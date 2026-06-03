@@ -1,0 +1,1 @@
+# PaySentinelIQ — AI Assistant Module

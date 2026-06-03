@@ -1,0 +1,1 @@
+"""PaySentinelIQ — Shared Module"""

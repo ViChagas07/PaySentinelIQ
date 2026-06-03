@@ -1,0 +1,1 @@
+"""PaySentinelIQ — Domain Events Module"""

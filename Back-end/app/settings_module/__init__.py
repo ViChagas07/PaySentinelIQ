@@ -1,0 +1,1 @@
+# PaySentinelIQ — User Settings Module

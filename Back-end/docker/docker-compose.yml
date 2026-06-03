@@ -1,0 +1,125 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: psi
+      POSTGRES_PASSWORD: psi_secret
+      POSTGRES_DB: paysentineliq
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psi -d paysentineliq"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    command: celery -A app.tasks worker --loglevel=info --concurrency=4
+    env_file:
+      - ../.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    command: celery -A app.tasks beat --loglevel=info
+    env_file:
+      - ../.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # ── Ollama — Local LLM Inference (Optional, zero API cost) ──
+  # Uncomment this service to run Ollama inside Docker.
+  # Alternatively, run Ollama natively on the host and set OLLAMA_BASE_URL=http://host.docker.internal:11434
+  #
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   environment:
+  #     - OLLAMA_KEEP_ALIVE=24h
+  #     - OLLAMA_HOST=0.0.0.0
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   restart: unless-stopped
+  #   # Run this after container starts to pull the model:
+  #   # docker compose exec ollama ollama pull llama3
+
+volumes:
+  postgres_data:
+  redis_data:
+  # ollama_data:

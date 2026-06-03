@@ -1,0 +1,3 @@
+"""
+PaySentinelIQ — Auth Module
+"""
