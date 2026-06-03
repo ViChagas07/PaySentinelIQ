@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Upload, FileText, X, Check, AlertCircle, FileWarning, FolderOpen, ChevronDown } from "lucide-react";
 import { useAnalysisStore, generateId, type UploadedFile } from "@/stores/analysis-store";
 import { FileSourceSelector } from "@/components/analysis/FileSourceSelector";
+import { GoogleDriveUploadButton } from "@/components/analysis/GoogleDriveUploadButton";
 
 const ALLOWED_TYPES = ["application/pdf", "image/png", "image/jpg", "image/jpeg"];
 const MAX_SIZE = 20 * 1024 * 1024; // 20MB
@@ -186,7 +187,19 @@ export function DocumentUploadZone() {
         />
       </motion.div>
 
-      {/* Source selector toggle */}
+      {/* Google Drive quick-action button */}
+      {canUpload && (
+        <div className="pt-1">
+          <div className="relative flex items-center gap-3 mb-3">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-psi-border/40 to-transparent" />
+            <span className="text-[11px] font-medium text-psi-text-secondary/60 uppercase tracking-widest">{tc("or")}</span>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-psi-border/40 to-transparent" />
+          </div>
+          <GoogleDriveUploadButton />
+        </div>
+      )}
+
+      {/* Advanced source selector toggle */}
       {canUpload && (
         <div>
           <button

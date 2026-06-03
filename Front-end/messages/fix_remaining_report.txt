@@ -1,0 +1,11 @@
+
+--- ja.json ---
+  => 70 added, 3 fixed
+
+--- zh.json ---
+  => 70 added, 256 fixed
+
+--- ar.json ---
+  => 70 added, 2 fixed
+
+TOTAL: 210 added, 261 fixed

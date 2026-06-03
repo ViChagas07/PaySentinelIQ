@@ -192,7 +192,7 @@
     "liveInsights": "Live AI Insights",
     "allSystemsOperational": "All Systems Operational",
     "updated": "Updated",
-    "minAgo": "min ago",
+    "minAgo": "{count} min ago",
     "viewAll": "View All",
     "last30Days": "Last 30 Days",
     "thisMonth": "This Month",
@@ -232,7 +232,6 @@
     "catUnauthorizedDeduction": "Unauthorized Deduction",
     "catOther": "Other",
     "justNow": "Just now",
-    "minAgo": "{count} min ago",
     "hoursAgo": "{count}h ago",
     "daysAgo": "{count}d ago",
     "emptyInsights": "No insights yet — upload a document to see AI analysis",
@@ -768,6 +767,21 @@
       "browseFiles": "Browse Files",
       "openDrive": "Open Google Drive",
       "openPhotos": "Open Google Photos"
+    },
+    "drive": {
+      "title": "Upload from Google Drive",
+      "description": "Sign in with Google to browse and import your Drive documents",
+      "connecting": "Connecting to Google...",
+      "importing": "Importing {count} file(s)...",
+      "imported": "{count} file(s) imported",
+      "importSuccess": "Files ready for analysis",
+      "failedToImport": "Failed to import files",
+      "tokenExpired": "Session expired. Please try again.",
+      "pleaseWait": "Do not close this page",
+      "tryAgain": "Try again or use device upload",
+      "errorTitle": "Connection failed",
+      "notConfigured": "Google Drive is not configured. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local",
+      "someSkipped": "Imported {count} file(s). Maximum file limit reached."
     },
     "pipeline": {
       "title": "AI Processing Pipeline",
