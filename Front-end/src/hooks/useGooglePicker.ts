@@ -55,6 +55,10 @@ export function useGooglePicker() {
   const tokenClientRef = useRef<any>(null);
   const pickerCallbackRef = useRef<((files: PickedFile[]) => void) | null>(null);
 
+  // Refs for synchronous access in event handlers (avoid stale closures)
+  const loadingRef = useRef(false);
+  const oauthActiveRef = useRef(false);
+
   // Load Google Identity Services script
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
@@ -68,10 +72,14 @@ export function useGooglePicker() {
             if (response.error) {
               setError(response.error);
               setLoading(false);
+              loadingRef.current = false;
+              oauthActiveRef.current = false;
               return;
             }
             setToken(response.access_token);
             setLoading(false);
+            loadingRef.current = false;
+            oauthActiveRef.current = false;
             // If a picker callback is waiting, proceed
             if (pickerCallbackRef.current && response.access_token) {
               openPickerWithToken(response.access_token, pickerCallbackRef.current);
@@ -95,6 +103,24 @@ export function useGooglePicker() {
     return () => {
       // Cleanup not needed for head scripts
     };
+  }, []);
+
+  // Detect when user closes the OAuth popup without completing auth
+  useEffect(() => {
+    const handleFocus = () => {
+      if (oauthActiveRef.current && loadingRef.current) {
+        // The popup was closed without completing authentication.
+        // Reset loading state and notify the waiting callback with empty result.
+        loadingRef.current = false;
+        oauthActiveRef.current = false;
+        setLoading(false);
+        pickerCallbackRef.current?.([]);
+        pickerCallbackRef.current = null;
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, []);
 
   // Load Picker API
@@ -159,6 +185,8 @@ export function useGooglePicker() {
         setToken(null);
         pickerCallbackRef.current = onPick;
         setLoading(true);
+        loadingRef.current = true;
+        oauthActiveRef.current = true;
         tokenClientRef.current?.requestAccessToken();
       });
       return;
@@ -166,6 +194,8 @@ export function useGooglePicker() {
 
     pickerCallbackRef.current = onPick;
     setLoading(true);
+    loadingRef.current = true;
+    oauthActiveRef.current = true;
     setError(null);
 
     if (tokenClientRef.current) {
@@ -178,6 +208,8 @@ export function useGooglePicker() {
         } else {
           setError("Google Sign-In not available. Please refresh the page.");
           setLoading(false);
+          loadingRef.current = false;
+          oauthActiveRef.current = false;
         }
       }, 1000);
     }

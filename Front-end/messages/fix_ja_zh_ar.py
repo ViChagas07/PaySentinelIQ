@@ -215,7 +215,6 @@ ZH_ENGLISH = {
 "dashboard.payrollTrend": "薪资趋势",
 "dashboard.payrollTrendDescription": "每月薪资量、标记异常和验证通过率",
 "dashboard.riskDistribution": "风险评分分布",
-"dashboard.riskDistributionDescription": "所有{count}个实体的薪资风险评分直方图",
 "dashboard.thisMonth": "本月",
 "dashboard.thisQuarter": "本季度",
 "dashboard.totalProcessed": "已处理总数",

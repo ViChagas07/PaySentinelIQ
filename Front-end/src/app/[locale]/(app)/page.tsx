@@ -381,9 +381,6 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t("riskDistribution")}</CardTitle>
-            <p className="text-xs text-psi-text-secondary">
-              {t("riskDistributionDescription")}
-            </p>
           </CardHeader>
           <CardContent>
             <LazyRiskDistributionChart />
