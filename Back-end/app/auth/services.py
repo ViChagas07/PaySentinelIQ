@@ -60,11 +60,14 @@ class AuthService:
         if extra_claims:
             payload.update(extra_claims)
 
-        return cast(str, jwt.encode(
-            payload,
-            settings.JWT_SECRET_KEY.get_secret_value(),
-            algorithm=settings.JWT_ALGORITHM,
-        ))
+        return cast(
+            str,
+            jwt.encode(
+                payload,
+                settings.JWT_SECRET_KEY.get_secret_value(),
+                algorithm=settings.JWT_ALGORITHM,
+            ),
+        )
 
     @staticmethod
     def create_refresh_token(user_id: str) -> tuple[str, str]:
@@ -78,11 +81,14 @@ class AuthService:
             "exp": now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
             "jti": jti,
         }
-        raw_token = cast(str, jwt.encode(
-            payload,
-            settings.JWT_SECRET_KEY.get_secret_value(),
-            algorithm=settings.JWT_ALGORITHM,
-        ))
+        raw_token = cast(
+            str,
+            jwt.encode(
+                payload,
+                settings.JWT_SECRET_KEY.get_secret_value(),
+                algorithm=settings.JWT_ALGORITHM,
+            ),
+        )
         hashed_token = hashlib.sha256(raw_token.encode()).hexdigest()
         return raw_token, hashed_token
 
@@ -117,10 +123,13 @@ class AuthService:
 
     @staticmethod
     def get_mfa_uri(secret: str, email: str) -> str:
-        return cast(str, pyotp.totp.TOTP(secret).provisioning_uri(
-            name=email,
-            issuer_name=settings.MFA_ISSUER,
-        ))
+        return cast(
+            str,
+            pyotp.totp.TOTP(secret).provisioning_uri(
+                name=email,
+                issuer_name=settings.MFA_ISSUER,
+            ),
+        )
 
     @staticmethod
     def verify_mfa_code(secret: str, code: str) -> bool:

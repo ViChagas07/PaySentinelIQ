@@ -288,8 +288,7 @@ async def get_department_stats(
 ) -> dict[str, Any]:
     """Get aggregate stats for a department."""
     dept_employees: list[dict[str, Any]] = [
-        e for e in _MOCK_EMPLOYEES
-        if str(e.get("department", "")).lower() == department.lower()
+        e for e in _MOCK_EMPLOYEES if str(e.get("department", "")).lower() == department.lower()
     ]
     if not dept_employees:
         return {
