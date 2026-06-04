@@ -8,14 +8,18 @@ WORKDIR /app
 #application and its dependencies properly. After installing the dependencies, the command also cleans up the apt cache to reduce the size of
 # the resulting Docker image.
 
-RUN apt-get update && apt-get install -y --no-install-recommends \ 
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install the application dependencies, whose the COPY command will be used to copy the pyproject.toml file, which contains the dependencies and build configuration for the project.
-COPY pyproject.toml .
-RUN pip install --no-cache-dir .
+# Install Poetry and use it to install dependencies.
+# With package-mode=false in pyproject.toml, pip install . would fail with
+# "Building a package is not possible in non-package mode".
+COPY pyproject.toml poetry.lock ./
+RUN pip install --no-cache-dir poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
 
 FROM python:3.12-slim AS production
 
@@ -33,7 +37,7 @@ RUN groupadd -r psi && useradd -r -g psi psi
 #dependencies to reduce the size of the resulting Docker image.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
-    curl \ 
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the installed dependencies from the builder stage to the production stage. This includes the 

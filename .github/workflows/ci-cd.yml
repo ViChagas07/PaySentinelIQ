@@ -164,9 +164,19 @@ jobs:
         run: |
           docker compose -f docker/docker-compose.yml up -d postgres redis
 
-      - name: Wait for postgres
-        run: |
-          timeout 30 sh -c 'until pg_isready -h localhost -p 5432 -U psi; do sleep 2; done'
+          # Wait for both containers to become healthy (max 45s)
+          for i in $(seq 1 45); do
+            PG_OK=$(docker compose -f docker/docker-compose.yml exec -T postgres \
+              pg_isready -U psi -d paysentineliq > /dev/null 2>&1 && echo 1 || echo 0)
+            RD_OK=$(docker compose -f docker/docker-compose.yml exec -T redis \
+              redis-cli ping > /dev/null 2>&1 && echo 1 || echo 0)
+            if [ "$PG_OK" = "1" ] && [ "$RD_OK" = "1" ]; then
+              echo "Both postgres and redis are healthy"
+              break
+            fi
+            echo "  ... waiting (pg=$PG_OK redis=$RD_OK) attempt $i"
+            sleep 1
+          done
 
       - name: Start API & ZAP scan
         env:
@@ -180,23 +190,37 @@ jobs:
             --factory \
             --host 0.0.0.0 \
             --port 8000 > /tmp/api.log 2>&1 &
+          API_PID=$!
+          echo "API PID: $API_PID"
 
-          # ── 2. Wait for health endpoint ──
+          # ── 2. Wait for health endpoint (up to 45s) ──
           echo "Waiting for API at http://localhost:8000/health ..."
-          for i in $(seq 1 30); do
+          for i in $(seq 1 45); do
             if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
-              echo "API is ready (attempt $i)"
+              echo "API ready at attempt $i"
               break
             fi
-            echo "  ... attempt $i"
+            # Every 10 attempts dump the log to help debug
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "--- Last lines from API log (attempt $i) ---"
+              tail -20 /tmp/api.log 2>/dev/null || echo "(log empty)"
+            fi
             sleep 1
           done
 
-          # ── 3. Run ZAP baseline scan via Docker ──
-          # (Using docker run directly instead of the action so the API
-          #  background process stays alive in the same step.)
+          # ── 3. Verify API process is still alive ──
+          if ! kill -0 "$API_PID" 2>/dev/null; then
+            echo "ERROR: API process died. Full log:"
+            cat /tmp/api.log
+            exit 1
+          fi
+          echo "API process is running (PID $API_PID)"
+
+          # ── 4. Run ZAP baseline scan via Docker ──
+          # Mount workspace/Back-end so reports end up in the working-directory
+          # where the upload step expects them.
           docker run \
-            -v "${{ github.workspace }}:/zap/wrk/:rw" \
+            -v "${{ github.workspace }}/Back-end:/zap/wrk/:rw" \
             --network=host \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
@@ -205,9 +229,9 @@ jobs:
             -w report_md.md \
             -r report_html.html
 
-          # Capture exit code but don't fail the build on ZAP findings
           ZAP_EXIT=$?
           echo "ZAP scan exit code: $ZAP_EXIT"
+          # Exit with ZAP code so the step fails on scan errors but artifacts are preserved
           exit $ZAP_EXIT
 
       - name: Upload ZAP report
@@ -219,6 +243,7 @@ jobs:
             report_json.json
             report_md.md
             report_html.html
+          retention-days: 7
 
 
   docker:
