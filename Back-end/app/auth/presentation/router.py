@@ -1,18 +1,25 @@
 # ============================================================
 # PaySentinelIQ — Auth Router (FastAPI)
-# Login, register, MFA, token refresh, logout
+# Login, register, MFA, token refresh, logout, Google OIDC
 # ============================================================
 
 import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_token_payload
+from app.auth.repository import UserRepository
 from app.auth.services import AuthService
-from app.shared.exceptions import InvalidCredentialsError, TokenExpiredError
+from app.shared.database import get_db
+from app.shared.exceptions import AuthenticationError, InvalidCredentialsError, TokenExpiredError
+from app.shared.settings import get_settings
 
+settings = get_settings()
 router = APIRouter()
 
 
@@ -57,7 +64,74 @@ class UserResponse(BaseModel):
     avatar_url: str | None = None
 
 
+class GoogleLoginRequest(BaseModel):
+    model_config = ConfigDict(strict=True)
+    credential: str
+
+
 # ── Endpoints ──
+
+
+@router.post("/google")
+async def google_login(
+    body: GoogleLoginRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Google OIDC (Sign In With Google) login.
+
+    Receives a Google ID token credential from the front-end GIS flow,
+    verifies it, finds-or-creates the user, and returns a PaySentinelIQ
+    JWT access token.
+    """
+    credential = body.credential
+
+    # 1. Verify the Google ID token
+    try:
+        google_user = id_token.verify_oauth2_token(
+            credential,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+    except ValueError as exc:
+        raise AuthenticationError(f"Invalid Google credential: {exc}") from exc
+
+    email: str = google_user["email"]
+    name: str = google_user.get("name", email.split("@")[0])
+    google_sub: str = google_user["sub"]
+
+    # 2. Find or create user
+    repo = UserRepository(db)
+    user = await repo.get_by_email(email)
+
+    if user is None:
+        user = await repo.create(
+            email=email,
+            full_name=name,
+            google_id=google_sub,
+        )
+    else:
+        # Update google_id if user already exists but didn't have one
+        if not user.google_id:
+            user.google_id = google_sub
+            await repo.update(user)
+
+    # 3. Issue PaySentinelIQ JWT
+    access_token = AuthService.create_access_token(
+        user_id=str(user.id),
+        tenant_id=str(user.tenant_id),
+        role=user.role,
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(user.id),
+            "email": user.email,
+            "name": user.full_name,
+        },
+    }
 
 
 @router.post("/login", response_model=TokenResponse)

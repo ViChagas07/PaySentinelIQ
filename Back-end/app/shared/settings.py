@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     MFA_ISSUER: str = "PaySentinelIQ"
 
+    # ── Google OIDC ──
+    GOOGLE_CLIENT_ID: str = ""
+
     # ── AWS ──
     AWS_ACCESS_KEY_ID: str | None = None
     AWS_SECRET_ACCESS_KEY: SecretStr | None = None

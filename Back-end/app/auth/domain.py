@@ -20,6 +20,7 @@ class User:
     full_name: str
     hashed_password: str
     role: UserRole
+    google_id: str | None = None
     mfa_enabled: bool = False
     mfa_secret: str | None = None
     is_active: bool = True
