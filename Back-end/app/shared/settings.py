@@ -20,7 +20,10 @@ class Settings(BaseSettings):
     # ── Application ──
     APP_NAME: str = "PaySentinelIQ"
     APP_VERSION: str = "1.0.0"
-    ENVIRONMENT: str = Field(default="development", pattern="^(development|staging|production)$")
+    ENVIRONMENT: str = Field(
+        default="development",
+        pattern="^(development|staging|production|test)$",
+    )
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
 
