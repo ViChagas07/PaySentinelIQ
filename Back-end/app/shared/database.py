@@ -19,12 +19,19 @@ settings = get_settings()
 engine = create_async_engine(
     settings.DATABASE_URL.get_secret_value(),
     echo=settings.DATABASE_ECHO,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    pool_timeout=settings.DATABASE_POOL_TIMEOUT,
     pool_pre_ping=True,
-    # Use NullPool for testing to avoid connection leaks
+    # Use NullPool for testing to avoid connection leaks;
+    # skip pool_size/max_overflow/pool_timeout — NullPool rejects those kwargs.
     poolclass=NullPool if settings.ENVIRONMENT == "test" else None,
+    **(
+        {}
+        if settings.ENVIRONMENT == "test"
+        else {
+            "pool_size": settings.DATABASE_POOL_SIZE,
+            "max_overflow": settings.DATABASE_MAX_OVERFLOW,
+            "pool_timeout": settings.DATABASE_POOL_TIMEOUT,
+        }
+    ),
 )
 
 AsyncSessionLocal = async_sessionmaker(
