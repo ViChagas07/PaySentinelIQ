@@ -121,7 +121,7 @@ def create_app() -> FastAPI:
             },
         )
 
-    # ── Root — returns 200 so ZAP spider / load balancers are happy ──
+    # ── Standard web roots (ZAP / crawlers request these) ──
     @app.get("/", tags=["Health"])
     async def root() -> dict[str, Any]:
         return {
@@ -129,6 +129,14 @@ def create_app() -> FastAPI:
             "version": settings.APP_VERSION,
             "environment": settings.ENVIRONMENT,
         }
+
+    @app.get("/robots.txt", tags=["Health"], include_in_schema=False)
+    async def robots() -> str:
+        return "User-agent: *\nDisallow: /"
+
+    @app.get("/sitemap.xml", tags=["Health"], include_in_schema=False)
+    async def sitemap() -> str:
+        return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n'
 
     # ── Health Check ──
     @app.get("/health", tags=["Health"])

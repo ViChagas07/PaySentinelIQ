@@ -30,10 +30,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy ONLY the project's virtualenv site-packages (not Poetry's own deps).
-# This avoids bringing build‑time tools (jaraco.context, wheel, etc.) into
-# production — keeping Trivy clean.
+# This avoids bringing build‑time tools into production.
 COPY --from=builder /app/.venv/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /app/.venv/bin /usr/local/bin
+
+# Upgrade any vulnerable packages that may have leaked in from the base
+# image or tooling (e.g. wheel from python:3.11-slim, jaraco.context
+# from pip install poetry).  Keeping Trivy HIGH/CRITICAL-free.
+RUN pip install --no-cache-dir --upgrade \
+    wheel==0.46.2 \
+    "jaraco.context>=6.1.0"
 
 # Application code
 COPY . .
