@@ -4,21 +4,19 @@
 # ============================================================
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.auth.dependencies import get_token_payload
-from app.auth.domain import MFASession, User
 from app.auth.services import AuthService
-from app.shared.exceptions import InvalidCredentialsError, MFARequiredError, TokenExpiredError
+from app.shared.exceptions import InvalidCredentialsError, TokenExpiredError
 
 router = APIRouter()
 
 
 # ── Request/Response Schemas ──
+
 
 class LoginRequest(BaseModel):
     model_config = ConfigDict(strict=True)
@@ -44,7 +42,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     requires_mfa: bool = False
-    mfa_session_token: Optional[str] = None
+    mfa_session_token: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -55,10 +53,11 @@ class UserResponse(BaseModel):
     role: str
     tenant_id: str
     mfa_enabled: bool
-    avatar_url: Optional[str] = None
+    avatar_url: str | None = None
 
 
 # ── Endpoints ──
+
 
 @router.post("/login", response_model=TokenResponse)
 async def login(request: Request, body: LoginRequest):
@@ -147,9 +146,9 @@ async def refresh_token(body: TokenRefreshRequest):
             expires_in=900,
         )
     except TokenExpiredError:
-        raise HTTPException(status_code=401, detail="Refresh token expired")
+        raise HTTPException(status_code=401, detail="Refresh token expired") from None
     except Exception:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        raise HTTPException(status_code=401, detail="Invalid refresh token") from None
 
 
 @router.get("/me", response_model=UserResponse)

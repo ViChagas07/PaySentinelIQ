@@ -6,7 +6,6 @@
 
 import logging
 import math
-import typing
 
 import sentry_sdk
 from fastapi import APIRouter, HTTPException, Query
@@ -39,7 +38,9 @@ async def sentry_status_check():
 async def trigger_unhandled_exception(
     error_type: str = Query(
         default="zero_division",
-        description="Type of unhandled error: zero_division, value_error, index_error, or key_error",
+        description=(
+            "Type of unhandled error: zero_division, value_error, index_error, or key_error"
+        ),
     ),
 ):
     """
@@ -62,7 +63,10 @@ async def trigger_unhandled_exception(
     else:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown error_type '{error_type}'. Use: zero_division, value_error, index_error, key_error",
+            detail=(
+                f"Unknown error_type '{error_type}'. "
+                f"Use: zero_division, value_error, index_error, key_error"
+            ),
         )
 
     return {"message": "This should never be reached."}
@@ -96,7 +100,9 @@ async def trigger_handled_exception():
 @router.get("/debug-sentry/capture-message", tags=["Debug"])
 async def capture_custom_message(
     message: str = Query(default="Hello from Sentry debug endpoint!"),
-    level: str = Query(default="info", description="Sentry level: debug, info, warning, error, fatal"),
+    level: str = Query(
+        default="info", description="Sentry level: debug, info, warning, error, fatal"
+    ),
 ):
     """
     Send a custom message/event to Sentry at the specified severity level.
@@ -146,17 +152,15 @@ async def performance_test(
     with sentry_sdk.start_transaction(
         op="test",
         name="debug-sentry-performance-test",
-    ) as transaction:
+    ):
         with sentry_sdk.start_span(op="computation", description="fibonacci_calculation"):
             # Simulate some CPU-bound work
-            total = sum(
-                math.sqrt(i) * math.log(i + 1)
-                for i in range(1, iterations * 1000)
-            )
+            total = sum(math.sqrt(i) * math.log(i + 1) for i in range(1, iterations * 1000))
 
         with sentry_sdk.start_span(op="io", description="simulated_db_query"):
             # Simulated I/O wait
             import asyncio
+
             await asyncio.sleep(0.1)
 
     return {

@@ -5,12 +5,11 @@
 # ============================================================
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_current_tenant_id, require_fraud_analyst
@@ -29,10 +28,10 @@ class FraudAlertResponse(BaseModel):
     ai_confidence: float
     anomaly_category: str
     description: str
-    ai_explanation: Optional[str] = None
+    ai_explanation: str | None = None
     flagged_fields: list = []
     status: str
-    assigned_to: Optional[str] = None
+    assigned_to: str | None = None
     created_at: str
 
 
@@ -45,28 +44,28 @@ class FraudAlertResolveRequest(BaseModel):
 class DocumentAnalyzeRequest(BaseModel):
     model_config = ConfigDict(strict=True)
     document_id: str
-    document_type: Optional[str] = None  # boleto, contracheque, holerite
+    document_type: str | None = None  # boleto, contracheque, holerite
     # Optional fields for direct analysis without OCR
-    salario_bruto: Optional[float] = None
-    inss: Optional[float] = None
-    irrf: Optional[float] = None
-    fgts: Optional[float] = None
-    liquido: Optional[float] = None
-    cargo: Optional[str] = None
-    cbo: Optional[str] = None
-    cnpj: Optional[str] = None
-    razao_social: Optional[str] = None
-    cnae: Optional[str] = None
-    linha_digitavel: Optional[str] = None
-    qr_code_payload: Optional[str] = None
+    salario_bruto: float | None = None
+    inss: float | None = None
+    irrf: float | None = None
+    fgts: float | None = None
+    liquido: float | None = None
+    cargo: str | None = None
+    cbo: str | None = None
+    cnpj: str | None = None
+    razao_social: str | None = None
+    cnae: str | None = None
+    linha_digitavel: str | None = None
+    qr_code_payload: str | None = None
 
 
 async def _alerts_query(
     tenant_id: uuid.UUID,
     db: AsyncSession,
-    risk_level: Optional[str] = None,
-    status: Optional[str] = None,
-    anomaly_category: Optional[str] = None,
+    risk_level: str | None = None,
+    status: str | None = None,
+    anomaly_category: str | None = None,
     skip: int = 0,
     limit: int = 20,
 ):
@@ -116,9 +115,9 @@ async def list_fraud_alerts(
     db: AsyncSession = Depends(get_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    risk_level: Optional[str] = None,
-    status: Optional[str] = None,
-    anomaly_category: Optional[str] = None,
+    risk_level: str | None = None,
+    status: str | None = None,
+    anomaly_category: str | None = None,
 ):
     """List fraud alerts with filtering. Returns real data from the database."""
     tid = uuid.UUID(tenant_id)
@@ -127,17 +126,13 @@ async def list_fraud_alerts(
     alerts = await _alerts_query(tid, db, risk_level, status, anomaly_category, skip, page_size)
 
     # Count total matching records for pagination
-    count_stmt = select(func.count(FraudAlertModel.id)).where(
-        FraudAlertModel.tenant_id == tid
-    )
+    count_stmt = select(func.count(FraudAlertModel.id)).where(FraudAlertModel.tenant_id == tid)
     if risk_level:
         count_stmt = count_stmt.where(FraudAlertModel.risk_level == risk_level)
     if status:
         count_stmt = count_stmt.where(FraudAlertModel.status == status)
     if anomaly_category:
-        count_stmt = count_stmt.where(
-            FraudAlertModel.anomaly_category == anomaly_category
-        )
+        count_stmt = count_stmt.where(FraudAlertModel.anomaly_category == anomaly_category)
     count_result = await db.execute(count_stmt)
     total = count_result.scalar_one()
 
@@ -172,9 +167,18 @@ async def analyze_document(
     }
 
     for field in [
-        "salario_bruto", "inss", "irrf", "fgts", "liquido",
-        "cargo", "cbo", "cnpj", "razao_social", "cnae",
-        "linha_digitavel", "qr_code_payload",
+        "salario_bruto",
+        "inss",
+        "irrf",
+        "fgts",
+        "liquido",
+        "cargo",
+        "cbo",
+        "cnpj",
+        "razao_social",
+        "cnae",
+        "linha_digitavel",
+        "qr_code_payload",
     ]:
         value = getattr(body, field, None)
         if value is not None:
@@ -268,7 +272,7 @@ async def resolve_fraud_alert(
         )
 
     alert.status = body.resolution
-    alert.resolved_at = datetime.now(timezone.utc)
+    alert.resolved_at = datetime.now(UTC)
     await db.flush()
 
     return {

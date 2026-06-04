@@ -33,7 +33,7 @@ def print_header(title: str) -> None:
     print(f"{'=' * 60}")
 
 
-def test_sentry_initialization() -> bool:
+def check_sentry_initialization() -> bool:
     """
     Test 1: Verify that init_sentry() correctly initializes the SDK
     when SENTRY_DSN is configured in .env.
@@ -62,6 +62,7 @@ def test_sentry_initialization() -> bool:
     init_sentry()
 
     import sentry_sdk
+
     client = sentry_sdk.get_client()
     is_active = client is not None and client.is_active()
 
@@ -73,7 +74,7 @@ def test_sentry_initialization() -> bool:
         return False
 
 
-def test_capture_message() -> bool:
+def check_capture_message() -> bool:
     """
     Test 2: Send a test message to Sentry and verify we get an event_id back.
     """
@@ -99,7 +100,7 @@ def test_capture_message() -> bool:
         return False
 
 
-def test_capture_exception() -> bool:
+def check_capture_exception() -> bool:
     """
     Test 3: Capture a handled exception and verify it's sent.
     """
@@ -126,7 +127,7 @@ def test_capture_exception() -> bool:
         return False
 
 
-def test_transaction_span() -> bool:
+def check_transaction_span() -> bool:
     """
     Test 4: Create a transaction with a child span for performance monitoring.
     """
@@ -151,7 +152,7 @@ def test_transaction_span() -> bool:
     return True
 
 
-def test_flush_and_shutdown() -> bool:
+def check_flush_and_shutdown() -> bool:
     """
     Test 5: Flush events to Sentry and shut down the SDK cleanly.
     """
@@ -166,7 +167,9 @@ def test_flush_and_shutdown() -> bool:
     if flushed:
         print("  [PASS] PASS: All events flushed successfully to Sentry.")
     else:
-        print("  [WARN] WARNING: Flush did not complete within timeout — some events may be pending.")
+        print(
+            "  [WARN] WARNING: Flush did not complete within timeout — some events may be pending."
+        )
 
     # Shutdown the SDK (disables transport, prevents further events)
     # This also triggers a final flush internally
@@ -178,6 +181,32 @@ def test_flush_and_shutdown() -> bool:
     return True
 
 
+# ── Pytest wrappers (use `assert` to avoid PytestReturnNotNoneWarning) ──
+
+
+def test_sentry_initialization() -> None:
+    assert check_sentry_initialization()
+
+
+def test_capture_message() -> None:
+    assert check_capture_message()
+
+
+def test_capture_exception() -> None:
+    assert check_capture_exception()
+
+
+def test_transaction_span() -> None:
+    assert check_transaction_span()
+
+
+def test_flush_and_shutdown() -> None:
+    assert check_flush_and_shutdown()
+
+
+# ── Standalone entry point ──
+
+
 def main() -> int:
     print_header("PaySentinelIQ — Sentry E2E Verification")
     print(f"  Back-end directory : {BACKEND_DIR}")
@@ -186,7 +215,7 @@ def main() -> int:
     results = {}
 
     # Test 1: Initialization (MUST pass for subsequent tests)
-    results["initialization"] = test_sentry_initialization()
+    results["initialization"] = check_sentry_initialization()
     if not results["initialization"]:
         print("\n" + "!" * 60)
         print("  Sentry initialization FAILED — aborting remaining tests.")
@@ -195,12 +224,12 @@ def main() -> int:
         return 1
 
     # Test 2-4: Core functionality
-    results["capture_message"] = test_capture_message()
-    results["capture_exception"] = test_capture_exception()
-    results["transaction"] = test_transaction_span()
+    results["capture_message"] = check_capture_message()
+    results["capture_exception"] = check_capture_exception()
+    results["transaction"] = check_transaction_span()
 
     # Test 5: Cleanup
-    results["flush"] = test_flush_and_shutdown()
+    results["flush"] = check_flush_and_shutdown()
 
     # ── Summary ──
     print_header("RESULTS SUMMARY")

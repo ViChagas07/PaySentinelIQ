@@ -4,10 +4,9 @@
 # ============================================================
 
 import os
-from typing import Optional
 
 import boto3
-from botocore.exceptions import ClientError, BotoCoreError
+from botocore.exceptions import BotoCoreError, ClientError
 
 from app.shared.exceptions import ServiceError
 
@@ -23,7 +22,7 @@ s3 = boto3.client(
 BUCKET_NAME = os.getenv("S3_BUCKET")
 
 
-def upload_file(file_bytes: bytes, filename: str, content_type: Optional[str] = None) -> str:
+def upload_file(file_bytes: bytes, filename: str, content_type: str | None = None) -> str:
     """Faz upload de um arquivo para o bucket S3.
 
     Args:
@@ -38,9 +37,7 @@ def upload_file(file_bytes: bytes, filename: str, content_type: Optional[str] = 
         ServiceError: Se o bucket não estiver configurado ou o upload falhar.
     """
     if not BUCKET_NAME:
-        raise ServiceError(
-            "S3_BUCKET não configurado. Defina no .env para usar o S3."
-        )
+        raise ServiceError("S3_BUCKET não configurado. Defina no .env para usar o S3.")
 
     try:
         extra_args: dict[str, str] = {}

@@ -4,10 +4,10 @@
 # ============================================================
 
 import os
-from typing import Any, Optional
+from typing import Any
 
 import boto3
-from botocore.exceptions import ClientError, BotoCoreError
+from botocore.exceptions import BotoCoreError, ClientError
 
 from app.shared.exceptions import ServiceError
 
@@ -25,7 +25,7 @@ def put_log_event(
     log_group: str,
     log_stream: str,
     message: str,
-    timestamp: Optional[int] = None,
+    timestamp: int | None = None,
 ) -> dict[str, Any]:
     """Envia um evento de log para o CloudWatch Logs.
 
@@ -80,9 +80,7 @@ def _ensure_log_group(log_group: str) -> None:
         code = exc.response.get("Error", {}).get("Code", "")
         # ResourceAlreadyExistsException é esperado e ignorado
         if code != "ResourceAlreadyExistsException":
-            raise ServiceError(
-                f"Falha ao criar log group '{log_group}': {exc}"
-            ) from exc
+            raise ServiceError(f"Falha ao criar log group '{log_group}': {exc}") from exc
 
 
 def _ensure_log_stream(log_group: str, log_stream: str) -> None:
@@ -92,6 +90,4 @@ def _ensure_log_stream(log_group: str, log_stream: str) -> None:
     except ClientError as exc:
         code = exc.response.get("Error", {}).get("Code", "")
         if code != "ResourceAlreadyExistsException":
-            raise ServiceError(
-                f"Falha ao criar log stream '{log_stream}': {exc}"
-            ) from exc
+            raise ServiceError(f"Falha ao criar log stream '{log_stream}': {exc}") from exc

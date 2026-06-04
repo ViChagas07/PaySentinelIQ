@@ -10,7 +10,6 @@ from app.ai_agents.tools.brazil_financial_tools import (
     _calculate_irrf,
     _cnpj_mod11,
     _parse_cnpj,
-    _validate_cnpj_checksum,
     bacen_bank_validator,
     cbo_salary_range,
     cnae_compatibility_check,
@@ -21,10 +20,10 @@ from app.ai_agents.tools.brazil_financial_tools import (
     liquido_consistency_check,
 )
 
-
 # ═══════════════════════════════════════════════════════════════
 # CNPJ VALIDATION TESTS
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestCNPJValidator:
     """Test CNPJ Módulo 11 checksum validation."""
@@ -86,6 +85,7 @@ class TestCNPJValidator:
 # INSS CALCULATOR TESTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestINSSCalculator:
     """Test INSS calculation using 2025 progressive table."""
 
@@ -123,10 +123,12 @@ class TestINSSCalculator:
         correct_inss = _calculate_inss(salario)["inss_calculado"]
         wrong_inss = correct_inss - 50.00  # Deliberately wrong
 
-        result = inss_calculator.invoke({
-            "salario_bruto": salario,
-            "inss_printed": wrong_inss,
-        })
+        result = inss_calculator.invoke(
+            {
+                "salario_bruto": salario,
+                "inss_printed": wrong_inss,
+            }
+        )
         assert result["anomaly"] is True
         assert abs(result["delta"]) > 0.01
 
@@ -135,16 +137,19 @@ class TestINSSCalculator:
         salario = 5000.00
         correct_inss = _calculate_inss(salario)["inss_calculado"]
 
-        result = inss_calculator.invoke({
-            "salario_bruto": salario,
-            "inss_printed": correct_inss,
-        })
+        result = inss_calculator.invoke(
+            {
+                "salario_bruto": salario,
+                "inss_printed": correct_inss,
+            }
+        )
         assert result["anomaly"] is False
 
 
 # ═══════════════════════════════════════════════════════════════
 # IRRF CALCULATOR TESTS
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestIRRFCalculator:
     """Test IRRF calculation using 2025 progressive table."""
@@ -175,11 +180,13 @@ class TestIRRFCalculator:
 
     def test_delta_detection(self):
         """IRRF mismatch should be detected."""
-        result = irrf_calculator.invoke({
-            "salario_bruto": 5000.00,
-            "inss": 400.00,
-            "irrf_printed": 50.00,  # Deliberately wrong
-        })
+        result = irrf_calculator.invoke(
+            {
+                "salario_bruto": 5000.00,
+                "inss": 400.00,
+                "irrf_printed": 50.00,  # Deliberately wrong
+            }
+        )
         assert result["anomaly"] is True
         assert abs(result["delta"]) > 0.01
 
@@ -188,42 +195,51 @@ class TestIRRFCalculator:
 # FGTS CALCULATOR TESTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestFGTSCalculator:
     """Test FGTS calculation (8% regular, 2% aprendiz)."""
 
     def test_regular_fgts(self):
         """Regular employee should have 8% FGTS."""
-        result = fgts_calculator.invoke({
-            "salario_bruto": 5000.00,
-            "fgts_printed": 400.00,
-        })
+        result = fgts_calculator.invoke(
+            {
+                "salario_bruto": 5000.00,
+                "fgts_printed": 400.00,
+            }
+        )
         assert result["fgts_calculado"] == 400.00
         assert result["anomaly"] is False
 
     def test_aprendiz_fgts(self):
         """Aprendiz should have 2% FGTS."""
-        result = fgts_calculator.invoke({
-            "salario_bruto": 1000.00,
-            "fgts_printed": 20.00,
-            "tipo_contrato": "aprendiz",
-        })
+        result = fgts_calculator.invoke(
+            {
+                "salario_bruto": 1000.00,
+                "fgts_printed": 20.00,
+                "tipo_contrato": "aprendiz",
+            }
+        )
         assert result["fgts_calculado"] == 20.00
 
     def test_fgts_mismatch(self):
         """Wrong FGTS should be flagged."""
-        result = fgts_calculator.invoke({
-            "salario_bruto": 5000.00,
-            "fgts_printed": 300.00,  # Should be 400.00
-        })
+        result = fgts_calculator.invoke(
+            {
+                "salario_bruto": 5000.00,
+                "fgts_printed": 300.00,  # Should be 400.00
+            }
+        )
         assert result["anomaly"] is True
         assert result["delta"] == 100.00
 
     def test_fgts_mismatch_critical(self):
         """Large FGTS mismatch should be critical severity."""
-        result = fgts_calculator.invoke({
-            "salario_bruto": 10000.00,
-            "fgts_printed": 100.00,  # Should be 800.00
-        })
+        result = fgts_calculator.invoke(
+            {
+                "salario_bruto": 10000.00,
+                "fgts_printed": 100.00,  # Should be 800.00
+            }
+        )
         assert result["severity"] == "critical"
 
 
@@ -231,41 +247,48 @@ class TestFGTSCalculator:
 # LÍQUIDO CONSISTENCY TESTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestLiquidoConsistency:
     """Test líquido (net pay) consistency validation."""
 
     def test_correct_liquido(self):
         """Correct net pay should pass."""
         # bruto=5000, inss=400, irrf=300, outros=0 → líquido=4300
-        result = liquido_consistency_check.invoke({
-            "salario_bruto": 5000.00,
-            "inss": 400.00,
-            "irrf": 300.00,
-            "outros_descontos": 0.00,
-            "liquido_printed": 4300.00,
-        })
+        result = liquido_consistency_check.invoke(
+            {
+                "salario_bruto": 5000.00,
+                "inss": 400.00,
+                "irrf": 300.00,
+                "outros_descontos": 0.00,
+                "liquido_printed": 4300.00,
+            }
+        )
         assert result["anomaly"] is False
 
     def test_incorrect_liquido(self):
         """Wrong net pay should be flagged as critical."""
-        result = liquido_consistency_check.invoke({
-            "salario_bruto": 5000.00,
-            "inss": 400.00,
-            "irrf": 300.00,
-            "liquido_printed": 5000.00,  # Impossible — deductions exist
-        })
+        result = liquido_consistency_check.invoke(
+            {
+                "salario_bruto": 5000.00,
+                "inss": 400.00,
+                "irrf": 300.00,
+                "liquido_printed": 5000.00,  # Impossible — deductions exist
+            }
+        )
         assert result["anomaly"] is True
         assert result["severity"] == "critical"
 
     def test_fgts_not_deducted(self):
         """FGTS should NOT be deducted from líquido."""
-        result = liquido_consistency_check.invoke({
-            "salario_bruto": 5000.00,
-            "inss": 400.00,
-            "irrf": 300.00,
-            "outros_descontos": 0.00,
-            "liquido_printed": 4300.00,
-        })
+        result = liquido_consistency_check.invoke(
+            {
+                "salario_bruto": 5000.00,
+                "inss": 400.00,
+                "irrf": 300.00,
+                "outros_descontos": 0.00,
+                "liquido_printed": 4300.00,
+            }
+        )
         assert result["liquido_calculado"] == 4300.00
         assert "patronal" in result.get("fgts_nota", "").lower()
 
@@ -274,54 +297,65 @@ class TestLiquidoConsistency:
 # CBO SALARY RANGE TESTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestCBOSalaryRange:
     """Test CBO salary range validation."""
 
     def test_within_range(self):
         """Salary within expected range should pass."""
-        result = cbo_salary_range.invoke({
-            "cbo_code": "212405",
-            "salario": 7000.00,
-            "cargo": "Analista de Sistemas",
-        })
+        result = cbo_salary_range.invoke(
+            {
+                "cbo_code": "212405",
+                "salario": 7000.00,
+                "cargo": "Analista de Sistemas",
+            }
+        )
         assert result["status"] == "within_range"
         assert result["anomaly"] is False
 
     def test_above_range(self):
         """Salary above expected range should be flagged."""
-        result = cbo_salary_range.invoke({
-            "cbo_code": "411005",
-            "salario": 20000.00,  # Auxiliar de Escritório at R$20k?!
-            "cargo": "Auxiliar de Escritório",
-        })
+        result = cbo_salary_range.invoke(
+            {
+                "cbo_code": "411005",
+                "salario": 20000.00,  # Auxiliar de Escritório at R$20k?!
+                "cargo": "Auxiliar de Escritório",
+            }
+        )
         assert result["anomaly"] is True
         assert "above" in result["status"]
 
     def test_below_range(self):
         """Salary far below the range should be flagged."""
-        result = cbo_salary_range.invoke({
-            "cbo_code": "252205",
-            "salario": 500.00,  # Gerente Financeiro at R$500?!
-            "cargo": "Gerente Financeiro",
-        })
+        result = cbo_salary_range.invoke(
+            {
+                "cbo_code": "252205",
+                "salario": 500.00,  # Gerente Financeiro at R$500?!
+                "cargo": "Gerente Financeiro",
+            }
+        )
         assert result["anomaly"] is True
 
     def test_unknown_cbo(self):
         """Unknown CBO should return NOT_VERIFIABLE."""
-        result = cbo_salary_range.invoke({
-            "cbo_code": "999999",
-            "salario": 5000.00,
-            "cargo": "XXXXXXXXXX_NO_MATCH_XXXXXXXXXX",  # Cargo that won't match anything
-        })
+        result = cbo_salary_range.invoke(
+            {
+                "cbo_code": "999999",
+                "salario": 5000.00,
+                "cargo": "XXXXXXXXXX_NO_MATCH_XXXXXXXXXX",  # Cargo that won't match anything
+            }
+        )
         assert result["status"] == "NOT_VERIFIABLE"
 
     def test_cargo_name_fallback(self):
         """Should match by cargo name if CBO code doesn't match directly."""
-        result = cbo_salary_range.invoke({
-            "cbo_code": "999",
-            "salario": 7000.00,
-            "cargo": "Gerente Financeiro",
-        })
+        result = cbo_salary_range.invoke(
+            {
+                "cbo_code": "999",
+                "salario": 7000.00,
+                "cargo": "Gerente Financeiro",
+            }
+        )
         # Should find by cargo name match
         assert result["status"] != "NOT_VERIFIABLE" or result["confidence"] == 0
 
@@ -329,6 +363,7 @@ class TestCBOSalaryRange:
 # ═══════════════════════════════════════════════════════════════
 # BACEN BANK VALIDATOR TESTS
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestBACENBankValidator:
     """Test BACEN ISPB bank code validation."""
@@ -366,32 +401,39 @@ class TestBACENBankValidator:
 # CNAE COMPATIBILITY TESTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestCNAECompatibility:
     """Test CNAE-CBO compatibility checking."""
 
     def test_compatible_it_cnae(self):
         """Software development CNAE with developer CBO should be compatible."""
-        result = cnae_compatibility_check.invoke({
-            "cnae_code": "62.01-5",
-            "cbo_code": "212405",
-            "cargo": "Analista de Sistemas",
-        })
+        result = cnae_compatibility_check.invoke(
+            {
+                "cnae_code": "62.01-5",
+                "cbo_code": "212405",
+                "cargo": "Analista de Sistemas",
+            }
+        )
         assert result["compatible"] is True
 
     def test_incompatible_pair(self):
         """Cleaning company CNAE with developer CBO should be incompatible."""
-        result = cnae_compatibility_check.invoke({
-            "cnae_code": "81.21-4",
-            "cbo_code": "212405",
-            "cargo": "Analista de Sistemas",
-        })
+        result = cnae_compatibility_check.invoke(
+            {
+                "cnae_code": "81.21-4",
+                "cbo_code": "212405",
+                "cargo": "Analista de Sistemas",
+            }
+        )
         # 81 prefix matches 81 (cleaning services) which includes 514320, 4110
         # But 212405 (Analista de Sistemas) is NOT in the cleaning CBO list
         assert result["compatible"] is False
 
     def test_unknown_cnae(self):
-        result = cnae_compatibility_check.invoke({
-            "cnae_code": "99.99-9",
-            "cbo_code": "212405",
-        })
+        result = cnae_compatibility_check.invoke(
+            {
+                "cnae_code": "99.99-9",
+                "cbo_code": "212405",
+            }
+        )
         assert result["status"] == "NOT_VERIFIABLE"

@@ -5,19 +5,16 @@
 
 import hashlib
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 import pyotp
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from app.auth.domain import MFASession, RefreshToken, User
+from app.auth.domain import User
 from app.shared.exceptions import (
     AuthenticationError,
     AuthorizationError,
-    InvalidCredentialsError,
-    MFARequiredError,
     TokenExpiredError,
 )
 from app.shared.settings import get_settings
@@ -47,9 +44,9 @@ class AuthService:
         user_id: str,
         tenant_id: str,
         role: str,
-        extra_claims: Optional[dict] = None,
+        extra_claims: dict | None = None,
     ) -> str:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         payload = {
             "sub": user_id,
             "tenant_id": tenant_id,
@@ -71,7 +68,7 @@ class AuthService:
     @staticmethod
     def create_refresh_token(user_id: str) -> tuple[str, str]:
         """Returns (raw_token, hashed_token) for secure storage."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         jti = str(uuid.uuid4())
         payload = {
             "sub": user_id,

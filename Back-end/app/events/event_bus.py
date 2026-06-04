@@ -5,7 +5,8 @@
 
 import asyncio
 import logging
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from app.events import DomainEvent
 from app.shared.redis_client import RedisPubSub
@@ -63,6 +64,7 @@ class EventBus:
 
 # ── Decorator for auto-subscribing handlers ──
 
+
 def event_handler(event_type: str):
     """Decorator to register a function as an event handler."""
 
@@ -74,6 +76,7 @@ def event_handler(event_type: str):
 
 
 # ── Redis Listener (Background Task) ──
+
 
 async def start_redis_event_listener() -> None:
     """

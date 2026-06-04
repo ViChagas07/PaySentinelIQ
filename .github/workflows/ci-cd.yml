@@ -34,24 +34,20 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Poetry
-        run: |
-          pip install poetry==${{ env.POETRY_VERSION }}
+        run: pip install poetry==${{ env.POETRY_VERSION }}
 
       - name: Install dependencies
-        run: |
-          poetry install
+        run: poetry install
 
       - name: Ruff lint
-        run: |
-          poetry run ruff check app tests
+        run: poetry run ruff check app tests
 
-      - name: Ruff format check
-        run: |
-          poetry run ruff format --check app tests
+      - name: Ruff format
+        run: poetry run ruff format --check app tests
 
       - name: Mypy
-        run: |
-          poetry run mypy app --ignore-missing-imports
+        run: poetry run mypy app --ignore-missing-imports
+
 
   test:
     name: Tests
@@ -62,7 +58,6 @@ jobs:
 
       postgres:
         image: postgres:16-alpine
-
         env:
           POSTGRES_USER: psi
           POSTGRES_PASSWORD: psi_secret
@@ -99,12 +94,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Poetry
-        run: |
-          pip install poetry==${{ env.POETRY_VERSION }}
+        run: pip install poetry==${{ env.POETRY_VERSION }}
 
       - name: Install dependencies
-        run: |
-          poetry install
+        run: poetry install
 
       - name: Run tests
         env:
@@ -126,6 +119,7 @@ jobs:
           name: coverage-report
           path: Back-end/coverage.xml
 
+
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
@@ -136,17 +130,16 @@ jobs:
       contents: read
 
     steps:
-
       - uses: actions/checkout@v4
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: python
-          queries: security-extended
 
       - name: Analyze
         uses: github/codeql-action/analyze@v3
+
 
   owasp-zap:
     name: OWASP ZAP Scan
@@ -154,7 +147,6 @@ jobs:
     needs: test
 
     steps:
-
       - uses: actions/checkout@v4
 
       - name: Setup Python
@@ -163,12 +155,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Poetry
-        run: |
-          pip install poetry==${{ env.POETRY_VERSION }}
+        run: pip install poetry==${{ env.POETRY_VERSION }}
 
       - name: Install dependencies
-        run: |
-          poetry install
+        run: poetry install
 
       - name: Start containers
         run: |
@@ -183,11 +173,12 @@ jobs:
 
           sleep 20
 
-      - name: ZAP baseline
+      - name: ZAP scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: "http://localhost:8000"
           fail_action: warn
+
 
   docker:
     name: Docker Build & Scan
@@ -195,7 +186,6 @@ jobs:
     needs: test
 
     steps:
-
       - uses: actions/checkout@v4
 
       - name: Setup Buildx
@@ -210,7 +200,7 @@ jobs:
           load: true
           tags: paysentineliq:ci
 
-      - name: Trivy
+      - name: Trivy Scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: paysentineliq:ci
@@ -218,6 +208,7 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
+
 
   deploy:
     name: Deploy Production
@@ -228,12 +219,10 @@ jobs:
       - codeql
       - docker
 
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main'
 
     steps:
-
       - uses: actions/checkout@v4
 
       - name: Deploy
-        run: |
-          echo "Deploying PaySentinelIQ..."
+        run: echo "Deploying..."

@@ -9,8 +9,6 @@ from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.shared.redis_client import RedisPubSub
-
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -34,7 +32,11 @@ class ConnectionManager:
         await websocket.accept()
         if channel in self._connections:
             self._connections[channel].add(websocket)
-        logger.info("WebSocket connected to channel: %s (total: %d)", channel, len(self._connections.get(channel, set())))
+        logger.info(
+            "WebSocket connected to channel: %s (total: %d)",
+            channel,
+            len(self._connections.get(channel, set())),
+        )
 
     async def disconnect(self, channel: str, websocket: WebSocket) -> None:
         if channel in self._connections:
@@ -73,6 +75,7 @@ ws_manager = ConnectionManager()
 
 # ── WebSocket Endpoints ──
 
+
 @router.websocket("/alerts")
 async def ws_alerts(websocket: WebSocket):
     """
@@ -82,11 +85,15 @@ async def ws_alerts(websocket: WebSocket):
     await ws_manager.connect("alerts", websocket)
     try:
         # Send initial connection confirmation
-        await websocket.send_text(json.dumps({
-            "type": "connected",
-            "channel": "alerts",
-            "message": "Connected to fraud alerts stream",
-        }))
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "connected",
+                    "channel": "alerts",
+                    "message": "Connected to fraud alerts stream",
+                }
+            )
+        )
 
         # Keep connection alive, listen for client messages
         while True:
@@ -110,11 +117,15 @@ async def ws_verification(websocket: WebSocket):
     """
     await ws_manager.connect("verification", websocket)
     try:
-        await websocket.send_text(json.dumps({
-            "type": "connected",
-            "channel": "verification",
-            "message": "Connected to verification progress stream",
-        }))
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "connected",
+                    "channel": "verification",
+                    "message": "Connected to verification progress stream",
+                }
+            )
+        )
 
         while True:
             data = await websocket.receive_text()
@@ -136,16 +147,20 @@ async def ws_analytics(websocket: WebSocket):
     """
     await ws_manager.connect("analytics", websocket)
     try:
-        await websocket.send_text(json.dumps({
-            "type": "connected",
-            "channel": "analytics",
-            "message": "Connected to analytics stream",
-            "metrics": {
-                "payrolls_processed": 12487,
-                "fraud_alerts": 23,
-                "verification_rate": 98.4,
-            },
-        }))
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "connected",
+                    "channel": "analytics",
+                    "message": "Connected to analytics stream",
+                    "metrics": {
+                        "payrolls_processed": 12487,
+                        "fraud_alerts": 23,
+                        "verification_rate": 98.4,
+                    },
+                }
+            )
+        )
 
         while True:
             data = await websocket.receive_text()
@@ -167,11 +182,15 @@ async def ws_notifications(websocket: WebSocket):
     """
     await ws_manager.connect("notifications", websocket)
     try:
-        await websocket.send_text(json.dumps({
-            "type": "connected",
-            "channel": "notifications",
-            "message": "Connected to notification stream",
-        }))
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "connected",
+                    "channel": "notifications",
+                    "message": "Connected to notification stream",
+                }
+            )
+        )
 
         while True:
             data = await websocket.receive_text()
@@ -187,27 +206,37 @@ async def ws_notifications(websocket: WebSocket):
 
 # ── Helper: push events from Celery tasks ──
 
+
 async def push_fraud_alert(alert_data: dict[str, Any]) -> None:
     """Called by Celery tasks to push fraud alerts to connected analysts."""
-    await ws_manager.broadcast("alerts", {
-        "type": "fraud_alert",
-        "data": alert_data,
-    })
+    await ws_manager.broadcast(
+        "alerts",
+        {
+            "type": "fraud_alert",
+            "data": alert_data,
+        },
+    )
 
 
 async def push_verification_progress(document_id: str, status: str, progress: float) -> None:
     """Called by Celery tasks to stream verification progress."""
-    await ws_manager.broadcast("verification", {
-        "type": "verification_progress",
-        "document_id": document_id,
-        "status": status,
-        "progress": progress,
-    })
+    await ws_manager.broadcast(
+        "verification",
+        {
+            "type": "verification_progress",
+            "document_id": document_id,
+            "status": status,
+            "progress": progress,
+        },
+    )
 
 
 async def push_dashboard_update(metrics: dict[str, Any]) -> None:
     """Called by Celery tasks to update dashboard metrics."""
-    await ws_manager.broadcast("analytics", {
-        "type": "dashboard_update",
-        "metrics": metrics,
-    })
+    await ws_manager.broadcast(
+        "analytics",
+        {
+            "type": "dashboard_update",
+            "metrics": metrics,
+        },
+    )

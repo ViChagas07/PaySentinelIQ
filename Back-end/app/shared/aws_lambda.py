@@ -8,7 +8,7 @@ import os
 from typing import Any
 
 import boto3
-from botocore.exceptions import ClientError, BotoCoreError
+from botocore.exceptions import BotoCoreError, ClientError
 
 from app.shared.exceptions import ServiceError
 

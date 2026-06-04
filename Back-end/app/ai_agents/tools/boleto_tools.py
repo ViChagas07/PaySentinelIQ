@@ -9,10 +9,10 @@ from typing import Any
 
 from langchain_core.tools import tool
 
-
 # ═══════════════════════════════════════════════════════════════
 # MÓDULO 10 (used in boleto checksum — campo verification)
 # ═══════════════════════════════════════════════════════════════
+
 
 def _modulo10(digits: str) -> int:
     """
@@ -40,7 +40,7 @@ def _validate_modulo10(digits_with_dv: str, dv_position_from_right: int = 0) -> 
         dv_expected = int(digits_with_dv[-1])
     else:
         idx = len(digits_with_dv) - dv_position_from_right - 1
-        payload = digits_with_dv[:idx] + digits_with_dv[idx + 1:]
+        payload = digits_with_dv[:idx] + digits_with_dv[idx + 1 :]
         dv_expected = int(digits_with_dv[idx])
 
     dv_calculated = _modulo10(payload)
@@ -50,6 +50,7 @@ def _validate_modulo10(digits_with_dv: str, dv_position_from_right: int = 0) -> 
 # ═══════════════════════════════════════════════════════════════
 # MÓDULO 11 (FEBRABAN — boleto barcode checksum)
 # ═══════════════════════════════════════════════════════════════
+
 
 def _modulo11_febraban(digits: str) -> int:
     """
@@ -92,6 +93,7 @@ def _modulo11_general(digits: str) -> int:
 # ═══════════════════════════════════════════════════════════════
 # FEBRABAN LINHA DIGITÁVEL PARSER & VALIDATOR
 # ═══════════════════════════════════════════════════════════════
+
 
 def _parse_linha_digitavel(linha: str) -> dict[str, Any]:
     """Parse a 47-digit linha digitável (boleto bancário) into its constituent fields."""
@@ -157,38 +159,44 @@ def _validate_campo_dvs(parsed: dict) -> list[dict[str, Any]]:
     # Validate Campo 1 with Módulo 10
     campo1_check = _validate_modulo10(parsed["campo1"]["raw"] + str(parsed["campo1"]["dv"]))
     if not campo1_check:
-        anomalies.append({
-            "campo": 1,
-            "dv_encontrado": parsed["campo1"]["dv"],
-            "dv_calculado": _modulo10(parsed["campo1"]["raw"]),
-            "algoritmo": "Módulo 10",
-            "severity": "critical",
-            "description": "DV do Campo 1 inválido — linha digitável adulterada.",
-        })
+        anomalies.append(
+            {
+                "campo": 1,
+                "dv_encontrado": parsed["campo1"]["dv"],
+                "dv_calculado": _modulo10(parsed["campo1"]["raw"]),
+                "algoritmo": "Módulo 10",
+                "severity": "critical",
+                "description": "DV do Campo 1 inválido — linha digitável adulterada.",
+            }
+        )
 
     # Validate Campo 2 with Módulo 10
     campo2_check = _validate_modulo10(parsed["campo2"]["raw"] + str(parsed["campo2"]["dv1"]))
     if not campo2_check:
-        anomalies.append({
-            "campo": 2,
-            "dv_encontrado": parsed["campo2"]["dv1"],
-            "dv_calculado": _modulo10(parsed["campo2"]["raw"]),
-            "algoritmo": "Módulo 10",
-            "severity": "critical",
-            "description": "DV do Campo 2 inválido — linha digitável adulterada.",
-        })
+        anomalies.append(
+            {
+                "campo": 2,
+                "dv_encontrado": parsed["campo2"]["dv1"],
+                "dv_calculado": _modulo10(parsed["campo2"]["raw"]),
+                "algoritmo": "Módulo 10",
+                "severity": "critical",
+                "description": "DV do Campo 2 inválido — linha digitável adulterada.",
+            }
+        )
 
     # Validate Campo 3 with Módulo 10
     campo3_check = _validate_modulo10(parsed["campo3"]["raw"] + str(parsed["campo3"]["dv1"]))
     if not campo3_check:
-        anomalies.append({
-            "campo": 3,
-            "dv_encontrado": parsed["campo3"]["dv1"],
-            "dv_calculado": _modulo10(parsed["campo3"]["raw"]),
-            "algoritmo": "Módulo 10",
-            "severity": "critical",
-            "description": "DV do Campo 3 inválido — linha digitável adulterada.",
-        })
+        anomalies.append(
+            {
+                "campo": 3,
+                "dv_encontrado": parsed["campo3"]["dv1"],
+                "dv_calculado": _modulo10(parsed["campo3"]["raw"]),
+                "algoritmo": "Módulo 10",
+                "severity": "critical",
+                "description": "DV do Campo 3 inválido — linha digitável adulterada.",
+            }
+        )
 
     return anomalies
 
@@ -267,14 +275,17 @@ def boleto_linha_digitavel_validator(linha_digitavel: str) -> dict[str, Any]:
     # Aggregate results
     all_anomalies = campo_anomalies.copy()
     if not barcode_result["valid"]:
-        all_anomalies.append({
-            "campo": "barcode_dv",
-            "dv_encontrado": barcode_result["dv_printed"],
-            "dv_calculado": barcode_result["dv_calculated"],
-            "algoritmo": "Módulo 11 (FEBRABAN)",
-            "severity": "critical",
-            "description": "DV geral do código de barras inválido — o boleto é estruturalmente inválido.",
-        })
+        all_anomalies.append(
+            {
+                "campo": "barcode_dv",
+                "dv_encontrado": barcode_result["dv_printed"],
+                "dv_calculado": barcode_result["dv_calculated"],
+                "algoritmo": "Módulo 11 (FEBRABAN)",
+                "severity": "critical",
+                "description": "DV geral do código de barras inválido "
+                "— o boleto é estruturalmente inválido.",
+            }
+        )
 
     checksum_valid = len(all_anomalies) == 0
     fraud_signal = not checksum_valid
@@ -311,6 +322,7 @@ def boleto_linha_digitavel_validator(linha_digitavel: str) -> dict[str, Any]:
 # BARCODE DECODER (Code 128 / ITF)
 # ═══════════════════════════════════════════════════════════════
 
+
 @tool
 def barcode_decoder(barcode_value: str, barcode_type: str = "ITF") -> dict[str, Any]:
     """
@@ -343,6 +355,7 @@ def barcode_decoder(barcode_value: str, barcode_type: str = "ITF") -> dict[str, 
     # Calculate due date from fator de vencimento
     # Base date: 07/10/1997 (FEBRABAN reference)
     from datetime import datetime, timedelta
+
     base_date = datetime(1997, 10, 7)
     try:
         fator = int(fator_vencimento)
@@ -360,10 +373,17 @@ def barcode_decoder(barcode_value: str, barcode_type: str = "ITF") -> dict[str, 
         "barcode_digits": digits,
         "banco": banco,
         "moeda": moeda,
-        "moeda_descricao": { "9": "Real (R$)", "6": "Real (R$)", "7": "Real (R$)", "8": "Real (R$)" }.get(moeda, "Desconhecida"),
+        "moeda_descricao": {
+            "9": "Real (R$)",
+            "6": "Real (R$)",
+            "7": "Real (R$)",
+            "8": "Real (R$)",
+        }.get(moeda, "Desconhecida"),
         "dv_geral": dv_geral,
         "fator_vencimento": fator_vencimento,
-        "vencimento_estimado": vencimento.strftime("%d/%m/%Y") if vencimento else "N/A (fator zero ou inválido)",
+        "vencimento_estimado": vencimento.strftime("%d/%m/%Y")
+        if vencimento
+        else "N/A (fator zero ou inválido)",
         "valor": valor_decimal,
         "valor_formatado": f"R$ {valor_decimal:,.2f}" if valor_decimal else "N/A",
         "campo_livre": campo_livre,
@@ -374,6 +394,7 @@ def barcode_decoder(barcode_value: str, barcode_type: str = "ITF") -> dict[str, 
 # ═══════════════════════════════════════════════════════════════
 # PIX QR CODE EMV PAYLOAD PARSER
 # ═══════════════════════════════════════════════════════════════
+
 
 def _parse_emv_payload(payload: str) -> dict[str, Any]:
     """
@@ -388,9 +409,9 @@ def _parse_emv_payload(payload: str) -> dict[str, Any]:
         if i + 4 > payload_len:
             break
 
-        tag_id = payload[i:i+2]
+        tag_id = payload[i : i + 2]
         try:
-            tag_len = int(payload[i+2:i+4])
+            tag_len = int(payload[i + 2 : i + 4])
         except ValueError:
             break
 
@@ -398,7 +419,7 @@ def _parse_emv_payload(payload: str) -> dict[str, Any]:
         if i + tag_len > payload_len:
             break
 
-        tag_value = payload[i:i+tag_len]
+        tag_value = payload[i : i + tag_len]
         i += tag_len
 
         # Process known tags
@@ -441,15 +462,15 @@ def _parse_merchant_account(data: str) -> dict[str, Any]:
     while i < data_len:
         if i + 4 > data_len:
             break
-        sub_id = data[i:i+2]
+        sub_id = data[i : i + 2]
         try:
-            sub_len = int(data[i+2:i+4])
+            sub_len = int(data[i + 2 : i + 4])
         except ValueError:
             break
         i += 4
         if i + sub_len > data_len:
             break
-        sub_value = data[i:i+sub_len]
+        sub_value = data[i : i + sub_len]
         i += sub_len
 
         if sub_id == "00":  # GUI (Globally Unique Identifier)
@@ -476,15 +497,15 @@ def _parse_additional_data(data: str) -> dict[str, Any]:
     while i < data_len:
         if i + 4 > data_len:
             break
-        sub_id = data[i:i+2]
+        sub_id = data[i : i + 2]
         try:
-            sub_len = int(data[i+2:i+4])
+            sub_len = int(data[i + 2 : i + 4])
         except ValueError:
             break
         i += 4
         if i + sub_len > data_len:
             break
-        sub_value = data[i:i+sub_len]
+        sub_value = data[i : i + sub_len]
         i += sub_len
 
         if sub_id == "05":  # Reference label (txid)
@@ -566,30 +587,39 @@ def pix_emv_parser(qr_code_payload: str) -> dict[str, Any]:
 
     # CPF as Pix key on institutional boletos is suspicious
     if pix_key_type == "CPF":
-        anomalies.append({
-            "type": "pix_key_cpf_on_institutional",
-            "severity": "medium",
-            "description": "Chave Pix é um CPF — boletos institucionais devem usar CNPJ, telefone ou EVP.",
-            "confidence": 70,
-        })
+        anomalies.append(
+            {
+                "type": "pix_key_cpf_on_institutional",
+                "severity": "medium",
+                "description": "Chave Pix é um CPF — boletos institucionais "
+                "devem usar CNPJ, telefone ou EVP.",
+                "confidence": 70,
+            }
+        )
 
     # Missing merchant name is suspicious
     if not merchant_name:
-        anomalies.append({
-            "type": "missing_merchant_name",
-            "severity": "high",
-            "description": "Nome do recebedor ausente no payload EMV — impede verificação de titularidade.",
-            "confidence": 90,
-        })
+        anomalies.append(
+            {
+                "type": "missing_merchant_name",
+                "severity": "high",
+                "description": "Nome do recebedor ausente no payload EMV "
+                "— impede verificação de titularidade.",
+                "confidence": 90,
+            }
+        )
 
     # Static QR without amount
     if parsed.get("initiation_method") == "static" and amount is None:
-        anomalies.append({
-            "type": "static_qr_no_amount",
-            "severity": "low",
-            "description": "QR Code estático sem valor — o pagador pode digitar qualquer valor.",
-            "confidence": 80,
-        })
+        anomalies.append(
+            {
+                "type": "static_qr_no_amount",
+                "severity": "low",
+                "description": "QR Code estático sem valor — o pagador pode "
+                "digitar qualquer valor.",
+                "confidence": 80,
+            }
+        )
 
     fraud_signal = len(anomalies) > 0
 
@@ -606,7 +636,9 @@ def pix_emv_parser(qr_code_payload: str) -> dict[str, Any]:
         "currency": parsed.get("currency", "unknown"),
         "txid": txid,
         "mcc": parsed.get("mcc"),
-        "all_tags": {k: v for k, v in parsed.items() if k not in ("merchant_account", "additional_data")},
+        "all_tags": {
+            k: v for k, v in parsed.items() if k not in ("merchant_account", "additional_data")
+        },
         "anomalies": anomalies,
         "fraud_signal": fraud_signal,
         "confidence": 95,
@@ -622,6 +654,7 @@ def pix_emv_parser(qr_code_payload: str) -> dict[str, Any]:
 # ═══════════════════════════════════════════════════════════════
 # QR CODE / PIX CONSISTENCY CROSS-VALIDATOR
 # ═══════════════════════════════════════════════════════════════
+
 
 @tool
 def pix_boleto_cross_validator(
@@ -655,6 +688,7 @@ def pix_boleto_cross_validator(
         # Normalize for comparison: lowercase, strip accents, remove punctuation
         def _normalize(s: str) -> str:
             import unicodedata
+
             s = s.lower().strip()
             s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
             s = re.sub(r"[^a-z0-9\s]", "", s)
@@ -665,22 +699,22 @@ def pix_boleto_cross_validator(
 
         # Check if one contains the other or they're highly similar
         name_match = (
-            boleto_norm in pix_norm
-            or pix_norm in boleto_norm
-            or boleto_norm[:10] == pix_norm[:10]
+            boleto_norm in pix_norm or pix_norm in boleto_norm or boleto_norm[:10] == pix_norm[:10]
         )
 
         if not name_match:
-            anomalies.append({
-                "type": "beneficiary_name_mismatch",
-                "severity": "critical",
-                "description": (
-                    f"Beneficiário do boleto ('{boleto_beneficiario}') "
-                    f"diverge do Merchant Name no Pix ('{pix_merchant_name}'). "
-                    f"Indício de troca-boleto via QR Code adulterado."
-                ),
-                "confidence": 95,
-            })
+            anomalies.append(
+                {
+                    "type": "beneficiary_name_mismatch",
+                    "severity": "critical",
+                    "description": (
+                        f"Beneficiário do boleto ('{boleto_beneficiario}') "
+                        f"diverge do Merchant Name no Pix ('{pix_merchant_name}'). "
+                        f"Indício de troca-boleto via QR Code adulterado."
+                    ),
+                    "confidence": 95,
+                }
+            )
 
     # Check 2: CNPJ in Pix key
     if boleto_cnpj and pix_key:
@@ -688,30 +722,34 @@ def pix_boleto_cross_validator(
         pix_key_digits = "".join(c for c in pix_key if c.isdigit())
         if len(boleto_cnpj_digits) == 14 and len(pix_key_digits) == 14:
             if boleto_cnpj_digits != pix_key_digits:
-                anomalies.append({
-                    "type": "cnpj_pix_key_mismatch",
-                    "severity": "critical",
-                    "description": (
-                        f"CNPJ do boleto difere da chave Pix. "
-                        f"Pagamento será enviado para outro CNPJ."
-                    ),
-                    "confidence": 100,
-                })
+                anomalies.append(
+                    {
+                        "type": "cnpj_pix_key_mismatch",
+                        "severity": "critical",
+                        "description": (
+                            "CNPJ do boleto difere da chave Pix. "
+                            "Pagamento será enviado para outro CNPJ."
+                        ),
+                        "confidence": 100,
+                    }
+                )
 
     # Check 3: Amount consistency
     if boleto_valor > 0 and pix_amount is not None and pix_amount > 0:
         amount_delta = abs(boleto_valor - pix_amount)
         if amount_delta > 0.01:
-            anomalies.append({
-                "type": "amount_mismatch",
-                "severity": "critical",
-                "description": (
-                    f"Valor do boleto (R$ {boleto_valor:,.2f}) "
-                    f"diverge do valor no Pix (R$ {pix_amount:,.2f}). "
-                    f"Delta: R$ {amount_delta:,.2f}."
-                ),
-                "confidence": 100,
-            })
+            anomalies.append(
+                {
+                    "type": "amount_mismatch",
+                    "severity": "critical",
+                    "description": (
+                        f"Valor do boleto (R$ {boleto_valor:,.2f}) "
+                        f"diverge do valor no Pix (R$ {pix_amount:,.2f}). "
+                        f"Delta: R$ {amount_delta:,.2f}."
+                    ),
+                    "confidence": 100,
+                }
+            )
 
     fraud_signal = len(anomalies) > 0
 
@@ -740,6 +778,7 @@ def pix_boleto_cross_validator(
 # ═══════════════════════════════════════════════════════════════
 # BENEFICIARY BINDING VALIDATOR (convenience aggregator)
 # ═══════════════════════════════════════════════════════════════
+
 
 @tool
 def beneficiary_binding_check(
@@ -789,6 +828,7 @@ def beneficiary_binding_check(
         "confidence": 85,
         "evidence": (
             f"Fontes de beneficiário: {list(populated.keys())} | "
-            f"Consistência: {'CONSISTENTE' if binding_consistent else 'INCONSISTENTE — possível fraude'}"
+            f"Consistência: "
+            f"{'CONSISTENTE' if binding_consistent else 'INCONSISTENTE — possível fraude'}"
         ),
     }

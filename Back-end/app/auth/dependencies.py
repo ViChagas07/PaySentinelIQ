@@ -3,21 +3,19 @@
 # Reusable dependency injection for auth, RBAC, multi-tenancy
 # ============================================================
 
-from typing import Optional
-from uuid import UUID
 
-from fastapi import Depends, Header, HTTPException, Request
+from fastapi import Depends, Header, Request
 from fastapi.security import OAuth2PasswordBearer
 
 from app.auth.services import AuthService
-from app.shared.exceptions import AuthenticationError, AuthorizationError, MFARequiredError
+from app.shared.exceptions import AuthenticationError, AuthorizationError
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 
 async def get_current_user_id(
     request: Request,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ) -> str:
     """Extract user ID from JWT access token."""
     token = None
@@ -39,7 +37,7 @@ async def get_current_user_id(
 
 async def get_current_tenant_id(
     request: Request,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ) -> str:
     """Extract tenant ID from JWT access token."""
     token = None
@@ -58,7 +56,7 @@ async def get_current_tenant_id(
 
 async def get_current_user_role(
     request: Request,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ) -> str:
     """Extract user role from JWT access token."""
     token = None
@@ -77,9 +75,10 @@ async def get_current_user_role(
 
 # ── Composite dependency: full token payload ──
 
+
 async def get_token_payload(
     request: Request,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ) -> dict:
     """Extract full JWT payload for comprehensive auth context."""
     token = None
@@ -97,10 +96,11 @@ async def get_token_payload(
 
 # ── RBAC Dependency Factory ──
 
+
 def require_roles(*allowed_roles: str):
     """Factory that creates a dependency requiring specific roles."""
 
-    async def role_checker(payload: dict = Depends(get_token_payload)) -> dict:
+    async def role_checker(payload: dict = Depends(get_token_payload)) -> dict:  # noqa: B008
         user_role = payload.get("role")
         if user_role not in allowed_roles:
             raise AuthorizationError(

@@ -5,11 +5,13 @@
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional, Sequence, TypeVar
+from collections.abc import Sequence
+from typing import Any, Generic, TypeVar
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import Select
+
+from app.shared.orm_models import FraudAlertModel, PayrollModel
 
 ModelType = TypeVar("ModelType")
 
@@ -18,8 +20,7 @@ class AbstractRepository(ABC, Generic[ModelType]):
     """Abstract base repository defining the contract."""
 
     @abstractmethod
-    async def get_by_id(self, id: uuid.UUID) -> Optional[ModelType]:
-        ...
+    async def get_by_id(self, id: uuid.UUID) -> ModelType | None: ...
 
     @abstractmethod
     async def get_all(
@@ -28,24 +29,19 @@ class AbstractRepository(ABC, Generic[ModelType]):
         skip: int = 0,
         limit: int = 100,
         **filters: Any,
-    ) -> Sequence[ModelType]:
-        ...
+    ) -> Sequence[ModelType]: ...
 
     @abstractmethod
-    async def add(self, entity: ModelType) -> ModelType:
-        ...
+    async def add(self, entity: ModelType) -> ModelType: ...
 
     @abstractmethod
-    async def update(self, entity: ModelType) -> ModelType:
-        ...
+    async def update(self, entity: ModelType) -> ModelType: ...
 
     @abstractmethod
-    async def delete(self, id: uuid.UUID) -> None:
-        ...
+    async def delete(self, id: uuid.UUID) -> None: ...
 
     @abstractmethod
-    async def count(self, tenant_id: uuid.UUID, **filters: Any) -> int:
-        ...
+    async def count(self, tenant_id: uuid.UUID, **filters: Any) -> int: ...
 
 
 class BaseRepository(AbstractRepository[ModelType]):
@@ -55,7 +51,7 @@ class BaseRepository(AbstractRepository[ModelType]):
         self._model = model
         self._session = session
 
-    async def get_by_id(self, id: uuid.UUID) -> Optional[ModelType]:
+    async def get_by_id(self, id: uuid.UUID) -> ModelType | None:
         stmt = select(self._model).where(self._model.id == id)
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
@@ -96,8 +92,8 @@ class BaseRepository(AbstractRepository[ModelType]):
             await self._session.flush()
 
     async def count(self, tenant_id: uuid.UUID, **filters: Any) -> int:
-        stmt = select(func.count()).select_from(self._model).where(
-            self._model.tenant_id == tenant_id
+        stmt = (
+            select(func.count()).select_from(self._model).where(self._model.tenant_id == tenant_id)
         )
         for field, value in filters.items():
             if value is not None and hasattr(self._model, field):
@@ -108,8 +104,6 @@ class BaseRepository(AbstractRepository[ModelType]):
 
 
 # ── Specialized Repositories ──
-
-from app.shared.orm_models import FraudAlertModel, PayrollModel, VerificationReportModel
 
 
 class FraudAlertRepository(BaseRepository[FraudAlertModel]):

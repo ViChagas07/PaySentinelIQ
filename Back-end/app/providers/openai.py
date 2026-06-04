@@ -66,7 +66,11 @@ class OpenAIProvider(BaseLLMProvider):
                 is_available = self.config.model in model_ids
                 if not is_available:
                     logger.warning("OpenAI model '%s' not in available models", self.config.model)
-                logger.info("OpenAI health check: status=%s, model_available=%s", resp.status_code, is_available)
+                logger.info(
+                    "OpenAI health check: status=%s, model_available=%s",
+                    resp.status_code,
+                    is_available,
+                )
                 return is_available
             else:
                 logger.warning("OpenAI health check failed: HTTP %s", resp.status_code)

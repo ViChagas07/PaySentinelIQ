@@ -5,16 +5,14 @@
 
 import logging
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from app.shared.domain_primitives import (
-    AnomalyCategory,
-    DocumentType,
     RiskLevel,
-    RiskScore,
 )
 
 logger = logging.getLogger(__name__)
@@ -23,6 +21,7 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════
 # Pipeline Data Structures
 # ═══════════════════════════════════════════════════════════════
+
 
 class Severity(str, Enum):
     INFO = "info"
@@ -42,6 +41,7 @@ class DocumentClass(str, Enum):
 @dataclass
 class Anomaly:
     """A single detected anomaly with full evidence trail."""
+
     id: str = field(default_factory=lambda: f"ANOMALY-{uuid.uuid4().hex[:4].upper()}")
     severity: Severity = Severity.INFO
     category: str = ""  # e.g. "structural", "forensic", "financial", "entity", "behavioral"
@@ -67,6 +67,7 @@ class Anomaly:
 @dataclass
 class StageResult:
     """Output from a single pipeline stage."""
+
     stage_name: str
     status: str  # "completed", "skipped", "failed"
     anomalies: list[Anomaly] = field(default_factory=list)
@@ -89,6 +90,7 @@ class StageResult:
 @dataclass
 class PipelineResult:
     """Complete result of the 7-stage fraud detection pipeline."""
+
     document_id: str
     document_class: DocumentClass
     analysis_timestamp: str
@@ -120,6 +122,7 @@ class PipelineResult:
 # 7-Stage Detection Pipeline
 # ═══════════════════════════════════════════════════════════════
 
+
 class FraudDetectionPipeline:
     """
     The core 7-stage fraud detection pipeline as specified in PSI-FraudIntel.
@@ -141,6 +144,13 @@ class FraudDetectionPipeline:
     def _register_tools(self) -> None:
         """Register all available LangChain tools for the pipeline."""
         try:
+            from app.ai_agents.tools.boleto_tools import (
+                barcode_decoder,
+                beneficiary_binding_check,
+                boleto_linha_digitavel_validator,
+                pix_boleto_cross_validator,
+                pix_emv_parser,
+            )
             from app.ai_agents.tools.brazil_financial_tools import (
                 bacen_bank_validator,
                 cbo_salary_range,
@@ -150,13 +160,6 @@ class FraudDetectionPipeline:
                 inss_calculator,
                 irrf_calculator,
                 liquido_consistency_check,
-            )
-            from app.ai_agents.tools.boleto_tools import (
-                barcode_decoder,
-                beneficiary_binding_check,
-                boleto_linha_digitavel_validator,
-                pix_boleto_cross_validator,
-                pix_emv_parser,
             )
             from app.ai_agents.tools.custom_tools import (
                 analyze_metadata_integrity,
@@ -210,6 +213,7 @@ class FraudDetectionPipeline:
             # LangChain tools return strings or dicts; normalize
             if isinstance(result, str):
                 import json
+
                 try:
                     result = json.loads(result)
                 except json.JSONDecodeError:
@@ -230,7 +234,7 @@ class FraudDetectionPipeline:
         Input: Raw document data dict (can include PDF metadata fields)
         Output: Classified document with metadata extracted
         """
-        start = datetime.now(timezone.utc)
+        start = datetime.now(UTC)
         anomalies: list[Anomaly] = []
         extracted: dict[str, Any] = {}
 
@@ -240,31 +244,44 @@ class FraudDetectionPipeline:
 
         if "boleto" in doc_type_raw or document_data.get("linha_digitavel"):
             doc_class = DocumentClass.BOLETO
-        elif any(k in doc_type_raw for k in ("contracheque", "holerite", "payslip", "payroll")):
-            doc_class = DocumentClass.CONTRACHEQUE
-        elif document_data.get("salario_bruto") or document_data.get("inss"):
+        elif (
+            any(k in doc_type_raw for k in ("contracheque", "holerite", "payslip", "payroll"))
+            or document_data.get("salario_bruto")
+            or document_data.get("inss")
+        ):
             doc_class = DocumentClass.CONTRACHEQUE
         elif document_data.get("linha_digitavel"):
             doc_class = DocumentClass.BOLETO
         else:
             doc_class = DocumentClass.UNKNOWN
-            anomalies.append(Anomaly(
-                severity=Severity.LOW,
-                category="classification",
-                description="Tipo de documento não identificado automaticamente. Classificado como UNKNOWN.",
-                evidence=f"Dados recebidos: {list(document_data.keys())}",
-                confidence=60,
-                stage_detected="Stage 1",
-                tool_used="heuristic_classifier",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity.LOW,
+                    category="classification",
+                    description=(
+                        "Tipo de documento não identificado automaticamente. "
+                        "Classificado como UNKNOWN."
+                    ),
+                    evidence=f"Dados recebidos: {list(document_data.keys())}",
+                    confidence=60,
+                    stage_detected="Stage 1",
+                    tool_used="heuristic_classifier",
+                )
+            )
 
         # Extract PDF metadata if present
         creator = pdf_metadata.get("creator", document_data.get("pdf_creator", ""))
         producer = pdf_metadata.get("producer", document_data.get("pdf_producer", ""))
-        creation_date = pdf_metadata.get("creation_date", document_data.get("pdf_creation_date", ""))
-        mod_date = pdf_metadata.get("modification_date", document_data.get("pdf_modification_date", ""))
+        creation_date = pdf_metadata.get(
+            "creation_date", document_data.get("pdf_creation_date", "")
+        )
+        mod_date = pdf_metadata.get(
+            "modification_date", document_data.get("pdf_modification_date", "")
+        )
         pdf_version = pdf_metadata.get("version", document_data.get("pdf_version", ""))
-        incremental_saves = pdf_metadata.get("incremental_save_count", document_data.get("incremental_saves", 0))
+        incremental_saves = pdf_metadata.get(
+            "incremental_save_count", document_data.get("incremental_saves", 0)
+        )
         page_count = pdf_metadata.get("page_count", document_data.get("page_count", 1))
 
         extracted = {
@@ -280,24 +297,30 @@ class FraudDetectionPipeline:
 
         # Metadata integrity quick check
         if creator and producer and creation_date:
-            meta_result = self._call_tool("pdf_metadata_extractor",
-                creator=creator, producer=producer,
-                creation_date=creation_date, modification_date=mod_date,
-                pdf_version=pdf_version, page_count=page_count,
+            meta_result = self._call_tool(
+                "pdf_metadata_extractor",
+                creator=creator,
+                producer=producer,
+                creation_date=creation_date,
+                modification_date=mod_date,
+                pdf_version=pdf_version,
+                page_count=page_count,
                 incremental_save_count=incremental_saves,
             )
             for meta_anomaly in meta_result.get("anomalies", []):
-                anomalies.append(Anomaly(
-                    severity=Severity(meta_anomaly.get("severity", "low")),
-                    category="forensic",
-                    description=meta_anomaly.get("description", ""),
-                    evidence=meta_anomaly.get("description", ""),
-                    confidence=meta_anomaly.get("confidence", 85),
-                    stage_detected="Stage 1",
-                    tool_used="pdf_metadata_extractor",
-                ))
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity(meta_anomaly.get("severity", "low")),
+                        category="forensic",
+                        description=meta_anomaly.get("description", ""),
+                        evidence=meta_anomaly.get("description", ""),
+                        confidence=meta_anomaly.get("confidence", 85),
+                        stage_detected="Stage 1",
+                        tool_used="pdf_metadata_extractor",
+                    )
+                )
 
-        duration = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+        duration = (datetime.now(UTC) - start).total_seconds() * 1000
         return StageResult(
             stage_name="Stage 1: Ingestion & Classification",
             status="completed",
@@ -310,13 +333,15 @@ class FraudDetectionPipeline:
     # STAGE 2: OCR & STRUCTURED EXTRACTION
     # ═══════════════════════════════════════════════════════════
 
-    def stage2_ocr_extraction(self, document_data: dict[str, Any], stage1_result: StageResult) -> StageResult:
+    def stage2_ocr_extraction(
+        self, document_data: dict[str, Any], stage1_result: StageResult
+    ) -> StageResult:
         """
         Process OCR results and extract structured fields.
         In production, this would invoke AWS Textract. Here we consume pre-extracted data
         passed from the OCR agent.
         """
-        start = datetime.now(timezone.utc)
+        start = datetime.now(UTC)
         anomalies: list[Anomaly] = []
         extracted: dict[str, Any] = {}
 
@@ -335,32 +360,39 @@ class FraudDetectionPipeline:
         # OCR confidence check
         ocr_conf = extracted["ocr_confidence"]
         if ocr_conf < 90:
-            anomalies.append(Anomaly(
-                severity=Severity.MEDIUM if ocr_conf < 80 else Severity.LOW,
-                category="forensic",
-                description=f"Confiança de OCR abaixo do ideal: {ocr_conf}%. "
-                            f"Texto parcialmente ilegível — possível adulteração.",
-                evidence=f"OCR confidence: {ocr_conf}%",
-                confidence=75,
-                stage_detected="Stage 2",
-                tool_used="ocr_confidence_analyzer",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity.MEDIUM if ocr_conf < 80 else Severity.LOW,
+                    category="forensic",
+                    description=f"Confiança de OCR abaixo do ideal: {ocr_conf}%. "
+                    f"Texto parcialmente ilegível — possível adulteração.",
+                    evidence=f"OCR confidence: {ocr_conf}%",
+                    confidence=75,
+                    stage_detected="Stage 2",
+                    tool_used="ocr_confidence_analyzer",
+                )
+            )
 
         # Detect QR codes (potential Pix)
         if extracted["qr_codes_detected"]:
             qr_count = len(extracted["qr_codes_detected"])
             if doc_class == "boleto" and qr_count == 0:
-                anomalies.append(Anomaly(
-                    severity=Severity.INFO,
-                    category="structural",
-                    description="Boleto sem QR Code Pix detectado. Verificar se o documento é anterior ao Pix.",
-                    evidence="Nenhum QR code encontrado no documento.",
-                    confidence=60,
-                    stage_detected="Stage 2",
-                    tool_used="qr_detection",
-                ))
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity.INFO,
+                        category="structural",
+                        description=(
+                            "Boleto sem QR Code Pix detectado. "
+                            "Verificar se o documento é anterior ao Pix."
+                        ),
+                        evidence="Nenhum QR code encontrado no documento.",
+                        confidence=60,
+                        stage_detected="Stage 2",
+                        tool_used="qr_detection",
+                    )
+                )
 
-        duration = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+        duration = (datetime.now(UTC) - start).total_seconds() * 1000
         return StageResult(
             stage_name="Stage 2: OCR & Structured Extraction",
             status="completed",
@@ -373,19 +405,21 @@ class FraudDetectionPipeline:
     # STAGE 3: FORENSIC PDF ANALYSIS
     # ═══════════════════════════════════════════════════════════
 
-    def stage3_forensic_pdf(self, document_data: dict[str, Any], stage1_result: StageResult) -> StageResult:
+    def stage3_forensic_pdf(
+        self, document_data: dict[str, Any], stage1_result: StageResult
+    ) -> StageResult:
         """
         Multi-layer PDF forensic analysis: layers, fonts, images, metadata.
         """
-        start = datetime.now(timezone.utc)
+        start = datetime.now(UTC)
         anomalies: list[Anomaly] = []
         extracted: dict[str, Any] = {}
 
         pdf_forensics = document_data.get("pdf_forensics", {})
-        s1_data = stage1_result.extracted_data
 
         # Layer analysis
-        layer_result = self._call_tool("pdf_layer_analyzer",
+        layer_result = self._call_tool(
+            "pdf_layer_analyzer",
             content_stream_count=pdf_forensics.get("content_stream_count", 1),
             font_inventory=pdf_forensics.get("font_inventory", ""),
             image_object_count=pdf_forensics.get("image_object_count", 0),
@@ -394,20 +428,23 @@ class FraudDetectionPipeline:
             encryption_level=pdf_forensics.get("encryption_level", "none"),
         )
         for la in layer_result.get("anomalies", []):
-            anomalies.append(Anomaly(
-                severity=Severity(la.get("severity", "low")),
-                category="forensic",
-                description=la.get("description", ""),
-                evidence=layer_result.get("evidence", ""),
-                confidence=la.get("confidence", 75),
-                stage_detected="Stage 3",
-                tool_used="pdf_layer_analyzer",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity(la.get("severity", "low")),
+                    category="forensic",
+                    description=la.get("description", ""),
+                    evidence=layer_result.get("evidence", ""),
+                    confidence=la.get("confidence", 75),
+                    stage_detected="Stage 3",
+                    tool_used="pdf_layer_analyzer",
+                )
+            )
         extracted["layer_analysis"] = layer_result
 
         # OCR confidence analysis
         ocr_data = document_data.get("ocr_data", {})
-        ocr_result = self._call_tool("ocr_confidence_analyzer",
+        ocr_result = self._call_tool(
+            "ocr_confidence_analyzer",
             overall_confidence=ocr_data.get("confidence", 95),
             min_character_confidence=ocr_data.get("min_char_confidence", 95),
             low_confidence_regions=ocr_data.get("low_confidence_regions", 0),
@@ -416,20 +453,23 @@ class FraudDetectionPipeline:
             resampling_artifacts=pdf_forensics.get("resampling_artifacts", False),
         )
         for oa in ocr_result.get("anomalies", []):
-            anomalies.append(Anomaly(
-                severity=Severity(oa.get("severity", "low")),
-                category="forensic",
-                description=oa.get("description", ""),
-                evidence=ocr_result.get("evidence", ""),
-                confidence=oa.get("confidence", 75),
-                stage_detected="Stage 3",
-                tool_used="ocr_confidence_analyzer",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity(oa.get("severity", "low")),
+                    category="forensic",
+                    description=oa.get("description", ""),
+                    evidence=ocr_result.get("evidence", ""),
+                    confidence=oa.get("confidence", 75),
+                    stage_detected="Stage 3",
+                    tool_used="ocr_confidence_analyzer",
+                )
+            )
         extracted["ocr_analysis"] = ocr_result
 
         # AI generation check
         ai_data = document_data.get("ai_generation_indicators", {})
-        ai_result = self._call_tool("ai_generation_detector",
+        ai_result = self._call_tool(
+            "ai_generation_detector",
             text_entropy=ai_data.get("text_entropy", 0),
             numerical_implausibility_score=ai_data.get("numerical_implausibility_score", 0),
             font_rendering_anomaly=ai_data.get("font_rendering_anomaly", False),
@@ -438,18 +478,20 @@ class FraudDetectionPipeline:
         )
         if ai_result.get("ai_generation_suspected"):
             for aa in ai_result.get("anomalies", []):
-                anomalies.append(Anomaly(
-                    severity=Severity(aa.get("severity", "low")),
-                    category="behavioral",
-                    description=f"[IA-GENERATED SUSPECT] {aa.get('description', '')}",
-                    evidence=ai_result.get("evidence", ""),
-                    confidence=aa.get("confidence", 50),
-                    stage_detected="Stage 3",
-                    tool_used="ai_generation_detector",
-                ))
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity(aa.get("severity", "low")),
+                        category="behavioral",
+                        description=f"[IA-GENERATED SUSPECT] {aa.get('description', '')}",
+                        evidence=ai_result.get("evidence", ""),
+                        confidence=aa.get("confidence", 50),
+                        stage_detected="Stage 3",
+                        tool_used="ai_generation_detector",
+                    )
+                )
         extracted["ai_generation_analysis"] = ai_result
 
-        duration = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+        duration = (datetime.now(UTC) - start).total_seconds() * 1000
         return StageResult(
             stage_name="Stage 3: Forensic PDF Analysis",
             status="completed",
@@ -462,13 +504,15 @@ class FraudDetectionPipeline:
     # STAGE 4: STRUCTURAL VALIDATION
     # ═══════════════════════════════════════════════════════════
 
-    def stage4_structural_validation(self, document_data: dict[str, Any], stage1_result: StageResult) -> StageResult:
+    def stage4_structural_validation(
+        self, document_data: dict[str, Any], stage1_result: StageResult
+    ) -> StageResult:
         """
         Branching validation based on document type.
         Boleto path: FEBRABAN layout, linha digitável checksum, bank code, QR Pix, barcode
         Contracheque path: INSS, IRRF, FGTS, líquido, CBO
         """
-        start = datetime.now(timezone.utc)
+        start = datetime.now(UTC)
         anomalies: list[Anomaly] = []
         extracted: dict[str, Any] = {}
 
@@ -486,7 +530,7 @@ class FraudDetectionPipeline:
                 contracheque_extracted = self._validate_contracheque(document_data, anomalies)
                 extracted.update(contracheque_extracted)
 
-        duration = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+        duration = (datetime.now(UTC) - start).total_seconds() * 1000
         return StageResult(
             stage_name="Stage 4: Structural Validation",
             status="completed",
@@ -510,15 +554,17 @@ class FraudDetectionPipeline:
 
             if not ld_result.get("checksum_valid", False):
                 for ld_anomaly in ld_result.get("anomalies", []):
-                    anomalies.append(Anomaly(
-                        severity=Severity.CRITICAL,
-                        category="structural",
-                        description=ld_anomaly.get("description", ""),
-                        evidence=ld_result.get("evidence", ""),
-                        confidence=100,
-                        stage_detected="Stage 4",
-                        tool_used="boleto_linha_digitavel_validator",
-                    ))
+                    anomalies.append(
+                        Anomaly(
+                            severity=Severity.CRITICAL,
+                            category="structural",
+                            description=ld_anomaly.get("description", ""),
+                            evidence=ld_result.get("evidence", ""),
+                            confidence=100,
+                            stage_detected="Stage 4",
+                            tool_used="boleto_linha_digitavel_validator",
+                        )
+                    )
 
             # Validate bank code
             banco = ld_result.get("banco_codigo", data.get("banco_codigo", ""))
@@ -526,15 +572,17 @@ class FraudDetectionPipeline:
                 bank_result = self._call_tool("bacen_bank_validator", bank_code=banco)
                 extracted["bank_validation"] = bank_result
                 if not bank_result.get("valid", False):
-                    anomalies.append(Anomaly(
-                        severity=Severity.CRITICAL,
-                        category="structural",
-                        description=bank_result.get("error", "Código de banco inválido"),
-                        evidence=bank_result.get("evidence", ""),
-                        confidence=100,
-                        stage_detected="Stage 4",
-                        tool_used="bacen_bank_validator",
-                    ))
+                    anomalies.append(
+                        Anomaly(
+                            severity=Severity.CRITICAL,
+                            category="structural",
+                            description=bank_result.get("error", "Código de banco inválido"),
+                            evidence=bank_result.get("evidence", ""),
+                            confidence=100,
+                            stage_detected="Stage 4",
+                            tool_used="bacen_bank_validator",
+                        )
+                    )
 
         # Decode barcode
         if barcode_val:
@@ -547,15 +595,17 @@ class FraudDetectionPipeline:
             extracted["pix_parsing"] = pix_result
 
             for pix_anomaly in pix_result.get("anomalies", []):
-                anomalies.append(Anomaly(
-                    severity=Severity(pix_anomaly.get("severity", "medium")),
-                    category="structural",
-                    description=pix_anomaly.get("description", ""),
-                    evidence=pix_result.get("evidence", ""),
-                    confidence=pix_anomaly.get("confidence", 90),
-                    stage_detected="Stage 4",
-                    tool_used="pix_emv_parser",
-                ))
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity(pix_anomaly.get("severity", "medium")),
+                        category="structural",
+                        description=pix_anomaly.get("description", ""),
+                        evidence=pix_result.get("evidence", ""),
+                        confidence=pix_anomaly.get("confidence", 90),
+                        stage_detected="Stage 4",
+                        tool_used="pix_emv_parser",
+                    )
+                )
 
         return extracted
 
@@ -567,7 +617,9 @@ class FraudDetectionPipeline:
         inss_printed = data.get("inss", data.get("inss_printed", 0))
         irrf_printed = data.get("irrf", data.get("irrf_printed", 0))
         fgts_printed = data.get("fgts", data.get("fgts_printed", 0))
-        liquido_printed = data.get("liquido", data.get("salario_liquido", data.get("liquido_printed", 0)))
+        liquido_printed = data.get(
+            "liquido", data.get("salario_liquido", data.get("liquido_printed", 0))
+        )
         outros_descontos = data.get("outros_descontos", 0)
         outros_vencimentos = data.get("outros_vencimentos", 0)
         cargo = data.get("cargo", data.get("job_title", ""))
@@ -578,58 +630,74 @@ class FraudDetectionPipeline:
             return extracted
 
         # --- INSS validation ---
-        inss_result = self._call_tool("inss_calculator",
-            salario_bruto=salario_bruto, inss_printed=inss_printed, competencia="2025")
+        inss_result = self._call_tool(
+            "inss_calculator",
+            salario_bruto=salario_bruto,
+            inss_printed=inss_printed,
+            competencia="2025",
+        )
         extracted["inss_validation"] = inss_result
         if inss_result.get("anomaly"):
-            anomalies.append(Anomaly(
-                severity=Severity(inss_result.get("severity", "high")),
-                category="financial",
-                description=f"INSS calculado (R$ {inss_result.get('inss_calculado', 0):,.2f}) "
-                            f"diverge do valor declarado (R$ {inss_printed:,.2f}). "
-                            f"Delta: R$ {inss_result.get('delta', 0):,.2f}.",
-                evidence=inss_result.get("evidence", ""),
-                confidence=100,
-                stage_detected="Stage 4",
-                tool_used="inss_calculator",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity(inss_result.get("severity", "high")),
+                    category="financial",
+                    description=f"INSS calculado (R$ {inss_result.get('inss_calculado', 0):,.2f}) "
+                    f"diverge do valor declarado (R$ {inss_printed:,.2f}). "
+                    f"Delta: R$ {inss_result.get('delta', 0):,.2f}.",
+                    evidence=inss_result.get("evidence", ""),
+                    confidence=100,
+                    stage_detected="Stage 4",
+                    tool_used="inss_calculator",
+                )
+            )
 
         # --- IRRF validation ---
-        irrf_result = self._call_tool("irrf_calculator",
-            salario_bruto=salario_bruto, inss=inss_result.get("inss_calculado", inss_printed),
-            irrf_printed=irrf_printed, dependentes=dependentes)
+        irrf_result = self._call_tool(
+            "irrf_calculator",
+            salario_bruto=salario_bruto,
+            inss=inss_result.get("inss_calculado", inss_printed),
+            irrf_printed=irrf_printed,
+            dependentes=dependentes,
+        )
         extracted["irrf_validation"] = irrf_result
         if irrf_result.get("anomaly"):
-            anomalies.append(Anomaly(
-                severity=Severity(irrf_result.get("severity", "high")),
-                category="financial",
-                description=f"IRRF calculado (R$ {irrf_result.get('irrf_calculado', 0):,.2f}) "
-                            f"diverge do valor declarado (R$ {irrf_printed:,.2f}). "
-                            f"Delta: R$ {irrf_result.get('delta', 0):,.2f}.",
-                evidence=irrf_result.get("evidence", ""),
-                confidence=100,
-                stage_detected="Stage 4",
-                tool_used="irrf_calculator",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity(irrf_result.get("severity", "high")),
+                    category="financial",
+                    description=f"IRRF calculado (R$ {irrf_result.get('irrf_calculado', 0):,.2f}) "
+                    f"diverge do valor declarado (R$ {irrf_printed:,.2f}). "
+                    f"Delta: R$ {irrf_result.get('delta', 0):,.2f}.",
+                    evidence=irrf_result.get("evidence", ""),
+                    confidence=100,
+                    stage_detected="Stage 4",
+                    tool_used="irrf_calculator",
+                )
+            )
 
         # --- FGTS validation ---
-        fgts_result = self._call_tool("fgts_calculator",
-            salario_bruto=salario_bruto, fgts_printed=fgts_printed)
+        fgts_result = self._call_tool(
+            "fgts_calculator", salario_bruto=salario_bruto, fgts_printed=fgts_printed
+        )
         extracted["fgts_validation"] = fgts_result
         if fgts_result.get("anomaly"):
-            anomalies.append(Anomaly(
-                severity=Severity(fgts_result.get("severity", "critical")),
-                category="financial",
-                description=f"FGTS calculado (R$ {fgts_result.get('fgts_calculado', 0):,.2f}) "
-                            f"diverge do valor declarado (R$ {fgts_printed:,.2f}).",
-                evidence=fgts_result.get("evidence", ""),
-                confidence=100,
-                stage_detected="Stage 4",
-                tool_used="fgts_calculator",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity(fgts_result.get("severity", "critical")),
+                    category="financial",
+                    description=f"FGTS calculado (R$ {fgts_result.get('fgts_calculado', 0):,.2f}) "
+                    f"diverge do valor declarado (R$ {fgts_printed:,.2f}).",
+                    evidence=fgts_result.get("evidence", ""),
+                    confidence=100,
+                    stage_detected="Stage 4",
+                    tool_used="fgts_calculator",
+                )
+            )
 
         # --- Líquido consistency ---
-        liquido_result = self._call_tool("liquido_consistency_check",
+        liquido_result = self._call_tool(
+            "liquido_consistency_check",
             salario_bruto=salario_bruto,
             inss=inss_printed,
             irrf=irrf_printed,
@@ -639,33 +707,41 @@ class FraudDetectionPipeline:
         )
         extracted["liquido_validation"] = liquido_result
         if liquido_result.get("anomaly"):
-            anomalies.append(Anomaly(
-                severity=Severity.CRITICAL,
-                category="financial",
-                description=f"Salário líquido não confere: calculado R$ {liquido_result.get('liquido_calculado', 0):,.2f} "
-                            f"vs. declarado R$ {liquido_printed:,.2f}. "
-                            f"Delta: R$ {liquido_result.get('delta', 0):,.2f}.",
-                evidence=liquido_result.get("evidence", ""),
-                confidence=100,
-                stage_detected="Stage 4",
-                tool_used="liquido_consistency_check",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity.CRITICAL,
+                    category="financial",
+                    description=(
+                        f"Salário líquido não confere: calculado "
+                        f"R$ {liquido_result.get('liquido_calculado', 0):,.2f} "
+                        f"vs. declarado R$ {liquido_printed:,.2f}. "
+                        f"Delta: R$ {liquido_result.get('delta', 0):,.2f}."
+                    ),
+                    evidence=liquido_result.get("evidence", ""),
+                    confidence=100,
+                    stage_detected="Stage 4",
+                    tool_used="liquido_consistency_check",
+                )
+            )
 
         # --- CBO salary range check ---
         if cbo_code:
-            cbo_result = self._call_tool("cbo_salary_range",
-                cbo_code=cbo_code, salario=salario_bruto, cargo=cargo)
+            cbo_result = self._call_tool(
+                "cbo_salary_range", cbo_code=cbo_code, salario=salario_bruto, cargo=cargo
+            )
             extracted["cbo_validation"] = cbo_result
             if cbo_result.get("anomaly"):
-                anomalies.append(Anomaly(
-                    severity=Severity(cbo_result.get("severity", "medium")),
-                    category="financial",
-                    description=cbo_result.get("evidence", ""),
-                    evidence=cbo_result.get("evidence", ""),
-                    confidence=cbo_result.get("confidence", 75),
-                    stage_detected="Stage 4",
-                    tool_used="cbo_salary_range",
-                ))
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity(cbo_result.get("severity", "medium")),
+                        category="financial",
+                        description=cbo_result.get("evidence", ""),
+                        evidence=cbo_result.get("evidence", ""),
+                        confidence=cbo_result.get("confidence", 75),
+                        stage_detected="Stage 4",
+                        tool_used="cbo_salary_range",
+                    )
+                )
 
         return extracted
 
@@ -673,11 +749,13 @@ class FraudDetectionPipeline:
     # STAGE 5: ENTITY VALIDATION
     # ═══════════════════════════════════════════════════════════
 
-    def stage5_entity_validation(self, document_data: dict[str, Any], stage4_result: StageResult) -> StageResult:
+    def stage5_entity_validation(
+        self, document_data: dict[str, Any], stage4_result: StageResult
+    ) -> StageResult:
         """
         CNPJ validation, CNAE compatibility, beneficiary binding.
         """
-        start = datetime.now(timezone.utc)
+        start = datetime.now(UTC)
         anomalies: list[Anomaly] = []
         extracted: dict[str, Any] = {}
 
@@ -693,34 +771,46 @@ class FraudDetectionPipeline:
             extracted["cnpj_validation"] = cnpj_result
 
             if not cnpj_result.get("valid_checksum", False):
-                anomalies.append(Anomaly(
-                    severity=Severity.CRITICAL,
-                    category="entity",
-                    description=f"CNPJ inválido: {cnpj}. Dígitos verificadores não conferem via Módulo 11.",
-                    evidence=f"CNPJ: {cnpj} | Checksum: FALHOU",
-                    confidence=100,
-                    stage_detected="Stage 5",
-                    tool_used="cnpj_validator",
-                ))
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity.CRITICAL,
+                        category="entity",
+                        description=(
+                            f"CNPJ inválido: {cnpj}. Dígitos verificadores "
+                            f"não conferem via Módulo 11."
+                        ),
+                        evidence=f"CNPJ: {cnpj} | Checksum: FALHOU",
+                        confidence=100,
+                        stage_detected="Stage 5",
+                        tool_used="cnpj_validator",
+                    )
+                )
             else:
                 extracted["cnpj_formatted"] = cnpj_result.get("cnpj_formatted")
 
         # CNAE compatibility
         if cnae and (cbo or cargo):
-            cnae_result = self._call_tool("cnae_compatibility_check",
-                cnae_code=cnae, cbo_code=cbo, cargo=cargo, razao_social=razao_social)
+            cnae_result = self._call_tool(
+                "cnae_compatibility_check",
+                cnae_code=cnae,
+                cbo_code=cbo,
+                cargo=cargo,
+                razao_social=razao_social,
+            )
             extracted["cnae_validation"] = cnae_result
 
             if cnae_result.get("anomaly"):
-                anomalies.append(Anomaly(
-                    severity=Severity.HIGH,
-                    category="entity",
-                    description=cnae_result.get("evidence", ""),
-                    evidence=cnae_result.get("evidence", ""),
-                    confidence=cnae_result.get("confidence", 70),
-                    stage_detected="Stage 5",
-                    tool_used="cnae_compatibility_check",
-                ))
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity.HIGH,
+                        category="entity",
+                        description=cnae_result.get("evidence", ""),
+                        evidence=cnae_result.get("evidence", ""),
+                        confidence=cnae_result.get("confidence", 70),
+                        stage_detected="Stage 5",
+                        tool_used="cnae_compatibility_check",
+                    )
+                )
 
         # Check tax ID format for non-CNPJ IDs
         tax_id = document_data.get("tax_id", document_data.get("employee_tax_id", ""))
@@ -729,17 +819,19 @@ class FraudDetectionPipeline:
             extracted["tax_id_validation"] = tax_result
             if not tax_result.get("valid", True):
                 for issue in tax_result.get("issues", []):
-                    anomalies.append(Anomaly(
-                        severity=Severity.HIGH,
-                        category="entity",
-                        description=f"Formato de identificador fiscal inválido: {issue}",
-                        evidence=f"Tax ID: {tax_id}",
-                        confidence=90,
-                        stage_detected="Stage 5",
-                        tool_used="check_tax_id_format",
-                    ))
+                    anomalies.append(
+                        Anomaly(
+                            severity=Severity.HIGH,
+                            category="entity",
+                            description=f"Formato de identificador fiscal inválido: {issue}",
+                            evidence=f"Tax ID: {tax_id}",
+                            confidence=90,
+                            stage_detected="Stage 5",
+                            tool_used="check_tax_id_format",
+                        )
+                    )
 
-        duration = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+        duration = (datetime.now(UTC) - start).total_seconds() * 1000
         return StageResult(
             stage_name="Stage 5: Entity Validation",
             status="completed",
@@ -759,12 +851,14 @@ class FraudDetectionPipeline:
         Cross-reference all extracted fields for internal consistency.
         Checks: visual text vs encoded data, beneficiary binding, date coherence.
         """
-        start = datetime.now(timezone.utc)
+        start = datetime.now(UTC)
         anomalies: list[Anomaly] = []
         extracted: dict[str, Any] = {}
 
         # --- Pix-to-Boleto cross-validation ---
-        boleto_beneficiario = document_data.get("beneficiario", document_data.get("beneficiary_name", ""))
+        boleto_beneficiario = document_data.get(
+            "beneficiario", document_data.get("beneficiary_name", "")
+        )
         boleto_cnpj = document_data.get("cnpj", "")
         boleto_valor = document_data.get("valor", document_data.get("amount", 0))
 
@@ -782,7 +876,8 @@ class FraudDetectionPipeline:
         pix_amount = pix_data.get("amount", 0)
 
         if pix_merchant or pix_key:
-            cross_result = self._call_tool("pix_boleto_cross_validator",
+            cross_result = self._call_tool(
+                "pix_boleto_cross_validator",
                 boleto_beneficiario=boleto_beneficiario,
                 boleto_cnpj=boleto_cnpj,
                 boleto_valor=boleto_valor,
@@ -793,18 +888,21 @@ class FraudDetectionPipeline:
             extracted["pix_boleto_cross_validation"] = cross_result
 
             for ca in cross_result.get("anomalies", []):
-                anomalies.append(Anomaly(
-                    severity=Severity(ca.get("severity", "critical")),
-                    category="cross_field",
-                    description=ca.get("description", ""),
-                    evidence=cross_result.get("evidence", ""),
-                    confidence=ca.get("confidence", 95),
-                    stage_detected="Stage 6",
-                    tool_used="pix_boleto_cross_validator",
-                ))
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity(ca.get("severity", "critical")),
+                        category="cross_field",
+                        description=ca.get("description", ""),
+                        evidence=cross_result.get("evidence", ""),
+                        confidence=ca.get("confidence", 95),
+                        stage_detected="Stage 6",
+                        tool_used="pix_boleto_cross_validator",
+                    )
+                )
 
         # --- Beneficiary binding check ---
-        binding_result = self._call_tool("beneficiary_binding_check",
+        binding_result = self._call_tool(
+            "beneficiary_binding_check",
             boleto_beneficiario=boleto_beneficiario,
             boleto_cnpj=boleto_cnpj,
             banco_codigo=document_data.get("banco_codigo", ""),
@@ -814,15 +912,20 @@ class FraudDetectionPipeline:
         extracted["beneficiary_binding"] = binding_result
 
         if binding_result.get("fraud_signal"):
-            anomalies.append(Anomaly(
-                severity=Severity.CRITICAL,
-                category="cross_field",
-                description="Vinculação de beneficiário quebrada — múltiplas fontes apontam para destinos diferentes.",
-                evidence=binding_result.get("evidence", ""),
-                confidence=85,
-                stage_detected="Stage 6",
-                tool_used="beneficiary_binding_check",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity.CRITICAL,
+                    category="cross_field",
+                    description=(
+                        "Vinculação de beneficiário quebrada — múltiplas "
+                        "fontes apontam para destinos diferentes."
+                    ),
+                    evidence=binding_result.get("evidence", ""),
+                    confidence=85,
+                    stage_detected="Stage 6",
+                    tool_used="beneficiary_binding_check",
+                )
+            )
 
         # --- Salary-to-CBO cross-check ---
         salario = document_data.get("salario_bruto", 0)
@@ -830,24 +933,30 @@ class FraudDetectionPipeline:
         cargo = document_data.get("cargo", "")
 
         if salario > 0 and (cbo or cargo):
-            salario_check = self._call_tool("analyze_payroll_discrepancy",
+            salario_check = self._call_tool(
+                "analyze_payroll_discrepancy",
                 employee_salary=salario,
                 department_median=document_data.get("department_median", salario),
                 department_std_dev=document_data.get("department_std_dev", 1.0),
             )
             extracted["salary_discrepancy"] = salario_check
             if salario_check.get("risk", "low") in ("high", "critical"):
-                anomalies.append(Anomaly(
-                    severity=Severity.HIGH,
-                    category="cross_field",
-                    description=f"Salário {salario_check.get('deviation_sigma', 0)}σ da mediana do departamento.",
-                    evidence=salario_check.get("detail", ""),
-                    confidence=80,
-                    stage_detected="Stage 6",
-                    tool_used="analyze_payroll_discrepancy",
-                ))
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity.HIGH,
+                        category="cross_field",
+                        description=(
+                            f"Salário {salario_check.get('deviation_sigma', 0)}σ "
+                            f"da mediana do departamento."
+                        ),
+                        evidence=salario_check.get("detail", ""),
+                        confidence=80,
+                        stage_detected="Stage 6",
+                        tool_used="analyze_payroll_discrepancy",
+                    )
+                )
 
-        duration = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+        duration = (datetime.now(UTC) - start).total_seconds() * 1000
         return StageResult(
             stage_name="Stage 6: Cross-Field Consistency",
             status="completed",
@@ -860,7 +969,9 @@ class FraudDetectionPipeline:
     # STAGE 7: RISK SCORING & REPORT GENERATION
     # ═══════════════════════════════════════════════════════════
 
-    def stage7_risk_scoring(self, all_stages: list[StageResult]) -> tuple[float, RiskLevel, float, str, str]:
+    def stage7_risk_scoring(
+        self, all_stages: list[StageResult]
+    ) -> tuple[float, RiskLevel, float, str, str]:
         """
         Aggregate all anomaly signals into a composite fraud risk score (0-100).
         Uses severity-weighted scoring with stage multipliers.
@@ -900,7 +1011,9 @@ class FraudDetectionPipeline:
         total_score = 0.0
         for anomaly in all_anomalies:
             base = severity_weights.get(anomaly.severity, 5)
-            stage_name = anomaly.stage_detected.split(":")[0].strip() if anomaly.stage_detected else ""
+            stage_name = (
+                anomaly.stage_detected.split(":")[0].strip() if anomaly.stage_detected else ""
+            )
             multiplier = stage_multipliers.get(stage_name, 1.0)
             total_score += base * multiplier * (anomaly.confidence / 100)
 
@@ -939,7 +1052,13 @@ class FraudDetectionPipeline:
         if len(unique_stages) == 1 and len(all_anomalies) > 0:
             ai_confidence -= 10
 
-        return total_score, classification, ai_confidence, action, self._generate_reasoning_summary(all_anomalies, total_score, classification)
+        return (
+            total_score,
+            classification,
+            ai_confidence,
+            action,
+            self._generate_reasoning_summary(all_anomalies, total_score, classification),
+        )
 
     def _generate_reasoning_summary(
         self, anomalies: list[Anomaly], score: float, classification: RiskLevel
@@ -977,8 +1096,10 @@ class FraudDetectionPipeline:
             )
 
         parts.append(
-            f"Score composto de fraude: {score:.1f}/100 — Classificação: {classification.value.upper()}. "
-            f"Total de {len(anomalies)} anomalias identificadas em {len({a.stage_detected for a in anomalies})} etapas do pipeline."
+            f"Score composto de fraude: {score:.1f}/100 "
+            f"— Classificação: {classification.value.upper()}. "
+            f"Total de {len(anomalies)} anomalias identificadas em "
+            f"{len({a.stage_detected for a in anomalies})} etapas do pipeline."
         )
 
         return " ".join(parts)
@@ -1006,7 +1127,7 @@ class FraudDetectionPipeline:
             PipelineResult with all stages, anomalies, risk score, and classification.
         """
         document_id = document_data.get("document_id", str(uuid.uuid4()))
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         logger.info("Starting 7-stage pipeline for document: %s", document_id)
 
@@ -1060,12 +1181,18 @@ class FraudDetectionPipeline:
 
         logger.info(
             "Pipeline complete for %s: score=%.1f, class=%s, anomalies=%d, action=%s",
-            document_id, score, classification.value, len(total_anomalies), action,
+            document_id,
+            score,
+            classification.value,
+            len(total_anomalies),
+            action,
         )
 
         return result
 
-    def generate_psi_report(self, result: PipelineResult, document_data: dict[str, Any]) -> dict[str, Any]:
+    def generate_psi_report(
+        self, result: PipelineResult, document_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Generate the complete PSI Fraud Analysis Report in the Section 5 format.
         This is consumed by the reporting_agent and displayed in the PSI dashboard.
@@ -1124,14 +1251,20 @@ class FraudDetectionPipeline:
                 "liquido_calculated": liquido_valid.get("liquido_calculado", 0),
                 "liquido_delta": liquido_valid.get("delta", 0),
                 "cargo_cbo": document_data.get("cbo", "N/A"),
-                "salary_range_check": s4_data.get("cbo_validation", {}).get("status", "NOT_VERIFIABLE"),
+                "salary_range_check": s4_data.get("cbo_validation", {}).get(
+                    "status", "NOT_VERIFIABLE"
+                ),
             },
             "FORENSIC_FINDINGS": {
                 "pdf_layers": document_data.get("pdf_forensics", {}).get("content_stream_count", 1),
                 "font_consistency": "consistent",
-                "image_overlays": document_data.get("pdf_forensics", {}).get("image_object_count", 0),
+                "image_overlays": document_data.get("pdf_forensics", {}).get(
+                    "image_object_count", 0
+                ),
                 "compression_anomaly": False,
-                "ocr_confidence_min": document_data.get("ocr_data", {}).get("min_char_confidence", 95),
+                "ocr_confidence_min": document_data.get("ocr_data", {}).get(
+                    "min_char_confidence", 95
+                ),
             },
             "ANOMALY_LIST": [a.to_dict() for a in result.all_anomalies],
             "RISK_ASSESSMENT": {
@@ -1143,8 +1276,10 @@ class FraudDetectionPipeline:
             "AI_REASONING_SUMMARY": result.ai_reasoning_summary,
             "ANALYST_NOTES": (
                 "Recomenda-se verificar o documento original diretamente com o emissor. "
-                "Conferir os dados cadastrais na Receita Federal para validação completa do CNPJ. "
-                "Em caso de boleto, confirmar a titularidade da conta de destino junto ao banco emissor."
+                "Conferir os dados cadastrais na Receita Federal "
+                "para validação completa do CNPJ. "
+                "Em caso de boleto, confirmar a titularidade da conta de "
+                "destino junto ao banco emissor."
             ),
         }
 
@@ -1153,7 +1288,7 @@ class FraudDetectionPipeline:
 
 # ── Singleton ──
 
-_pipeline_instance: Optional[FraudDetectionPipeline] = None
+_pipeline_instance: FraudDetectionPipeline | None = None
 
 
 def get_fraud_pipeline() -> FraudDetectionPipeline:

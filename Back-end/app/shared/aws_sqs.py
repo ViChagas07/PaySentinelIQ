@@ -8,7 +8,7 @@ import os
 from typing import Any
 
 import boto3
-from botocore.exceptions import ClientError, BotoCoreError
+from botocore.exceptions import BotoCoreError, ClientError
 
 from app.shared.exceptions import ServiceError
 
@@ -38,17 +38,17 @@ def send_event(event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         ServiceError: Se a fila não estiver configurada ou a chamada falhar.
     """
     if not QUEUE_URL:
-        raise ServiceError(
-            "SQS_QUEUE_URL não configurada. Defina no .env para usar a fila."
-        )
+        raise ServiceError("SQS_QUEUE_URL não configurada. Defina no .env para usar a fila.")
 
     try:
         response = sqs.send_message(
             QueueUrl=QUEUE_URL,
-            MessageBody=json.dumps({
-                "type": event_type,
-                "payload": payload,
-            }),
+            MessageBody=json.dumps(
+                {
+                    "type": event_type,
+                    "payload": payload,
+                }
+            ),
         )
         return response
     except (ClientError, BotoCoreError) as exc:

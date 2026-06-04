@@ -3,8 +3,8 @@
 # Creates and configures the FastAPI app with all middleware, routers
 # ============================================================
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,16 +32,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize LLM provider health check (non-blocking — fails gracefully)
     try:
         from app.ai_agents.llm_service import get_llm_service
+
         llm_service = await get_llm_service()
         info = llm_service.get_info()
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(
             "LLM service initialized: provider=%s model=%s healthy=%s",
-            info["provider"], info["model"], info["healthy"],
+            info["provider"],
+            info["model"],
+            info["healthy"],
         )
     except Exception as exc:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.warning("LLM service initialization deferred: %s", exc)
 
@@ -116,6 +121,7 @@ def create_app() -> FastAPI:
         """Return LLM provider status for monitoring/diagnostics."""
         try:
             from app.ai_agents.llm_service import get_llm_service
+
             llm_service = await get_llm_service()
             info = llm_service.get_info()
             # Run a fresh health check
@@ -140,53 +146,66 @@ def _register_routers(app: FastAPI) -> None:
 
     # Auth
     from app.auth.presentation.router import router as auth_router
+
     app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 
     # Payroll
     from app.payroll.presentation.router import router as payroll_router
+
     app.include_router(payroll_router, prefix="/api/payrolls", tags=["Payroll"])
 
     # Employees
     from app.employees.presentation.router import router as employees_router
+
     app.include_router(employees_router, prefix="/api/employees", tags=["Employees"])
 
     # Verification
     from app.verification.presentation.router import router as verification_router
+
     app.include_router(verification_router, prefix="/api/verifications", tags=["Verification"])
 
     # Fraud Detection
     from app.fraud_detection.presentation.router import router as fraud_router
+
     app.include_router(fraud_router, prefix="/api/fraud-alerts", tags=["Fraud Detection"])
 
     # Compliance
     from app.compliance.presentation.router import router as compliance_router
+
     app.include_router(compliance_router, prefix="/api/compliance", tags=["Compliance"])
 
     # Audit Logs
     from app.audit.infrastructure.router import router as audit_router
+
     app.include_router(audit_router, prefix="/api/audit-logs", tags=["Audit Logs"])
 
     # Notifications
     from app.notifications.infrastructure.router import router as notification_router
+
     app.include_router(notification_router, prefix="/api/notifications", tags=["Notifications"])
 
     # AI Assistant (Chat)
     from app.ai_assistant.presentation.router import router as ai_assistant_router
+
     app.include_router(ai_assistant_router, prefix="/api/ai-assistant", tags=["AI Assistant"])
 
     # User Settings / Preferences
     from app.settings_module.presentation.router import router as settings_router
+
     app.include_router(settings_router, prefix="/api/settings", tags=["Settings"])
 
     # AI Insights (Dashboard)
     from app.analytics.application.router import router as analytics_router
+
     app.include_router(analytics_router, prefix="/api", tags=["Analytics"])
 
     # WebSocket
     from app.websocket.router import router as ws_router
+
     app.include_router(ws_router, prefix="/ws", tags=["WebSocket"])
 
     # ── Debug Router (non-production only) ──
     if settings.ENVIRONMENT != "production":
         from app.shared.debug_router import router as debug_router
+
         app.include_router(debug_router, prefix="/api", tags=["Debug"])

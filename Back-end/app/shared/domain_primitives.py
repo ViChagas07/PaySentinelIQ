@@ -4,11 +4,9 @@
 # ============================================================
 
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 from enum import Enum
 from typing import NewType
-
 
 # ── Strongly-typed IDs ──
 
@@ -23,6 +21,7 @@ AuditLogId = NewType("AuditLogId", uuid.UUID)
 
 
 # ── Enums ──
+
 
 class RiskLevel(str, Enum):
     LOW = "low"
@@ -98,9 +97,11 @@ class EntityType(str, Enum):
 
 # ── Value Objects ──
 
+
 @dataclass(frozen=True)
 class Money:
     """Immutable money value object with currency."""
+
     amount: float
     currency: str = "USD"
 
@@ -128,6 +129,7 @@ class Money:
 @dataclass(frozen=True)
 class RiskScore:
     """Immutable risk score value object (0-100)."""
+
     value: float
     confidence: float  # AI confidence 0-1
 
@@ -160,6 +162,7 @@ class Address:
 @dataclass(frozen=True)
 class TaxId:
     """Tax identification number (SSN/EIN) — handles masking."""
+
     value: str
     id_type: str = "SSN"
 

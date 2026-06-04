@@ -9,7 +9,7 @@
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from crewai import Agent, Crew, Process, Task
 
@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 # ── Tool Imports ──
 
+
 def _load_tools() -> list[Any]:
     """Load all registered tools and convert them to CrewAI-compatible format.
 
@@ -29,6 +30,16 @@ def _load_tools() -> list[Any]:
     """
     tools = []
     try:
+        # Convert each LangChain StructuredTool → CrewAI Tool
+        from crewai.tools.base_tool import Tool as CrewAITool
+
+        from app.ai_agents.tools.boleto_tools import (
+            barcode_decoder,
+            beneficiary_binding_check,
+            boleto_linha_digitavel_validator,
+            pix_boleto_cross_validator,
+            pix_emv_parser,
+        )
         from app.ai_agents.tools.brazil_financial_tools import (
             bacen_bank_validator,
             cbo_salary_range,
@@ -38,13 +49,6 @@ def _load_tools() -> list[Any]:
             inss_calculator,
             irrf_calculator,
             liquido_consistency_check,
-        )
-        from app.ai_agents.tools.boleto_tools import (
-            barcode_decoder,
-            beneficiary_binding_check,
-            boleto_linha_digitavel_validator,
-            pix_boleto_cross_validator,
-            pix_emv_parser,
         )
         from app.ai_agents.tools.custom_tools import (
             analyze_metadata_integrity,
@@ -59,23 +63,31 @@ def _load_tools() -> list[Any]:
             pdf_metadata_extractor,
         )
 
-        # Convert each LangChain StructuredTool → CrewAI Tool
-        from crewai.tools.base_tool import Tool as CrewAITool
-
         raw_tools = [
             # Financial
-            cnpj_validator, inss_calculator, irrf_calculator, fgts_calculator,
-            liquido_consistency_check, cbo_salary_range, cnae_compatibility_check,
+            cnpj_validator,
+            inss_calculator,
+            irrf_calculator,
+            fgts_calculator,
+            liquido_consistency_check,
+            cbo_salary_range,
+            cnae_compatibility_check,
             bacen_bank_validator,
             # Boleto/Pix
-            boleto_linha_digitavel_validator, barcode_decoder,
-            pix_emv_parser, pix_boleto_cross_validator, beneficiary_binding_check,
+            boleto_linha_digitavel_validator,
+            barcode_decoder,
+            pix_emv_parser,
+            pix_boleto_cross_validator,
+            beneficiary_binding_check,
             # PDF Forensics
-            pdf_metadata_extractor, pdf_layer_analyzer,
-            image_forensic_analyzer, ocr_confidence_analyzer,
+            pdf_metadata_extractor,
+            pdf_layer_analyzer,
+            image_forensic_analyzer,
+            ocr_confidence_analyzer,
             ai_generation_detector,
             # Base
-            analyze_metadata_integrity, analyze_payroll_discrepancy,
+            analyze_metadata_integrity,
+            analyze_payroll_discrepancy,
             check_tax_id_format,
         ]
 
@@ -90,29 +102,41 @@ def _load_tools() -> list[Any]:
 # Agent-specific tool assignments
 _FRAUD_TOOLS = [
     # Fraud agent gets the core detection tools
-    "boleto_linha_digitavel_validator", "barcode_decoder",
-    "inss_calculator", "irrf_calculator", "fgts_calculator",
-    "liquido_consistency_check", "cbo_salary_range",
-    "analyze_payroll_discrepancy", "check_tax_id_format",
+    "boleto_linha_digitavel_validator",
+    "barcode_decoder",
+    "inss_calculator",
+    "irrf_calculator",
+    "fgts_calculator",
+    "liquido_consistency_check",
+    "cbo_salary_range",
+    "analyze_payroll_discrepancy",
+    "check_tax_id_format",
 ]
 
 _VERIFICATION_TOOLS = [
     # Verification agent gets forensic tools + Pix QR parsing
-    "pdf_metadata_extractor", "pdf_layer_analyzer",
-    "image_forensic_analyzer", "ocr_confidence_analyzer",
-    "ai_generation_detector", "analyze_metadata_integrity",
-    "pix_emv_parser", "cnpj_validator",
+    "pdf_metadata_extractor",
+    "pdf_layer_analyzer",
+    "image_forensic_analyzer",
+    "ocr_confidence_analyzer",
+    "ai_generation_detector",
+    "analyze_metadata_integrity",
+    "pix_emv_parser",
+    "cnpj_validator",
 ]
 
 _COMPLIANCE_TOOLS = [
     # Compliance agent gets entity validation tools
-    "cnpj_validator", "cnae_compatibility_check",
-    "bacen_bank_validator", "beneficiary_binding_check",
+    "cnpj_validator",
+    "cnae_compatibility_check",
+    "bacen_bank_validator",
+    "beneficiary_binding_check",
 ]
 
 _RISK_TOOLS = [
     # Risk agent gets cross-validation tools
-    "pix_boleto_cross_validator", "beneficiary_binding_check",
+    "pix_boleto_cross_validator",
+    "beneficiary_binding_check",
     "check_tax_id_format",
 ]
 
@@ -162,13 +186,18 @@ class AIAgentCrew:
                     )
                 else:
                     logger.warning(
-                        "LLM provider '%s' returned unhealthy status — running in deterministic-only mode",
+                        "LLM provider '%s' returned unhealthy status "
+                        "— running in deterministic-only mode",
                         provider.get_info().provider_name,
                     )
             else:
-                logger.warning("CrewAI LLM creation returned None — running in deterministic-only mode")
+                logger.warning(
+                    "CrewAI LLM creation returned None — running in deterministic-only mode"
+                )
         except Exception as e:
-            logger.warning("Could not initialize CrewAI LLM — running in deterministic-only mode: %s", e)
+            logger.warning(
+                "Could not initialize CrewAI LLM — running in deterministic-only mode: %s", e
+            )
 
         # Load all tools (always available — these are deterministic)
         self._tools = _load_tools()
@@ -178,16 +207,24 @@ class AIAgentCrew:
         return Agent(
             role="Fraud Detection Specialist",
             goal=(
-                "Analyze payroll and boleto data for fraud indicators, perform structural validation "
-                "(FEBRABAN checksums, INSS/IRRF/FGTS recalculation), detect anomalies, and explain "
-                "findings with evidence. You are an expert in Brazilian payroll fraud patterns."
+                "Analyze payroll and boleto data for fraud indicators, "
+                "perform structural validation "
+                "(FEBRABAN checksums, INSS/IRRF/FGTS recalculation), "
+                "detect anomalies, and explain "
+                "findings with evidence. You are an expert in Brazilian "
+                "payroll fraud patterns."
             ),
             backstory=(
-                "You are an expert financial fraud investigator with 20+ years of experience "
-                "in forensic accounting and payroll fraud detection at the Brazilian Federal Police. "
-                "You've uncovered hundreds of fraud schemes including ghost employees, salary padding, "
-                "boleto tampering, and document forgery. Your analysis is meticulous, evidence-based, "
-                "and always provides the mathematical proof behind every anomaly detected."
+                "You are an expert financial fraud investigator with "
+                "20+ years of experience "
+                "in forensic accounting and payroll fraud detection "
+                "at the Brazilian Federal Police. "
+                "You've uncovered hundreds of fraud schemes including "
+                "ghost employees, salary padding, "
+                "boleto tampering, and document forgery. Your analysis is "
+                "meticulous, evidence-based, "
+                "and always provides the mathematical proof behind "
+                "every anomaly detected."
             ),
             llm=self._llm,
             tools=fraud_tools,
@@ -222,15 +259,22 @@ class AIAgentCrew:
         return Agent(
             role="Compliance Intelligence Analyst",
             goal=(
-                "Validate entity data against Brazilian government registries (CNPJ via Receita Federal, "
-                "BACEN bank codes), check CNAE-to-CBO compatibility, verify beneficiary bindings, "
-                "and flag regulatory risks including LGPD/GDPR compliance issues."
+                "Validate entity data against Brazilian government registries "
+                "(CNPJ via Receita Federal, "
+                "BACEN bank codes), check CNAE-to-CBO compatibility, "
+                "verify beneficiary bindings, "
+                "and flag regulatory risks including "
+                "LGPD/GDPR compliance issues."
             ),
             backstory=(
-                "You are a regulatory compliance expert specializing in Brazilian labor law, "
-                "tax regulations (Receita Federal), and anti-money laundering (AML/CFT) frameworks. "
-                "You aggregate public records, cross-reference CNPJ data, validate bank registrations "
-                "against BACEN ISPB, and identify compliance risks in payroll and payment documents."
+                "You are a regulatory compliance expert specializing in "
+                "Brazilian labor law, "
+                "tax regulations (Receita Federal), and anti-money laundering "
+                "(AML/CFT) frameworks. "
+                "You aggregate public records, cross-reference CNPJ data, "
+                "validate bank registrations "
+                "against BACEN ISPB, and identify compliance risks "
+                "in payroll and payment documents."
             ),
             llm=self._llm,
             tools=compliance_tools,
@@ -243,15 +287,19 @@ class AIAgentCrew:
         return Agent(
             role="Risk Scoring Specialist",
             goal=(
-                "Aggregate all fraud, verification, and compliance signals into a unified risk score "
-                "with full explainability. Cross-validate Pix vs. Boleto data, verify beneficiary "
-                "binding across all sources, and produce the final PSI Fraud Analysis Report."
+                "Aggregate all fraud, verification, and compliance signals "
+                "into a unified risk score "
+                "with full explainability. Cross-validate Pix vs. Boleto data, "
+                "verify beneficiary "
+                "binding across all sources, and produce the final "
+                "PSI Fraud Analysis Report."
             ),
             backstory=(
                 "You are a quantitative risk analyst who specializes in building risk scoring "
                 "models for the Brazilian financial sector. You've designed fraud scoring systems "
                 "for the Central Bank (BACEN) and major Brazilian banks. You combine multiple "
-                "data sources to produce accurate, explainable risk scores with confidence intervals."
+                "data sources to produce accurate, explainable risk scores "
+                "with confidence intervals."
             ),
             llm=self._llm,
             tools=risk_tools,
@@ -288,7 +336,8 @@ class AIAgentCrew:
         }
 
     def _run_deterministic_pipeline(self, document_data: dict[str, Any]) -> dict[str, Any]:
-        """Run the 7-stage deterministic pipeline — always executes regardless of LLM availability."""
+        """Run the 7-stage deterministic pipeline — always executes regardless
+        of LLM availability."""
         try:
             from app.fraud_detection.domain.pipeline import get_fraud_pipeline
 
@@ -298,7 +347,9 @@ class AIAgentCrew:
 
             logger.info(
                 "Deterministic pipeline: score=%.1f, class=%s, anomalies=%d",
-                result.fraud_risk_score, result.risk_classification.value, len(result.all_anomalies),
+                result.fraud_risk_score,
+                result.risk_classification.value,
+                len(result.all_anomalies),
             )
 
             return {
@@ -312,8 +363,12 @@ class AIAgentCrew:
                     "ai_confidence": result.ai_confidence,
                     "recommended_action": result.recommended_action,
                     "anomaly_count": len(result.all_anomalies),
-                    "critical_anomalies": sum(1 for a in result.all_anomalies if a.severity.value == "critical"),
-                    "high_anomalies": sum(1 for a in result.all_anomalies if a.severity.value == "high"),
+                    "critical_anomalies": sum(
+                        1 for a in result.all_anomalies if a.severity.value == "critical"
+                    ),
+                    "high_anomalies": sum(
+                        1 for a in result.all_anomalies if a.severity.value == "high"
+                    ),
                     "reasoning": result.ai_reasoning_summary,
                 },
             }
@@ -344,8 +399,9 @@ class AIAgentCrew:
                 f"Provide additional investigative insights and fraud pattern analysis."
             ),
             expected_output=(
-                "Enhanced fraud analysis with investigative insights, fraud pattern "
-                "identification, and recommended investigation steps in Portuguese."
+                "Enhanced fraud analysis with investigative insights, "
+                "fraud pattern identification, and recommended "
+                "investigation steps in Portuguese."
             ),
             agent=fraud_agent,
         )
@@ -356,7 +412,9 @@ class AIAgentCrew:
                 f"Forensic data: {report.get('FORENSIC_FINDINGS', {})}. "
                 f"Metadata: {report.get('DOCUMENT_METADATA', {})}."
             ),
-            expected_output="Document verification enhancement with specific forensic recommendations.",
+            expected_output=(
+                "Document verification enhancement with specific forensic recommendations."
+            ),
             agent=verification_agent,
         )
 
@@ -366,7 +424,9 @@ class AIAgentCrew:
                 f"Entity data: {report.get('ENTITY_VALIDATION', {})}. "
                 f"Suggest additional regulatory checks and compliance verification steps."
             ),
-            expected_output="Compliance enhancement with regulatory risk flags and verification steps.",
+            expected_output=(
+                "Compliance enhancement with regulatory risk flags and verification steps."
+            ),
             agent=compliance_agent,
         )
 
@@ -423,7 +483,7 @@ class AIAgentCrew:
 
 # ── Singleton ──
 
-_crew_instance: Optional[AIAgentCrew] = None
+_crew_instance: AIAgentCrew | None = None
 
 
 def get_ai_crew() -> AIAgentCrew:

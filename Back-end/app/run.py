@@ -9,6 +9,7 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
+
     from app.shared.settings import get_settings
 
     settings = get_settings()

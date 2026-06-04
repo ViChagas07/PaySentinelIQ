@@ -2,9 +2,9 @@
 # PaySentinelIQ — Verification Router
 # ============================================================
 
-from fastapi import APIRouter, Depends, Query, UploadFile, File
+
+from fastapi import APIRouter, Depends, File, UploadFile
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 from app.auth.dependencies import get_current_tenant_id, require_fraud_analyst
 
@@ -19,8 +19,8 @@ class VerificationResponse(BaseModel):
     risk_score: float
     extracted_fields: dict = {}
     fraud_indicators: list = []
-    ocr_confidence: Optional[float] = None
-    ai_explanation: Optional[str] = None
+    ocr_confidence: float | None = None
+    ai_explanation: str | None = None
 
 
 class UploadResponse(BaseModel):
@@ -28,7 +28,7 @@ class UploadResponse(BaseModel):
     document_id: str
     status: str
     message: str
-    presigned_url: Optional[str] = None
+    presigned_url: str | None = None
 
 
 @router.post("/upload", response_model=UploadResponse)
@@ -93,5 +93,6 @@ async def trigger_verification(
     """Manually trigger re-verification of a document."""
     # In production: trigger Celery task
     from app.tasks import analyze_document
+
     task = analyze_document.delay(document_id, tenant_id)
     return {"status": "triggered", "task_id": task.id}

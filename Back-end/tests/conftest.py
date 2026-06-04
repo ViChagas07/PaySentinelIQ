@@ -4,12 +4,19 @@
 # ============================================================
 
 import asyncio
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+# ── SQLite JSONB compatibility ────────────────────────────────────────
+# Enable JSONB-type columns (PostgreSQL-only) to work in SQLite test DBs
+# by mapping the JSONB compiler method to the existing JSON compiler.
+if not hasattr(SQLiteTypeCompiler, "visit_JSONB"):
+    SQLiteTypeCompiler.visit_JSONB = SQLiteTypeCompiler.visit_JSON
 
 from app.main import create_app
 from app.shared.base_model import Base

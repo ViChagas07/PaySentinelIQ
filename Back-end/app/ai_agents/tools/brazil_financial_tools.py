@@ -23,7 +23,7 @@ _CNPJ_INVALID_PATTERNS = {str(i) * 14 for i in range(10)}
 
 def _cnpj_mod11(digits: str, weights: list[int]) -> int:
     """Calculate Módulo 11 check digit for CNPJ."""
-    total = sum(int(d) * w for d, w in zip(digits, weights))
+    total = sum(int(d) * w for d, w in zip(digits, weights, strict=False))
     remainder = total % 11
     return 0 if remainder < 2 else 11 - remainder
 
@@ -101,7 +101,8 @@ def cnpj_validator(cnpj: str) -> dict[str, Any]:
         "valid_checksum": checksum_valid,
         "error": None if checksum_valid else "CNPJ check digits failed Módulo 11 validation",
         "confidence": 100 if checksum_valid else 100,
-        "recommend_external_lookup": checksum_valid,  # If checksum passes, verify against Receita Federal
+        "recommend_external_lookup": checksum_valid,
+        # If checksum passes, verify against Receita Federal
         "raiz": digits[:8],  # Base CNPJ (first 8 digits)
         "filial": digits[8:12],  # Branch number
     }
@@ -113,10 +114,10 @@ def cnpj_validator(cnpj: str) -> dict[str, Any]:
 
 # INSS 2025 progressive table (Portaria Interministerial MPS/MF Nº 6/2025)
 _INSS_2025_BRACKETS = [
-    (1412.00, 0.075, 0.00),       # Até R$1.412,00: 7,5%
-    (2666.68, 0.09, 21.18),       # R$1.412,01 a R$2.666,68: 9%
-    (4000.03, 0.12, 101.18),      # R$2.666,69 a R$4.000,03: 12%
-    (7786.02, 0.14, 181.18),      # R$4.000,04 a R$7.786,02: 14%
+    (1412.00, 0.075, 0.00),  # Até R$1.412,00: 7,5%
+    (2666.68, 0.09, 21.18),  # R$1.412,01 a R$2.666,68: 9%
+    (4000.03, 0.12, 101.18),  # R$2.666,69 a R$4.000,03: 12%
+    (7786.02, 0.14, 181.18),  # R$4.000,04 a R$7.786,02: 14%
 ]
 
 _INSS_TETO = 7786.02  # INSS contribution ceiling
@@ -140,12 +141,14 @@ def _calculate_inss(salario_bruto: float) -> dict[str, Any]:
         if taxable > 0:
             contrib = taxable * rate
             contribuicao += contrib
-            faixas_aplicadas.append({
-                "faixa": f"R$ {previous_limit:,.2f} a R$ {limit:,.2f}",
-                "aliquota": f"{rate*100:.1f}%",
-                "base_calculo": round(taxable, 2),
-                "contribuicao": round(contrib, 2),
-            })
+            faixas_aplicadas.append(
+                {
+                    "faixa": f"R$ {previous_limit:,.2f} a R$ {limit:,.2f}",
+                    "aliquota": f"{rate * 100:.1f}%",
+                    "base_calculo": round(taxable, 2),
+                    "contribuicao": round(contrib, 2),
+                }
+            )
         salario_restante -= taxable
         previous_limit = limit
 
@@ -154,13 +157,17 @@ def _calculate_inss(salario_bruto: float) -> dict[str, Any]:
         "teto_inss": _INSS_TETO,
         "salario_contribuicao": min(salario_bruto, _INSS_TETO),
         "inss_calculado": round(contribuicao, 2),
-        "aliquota_efetiva": round((contribuicao / salario_bruto) * 100, 2) if salario_bruto > 0 else 0,
+        "aliquota_efetiva": round((contribuicao / salario_bruto) * 100, 2)
+        if salario_bruto > 0
+        else 0,
         "faixas": faixas_aplicadas,
     }
 
 
 @tool
-def inss_calculator(salario_bruto: float, inss_printed: float = 0.0, competencia: str = "2025") -> dict[str, Any]:
+def inss_calculator(
+    salario_bruto: float, inss_printed: float = 0.0, competencia: str = "2025"
+) -> dict[str, Any]:
     """
     Calculate INSS contribution for a given gross salary using the 2025 progressive table.
     Compares calculated value against the printed/declared INSS on the payslip.
@@ -176,7 +183,13 @@ def inss_calculator(salario_bruto: float, inss_printed: float = 0.0, competencia
     result = _calculate_inss(salario_bruto)
 
     if "error" in result:
-        return {**result, "inss_printed": inss_printed, "delta": None, "anomaly": True, "anomaly_type": "calculation_error"}
+        return {
+            **result,
+            "inss_printed": inss_printed,
+            "delta": None,
+            "anomaly": True,
+            "anomaly_type": "calculation_error",
+        }
 
     delta = round(result["inss_calculado"] - inss_printed, 2)
 
@@ -205,10 +218,10 @@ def inss_calculator(salario_bruto: float, inss_printed: float = 0.0, competencia
 
 # IRRF 2025 table (base de cálculo mensal)
 _IRRF_2025_BRACKETS = [
-    (2259.20, 0.0, 0.0),            # Até R$2.259,20: isento
-    (2826.65, 0.075, 169.44),       # R$2.259,21 a R$2.826,65: 7,5%
-    (3751.05, 0.15, 381.44),        # R$2.826,66 a R$3.751,05: 15%
-    (4664.68, 0.225, 662.77),       # R$3.751,06 a R$4.664,68: 22,5%
+    (2259.20, 0.0, 0.0),  # Até R$2.259,20: isento
+    (2826.65, 0.075, 169.44),  # R$2.259,21 a R$2.826,65: 7,5%
+    (3751.05, 0.15, 381.44),  # R$2.826,66 a R$3.751,05: 15%
+    (4664.68, 0.225, 662.77),  # R$3.751,06 a R$4.664,68: 22,5%
     (float("inf"), 0.275, 896.00),  # Acima de R$4.664,68: 27,5%
 ]
 
@@ -248,7 +261,7 @@ def _calculate_irrf(
     for limit, rate, deduction in _IRRF_2025_BRACKETS:
         if base_calculo <= limit:
             irrf = (base_calculo * rate) - deduction
-            faixa_applied = f"{rate*100:.1f}%"
+            faixa_applied = f"{rate * 100:.1f}%"
             break
 
     irrf = max(irrf, 0)  # IRRF cannot be negative
@@ -288,7 +301,13 @@ def irrf_calculator(
     result = _calculate_irrf(salario_bruto, inss, dependentes)
 
     if "error" in result:
-        return {**result, "irrf_printed": irrf_printed, "delta": None, "anomaly": True, "anomaly_type": "calculation_error"}
+        return {
+            **result,
+            "irrf_printed": irrf_printed,
+            "delta": None,
+            "anomaly": True,
+            "anomaly_type": "calculation_error",
+        }
 
     delta = round(result["irrf_calculado"] - irrf_printed, 2)
     anomaly = abs(delta) > 0.01
@@ -315,7 +334,7 @@ def irrf_calculator(
 # FGTS CALCULATOR
 # ═══════════════════════════════════════════════════════════════
 
-_FGTS_RATE_REGULAR = 0.08   # 8% for regular employees
+_FGTS_RATE_REGULAR = 0.08  # 8% for regular employees
 _FGTS_RATE_APRENDIZ = 0.02  # 2% for young apprentices
 
 
@@ -345,7 +364,7 @@ def fgts_calculator(
     return {
         "salario_bruto": salario_bruto,
         "tipo_contrato": tipo_contrato,
-        "aliquota_fgts": f"{rate*100:.0f}%",
+        "aliquota_fgts": f"{rate * 100:.0f}%",
         "fgts_calculado": fgts_calculado,
         "fgts_printed": fgts_printed,
         "delta": delta,
@@ -355,7 +374,7 @@ def fgts_calculator(
         "severity": "critical" if abs(delta) > 100 else ("high" if abs(delta) > 10 else "low"),
         "confidence": 100,
         "evidence": (
-            f"FGTS ({rate*100:.0f}%) calculado: R$ {fgts_calculado:,.2f} | "
+            f"FGTS ({rate * 100:.0f}%) calculado: R$ {fgts_calculado:,.2f} | "
             f"FGTS declarado: R$ {fgts_printed:,.2f} | "
             f"Delta: R$ {delta:,.2f}"
         ),
@@ -365,6 +384,7 @@ def fgts_calculator(
 # ═══════════════════════════════════════════════════════════════
 # LÍQUIDO CONSISTENCY CHECK
 # ═══════════════════════════════════════════════════════════════
+
 
 @tool
 def liquido_consistency_check(
@@ -446,7 +466,12 @@ _CBO_SALARY_RANGES: dict[str, dict[str, Any]] = {
     "142105": {"cargo": "Gerente de TI", "min": 10000, "max": 30000, "mediana": 18000},
     "214405": {"cargo": "Engenheiro Civil", "min": 4000, "max": 15000, "mediana": 8000},
     # General
-    "521110": {"cargo": "Vendedor de Comércio Varejista", "min": 1400, "max": 3500, "mediana": 2000},
+    "521110": {
+        "cargo": "Vendedor de Comércio Varejista",
+        "min": 1400,
+        "max": 3500,
+        "mediana": 2000,
+    },
     "513205": {"cargo": "Cozinheiro Geral", "min": 1400, "max": 3000, "mediana": 1800},
     "514320": {"cargo": "Faxineiro", "min": 1400, "max": 2200, "mediana": 1600},
     "782510": {"cargo": "Motorista de Caminhão", "min": 2200, "max": 5000, "mediana": 3200},
@@ -460,9 +485,12 @@ _CBO_SALARY_RANGES: dict[str, dict[str, Any]] = {
 
 
 @tool
-def cbo_salary_range(cbo_code: str, salario: float, cargo: str = "", uf: str = "SP") -> dict[str, Any]:
+def cbo_salary_range(
+    cbo_code: str, salario: float, cargo: str = "", uf: str = "SP"
+) -> dict[str, Any]:
     """
-    Check if a stated salary falls within the expected range for a given CBO (Classificação Brasileira de Ocupações) code.
+    Check if a stated salary falls within the expected range for a given
+    CBO (Classificação Brasileira de Ocupações) code.
 
     Input:
       - cbo_code: CBO code (e.g. "411005", "212405")
@@ -483,7 +511,7 @@ def cbo_salary_range(cbo_code: str, salario: float, cargo: str = "", uf: str = "
     if not reference and cargo and cargo.strip():
         # Try matching by cargo name
         cargo_lower = cargo.lower().strip()
-        for code, data in _CBO_SALARY_RANGES.items():
+        for _code, data in _CBO_SALARY_RANGES.items():
             if cargo_lower in data["cargo"].lower():
                 reference = data
                 break
@@ -523,7 +551,9 @@ def cbo_salary_range(cbo_code: str, salario: float, cargo: str = "", uf: str = "
         severity = "medium"
 
     # Calculate how many multiples of the median
-    multiples_of_median = round(salario / reference["mediana"], 1) if reference["mediana"] > 0 else 0
+    multiples_of_median = (
+        round(salario / reference["mediana"], 1) if reference["mediana"] > 0 else 0
+    )
 
     anomaly = not within_range
 
@@ -543,10 +573,12 @@ def cbo_salary_range(cbo_code: str, salario: float, cargo: str = "", uf: str = "
         "confidence": 75,  # Reference data may vary by region/company size
         "uf": uf,
         "evidence": (
-            f"CBO {cbo_code} ({reference['cargo']}): faixa esperada R$ {reference['min']:,.2f} a R$ {reference['max']:,.2f} | "
+            f"CBO {cbo_code} ({reference['cargo']}): faixa esperada "
+            f"R$ {reference['min']:,.2f} a R$ {reference['max']:,.2f} | "
             f"Salário declarado: R$ {salario:,.2f} ({multiples_of_median}x a mediana)"
         ),
-        "nota": "Reference values are national estimates. Regional variation and company size may affect expected ranges.",
+        "nota": "Reference values are national estimates. Regional variation "
+        "and company size may affect expected ranges.",
     }
 
 
@@ -582,7 +614,11 @@ _BACEN_ISPB_REGISTRY: dict[str, tuple[str, str, bool]] = {
     "085": ("05463212", "Cooperativa Central de Crédito do Norte/Nordeste (AILOS)", True),
     "095": ("01172323", "Banco Confidence de Câmbio S.A.", True),
     "097": ("04632851", "Cooperativa Central de Crédito Noroeste Brasileiro (Credicitrus)", True),
-    "099": ("00309573", "UNIPRIME Central — Central Interestadual de Cooperativas de Crédito", True),
+    "099": (
+        "00309573",
+        "UNIPRIME Central — Central Interestadual de Cooperativas de Crédito",
+        True,
+    ),
     "104": ("00360305", "Caixa Econômica Federal", True),
     "107": ("01511468", "Banco BOCOM BBM S.A.", True),
     "133": ("01038839", "Cresol — Confederação das Cooperativas de Crédito", True),
@@ -651,7 +687,8 @@ def bacen_bank_validator(bank_code: str) -> dict[str, Any]:
             "bank_name": None,
             "ispb": None,
             "active": False,
-            "error": f"Bank code {code} not found in BACEN ISPB registry. Possible fabricated boleto.",
+            "error": f"Bank code {code} not found in BACEN ISPB registry. "
+            "Possible fabricated boleto.",
             "severity": "critical",
             "confidence": 100,
             "evidence": f"Código {code} não consta no registro ISPB do BACEN.",
@@ -668,7 +705,9 @@ def bacen_bank_validator(bank_code: str) -> dict[str, Any]:
         "error": None if active else f"Bank {code} ({name}) is inactive/liquidated",
         "severity": "low" if active else "critical",
         "confidence": 100,
-        "evidence": f"Banco {code}: {name} | ISPB: {ispb} | Status: {'Ativo' if active else 'Inativo'}",
+        "evidence": (
+            f"Banco {code}: {name} | ISPB: {ispb} | Status: {'Ativo' if active else 'Inativo'}"
+        ),
     }
 
 
@@ -713,7 +752,9 @@ _CNAE_CBO_COMPATIBILITY: dict[str, list[str]] = {
 
 
 @tool
-def cnae_compatibility_check(cnae_code: str, cbo_code: str, cargo: str = "", razao_social: str = "") -> dict[str, Any]:
+def cnae_compatibility_check(
+    cnae_code: str, cbo_code: str, cargo: str = "", razao_social: str = ""
+) -> dict[str, Any]:
     """
     Check if a job role (CBO) is compatible with the company's registered
     economic activity (CNAE) from Receita Federal.
@@ -783,5 +824,5 @@ def cnae_compatibility_check(cnae_code: str, cbo_code: str, cargo: str = "", raz
             f"Resultado: {'COMPATÍVEL' if is_compatible else 'INCOMPATÍVEL — possível fraude'}"
         ),
         "nota": "This check uses a reference mapping and may not cover all valid combinations. "
-                "Flag for human review rather than automatic rejection.",
+        "Flag for human review rather than automatic rejection.",
     }

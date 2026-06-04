@@ -4,7 +4,7 @@
 # ============================================================
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 class FraudType(str, Enum):
     """Known payroll and document fraud types in the Brazilian context."""
+
     GHOST_EMPLOYEE = "ghost_employee"
     SALARY_PADDING = "salary_padding"
     JOB_TITLE_INFLATION = "job_title_inflation"
@@ -37,6 +38,7 @@ class FraudType(str, Enum):
 @dataclass
 class FraudCase:
     """A complete fraud case assembled from pipeline analysis."""
+
     id: UUID = field(default_factory=uuid4)
     document_id: str = ""
     fraud_types: list[FraudType] = field(default_factory=list)
@@ -48,7 +50,7 @@ class FraudCase:
     medium_count: int = 0
     description: str = ""
     evidence_summary: str = ""
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def is_critical(self) -> bool:

@@ -4,7 +4,6 @@
 # ============================================================
 
 from functools import lru_cache
-from typing import Optional
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -58,12 +57,12 @@ class Settings(BaseSettings):
     MFA_ISSUER: str = "PaySentinelIQ"
 
     # ── AWS ──
-    AWS_ACCESS_KEY_ID: Optional[str] = None
-    AWS_SECRET_ACCESS_KEY: Optional[SecretStr] = None
+    AWS_ACCESS_KEY_ID: str | None = None
+    AWS_SECRET_ACCESS_KEY: SecretStr | None = None
     AWS_REGION: str = "us-east-1"
     S3_BUCKET: str = "psi-documents"
     S3_PRESIGNED_URL_EXPIRY: int = 3600
-    AWS_TEXTRACT_ROLE_ARN: Optional[str] = None
+    AWS_TEXTRACT_ROLE_ARN: str | None = None
 
     # ── AI / LLM Provider Selection ──
     # Supported providers: ollama, openai, anthropic, bedrock, groq, gemini
@@ -82,25 +81,25 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "llama3"
     OLLAMA_TIMEOUT: float = 120.0  # seconds — local models can be slower
     OLLAMA_MAX_RETRIES: int = 3
-    OLLAMA_NUM_GPU: Optional[int] = None  # None = auto-detect; set to 0 for CPU-only
-    OLLAMA_NUM_THREAD: Optional[int] = None  # None = auto-detect
+    OLLAMA_NUM_GPU: int | None = None  # None = auto-detect; set to 0 for CPU-only
+    OLLAMA_NUM_THREAD: int | None = None  # None = auto-detect
 
     # ── OpenAI (Cloud LLM — optional, for fallback or specific use cases) ──
-    OPENAI_API_KEY: Optional[SecretStr] = None
+    OPENAI_API_KEY: SecretStr | None = None
     OPENAI_MODEL: str = "gpt-4o"
 
     # ── Anthropic (Cloud LLM — reserved for future use) ──
-    ANTHROPIC_API_KEY: Optional[SecretStr] = None
+    ANTHROPIC_API_KEY: SecretStr | None = None
 
     # ── Sentry ──
-    SENTRY_DSN: Optional[str] = None
+    SENTRY_DSN: str | None = None
     SENTRY_TRACES_SAMPLE_RATE: float = 0.1
     SENTRY_PROFILES_SAMPLE_RATE: float = 0.1
 
     # ── Rate Limiting ──
     RATE_LIMIT_PER_USER: int = 100  # requests per window
-    RATE_LIMIT_WINDOW: int = 60     # seconds
-    RATE_LIMIT_LOGIN_MAX: int = 5   # attempts per window
+    RATE_LIMIT_WINDOW: int = 60  # seconds
+    RATE_LIMIT_LOGIN_MAX: int = 5  # attempts per window
 
     # ── Feature Flags ──
     ENABLE_AI_AGENTS: bool = True
@@ -114,6 +113,6 @@ class Settings(BaseSettings):
     DOCUMENT_RETENTION_DAYS: int = 2555  # 7 years for payroll records
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     return Settings()

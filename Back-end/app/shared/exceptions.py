@@ -3,13 +3,15 @@
 # Typed exception hierarchy for clean error handling
 # ============================================================
 
-from typing import Any, Optional
+from typing import Any
 
 
 class PSIDomainError(Exception):
     """Base exception for all domain errors."""
 
-    def __init__(self, message: str, code: str = "DOMAIN_ERROR", details: Optional[dict[str, Any]] = None):
+    def __init__(
+        self, message: str, code: str = "DOMAIN_ERROR", details: dict[str, Any] | None = None
+    ):
         self.message = message
         self.code = code
         self.details = details or {}
@@ -17,6 +19,7 @@ class PSIDomainError(Exception):
 
 
 # ── Auth Errors ──
+
 
 class AuthenticationError(PSIDomainError):
     def __init__(self, message: str = "Authentication failed"):
@@ -45,6 +48,7 @@ class MFARequiredError(AuthenticationError):
 
 # ── Entity Errors ──
 
+
 class NotFoundError(PSIDomainError):
     def __init__(self, entity: str, identifier: str):
         super().__init__(
@@ -64,7 +68,7 @@ class AlreadyExistsError(PSIDomainError):
 
 
 class ValidationError(PSIDomainError):
-    def __init__(self, message: str, field: Optional[str] = None):
+    def __init__(self, message: str, field: str | None = None):
         super().__init__(
             message,
             code="VALIDATION_ERROR",
@@ -74,8 +78,9 @@ class ValidationError(PSIDomainError):
 
 # ── Business Errors ──
 
+
 class PayrollProcessingError(PSIDomainError):
-    def __init__(self, message: str, payroll_id: Optional[str] = None):
+    def __init__(self, message: str, payroll_id: str | None = None):
         super().__init__(
             message,
             code="PAYROLL_PROCESSING_ERROR",
@@ -84,7 +89,7 @@ class PayrollProcessingError(PSIDomainError):
 
 
 class FraudDetectionError(PSIDomainError):
-    def __init__(self, message: str, document_id: Optional[str] = None):
+    def __init__(self, message: str, document_id: str | None = None):
         super().__init__(
             message,
             code="FRAUD_DETECTION_ERROR",
@@ -93,7 +98,7 @@ class FraudDetectionError(PSIDomainError):
 
 
 class VerificationError(PSIDomainError):
-    def __init__(self, message: str, document_id: Optional[str] = None):
+    def __init__(self, message: str, document_id: str | None = None):
         super().__init__(
             message,
             code="VERIFICATION_ERROR",
@@ -102,7 +107,7 @@ class VerificationError(PSIDomainError):
 
 
 class ComplianceCheckError(PSIDomainError):
-    def __init__(self, message: str, entity_id: Optional[str] = None):
+    def __init__(self, message: str, entity_id: str | None = None):
         super().__init__(
             message,
             code="COMPLIANCE_CHECK_ERROR",
@@ -111,6 +116,7 @@ class ComplianceCheckError(PSIDomainError):
 
 
 # ── Rate Limiting ──
+
 
 class RateLimitExceededError(PSIDomainError):
     def __init__(self, retry_after: int = 60):
@@ -123,10 +129,11 @@ class RateLimitExceededError(PSIDomainError):
 
 # ── Infrastructure / Service Errors ──
 
+
 class ServiceError(PSIDomainError):
     """Erro em serviços de infraestrutura (AWS, Redis, etc.)."""
 
-    def __init__(self, message: str, service: Optional[str] = None):
+    def __init__(self, message: str, service: str | None = None):
         super().__init__(
             message,
             code="SERVICE_ERROR",

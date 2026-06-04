@@ -3,8 +3,8 @@
 # Multi-service: API, Celery worker, PostgreSQL, Redis
 # ============================================================
 
-# Dockerfile 
-DOCKERFILE_CONTENT = r''' 
+# Dockerfile
+DOCKERFILE_CONTENT = r""" 
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
@@ -42,11 +42,12 @@ USER psi
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
-'''
+CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", \
+    "--port", "8000", "--workers", "4"]
+"""
 
 # ── docker-compose.yml ──
-DOCKER_COMPOSE_CONTENT = r'''
+DOCKER_COMPOSE_CONTENT = r"""
 version: "3.9"
 
 services:
@@ -178,4 +179,4 @@ volumes:
   postgres_data:
   redis_data:
   # ollama_data:
-'''
+"""

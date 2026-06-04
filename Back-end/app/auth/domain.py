@@ -4,12 +4,9 @@
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from enum import Enum
-from typing import Optional
+from datetime import UTC, datetime
 
 from app.shared.domain_primitives import UserRole
-from app.shared.exceptions import ValidationError
 
 
 @dataclass
@@ -23,12 +20,12 @@ class User:
     hashed_password: str
     role: UserRole
     mfa_enabled: bool = False
-    mfa_secret: Optional[str] = None
+    mfa_secret: str | None = None
     is_active: bool = True
-    last_login: Optional[datetime] = None
-    avatar_url: Optional[str] = None
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_login: datetime | None = None
+    avatar_url: str | None = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def verify_password(self, password: str, hasher) -> bool:
         return hasher.verify(password, self.hashed_password)
@@ -36,14 +33,14 @@ class User:
     def enable_mfa(self, secret: str) -> None:
         self.mfa_secret = secret
         self.mfa_enabled = True
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def record_login(self) -> None:
-        self.last_login = datetime.now(timezone.utc)
+        self.last_login = datetime.now(UTC)
 
     def deactivate(self) -> None:
         self.is_active = False
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
 
 @dataclass
@@ -55,11 +52,11 @@ class RefreshToken:
     token_hash: str
     expires_at: datetime
     is_revoked: bool = False
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     @property
     def is_valid(self) -> bool:
@@ -77,8 +74,8 @@ class MFASession:
     user_id: uuid.UUID
     temp_token: str
     expires_at: datetime
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at

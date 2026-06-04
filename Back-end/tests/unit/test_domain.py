@@ -4,11 +4,11 @@
 # ============================================================
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
-from app.shared.domain_primitives import Money, RiskScore, RiskLevel
+from app.shared.domain_primitives import Money, RiskLevel, RiskScore
 
 
 class TestMoneyValueObject:
@@ -75,6 +75,7 @@ class TestRiskScore:
 class TestAuthDomain:
     def test_user_creation(self):
         from app.auth.domain import User
+
         user = User(
             id=uuid.uuid4(),
             tenant_id=uuid.uuid4(),
@@ -89,6 +90,7 @@ class TestAuthDomain:
 
     def test_user_deactivation(self):
         from app.auth.domain import User
+
         user = User(
             id=uuid.uuid4(),
             tenant_id=uuid.uuid4(),
@@ -102,12 +104,13 @@ class TestAuthDomain:
 
     def test_refresh_token_validity(self):
         from app.auth.domain import RefreshToken
-        now = datetime.now(timezone.utc)
+
+        datetime.now(UTC)
         token = RefreshToken(
             id=uuid.uuid4(),
             user_id=uuid.uuid4(),
             token_hash="abc123",
-            expires_at=datetime(2099, 1, 1, tzinfo=timezone.utc),
+            expires_at=datetime(2099, 1, 1, tzinfo=UTC),
         )
         assert token.is_valid is True
         assert token.is_expired is False

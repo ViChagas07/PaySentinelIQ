@@ -11,15 +11,14 @@ from app.fraud_detection.domain.pipeline import (
     Anomaly,
     DocumentClass,
     FraudDetectionPipeline,
-    PipelineResult,
     Severity,
     StageResult,
 )
 
-
 # ═══════════════════════════════════════════════════════════════
 # Fixtures
 # ═══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def pipeline():
@@ -115,6 +114,7 @@ def suspicious_contracheque_data():
 # Stage 1: Ingestion Tests
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestStage1Ingestion:
     """Test Stage 1: Ingestion & Classification."""
 
@@ -123,10 +123,12 @@ class TestStage1Ingestion:
         assert result.extracted_data["document_class"] == "contracheque"
 
     def test_classifies_boleto(self, pipeline):
-        result = pipeline.stage1_ingestion({
-            "document_type": "boleto",
-            "linha_digitavel": "00190000090123456700812345678901234567890123456",
-        })
+        result = pipeline.stage1_ingestion(
+            {
+                "document_type": "boleto",
+                "linha_digitavel": "00190000090123456700812345678901234567890123456",
+            }
+        )
         assert result.extracted_data["document_class"] == "boleto"
 
     def test_classifies_unknown(self, pipeline):
@@ -134,27 +136,31 @@ class TestStage1Ingestion:
         assert result.extracted_data["document_class"] == "unknown"
 
     def test_extracts_pdf_metadata(self, pipeline):
-        result = pipeline.stage1_ingestion({
-            "pdf_metadata": {
-                "creator": "TestCreator",
-                "producer": "TestProducer",
-                "creation_date": "2025-01-01T10:00:00",
-                "version": "1.7",
-            },
-        })
+        result = pipeline.stage1_ingestion(
+            {
+                "pdf_metadata": {
+                    "creator": "TestCreator",
+                    "producer": "TestProducer",
+                    "creation_date": "2025-01-01T10:00:00",
+                    "version": "1.7",
+                },
+            }
+        )
         assert result.extracted_data["pdf_creator"] == "TestCreator"
         assert result.extracted_data["pdf_producer"] == "TestProducer"
 
     def test_suspicious_producer_flagged(self, pipeline):
-        result = pipeline.stage1_ingestion({
-            "pdf_metadata": {
-                "creator": "Canva",
-                "producer": "Canva",
-                "creation_date": "2025-01-01T10:00:00",
-                "modification_date": "2025-01-01T10:00:00",
-            },
-        })
-        anomaly_types = [a.category for a in result.anomalies]
+        result = pipeline.stage1_ingestion(
+            {
+                "pdf_metadata": {
+                    "creator": "Canva",
+                    "producer": "Canva",
+                    "creation_date": "2025-01-01T10:00:00",
+                    "modification_date": "2025-01-01T10:00:00",
+                },
+            }
+        )
+        [a.category for a in result.anomalies]
         # Should have at least a forensic or classification anomaly about suspicious producer
         assert len(result.anomalies) > 0
 
@@ -162,6 +168,7 @@ class TestStage1Ingestion:
 # ═══════════════════════════════════════════════════════════════
 # Stage 4: Structural Validation Tests
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestStage4StructuralValidation:
     """Test Stage 4: Structural Validation — contracheque path."""
@@ -209,11 +216,14 @@ class TestStage4StructuralValidation:
 # Stage 5: Entity Validation Tests
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestStage5EntityValidation:
     """Test Stage 5: Entity Validation."""
 
     def test_cnpj_valid_passes(self, pipeline, valid_contracheque_data):
-        s4 = pipeline.stage4_structural_validation(valid_contracheque_data, pipeline.stage1_ingestion(valid_contracheque_data))
+        s4 = pipeline.stage4_structural_validation(
+            valid_contracheque_data, pipeline.stage1_ingestion(valid_contracheque_data)
+        )
         result = pipeline.stage5_entity_validation(valid_contracheque_data, s4)
 
         cnpj_val = result.extracted_data.get("cnpj_validation", {})
@@ -221,7 +231,9 @@ class TestStage5EntityValidation:
         assert cnpj_val.get("valid_checksum") is True
 
     def test_invalid_cnpj_flagged(self, pipeline, suspicious_contracheque_data):
-        s4 = pipeline.stage4_structural_validation(suspicious_contracheque_data, pipeline.stage1_ingestion(suspicious_contracheque_data))
+        s4 = pipeline.stage4_structural_validation(
+            suspicious_contracheque_data, pipeline.stage1_ingestion(suspicious_contracheque_data)
+        )
         result = pipeline.stage5_entity_validation(suspicious_contracheque_data, s4)
 
         # Should have at least one entity anomaly
@@ -229,7 +241,9 @@ class TestStage5EntityValidation:
         assert len(entity_anomalies) > 0
 
     def test_cnae_incompatible_flagged(self, pipeline, suspicious_contracheque_data):
-        s4 = pipeline.stage4_structural_validation(suspicious_contracheque_data, pipeline.stage1_ingestion(suspicious_contracheque_data))
+        s4 = pipeline.stage4_structural_validation(
+            suspicious_contracheque_data, pipeline.stage1_ingestion(suspicious_contracheque_data)
+        )
         result = pipeline.stage5_entity_validation(suspicious_contracheque_data, s4)
 
         cnae_val = result.extracted_data.get("cnae_validation", {})
@@ -240,6 +254,7 @@ class TestStage5EntityValidation:
 # ═══════════════════════════════════════════════════════════════
 # Full Pipeline Integration Tests
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestFullPipeline:
     """End-to-end tests for the complete 7-stage pipeline."""
@@ -264,7 +279,8 @@ class TestFullPipeline:
         assert len(result.ai_reasoning_summary) > 10
 
     def test_clean_document_low_score(self, pipeline, valid_contracheque_data):
-        """A clean document should score low (but may have some anomalies due to exact calculation)."""
+        """A clean document should score low (but may have some anomalies
+        due to exact calculation)."""
         result = pipeline.run_full_pipeline(valid_contracheque_data)
         # A clean document might still have minor anomalies if INSS/IRRF values
         # don't exactly match the current table. But it shouldn't be CRITICAL.
@@ -323,9 +339,11 @@ class TestFullPipeline:
 
     def test_pipeline_empty_data_handles_gracefully(self, pipeline):
         """Empty or minimal data should not crash."""
-        result = pipeline.run_full_pipeline({
-            "document_id": str(uuid.uuid4()),
-        })
+        result = pipeline.run_full_pipeline(
+            {
+                "document_id": str(uuid.uuid4()),
+            }
+        )
         assert result.fraud_risk_score >= 0
         assert result.risk_classification is not None
 
@@ -347,6 +365,7 @@ class TestFullPipeline:
 # ═══════════════════════════════════════════════════════════════
 # Risk Classification Tests
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestRiskClassification:
     """Test risk classification thresholds."""
@@ -387,15 +406,17 @@ class TestRiskClassification:
         """Multiple HIGH anomalies should trigger escalation."""
         anomalies = []
         for i in range(4):
-            anomalies.append(Anomaly(
-                severity=Severity.HIGH,
-                category="financial",
-                description=f"Test anomaly {i}",
-                evidence="Test",
-                confidence=100,
-                stage_detected="Stage 4",
-                tool_used="test",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity.HIGH,
+                    category="financial",
+                    description=f"Test anomaly {i}",
+                    evidence="Test",
+                    confidence=100,
+                    stage_detected="Stage 4",
+                    tool_used="test",
+                )
+            )
         stage = StageResult(
             stage_name="Stage 4: Structural Validation",
             status="completed",

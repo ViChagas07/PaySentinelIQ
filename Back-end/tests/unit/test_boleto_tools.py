@@ -3,18 +3,16 @@
 # Tests for FEBRABAN, Módulo 10/11, barcode, Pix EMV
 # ============================================================
 
-import pytest
 
 from app.ai_agents.tools.boleto_tools import (
+    _classify_pix_key,
     _modulo10,
     _modulo11_febraban,
     _modulo11_general,
     _parse_emv_payload,
-    _classify_pix_key,
     _parse_linha_digitavel,
     _reconstruct_barcode,
     _validate_barcode_dv,
-    _validate_campo_dvs,
     barcode_decoder,
     beneficiary_binding_check,
     boleto_linha_digitavel_validator,
@@ -22,10 +20,10 @@ from app.ai_agents.tools.boleto_tools import (
     pix_emv_parser,
 )
 
-
 # ═══════════════════════════════════════════════════════════════
 # MÓDULO 10 & 11 TESTS
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestModuloAlgorithms:
     """Test the core checksum algorithms used in boletos."""
@@ -66,6 +64,7 @@ class TestModuloAlgorithms:
 # ═══════════════════════════════════════════════════════════════
 # LINHA DIGITÁVEL TESTS
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestLinhaDigitavel:
     """Test FEBRABAN linha digitável parsing and validation."""
@@ -122,6 +121,7 @@ class TestLinhaDigitavel:
 # BARCODE TESTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestBarcodeDecoder:
     """Test 44-digit barcode decoding."""
 
@@ -173,25 +173,26 @@ class TestBarcodeDecoder:
 # PIX EMV PARSER TESTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestPixEMVParser:
     """Test Pix EMV QR Code payload parsing."""
 
     def test_parse_simple_payload(self):
         """Should parse a basic EMV payload with correct length prefixes."""
         payload = (
-            "000201"            # Payload format indicator
-            "010212"            # Point of initiation (dynamic)
-            "2636"              # Merchant account tag 26, len 36
+            "000201"  # Payload format indicator
+            "010212"  # Point of initiation (dynamic)
+            "2636"  # Merchant account tag 26, len 36
             "0014br.gov.bcb.pix"  # GUI subtag
-            "011412345678901234"   # Pix key subtag
-            "52040000"          # MCC
-            "5303986"           # Currency 986 = BRL
-            "5406123.45"        # Amount (6 chars incl decimal)
-            "5802BR"            # Country
+            "011412345678901234"  # Pix key subtag
+            "52040000"  # MCC
+            "5303986"  # Currency 986 = BRL
+            "5406123.45"  # Amount (6 chars incl decimal)
+            "5802BR"  # Country
             "5916Merchant Name Lt"  # Merchant name (16 chars)
-            "6008BRASILIA"      # Merchant city
+            "6008BRASILIA"  # Merchant city
             "62150511txid12345"  # Additional data
-            "6304ABCD"          # CRC
+            "6304ABCD"  # CRC
         )
         result = _parse_emv_payload(payload)
         assert result["payload_format"] == "01"
@@ -243,7 +244,7 @@ class TestPixEMVParser:
             "26360014br.gov.bcb.pix011412345678901234"
             "52040000"
             "5303986"
-            "5406100.00"          # Amount len 6 = "100.00"
+            "5406100.00"  # Amount len 6 = "100.00"
             "5802BR"
             "5915Empresa Exemplo"  # len 15 = "Empresa Exemplo"
             "6008BRASILIA"
@@ -285,54 +286,63 @@ class TestPixEMVParser:
 # PIX-BOLETO CROSS-VALIDATION TESTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestPixBoletoCrossValidation:
     """Test cross-referencing between boleto and Pix data."""
 
     def test_matching_beneficiaries(self):
         """Matching beneficiary names should pass."""
-        result = pix_boleto_cross_validator.invoke({
-            "boleto_beneficiario": "Empresa Exemplo Ltda",
-            "pix_merchant_name": "Empresa Exemplo Ltda",
-        })
+        result = pix_boleto_cross_validator.invoke(
+            {
+                "boleto_beneficiario": "Empresa Exemplo Ltda",
+                "pix_merchant_name": "Empresa Exemplo Ltda",
+            }
+        )
         assert result["fraud_signal"] is False
         assert result["beneficiary_name_match"] is True
 
     def test_mismatched_beneficiaries(self):
         """Mismatched names should be critical."""
-        result = pix_boleto_cross_validator.invoke({
-            "boleto_beneficiario": "Empresa X Ltda",
-            "pix_merchant_name": "Empresa Y Ltda",
-        })
+        result = pix_boleto_cross_validator.invoke(
+            {
+                "boleto_beneficiario": "Empresa X Ltda",
+                "pix_merchant_name": "Empresa Y Ltda",
+            }
+        )
         # Should have at least one anomaly
-        assert "beneficiary_name_mismatch" in [
-            a["type"] for a in result.get("anomalies", [])
-        ]
+        assert "beneficiary_name_mismatch" in [a["type"] for a in result.get("anomalies", [])]
 
     def test_amount_mismatch(self):
         """Amount mismatch should be detected."""
-        result = pix_boleto_cross_validator.invoke({
-            "boleto_beneficiario": "Empresa Teste",
-            "boleto_valor": 1000.00,
-            "pix_amount": 500.00,
-        })
+        result = pix_boleto_cross_validator.invoke(
+            {
+                "boleto_beneficiario": "Empresa Teste",
+                "boleto_valor": 1000.00,
+                "pix_amount": 500.00,
+            }
+        )
         anomalies = result.get("anomalies", [])
         types = [a["type"] for a in anomalies]
         assert "amount_mismatch" in types
 
     def test_beneficiary_binding_broken(self):
         """Multiple inconsistent sources should break binding."""
-        result = beneficiary_binding_check.invoke({
-            "boleto_beneficiario": "Empresa A",
-            "boleto_cnpj": "11.222.333/0001-81",
-            "pix_merchant_name": "Empresa B",
-            "pix_key": "99988877766655",
-        })
+        result = beneficiary_binding_check.invoke(
+            {
+                "boleto_beneficiario": "Empresa A",
+                "boleto_cnpj": "11.222.333/0001-81",
+                "pix_merchant_name": "Empresa B",
+                "pix_key": "99988877766655",
+            }
+        )
         assert result["fraud_signal"] is True
 
     def test_beneficiary_binding_consistent(self):
         """Consistent sources should pass binding check."""
-        result = beneficiary_binding_check.invoke({
-            "boleto_beneficiario": "Empresa X",
-            "pix_merchant_name": "Empresa X",
-        })
+        result = beneficiary_binding_check.invoke(
+            {
+                "boleto_beneficiario": "Empresa X",
+                "pix_merchant_name": "Empresa X",
+            }
+        )
         assert result["binding_consistent"] is True

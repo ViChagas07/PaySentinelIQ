@@ -64,6 +64,7 @@ def task_failure_handler(sender: Any, exception: Exception, **kwargs: Any) -> No
 # MAIN DOCUMENT ANALYSIS TASK
 # ═══════════════════════════════════════════════════════════════
 
+
 @celery_app.task(
     bind=True,
     max_retries=3,
@@ -85,7 +86,7 @@ def analyze_document(self, document_id: str, tenant_id: str) -> dict[str, Any]:
     try:
         # Step 1: OCR
         ocr_result = run_ocr_pipeline(document_id, tenant_id)
-        document_data = ocr_result.get("extracted_fields", {})
+        ocr_result.get("extracted_fields", {})
 
         # Step 2: Full fraud analysis via the 7-stage pipeline
         fraud_result = run_fraud_analysis(document_id, tenant_id)
@@ -109,7 +110,9 @@ def analyze_document(self, document_id: str, tenant_id: str) -> dict[str, Any]:
 
         # Step 6: Emit alert if HIGH or CRITICAL
         if risk_classification in ("high", "critical"):
-            _emit_analyst_alert(document_id, tenant_id, risk_score, risk_classification, anomaly_count)
+            _emit_analyst_alert(
+                document_id, tenant_id, risk_score, risk_classification, anomaly_count
+            )
 
         return {
             "status": "completed",
@@ -118,22 +121,25 @@ def analyze_document(self, document_id: str, tenant_id: str) -> dict[str, Any]:
             "risk_score": risk_score,
             "risk_classification": risk_classification,
             "anomaly_count": anomaly_count,
-            "recommended_action": analysis.get("summary", {}).get("recommended_action", "MANUAL_REVIEW"),
+            "recommended_action": analysis.get("summary", {}).get(
+                "recommended_action", "MANUAL_REVIEW"
+            ),
         }
 
     except Exception as exc:
         logger.error("Document analysis failed for %s: %s", document_id, exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 def _emit_analyst_alert(
-    document_id: str, tenant_id: str, risk_score: float,
-    risk_classification: str, anomaly_count: int,
+    document_id: str,
+    tenant_id: str,
+    risk_score: float,
+    risk_classification: str,
+    anomaly_count: int,
 ) -> None:
     """Emit real-time alert to analyst dashboard via WebSocket."""
     try:
-        from app.websocket.router import broadcast_alert
-        import asyncio
         import json
 
         alert_data = {
@@ -158,6 +164,7 @@ def _emit_analyst_alert(
 # OCR TASK
 # ═══════════════════════════════════════════════════════════════
 
+
 @celery_app.task(
     bind=True,
     max_retries=2,
@@ -175,6 +182,7 @@ def run_ocr_pipeline(self, document_id: str, tenant_id: str) -> dict[str, Any]:
         # In production: call AWS Textract
         # For now, return structured data that exercises all pipeline stages
         import time
+
         time.sleep(0.5)
 
         return {
@@ -204,12 +212,13 @@ def run_ocr_pipeline(self, document_id: str, tenant_id: str) -> dict[str, Any]:
 
     except Exception as exc:
         logger.error("OCR failed for document %s: %s", document_id, exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ═══════════════════════════════════════════════════════════════
 # AI FRAUD ANALYSIS TASK
 # ═══════════════════════════════════════════════════════════════
+
 
 @celery_app.task(
     bind=True,
@@ -272,12 +281,13 @@ def run_fraud_analysis(self, document_id: str, tenant_id: str) -> dict[str, Any]
 
     except Exception as exc:
         logger.error("AI analysis failed for %s: %s", document_id, exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ═══════════════════════════════════════════════════════════════
 # RISK SCORING TASK
 # ═══════════════════════════════════════════════════════════════
+
 
 @celery_app.task(
     bind=True,
@@ -307,18 +317,21 @@ def calculate_risk_score(
         anomalies = []
         for signal in fraud_signals:
             sev = signal.get("severity", "low")
-            anomalies.append(Anomaly(
-                severity=Severity(sev if sev in [s.value for s in Severity] else "low"),
-                category=signal.get("type", "unknown"),
-                description=signal.get("description", ""),
-                evidence=signal.get("description", ""),
-                confidence=signal.get("confidence", 80),
-                stage_detected="Stage 7",
-                tool_used="calculate_risk_score",
-            ))
+            anomalies.append(
+                Anomaly(
+                    severity=Severity(sev if sev in [s.value for s in Severity] else "low"),
+                    category=signal.get("type", "unknown"),
+                    description=signal.get("description", ""),
+                    evidence=signal.get("description", ""),
+                    confidence=signal.get("confidence", 80),
+                    stage_detected="Stage 7",
+                    tool_used="calculate_risk_score",
+                )
+            )
 
         # Score using a mini stage result
         from app.fraud_detection.domain.pipeline import StageResult
+
         stage = StageResult(
             stage_name="Stage 7: Risk Scoring",
             status="completed",
@@ -338,12 +351,13 @@ def calculate_risk_score(
 
     except Exception as exc:
         logger.error("Risk scoring failed: %s", exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ═══════════════════════════════════════════════════════════════
 # COMPLIANCE TASK
 # ═══════════════════════════════════════════════════════════════
+
 
 @celery_app.task(
     bind=True,
@@ -364,6 +378,7 @@ def run_compliance_check(
 
     try:
         import time
+
         time.sleep(1)
 
         return {
@@ -378,12 +393,13 @@ def run_compliance_check(
 
     except Exception as exc:
         logger.error("Compliance check failed: %s", exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ═══════════════════════════════════════════════════════════════
 # PAYROLL GENERATION TASK
 # ═══════════════════════════════════════════════════════════════
+
 
 @celery_app.task(
     bind=True,
@@ -432,12 +448,13 @@ def generate_payroll(
 
     except Exception as exc:
         logger.error("Payroll generation failed: %s", exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ═══════════════════════════════════════════════════════════════
 # REPORTING TASK
 # ═══════════════════════════════════════════════════════════════
+
 
 @celery_app.task(
     bind=True,
@@ -460,4 +477,4 @@ def generate_ai_report(self, document_id: str, tenant_id: str) -> dict[str, Any]
 
     except Exception as exc:
         logger.error("Report generation failed: %s", exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

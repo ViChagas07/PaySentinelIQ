@@ -9,8 +9,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 import tenacity
 
@@ -129,7 +130,8 @@ class LLMService:
             if not is_healthy:
                 raise ProviderUnavailableError(
                     f"LLM provider '{self.provider.get_info().provider_name}' is not available. "
-                    f"Ensure Ollama is running ('ollama serve') and model '{self.provider.config.model}' "
+                    f"Ensure Ollama is running ('ollama serve') and model "
+                    f"'{self.provider.config.model}' "
                     f"is pulled ('ollama pull {self.provider.config.model}')."
                 )
 
@@ -152,7 +154,7 @@ class LLMService:
                 loop.run_in_executor(None, self.provider.health_check),
                 timeout=15.0,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("Health check timed out for %s", self.provider.get_info().provider_name)
             return False
         except Exception as e:
@@ -176,7 +178,9 @@ class LLMService:
         Call initialize() first, or this will lazily health-check.
         """
         if not self._initialized:
-            logger.warning("LLMService.get_chat_model() called before initialize() — checking health lazily")
+            logger.warning(
+                "LLMService.get_chat_model() called before initialize() — checking health lazily"
+            )
             if not self.provider.health_check():
                 raise ProviderUnavailableError(
                     f"LLM provider '{self.provider.get_info().provider_name}' is not available."
@@ -227,7 +231,7 @@ class LLMService:
                 loop.run_in_executor(None, _wrapped),
                 timeout=effective_timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(
                 "LLM invocation timed out after %.1fs (provider=%s, model=%s)",
                 effective_timeout,
@@ -237,12 +241,12 @@ class LLMService:
             raise LLMTimeoutError(
                 f"LLM call timed out after {effective_timeout:.0f}s with "
                 f"provider '{self.provider.get_info().provider_name}'"
-            )
+            ) from None
         except tenacity.RetryError as e:
             logger.error("LLM invocation failed after %d retries: %s", effective_retries, e)
             raise LLMMaxRetriesExceededError(
                 f"LLM call failed after {effective_retries} retries: {e}"
-            )
+            ) from e
         except Exception as e:
             logger.error("LLM invocation unexpected error: %s", e)
             raise LLMServiceError(f"LLM invocation failed: {e}") from e

@@ -3,7 +3,7 @@
 # SQLAlchemy 2.0 async with PostgreSQL
 # ============================================================
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,

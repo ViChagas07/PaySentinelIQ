@@ -12,23 +12,9 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.shared.base_model import Base
-from app.shared.settings import get_settings
 
 # Import all ORM models so Alembic can detect them
-from app.shared.orm_models import (
-    TenantModel,
-    UserModel,
-    RefreshTokenModel,
-    EmployeeModel,
-    PayrollModel,
-    DocumentModel,
-    VerificationReportModel,
-    FraudAlertModel,
-    ComplianceReportModel,
-    AuditLogModel,
-    NotificationModel,
-    RiskScoreModel,
-)
+from app.shared.settings import get_settings
 
 settings = get_settings()
 

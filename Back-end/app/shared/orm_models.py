@@ -5,7 +5,6 @@
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import (
     Boolean,
@@ -17,17 +16,16 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.base_model import Base, SoftDeleteMixin
 
-
 # ============================================================
 # Tenant / Company
 # ============================================================
+
 
 class TenantModel(Base):
     __tablename__ = "tenants"
@@ -46,6 +44,7 @@ class TenantModel(Base):
 # Users & Roles
 # ============================================================
 
+
 class UserModel(Base):
     __tablename__ = "users"
 
@@ -57,16 +56,20 @@ class UserModel(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(50), nullable=False, default="viewer")
     mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
-    mfa_secret: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    mfa_secret: Mapped[str | None] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    last_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # Relationships
     tenant: Mapped["TenantModel"] = relationship(back_populates="users")
 
     __table_args__ = (
-        CheckConstraint("role IN ('super_admin','compliance_analyst','fraud_analyst','hr_manager','auditor','payroll_manager','viewer')", name="chk_user_role"),
+        CheckConstraint(
+            "role IN ('super_admin','compliance_analyst','fraud_analyst',"
+            "'hr_manager','auditor','payroll_manager','viewer')",
+            name="chk_user_role",
+        ),
     )
 
 
@@ -85,6 +88,7 @@ class RefreshTokenModel(Base):
 # Employees
 # ============================================================
 
+
 class EmployeeModel(Base):
     __tablename__ = "employees"
 
@@ -99,7 +103,7 @@ class EmployeeModel(Base):
     hire_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="active")
     risk_score: Mapped[float] = mapped_column(Float, default=0.0)
-    tax_id_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    tax_id_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (
         CheckConstraint("salary > 0", name="chk_salary_positive"),
@@ -111,6 +115,7 @@ class EmployeeModel(Base):
 # ============================================================
 # Payrolls
 # ============================================================
+
 
 class PayrollModel(Base, SoftDeleteMixin):
     __tablename__ = "payrolls"
@@ -146,6 +151,7 @@ class PayrollModel(Base, SoftDeleteMixin):
 # Documents
 # ============================================================
 
+
 class DocumentModel(Base, SoftDeleteMixin):
     __tablename__ = "documents"
 
@@ -161,13 +167,14 @@ class DocumentModel(Base, SoftDeleteMixin):
     s3_key: Mapped[str] = mapped_column(String(500), nullable=False)
     s3_bucket: Mapped[str] = mapped_column(String(200), nullable=False)
     ocr_status: Mapped[str] = mapped_column(String(30), default="pending")
-    ocr_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    extracted_fields: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    ocr_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    extracted_fields: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     __table_args__ = (
         CheckConstraint("file_size_bytes > 0", name="chk_file_size_positive"),
         CheckConstraint(
-            "document_type IN ('payroll_report','tax_form','timesheet','employment_contract','bank_statement','identity_document','compliance_report')",
+            "document_type IN ('payroll_report','tax_form','timesheet',"
+            "'employment_contract','bank_statement','identity_document','compliance_report')",
             name="chk_document_type",
         ),
     )
@@ -176,6 +183,7 @@ class DocumentModel(Base, SoftDeleteMixin):
 # ============================================================
 # Verification Reports
 # ============================================================
+
 
 class VerificationReportModel(Base):
     __tablename__ = "verification_reports"
@@ -191,9 +199,9 @@ class VerificationReportModel(Base):
     extracted_fields: Mapped[dict] = mapped_column(JSONB, default=dict)
     metadata_analysis: Mapped[dict] = mapped_column(JSONB, default=dict)
     fraud_indicators: Mapped[list] = mapped_column(JSONB, default=list)
-    ocr_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    ai_explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    ocr_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ai_explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         CheckConstraint(
@@ -207,6 +215,7 @@ class VerificationReportModel(Base):
 # Fraud Alerts
 # ============================================================
 
+
 class FraudAlertModel(Base):
     __tablename__ = "fraud_alerts"
 
@@ -216,7 +225,7 @@ class FraudAlertModel(Base):
     document_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("documents.id"), nullable=False, index=True
     )
-    verification_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    verification_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("verification_reports.id"), nullable=True
     )
     risk_level: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
@@ -224,13 +233,13 @@ class FraudAlertModel(Base):
     ai_confidence: Mapped[float] = mapped_column(Float, nullable=False)
     anomaly_category: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    ai_explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    ai_explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
     flagged_fields: Mapped[list] = mapped_column(JSONB, default=list)
     status: Mapped[str] = mapped_column(String(30), default="new", index=True)
-    assigned_to: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assigned_to: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
     )
-    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         CheckConstraint("risk_score >= 0 AND risk_score <= 100", name="chk_fraud_risk_score"),
@@ -240,7 +249,8 @@ class FraudAlertModel(Base):
             name="chk_fraud_risk_level",
         ),
         CheckConstraint(
-            "status IN ('new','under_review','escalated','confirmed_fraud','false_positive','resolved')",
+            "status IN ('new','under_review','escalated',"
+            "'confirmed_fraud','false_positive','resolved')",
             name="chk_fraud_alert_status",
         ),
     )
@@ -249,6 +259,7 @@ class FraudAlertModel(Base):
 # ============================================================
 # Compliance Reports
 # ============================================================
+
 
 class ComplianceReportModel(Base):
     __tablename__ = "compliance_reports"
@@ -260,12 +271,12 @@ class ComplianceReportModel(Base):
     entity_type: Mapped[str] = mapped_column(String(20), nullable=False)
     verification_status: Mapped[str] = mapped_column(String(30), default="unverified")
     risk_level: Mapped[str] = mapped_column(String(20), default="low")
-    public_records_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    lawsuit_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    public_records_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    lawsuit_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     sanctions_check: Mapped[bool] = mapped_column(Boolean, default=False)
     pep_check: Mapped[bool] = mapped_column(Boolean, default=False)
     adverse_media: Mapped[list] = mapped_column(JSONB, default=list)
-    last_checked: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_checked: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         CheckConstraint(
@@ -279,13 +290,14 @@ class ComplianceReportModel(Base):
 # Audit Logs (Immutable — Append Only)
 # ============================================================
 
+
 class AuditLogModel(Base):
     __tablename__ = "audit_logs"
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
     )
-    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
     user_name: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -293,8 +305,8 @@ class AuditLogModel(Base):
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
     entity_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     details: Mapped[dict] = mapped_column(JSONB, default=dict)
-    ip_address: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    user_agent: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    ip_address: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     __table_args__ = (
         # NO UPDATE/DELETE — immutable by design
@@ -304,6 +316,7 @@ class AuditLogModel(Base):
 # ============================================================
 # Notifications
 # ============================================================
+
 
 class NotificationModel(Base):
     __tablename__ = "notifications"
@@ -318,11 +331,12 @@ class NotificationModel(Base):
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
-    action_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    action_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     __table_args__ = (
         CheckConstraint(
-            "type IN ('fraud_alert','verification_complete','compliance_alert','system','ai_insight')",
+            "type IN ('fraud_alert','verification_complete',"
+            "'compliance_alert','system','ai_insight')",
             name="chk_notification_type",
         ),
     )
@@ -331,6 +345,7 @@ class NotificationModel(Base):
 # ============================================================
 # Risk Scores (Historical)
 # ============================================================
+
 
 class RiskScoreModel(Base):
     __tablename__ = "risk_scores"
@@ -345,7 +360,7 @@ class RiskScoreModel(Base):
     fraud_weight: Mapped[float] = mapped_column(Float, default=0.0)
     compliance_weight: Mapped[float] = mapped_column(Float, default=0.0)
     verification_weight: Mapped[float] = mapped_column(Float, default=0.0)
-    explanation: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    explanation: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     __table_args__ = (
         CheckConstraint("risk_score >= 0 AND risk_score <= 100", name="chk_risk_score"),
@@ -357,11 +372,16 @@ class RiskScoreModel(Base):
 # User Settings / Preferences
 # ============================================================
 
+
 class UserSettingsModel(Base):
     __tablename__ = "user_settings"
 
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+        index=True,
     )
     # Appearance
     theme: Mapped[str] = mapped_column(String(20), default="dark")
@@ -385,7 +405,7 @@ class UserSettingsModel(Base):
     desktop_alerts: Mapped[bool] = mapped_column(Boolean, default=False)
     sound_alerts: Mapped[bool] = mapped_column(Boolean, default=False)
     alert_threshold: Mapped[int] = mapped_column(Integer, default=70)
-    fraud_alert_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    fraud_alert_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     digest_frequency: Mapped[str] = mapped_column(String(20), default="daily")
     # Account
     timezone: Mapped[str] = mapped_column(String(50), default="America/Sao_Paulo")
@@ -393,5 +413,7 @@ class UserSettingsModel(Base):
     developer_mode: Mapped[bool] = mapped_column(Boolean, default=False)
 
     __table_args__ = (
-        CheckConstraint("alert_threshold >= 0 AND alert_threshold <= 100", name="chk_alert_threshold"),
+        CheckConstraint(
+            "alert_threshold >= 0 AND alert_threshold <= 100", name="chk_alert_threshold"
+        ),
     )

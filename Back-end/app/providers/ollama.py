@@ -52,9 +52,11 @@ class OllamaProvider(BaseLLMProvider):
         # Prefer the newer official langchain_ollama package if available
         try:
             from langchain_ollama import ChatOllama  # type: ignore[import-untyped]
+
             logger.info("Using langchain_ollama.ChatOllama (official package)")
         except ImportError:
             from langchain_community.chat_models import ChatOllama  # type: ignore[import-untyped]
+
             logger.info("Using langchain_community.chat_models.ChatOllama (fallback)")
 
         kwargs: dict[str, Any] = {
@@ -114,8 +116,7 @@ class OllamaProvider(BaseLLMProvider):
             # Match model name (handles tags like "llama3:latest", "llama3:8b", etc.)
             model_base = self.config.model.split(":")[0]
             is_available = any(
-                m == self.config.model or m.startswith(f"{model_base}:")
-                for m in available_models
+                m == self.config.model or m.startswith(f"{model_base}:") for m in available_models
             )
 
             if not is_available:

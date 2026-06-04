@@ -3,56 +3,60 @@
 # Persists user preferences (theme, notifications, accessibility)
 # ============================================================
 
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 
-from app.auth.dependencies import get_current_user_id, get_current_tenant_id
+from app.auth.dependencies import get_current_tenant_id, get_current_user_id
 
 router = APIRouter()
 
 
 class UserSettingsRequest(BaseModel):
     """User preferences schema matching front-end SettingsState."""
+
     model_config = ConfigDict(strict=True)
 
     # Appearance
-    theme: Optional[str] = Field(default=None, pattern="^(dark|light|system)$")
-    primary_color: Optional[str] = Field(default=None, pattern="^(blue|green|purple|orange|red|teal)$")
-    background_color: Optional[str] = Field(default=None, pattern="^(navy|charcoal|slate|midnight|espresso|forest)$")
-    bold_text: Optional[bool] = None
-    font_size: Optional[str] = Field(default=None, pattern="^(small|medium|large|xlarge)$")
-    element_size: Optional[str] = Field(default=None, pattern="^(compact|comfortable|spacious)$")
+    theme: str | None = Field(default=None, pattern="^(dark|light|system)$")
+    primary_color: str | None = Field(default=None, pattern="^(blue|green|purple|orange|red|teal)$")
+    background_color: str | None = Field(
+        default=None, pattern="^(navy|charcoal|slate|midnight|espresso|forest)$"
+    )
+    bold_text: bool | None = None
+    font_size: str | None = Field(default=None, pattern="^(small|medium|large|xlarge)$")
+    element_size: str | None = Field(default=None, pattern="^(compact|comfortable|spacious)$")
 
     # Language
-    locale: Optional[str] = None
+    locale: str | None = None
 
     # Accessibility
-    high_contrast: Optional[bool] = None
-    screen_reader_optimized: Optional[bool] = None
-    keyboard_nav: Optional[bool] = None
-    focus_indicator: Optional[bool] = None
-    dyslexia_font: Optional[bool] = None
-    reduced_motion: Optional[bool] = None
+    high_contrast: bool | None = None
+    screen_reader_optimized: bool | None = None
+    keyboard_nav: bool | None = None
+    focus_indicator: bool | None = None
+    dyslexia_font: bool | None = None
+    reduced_motion: bool | None = None
 
     # Notifications
-    email_alerts: Optional[bool] = None
-    push_notifications: Optional[bool] = None
-    desktop_alerts: Optional[bool] = None
-    sound_alerts: Optional[bool] = None
-    alert_threshold: Optional[int] = Field(default=None, ge=0, le=100)
-    fraud_alert_email: Optional[str] = None
-    digest_frequency: Optional[str] = Field(default=None, pattern="^(daily|weekly|monthly|never)$")
+    email_alerts: bool | None = None
+    push_notifications: bool | None = None
+    desktop_alerts: bool | None = None
+    sound_alerts: bool | None = None
+    alert_threshold: int | None = Field(default=None, ge=0, le=100)
+    fraud_alert_email: str | None = None
+    digest_frequency: str | None = Field(default=None, pattern="^(daily|weekly|monthly|never)$")
 
     # Account
-    timezone: Optional[str] = None
+    timezone: str | None = None
 
     # Developer
-    developer_mode: Optional[bool] = None
+    developer_mode: bool | None = None
 
 
 class UserSettingsResponse(BaseModel):
     """Full user settings response."""
+
     model_config = ConfigDict(strict=True)
 
     # Appearance

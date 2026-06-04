@@ -5,7 +5,7 @@
 
 import json
 from collections.abc import AsyncGenerator
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as aioredis
 from redis.asyncio import Redis
@@ -15,7 +15,7 @@ from app.shared.settings import get_settings
 
 settings = get_settings()
 
-redis_pool: Optional[Redis] = None
+redis_pool: Redis | None = None
 
 
 async def get_redis() -> Redis:
@@ -42,7 +42,7 @@ class RedisCache:
     """Async Redis cache helper."""
 
     @staticmethod
-    async def get(key: str) -> Optional[Any]:
+    async def get(key: str) -> Any | None:
         client = await get_redis()
         value = await client.get(key)
         if value is not None:
@@ -53,7 +53,7 @@ class RedisCache:
         return None
 
     @staticmethod
-    async def set(key: str, value: Any, ttl: Optional[int] = None) -> None:
+    async def set(key: str, value: Any, ttl: int | None = None) -> None:
         client = await get_redis()
         ttl = ttl or settings.REDIS_CACHE_TTL
         data = json.dumps(value, default=str)

@@ -3,7 +3,7 @@
 # Custom tools for fraud detection, OCR processing, compliance checks
 # ============================================================
 
-from typing import Any, Optional
+from typing import Any
 
 from langchain_core.tools import tool
 
@@ -35,7 +35,10 @@ def analyze_payroll_discrepancy(
     return {
         "deviation_sigma": round(deviation, 2),
         "risk": risk,
-        "detail": f"Salary is {deviation:.1f} standard deviations {'above' if deviation > 0 else 'below'} median",
+        "detail": (
+            f"Salary is {deviation:.1f} standard deviations "
+            f"{'above' if deviation > 0 else 'below'} median"
+        ),
     }
 
 
@@ -93,6 +96,7 @@ def analyze_metadata_integrity(
 
     # Check modification gap
     from datetime import datetime
+
     try:
         created = datetime.fromisoformat(file_created.replace("Z", "+00:00"))
         modified = datetime.fromisoformat(file_modified.replace("Z", "+00:00"))

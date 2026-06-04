@@ -4,11 +4,12 @@
 # ============================================================
 
 import uuid
+from datetime import datetime
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.shared.orm_models import UserModel, TenantModel
+from app.shared.orm_models import EmployeeModel, TenantModel
 from app.shared.repository import BaseRepository
 
 
@@ -36,30 +37,74 @@ async def test_create_tenant(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_tenant_isolation(db_session: AsyncSession):
-    """Test that get_all filters by tenant_id."""
-    repo = BaseRepository(TenantModel, db_session)
+    """Test that get_all filters by tenant_id using EmployeeModel (has tenant_id FK)."""
+    tenant_repo = BaseRepository(TenantModel, db_session)
+    employee_repo = BaseRepository(EmployeeModel, db_session)
 
     tenant1_id = uuid.uuid4()
     tenant2_id = uuid.uuid4()
 
-    await repo.add(TenantModel(id=tenant1_id, name="Tenant 1", slug="t1"))
-    await repo.add(TenantModel(id=tenant2_id, name="Tenant 2", slug="t2"))
+    await tenant_repo.add(TenantModel(id=tenant1_id, name="Tenant 1", slug="t1"))
+    await tenant_repo.add(TenantModel(id=tenant2_id, name="Tenant 2", slug="t2"))
 
-    results = await repo.get_all(tenant1_id)
-    assert len(results) == 1
-    assert results[0].name == "Tenant 1"
+    now = datetime.now()
+    emp1 = EmployeeModel(
+        id=uuid.uuid4(),
+        tenant_id=tenant1_id,
+        full_name="Emp 1",
+        email="e1@t1.com",
+        department="Engineering",
+        position="Developer",
+        salary=100000.0,
+        hire_date=now,
+    )
+    emp2 = EmployeeModel(
+        id=uuid.uuid4(),
+        tenant_id=tenant2_id,
+        full_name="Emp 2",
+        email="e2@t2.com",
+        department="Engineering",
+        position="Developer",
+        salary=90000.0,
+        hire_date=now,
+    )
+    await employee_repo.add(emp1)
+    await employee_repo.add(emp2)
+
+    # EmployeeModel has tenant_id, so filtering must return only
+    # the employee belonging to the requested tenant
+    results_t1 = await employee_repo.get_all(tenant1_id)
+    assert len(results_t1) == 1
+    assert results_t1[0].full_name == "Emp 1"
+
+    results_t2 = await employee_repo.get_all(tenant2_id)
+    assert len(results_t2) == 1
+    assert results_t2[0].full_name == "Emp 2"
 
 
 @pytest.mark.asyncio
 async def test_count_records(db_session: AsyncSession):
-    """Test repository count method."""
-    repo = BaseRepository(TenantModel, db_session)
+    """Test repository count method — uses EmployeeModel for proper tenant_id filtering."""
+    tenant_repo = BaseRepository(TenantModel, db_session)
+    employee_repo = BaseRepository(EmployeeModel, db_session)
+
     tenant_id = uuid.uuid4()
+    await tenant_repo.add(TenantModel(id=tenant_id, name="Test", slug="test"))
 
-    await repo.add(TenantModel(id=uuid.uuid4(), name="A", slug="a", **{"tenant_id": tenant_id} if False else {}))
-    await repo.add(TenantModel(id=uuid.uuid4(), name="B", slug="b"))
+    now = datetime.now()
+    for i in range(3):
+        emp = EmployeeModel(
+            id=uuid.uuid4(),
+            tenant_id=tenant_id,
+            full_name=f"Emp {i}",
+            email=f"e{i}@test.com",
+            department="Engineering",
+            position="Developer",
+            salary=80000.0,
+            hire_date=now,
+        )
+        await employee_repo.add(emp)
 
-    # Count works but note: TenantModel doesn't have tenant_id as FK to itself
-    # This is just a structural test
-    count = await repo.count(uuid.uuid4())
+    count = await employee_repo.count(tenant_id)
+    assert count == 3
     assert isinstance(count, int)

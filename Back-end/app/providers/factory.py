@@ -94,7 +94,9 @@ def _resolve_llm_config() -> LLMConfig:
 
     settings = get_settings()
     return LLMConfig(
-        model=settings.OLLAMA_MODEL if settings.LLM_PROVIDER == ProviderType.OLLAMA.value else settings.OPENAI_MODEL,
+        model=settings.OLLAMA_MODEL
+        if ProviderType.OLLAMA.value == settings.LLM_PROVIDER
+        else settings.OPENAI_MODEL,
         temperature=settings.AI_TEMPERATURE,
         max_tokens=settings.AI_MAX_TOKENS,
         timeout=settings.OLLAMA_TIMEOUT,
@@ -102,7 +104,7 @@ def _resolve_llm_config() -> LLMConfig:
     )
 
 
-@lru_cache()
+@lru_cache
 def get_llm_provider() -> BaseLLMProvider:
     """
     Get or create the configured LLM provider (singleton, cached).
@@ -126,11 +128,7 @@ def get_llm_provider() -> BaseLLMProvider:
         if settings.OLLAMA_NUM_THREAD is not None:
             extra_kwargs["num_thread"] = settings.OLLAMA_NUM_THREAD
     elif provider_type == ProviderType.OPENAI:
-        api_key = (
-            settings.OPENAI_API_KEY.get_secret_value()
-            if settings.OPENAI_API_KEY
-            else None
-        )
+        api_key = settings.OPENAI_API_KEY.get_secret_value() if settings.OPENAI_API_KEY else None
         if not api_key:
             raise ValueError(
                 "OPENAI_API_KEY is required when LLM_PROVIDER is 'openai'. "
@@ -156,7 +154,7 @@ def get_llm() -> Any:
     return provider.get_chat_model()
 
 
-@lru_cache()
+@lru_cache
 def get_crewai_llm() -> Any:
     """
     Return a CrewAI-compatible LLM object from the configured provider.
@@ -168,7 +166,7 @@ def get_crewai_llm() -> Any:
     Returns None if the provider cannot be resolved (graceful fallback).
     """
     try:
-        from crewai.llm import LLM as CrewAILLM
+        from crewai.llm import LLM as CrewAILLM  # noqa: N811
     except ImportError:
         logger.warning("crewai not installed — cannot create CrewAI LLM")
         return None
@@ -188,11 +186,7 @@ def get_crewai_llm() -> Any:
         )
 
     if provider_type == ProviderType.OPENAI.value:
-        api_key = (
-            settings.OPENAI_API_KEY.get_secret_value()
-            if settings.OPENAI_API_KEY
-            else None
-        )
+        api_key = settings.OPENAI_API_KEY.get_secret_value() if settings.OPENAI_API_KEY else None
         if not api_key:
             logger.warning("OPENAI_API_KEY not set — cannot create CrewAI LLM for OpenAI")
             return None
