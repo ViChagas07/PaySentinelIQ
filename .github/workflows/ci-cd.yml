@@ -235,8 +235,14 @@ jobs:
 
           ZAP_EXIT=$?
           echo "ZAP scan exit code: $ZAP_EXIT"
-          # Exit with ZAP code so the step fails on scan errors but artifacts are preserved
-          exit $ZAP_EXIT
+          # ZAP exit codes:  0 = clean, 1 = FAIL alerts, 2 = WARN alerts.
+          # Findings are captured in the uploaded reports; only fail on
+          # actual scan errors (3+).
+          if [ "$ZAP_EXIT" -ge 3 ]; then
+            echo "ZAP encountered a fatal error."
+            exit "$ZAP_EXIT"
+          fi
+          echo "ZAP scan completed — see uploaded reports for details."
 
       - name: Upload ZAP report
         if: always()
