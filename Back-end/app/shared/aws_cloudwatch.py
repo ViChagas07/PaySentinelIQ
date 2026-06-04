@@ -4,7 +4,7 @@
 # ============================================================
 
 import os
-from typing import Any
+from typing import Any, cast
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -67,7 +67,7 @@ def put_log_event(
                 },
             ],
         )
-        return response
+        return cast(dict[str, Any], response)
     except (ClientError, BotoCoreError) as exc:
         raise ServiceError(f"Falha ao enviar log para CloudWatch: {exc}") from exc
 

@@ -4,6 +4,8 @@
 # ============================================================
 
 
+from typing import Any
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -95,14 +97,14 @@ class UserSettingsResponse(BaseModel):
 
 
 # ── In-memory settings store (production: PostgreSQL or Redis) ──
-_user_settings: dict[str, dict] = {}
+_user_settings: dict[str, dict[str, Any]] = {}
 
 
-def _get_defaults() -> dict:
+def _get_defaults() -> dict[str, Any]:
     return UserSettingsResponse().model_dump()
 
 
-def _get_or_create_settings(user_id: str) -> dict:
+def _get_or_create_settings(user_id: str) -> dict[str, Any]:
     if user_id not in _user_settings:
         _user_settings[user_id] = _get_defaults()
     return _user_settings[user_id]
@@ -112,7 +114,7 @@ def _get_or_create_settings(user_id: str) -> dict:
 async def get_settings(
     user_id: str = Depends(get_current_user_id),
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> UserSettingsResponse:
     """Get current user preferences/settings."""
     settings = _get_or_create_settings(user_id)
     return UserSettingsResponse(**settings)
@@ -123,7 +125,7 @@ async def update_settings(
     body: UserSettingsRequest,
     user_id: str = Depends(get_current_user_id),
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> UserSettingsResponse:
     """Update user preferences. Only provided fields are changed."""
     current = _get_or_create_settings(user_id)
 
@@ -140,7 +142,7 @@ async def update_settings(
 async def reset_settings(
     user_id: str = Depends(get_current_user_id),
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> UserSettingsResponse:
     """Reset all user preferences to defaults."""
     defaults = _get_defaults()
     _user_settings[user_id] = defaults

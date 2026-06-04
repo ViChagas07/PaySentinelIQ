@@ -152,7 +152,7 @@ def _parse_linha_digitavel(linha: str) -> dict[str, Any]:
     }
 
 
-def _validate_campo_dvs(parsed: dict) -> list[dict[str, Any]]:
+def _validate_campo_dvs(parsed: dict[str, Any]) -> list[dict[str, Any]]:
     """Validate the internal DVs of each campo in the linha digitável."""
     anomalies = []
 
@@ -201,7 +201,7 @@ def _validate_campo_dvs(parsed: dict) -> list[dict[str, Any]]:
     return anomalies
 
 
-def _reconstruct_barcode(parsed: dict) -> str:
+def _reconstruct_barcode(parsed: dict[str, Any]) -> str:
     """Reconstruct the 44-digit barcode from linha digitável fields."""
     banco = parsed["banco"]
     moeda = parsed["moeda"]
@@ -223,7 +223,7 @@ def _reconstruct_barcode(parsed: dict) -> str:
     # For simplicity, use the common reconstruction:
     campo_livre = campo1[4:] + campo2 + campo3
 
-    barcode = banco + moeda + dv_geral + fator + valor + campo_livre
+    barcode = str(banco) + str(moeda) + dv_geral + str(fator) + str(valor) + str(campo_livre)
     return barcode
 
 
@@ -401,7 +401,7 @@ def _parse_emv_payload(payload: str) -> dict[str, Any]:
     Parse a Pix EMV QR Code payload according to Banco Central do Brasil specification.
     EMV format: ID (2 digits) + Length (2 digits) + Value (variable)
     """
-    result = {}
+    result: dict[str, Any] = {}
     i = 0
     payload_len = len(payload)
 
@@ -455,7 +455,7 @@ def _parse_emv_payload(payload: str) -> dict[str, Any]:
 
 def _parse_merchant_account(data: str) -> dict[str, Any]:
     """Parse merchant account information (tag 26) with sub-tags."""
-    result = {}
+    result: dict[str, Any] = {}
     i = 0
     data_len = len(data)
 
@@ -490,7 +490,7 @@ def _parse_merchant_account(data: str) -> dict[str, Any]:
 
 def _parse_additional_data(data: str) -> dict[str, Any]:
     """Parse additional data field (tag 62) with sub-tags."""
-    result = {}
+    result: dict[str, Any] = {}
     i = 0
     data_len = len(data)
 

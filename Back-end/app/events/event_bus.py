@@ -65,7 +65,7 @@ class EventBus:
 # ── Decorator for auto-subscribing handlers ──
 
 
-def event_handler(event_type: str):
+def event_handler(event_type: str) -> Callable[[EventHandler], EventHandler]:
     """Decorator to register a function as an event handler."""
 
     def decorator(func: EventHandler) -> EventHandler:

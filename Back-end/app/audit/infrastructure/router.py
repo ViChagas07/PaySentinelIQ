@@ -3,6 +3,8 @@
 # ============================================================
 
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, Query
 
 from app.auth.dependencies import get_current_tenant_id, require_auditor
@@ -243,25 +245,25 @@ def _filter_audit_logs(
     entity_type: str | None = None,
     from_date: str | None = None,
     to_date: str | None = None,
-) -> list[dict]:
-    result = _MOCK_AUDIT_LOGS
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = _MOCK_AUDIT_LOGS
     if action:
         result = [rec for rec in result if rec["action"] == action]
     if user_id:
         result = [rec for rec in result if rec["user_id"] == user_id]
     if entity_type:
         result = [rec for rec in result if rec["entity_type"] == entity_type]
-    if from_date:
-        result = [rec for rec in result if rec["created_at"] >= from_date]
-    if to_date:
-        result = [rec for rec in result if rec["created_at"] <= to_date]
+    if from_date is not None:
+        result = [rec for rec in result if str(rec.get("created_at", "")) >= from_date]
+    if to_date is not None:
+        result = [rec for rec in result if str(rec.get("created_at", "")) <= to_date]
     return result
 
 
 @router.get("")
 async def list_audit_logs(
     tenant_id: str = Depends(get_current_tenant_id),
-    payload: dict = Depends(require_auditor),
+    payload: dict[str, Any] = Depends(require_auditor),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     action: str | None = None,
@@ -269,7 +271,7 @@ async def list_audit_logs(
     entity_type: str | None = None,
     from_date: str | None = None,
     to_date: str | None = None,
-):
+) -> dict[str, Any]:
     """
     List immutable audit log entries.
     Read-only — audit logs are append-only by design.

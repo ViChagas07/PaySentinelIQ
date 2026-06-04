@@ -19,7 +19,7 @@ class ConnectionManager:
     Bridges Redis pub/sub messages to connected WebSocket clients.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # channel_name -> set of WebSocket connections
         self._connections: dict[str, set[WebSocket]] = {
             "alerts": set(),
@@ -77,7 +77,7 @@ ws_manager = ConnectionManager()
 
 
 @router.websocket("/alerts")
-async def ws_alerts(websocket: WebSocket):
+async def ws_alerts(websocket: WebSocket) -> None:
     """
     Live fraud alerts channel.
     Pushes new fraud alerts to connected analysts in real-time.
@@ -110,7 +110,7 @@ async def ws_alerts(websocket: WebSocket):
 
 
 @router.websocket("/verification")
-async def ws_verification(websocket: WebSocket):
+async def ws_verification(websocket: WebSocket) -> None:
     """
     Verification progress channel.
     Streams real-time OCR and AI analysis progress for active documents.
@@ -140,7 +140,7 @@ async def ws_verification(websocket: WebSocket):
 
 
 @router.websocket("/analytics")
-async def ws_analytics(websocket: WebSocket):
+async def ws_analytics(websocket: WebSocket) -> None:
     """
     Analytics channel.
     Pushes dashboard metric updates and risk score changes in real-time.
@@ -175,7 +175,7 @@ async def ws_analytics(websocket: WebSocket):
 
 
 @router.websocket("/notifications")
-async def ws_notifications(websocket: WebSocket):
+async def ws_notifications(websocket: WebSocket) -> None:
     """
     Notification channel.
     Pushes user-specific notifications in real-time.

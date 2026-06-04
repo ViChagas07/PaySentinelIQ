@@ -4,6 +4,7 @@
 # ============================================================
 
 import os
+from typing import cast
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -75,7 +76,7 @@ def download_file(filename: str) -> bytes:
 
     try:
         response = s3.get_object(Bucket=BUCKET_NAME, Key=filename)
-        return response["Body"].read()
+        return cast(bytes, response["Body"].read())
     except (ClientError, BotoCoreError) as exc:
         raise ServiceError(f"Falha ao baixar arquivo do S3: {exc}") from exc
 

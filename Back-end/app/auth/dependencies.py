@@ -4,6 +4,8 @@
 # ============================================================
 
 
+from typing import Any
+
 from fastapi import Depends, Header, Request
 from fastapi.security import OAuth2PasswordBearer
 
@@ -32,7 +34,7 @@ async def get_current_user_id(
         raise AuthenticationError("Authentication required")
 
     payload = AuthService.verify_access_token(token)
-    return payload["sub"]
+    return str(payload["sub"])
 
 
 async def get_current_tenant_id(
@@ -51,7 +53,7 @@ async def get_current_tenant_id(
         raise AuthenticationError("Authentication required")
 
     payload = AuthService.verify_access_token(token)
-    return payload["tenant_id"]
+    return str(payload["tenant_id"])
 
 
 async def get_current_user_role(
@@ -70,7 +72,7 @@ async def get_current_user_role(
         raise AuthenticationError("Authentication required")
 
     payload = AuthService.verify_access_token(token)
-    return payload["role"]
+    return str(payload["role"])
 
 
 # ── Composite dependency: full token payload ──
@@ -79,7 +81,7 @@ async def get_current_user_role(
 async def get_token_payload(
     request: Request,
     authorization: str | None = Header(None),
-) -> dict:
+) -> dict[str, Any]:
     """Extract full JWT payload for comprehensive auth context."""
     token = None
     if authorization and authorization.startswith("Bearer "):
@@ -97,10 +99,10 @@ async def get_token_payload(
 # ── RBAC Dependency Factory ──
 
 
-def require_roles(*allowed_roles: str):
+def require_roles(*allowed_roles: str) -> Any:
     """Factory that creates a dependency requiring specific roles."""
 
-    async def role_checker(payload: dict = Depends(get_token_payload)) -> dict:  # noqa: B008
+    async def role_checker(payload: dict[str, Any] = Depends(get_token_payload)) -> dict[str, Any]:  # noqa: B008
         user_role = payload.get("role")
         if user_role not in allowed_roles:
             raise AuthorizationError(

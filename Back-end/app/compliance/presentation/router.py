@@ -3,6 +3,8 @@
 # ============================================================
 
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict
 
@@ -12,7 +14,7 @@ router = APIRouter()
 
 # ── Rich mock compliance data ──
 
-_MOCK_COMPLIANCE_RECORDS = [
+_MOCK_COMPLIANCE_RECORDS: list[dict[str, Any]] = [
     {
         "id": "comp-001",
         "tenant_id": "t1",
@@ -184,15 +186,18 @@ class ComplianceResponse(BaseModel):
     public_records_summary: str | None = None
     sanctions_check: bool = False
     pep_check: bool = False
-    adverse_media: list = []
+    adverse_media: list[str] = []
     last_checked: str | None = None
 
 
-def _filter_compliance(entity_type: str | None = None) -> list[dict]:
-    result = _MOCK_COMPLIANCE_RECORDS
+def _filter_compliance(entity_type: str | None = None) -> list[dict[str, Any]]:
     if entity_type:
-        result = [r for r in result if r["entity_type"] == entity_type]
-    return result
+        result: list[dict[str, Any]] = []
+        for r in _MOCK_COMPLIANCE_RECORDS:
+            if isinstance(r, dict) and r.get("entity_type") == entity_type:
+                result.append(r)
+        return result
+    return _MOCK_COMPLIANCE_RECORDS
 
 
 @router.get("")
@@ -201,7 +206,7 @@ async def list_compliance_records(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     entity_type: str | None = None,
-):
+) -> dict[str, Any]:
     """List compliance records for the tenant."""
     filtered = _filter_compliance(entity_type)
     total = len(filtered)
@@ -221,10 +226,10 @@ async def list_compliance_records(
 async def get_compliance_record(
     compliance_id: str,
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> ComplianceResponse:
     """Get a single compliance record."""
     for record in _MOCK_COMPLIANCE_RECORDS:
-        if record["id"] == compliance_id:
+        if isinstance(record, dict) and record.get("id") == compliance_id:
             return ComplianceResponse(**record)
 
     return ComplianceResponse(
@@ -244,9 +249,9 @@ async def get_compliance_record(
 async def trigger_compliance_check(
     entity_id: str,
     entity_type: str = "company",
-    payload: dict = Depends(require_compliance_officer),
+    payload: dict[str, Any] = Depends(require_compliance_officer),
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> dict[str, Any]:
     """
     Trigger a compliance check for an entity.
     Emits ComplianceCheckTriggeredEvent.

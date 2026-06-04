@@ -3,6 +3,7 @@
 # ============================================================
 
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict
@@ -145,7 +146,7 @@ async def list_notifications(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     unread_only: bool = False,
-):
+) -> dict[str, Any]:
     """List notifications for the current user."""
     notifications = _MOCK_NOTIFICATIONS
     if unread_only:
@@ -166,7 +167,7 @@ async def list_notifications(
 @router.get("/unread-count")
 async def get_unread_count(
     user_id: str = Depends(get_current_user_id),
-):
+) -> dict[str, Any]:
     """Get count of unread notifications."""
     unread = sum(1 for n in _MOCK_NOTIFICATIONS if not n["is_read"])
     return {"count": unread}
@@ -176,12 +177,12 @@ async def get_unread_count(
 async def mark_as_read(
     notification_id: str,
     user_id: str = Depends(get_current_user_id),
-):
+) -> dict[str, Any]:
     """Mark a notification as read."""
     return {"status": "read", "notification_id": notification_id}
 
 
 @router.post("/read-all")
-async def mark_all_read(user_id: str = Depends(get_current_user_id)):
+async def mark_all_read(user_id: str = Depends(get_current_user_id)) -> dict[str, Any]:
     """Mark all notifications as read."""
     return {"status": "all_read"}

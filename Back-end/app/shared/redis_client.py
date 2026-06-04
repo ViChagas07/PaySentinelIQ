@@ -5,7 +5,7 @@
 
 import json
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Any, cast
 
 import redis.asyncio as aioredis
 from redis.asyncio import Redis
@@ -22,7 +22,7 @@ async def get_redis() -> Redis:
     """Dependency injection for Redis connection."""
     global redis_pool
     if redis_pool is None:
-        redis_pool = aioredis.from_url(
+        redis_pool = aioredis.from_url(  # type: ignore[no-untyped-call]
             settings.REDIS_URL,
             decode_responses=True,
             max_connections=50,
@@ -86,7 +86,7 @@ class RedisPubSub:
         client = await get_redis()
         full_channel = f"{RedisPubSub.CHANNEL_PREFIX}:{channel}"
         payload = json.dumps(message, default=str)
-        return await client.publish(full_channel, payload)
+        return cast(int, await client.publish(full_channel, payload))
 
     @staticmethod
     async def subscribe(channel: str) -> PubSub:

@@ -3,6 +3,8 @@
 # ============================================================
 
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict
 
@@ -213,7 +215,7 @@ class EmployeeResponse(BaseModel):
 
 class PaginatedResponse(BaseModel):
     model_config = ConfigDict(strict=True)
-    data: list
+    data: list[Any]
     total: int
     page: int
     page_size: int
@@ -224,21 +226,21 @@ def _filter_employees(
     status: str | None = None,
     department: str | None = None,
     search: str | None = None,
-) -> list[dict]:
-    result = _MOCK_EMPLOYEES
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = _MOCK_EMPLOYEES
     if status:
         result = [e for e in result if e["status"] == status]
     if department:
-        result = [e for e in result if e["department"].lower() == department.lower()]
+        result = [e for e in result if str(e.get("department", "")).lower() == department.lower()]
     if search:
         s = search.lower()
         result = [
             e
             for e in result
-            if s in e["full_name"].lower()
-            or s in e["email"].lower()
-            or s in e["department"].lower()
-            or s in e["position"].lower()
+            if s in str(e.get("full_name", "")).lower()
+            or s in str(e.get("email", "")).lower()
+            or s in str(e.get("department", "")).lower()
+            or s in str(e.get("position", "")).lower()
         ]
     return result
 
@@ -251,7 +253,7 @@ async def list_employees(
     status: str | None = None,
     department: str | None = None,
     search: str | None = None,
-):
+) -> dict[str, Any]:
     """List employees for the current tenant with optional filters."""
     filtered = _filter_employees(status, department, search)
     total = len(filtered)
@@ -271,11 +273,11 @@ async def list_employees(
 async def get_employee(
     employee_id: str,
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> EmployeeResponse:
     """Get a single employee by ID."""
     for emp in _MOCK_EMPLOYEES:
         if emp["id"] == employee_id:
-            return EmployeeResponse(**emp)
+            return EmployeeResponse(**emp)  # type: ignore[arg-type]
     raise NotFoundError("Employee", employee_id)
 
 
@@ -283,9 +285,12 @@ async def get_employee(
 async def get_department_stats(
     department: str,
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> dict[str, Any]:
     """Get aggregate stats for a department."""
-    dept_employees = [e for e in _MOCK_EMPLOYEES if e["department"].lower() == department.lower()]
+    dept_employees: list[dict[str, Any]] = [
+        e for e in _MOCK_EMPLOYEES
+        if str(e.get("department", "")).lower() == department.lower()
+    ]
     if not dept_employees:
         return {
             "department": department,
@@ -295,9 +300,9 @@ async def get_department_stats(
             "active_count": 0,
         }
 
-    avg_salary = sum(e["salary"] for e in dept_employees) / len(dept_employees)
-    avg_risk = sum(e["risk_score"] for e in dept_employees) / len(dept_employees)
-    active = sum(1 for e in dept_employees if e["status"] == "active")
+    avg_salary = sum(float(e["salary"]) for e in dept_employees) / len(dept_employees)
+    avg_risk = sum(float(e["risk_score"]) for e in dept_employees) / len(dept_employees)
+    active = sum(1 for e in dept_employees if str(e.get("status", "")) == "active")
 
     return {
         "department": department,

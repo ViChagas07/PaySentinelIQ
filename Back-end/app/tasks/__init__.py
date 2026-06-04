@@ -45,17 +45,17 @@ celery_app.conf.update(
 )
 
 
-@task_prerun.connect
+@task_prerun.connect  # type: ignore[untyped-decorator]
 def task_prerun_handler(task_id: str, task: Any, **kwargs: Any) -> None:
     logger.info("Task starting: %s [%s]", task.name, task_id)
 
 
-@task_success.connect
+@task_success.connect  # type: ignore[untyped-decorator]
 def task_success_handler(sender: Any, result: Any, **kwargs: Any) -> None:
     logger.info("Task completed: %s", sender.name)
 
 
-@task_failure.connect
+@task_failure.connect  # type: ignore[untyped-decorator]
 def task_failure_handler(sender: Any, exception: Exception, **kwargs: Any) -> None:
     logger.error("Task failed: %s — %s", sender.name, str(exception))
 
@@ -65,14 +65,14 @@ def task_failure_handler(sender: Any, exception: Exception, **kwargs: Any) -> No
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     bind=True,
     max_retries=3,
     default_retry_delay=60,
     autoretry_for=(Exception,),
     name="analyze_document",
 )
-def analyze_document(self, document_id: str, tenant_id: str) -> dict[str, Any]:
+def analyze_document(self: Any, document_id: str, tenant_id: str) -> dict[str, Any]:
     """
     Full document analysis pipeline:
     1. OCR extraction
@@ -165,13 +165,13 @@ def _emit_analyst_alert(
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     bind=True,
     max_retries=2,
     default_retry_delay=30,
     name="run_ocr_pipeline",
 )
-def run_ocr_pipeline(self, document_id: str, tenant_id: str) -> dict[str, Any]:
+def run_ocr_pipeline(self: Any, document_id: str, tenant_id: str) -> dict[str, Any]:
     """
     Execute OCR extraction (AWS Textract in production).
     Currently returns structured mock data for testing the pipeline.
@@ -220,13 +220,13 @@ def run_ocr_pipeline(self, document_id: str, tenant_id: str) -> dict[str, Any]:
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     bind=True,
     max_retries=2,
     default_retry_delay=120,
     name="run_fraud_analysis",
 )
-def run_fraud_analysis(self, document_id: str, tenant_id: str) -> dict[str, Any]:
+def run_fraud_analysis(self: Any, document_id: str, tenant_id: str) -> dict[str, Any]:
     """
     Execute the full fraud detection pipeline (7-stage deterministic + CrewAI LLM).
     """
@@ -289,14 +289,14 @@ def run_fraud_analysis(self, document_id: str, tenant_id: str) -> dict[str, Any]
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     bind=True,
     max_retries=3,
     default_retry_delay=60,
     name="calculate_risk_score",
 )
 def calculate_risk_score(
-    self,
+    self: Any,
     document_id: str,
     tenant_id: str,
     fraud_signals: list[dict[str, Any]],
@@ -359,14 +359,14 @@ def calculate_risk_score(
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     bind=True,
     max_retries=2,
     default_retry_delay=300,
     name="run_compliance_check",
 )
 def run_compliance_check(
-    self,
+    self: Any,
     entity_id: str,
     tenant_id: str,
     entity_type: str = "document",
@@ -401,14 +401,14 @@ def run_compliance_check(
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     bind=True,
     max_retries=1,
     default_retry_delay=30,
     name="generate_payroll",
 )
 def generate_payroll(
-    self,
+    self: Any,
     employee_id: str,
     tenant_id: str,
     period_start: str,
@@ -456,13 +456,13 @@ def generate_payroll(
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     bind=True,
     max_retries=2,
     default_retry_delay=120,
     name="generate_ai_report",
 )
-def generate_ai_report(self, document_id: str, tenant_id: str) -> dict[str, Any]:
+def generate_ai_report(self: Any, document_id: str, tenant_id: str) -> dict[str, Any]:
     """Generate AI-powered fraud analysis report."""
     logger.info("Generating AI report for document: %s", document_id)
 

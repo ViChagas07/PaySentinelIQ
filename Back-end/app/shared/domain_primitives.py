@@ -6,7 +6,7 @@
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import NewType
+from typing import Any, NewType
 
 # ── Strongly-typed IDs ──
 
@@ -105,7 +105,7 @@ class Money:
     amount: float
     currency: str = "USD"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.amount < 0:
             raise ValueError("Money amount cannot be negative")
 
@@ -122,7 +122,7 @@ class Money:
             raise ValueError("Money cannot be negative")
         return Money(result, self.currency)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {"amount": self.amount, "currency": self.currency}
 
 
@@ -133,7 +133,7 @@ class RiskScore:
     value: float
     confidence: float  # AI confidence 0-1
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not 0 <= self.value <= 100:
             raise ValueError("Risk score must be between 0 and 100")
         if not 0 <= self.confidence <= 1:
@@ -166,7 +166,7 @@ class TaxId:
     value: str
     id_type: str = "SSN"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.value or len(self.value) < 4:
             raise ValueError("Tax ID must have at least 4 characters")
 

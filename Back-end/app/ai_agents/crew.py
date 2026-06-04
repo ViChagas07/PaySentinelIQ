@@ -162,11 +162,11 @@ class AIAgentCrew:
     complete results — the LLM layer is purely additive.
     """
 
-    _tools: list = field(default_factory=list, init=False)
+    _tools: list[Any] = field(default_factory=list, init=False)
     _llm: Any = field(default=None, init=False)
     _llm_available: bool = field(default=False, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Attempt to initialize the CrewAI-compatible LLM from the configured provider
         self._llm = None
         self._llm_available = False

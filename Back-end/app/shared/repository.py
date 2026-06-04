@@ -52,7 +52,7 @@ class BaseRepository(AbstractRepository[ModelType]):
         self._session = session
 
     async def get_by_id(self, id: uuid.UUID) -> ModelType | None:
-        stmt = select(self._model).where(self._model.id == id)
+        stmt = select(self._model).where(self._model.id == id)  # type: ignore[attr-defined]
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -63,13 +63,13 @@ class BaseRepository(AbstractRepository[ModelType]):
         limit: int = 100,
         **filters: Any,
     ) -> Sequence[ModelType]:
-        stmt = select(self._model).where(self._model.tenant_id == tenant_id)
+        stmt = select(self._model).where(self._model.tenant_id == tenant_id)  # type: ignore[attr-defined]
 
         for field, value in filters.items():
             if value is not None and hasattr(self._model, field):
                 stmt = stmt.where(getattr(self._model, field) == value)
 
-        stmt = stmt.offset(skip).limit(limit).order_by(self._model.created_at.desc())
+        stmt = stmt.offset(skip).limit(limit).order_by(self._model.created_at.desc())  # type: ignore[attr-defined]
         result = await self._session.execute(stmt)
         return result.scalars().all()
 
@@ -93,7 +93,7 @@ class BaseRepository(AbstractRepository[ModelType]):
 
     async def count(self, tenant_id: uuid.UUID, **filters: Any) -> int:
         stmt = (
-            select(func.count()).select_from(self._model).where(self._model.tenant_id == tenant_id)
+            select(func.count()).select_from(self._model).where(self._model.tenant_id == tenant_id)  # type: ignore[attr-defined]
         )
         for field, value in filters.items():
             if value is not None and hasattr(self._model, field):

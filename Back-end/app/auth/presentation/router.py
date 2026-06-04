@@ -4,6 +4,7 @@
 # ============================================================
 
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -60,7 +61,7 @@ class UserResponse(BaseModel):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(request: Request, body: LoginRequest):
+async def login(request: Request, body: LoginRequest) -> TokenResponse:
     """
     Authenticate user. If MFA is enabled, returns a temporary session token
     instead of full access/refresh tokens.
@@ -93,7 +94,7 @@ async def login(request: Request, body: LoginRequest):
 
 
 @router.post("/mfa/verify", response_model=TokenResponse)
-async def verify_mfa(body: MFAVerifyRequest):
+async def verify_mfa(body: MFAVerifyRequest) -> TokenResponse:
     """
     Verify MFA code and issue full access/refresh tokens.
     """
@@ -120,7 +121,7 @@ async def verify_mfa(body: MFAVerifyRequest):
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(body: TokenRefreshRequest):
+async def refresh_token(body: TokenRefreshRequest) -> TokenResponse:
     """
     Exchange a valid refresh token for a new access/refresh token pair.
     Implements refresh token rotation.
@@ -152,7 +153,7 @@ async def refresh_token(body: TokenRefreshRequest):
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user(payload: dict = Depends(get_token_payload)):
+async def get_current_user(payload: dict[str, Any] = Depends(get_token_payload)) -> UserResponse:
     """
     Return the currently authenticated user's profile.
     """
@@ -167,7 +168,7 @@ async def get_current_user(payload: dict = Depends(get_token_payload)):
 
 
 @router.post("/logout")
-async def logout(payload: dict = Depends(get_token_payload)):
+async def logout(payload: dict[str, Any] = Depends(get_token_payload)) -> dict[str, Any]:
     """
     Logout: revoke all refresh tokens for this user.
     """

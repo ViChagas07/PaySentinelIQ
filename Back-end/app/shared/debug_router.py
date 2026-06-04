@@ -6,6 +6,7 @@
 
 import logging
 import math
+from typing import Any, Literal
 
 import sentry_sdk
 from fastapi import APIRouter, HTTPException, Query
@@ -16,7 +17,7 @@ router = APIRouter()
 
 
 @router.get("/debug-sentry/check", tags=["Debug"])
-async def sentry_status_check():
+async def sentry_status_check() -> dict[str, Any]:
     """
     Check whether Sentry SDK is initialized and provide its current config.
 
@@ -28,7 +29,7 @@ async def sentry_status_check():
 
     return {
         "sentry_initialized": client is not None and client.is_active(),
-        "environment": sentry_sdk.get_current_scope()._scope.get("environment"),
+        "environment": str(sentry_sdk.get_current_scope()._scope.get("environment")),  # type: ignore[attr-defined]
         "dsn_masked": str(dsn)[:30] + "..." if dsn else None,
         "sdk_version": sentry_sdk.consts.VERSION,
     }
@@ -42,7 +43,7 @@ async def trigger_unhandled_exception(
             "Type of unhandled error: zero_division, value_error, index_error, or key_error"
         ),
     ),
-):
+) -> dict[str, Any]:
     """
     ⚠️ TRIGGER an unhandled exception to verify Sentry captures it.
 
@@ -59,7 +60,7 @@ async def trigger_unhandled_exception(
     elif error_type == "index_error":
         _ = [1, 2, 3][99]  # IndexError
     elif error_type == "key_error":
-        _ = {}["nonexistent_key"]  # KeyError
+        _ = {}["nonexistent_key"]  # type: ignore[index]  # KeyError
     else:
         raise HTTPException(
             status_code=400,
@@ -73,7 +74,7 @@ async def trigger_unhandled_exception(
 
 
 @router.get("/debug-sentry/trigger-handled", tags=["Debug"])
-async def trigger_handled_exception():
+async def trigger_handled_exception() -> dict[str, Any]:
     """
     Intentionally raises a handled exception caught by our domain error handler.
 
@@ -103,14 +104,14 @@ async def capture_custom_message(
     level: str = Query(
         default="info", description="Sentry level: debug, info, warning, error, fatal"
     ),
-):
+) -> dict[str, Any]:
     """
     Send a custom message/event to Sentry at the specified severity level.
 
     Useful to verify that the Sentry transport is working correctly
     without triggering an actual error in the application.
     """
-    level_map = {
+    level_map: dict[str, Literal["debug", "info", "warning", "error", "fatal"]] = {
         "debug": "debug",
         "info": "info",
         "warning": "warning",
@@ -142,7 +143,7 @@ async def capture_custom_message(
 @router.get("/debug-sentry/performance", tags=["Debug"])
 async def performance_test(
     iterations: int = Query(default=10, ge=1, le=100),
-):
+) -> dict[str, Any]:
     """
     Simulate a span of work for Sentry performance monitoring.
 

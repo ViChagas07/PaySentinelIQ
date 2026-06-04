@@ -5,7 +5,6 @@
 
 import logging
 import uuid
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
@@ -138,7 +137,7 @@ class FraudDetectionPipeline:
 
     def __init__(self, enable_ai_agents: bool = True):
         self.enable_ai_agents = enable_ai_agents
-        self.tool_registry: dict[str, Callable] = {}
+        self.tool_registry: dict[str, Any] = {}
         self._register_tools()
 
     def _register_tools(self) -> None:
@@ -539,9 +538,9 @@ class FraudDetectionPipeline:
             duration_ms=duration,
         )
 
-    def _validate_boleto(self, data: dict, anomalies: list[Anomaly]) -> dict[str, Any]:
+    def _validate_boleto(self, data: dict[str, Any], anomalies: list[Anomaly]) -> dict[str, Any]:
         """Boleto structural validation sub-pipeline."""
-        extracted = {}
+        extracted: dict[str, Any] = {}
 
         linha = data.get("linha_digitavel", "")
         barcode_val = data.get("barcode_value", "")
@@ -609,9 +608,11 @@ class FraudDetectionPipeline:
 
         return extracted
 
-    def _validate_contracheque(self, data: dict, anomalies: list[Anomaly]) -> dict[str, Any]:
+    def _validate_contracheque(
+        self, data: dict[str, Any], anomalies: list[Anomaly]
+    ) -> dict[str, Any]:
         """Contracheque/Holerite structural validation sub-pipeline."""
-        extracted = {}
+        extracted: dict[str, Any] = {}
 
         salario_bruto = data.get("salario_bruto", 0)
         inss_printed = data.get("inss", data.get("inss_printed", 0))

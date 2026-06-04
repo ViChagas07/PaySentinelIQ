@@ -5,7 +5,7 @@
 
 import json
 import os
-from typing import Any
+from typing import Any, cast
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -50,6 +50,6 @@ def send_event(event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
                 }
             ),
         )
-        return response
+        return cast(dict[str, Any], response)
     except (ClientError, BotoCoreError) as exc:
         raise ServiceError(f"Falha ao enviar mensagem para SQS: {exc}") from exc

@@ -5,6 +5,7 @@
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -33,7 +34,7 @@ class TenantModel(Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
     plan: Mapped[str] = mapped_column(String(50), default="starter")
-    features: Mapped[dict] = mapped_column(JSONB, default=dict)
+    features: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     # Relationships
@@ -131,7 +132,7 @@ class PayrollModel(Base, SoftDeleteMixin):
     gross_pay: Mapped[float] = mapped_column(Float, nullable=False)
     net_pay: Mapped[float] = mapped_column(Float, nullable=False)
     tax_withheld: Mapped[float] = mapped_column(Float, default=0.0)
-    deductions: Mapped[dict] = mapped_column(JSONB, default=dict)
+    deductions: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
     risk_score: Mapped[float] = mapped_column(Float, default=0.0)
     verified_by_ai: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -168,16 +169,7 @@ class DocumentModel(Base, SoftDeleteMixin):
     s3_bucket: Mapped[str] = mapped_column(String(200), nullable=False)
     ocr_status: Mapped[str] = mapped_column(String(30), default="pending")
     ocr_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
-    extracted_fields: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-
-    __table_args__ = (
-        CheckConstraint("file_size_bytes > 0", name="chk_file_size_positive"),
-        CheckConstraint(
-            "document_type IN ('payroll_report','tax_form','timesheet',"
-            "'employment_contract','bank_statement','identity_document','compliance_report')",
-            name="chk_document_type",
-        ),
-    )
+    extracted_fields: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
 
 # ============================================================
@@ -196,9 +188,9 @@ class VerificationReportModel(Base):
     )
     status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
     risk_score: Mapped[float] = mapped_column(Float, default=0.0)
-    extracted_fields: Mapped[dict] = mapped_column(JSONB, default=dict)
-    metadata_analysis: Mapped[dict] = mapped_column(JSONB, default=dict)
-    fraud_indicators: Mapped[list] = mapped_column(JSONB, default=list)
+    extracted_fields: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    metadata_analysis: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    fraud_indicators: Mapped[list[Any]] = mapped_column(JSONB, default=list)
     ocr_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     ai_explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -234,7 +226,7 @@ class FraudAlertModel(Base):
     anomaly_category: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     ai_explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
-    flagged_fields: Mapped[list] = mapped_column(JSONB, default=list)
+    flagged_fields: Mapped[list[Any]] = mapped_column(JSONB, default=list)
     status: Mapped[str] = mapped_column(String(30), default="new", index=True)
     assigned_to: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
@@ -275,7 +267,7 @@ class ComplianceReportModel(Base):
     lawsuit_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     sanctions_check: Mapped[bool] = mapped_column(Boolean, default=False)
     pep_check: Mapped[bool] = mapped_column(Boolean, default=False)
-    adverse_media: Mapped[list] = mapped_column(JSONB, default=list)
+    adverse_media: Mapped[list[Any]] = mapped_column(JSONB, default=list)
     last_checked: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
@@ -304,7 +296,7 @@ class AuditLogModel(Base):
     action: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
     entity_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    details: Mapped[dict] = mapped_column(JSONB, default=dict)
+    details: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     ip_address: Mapped[str | None] = mapped_column(String(50), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
@@ -360,7 +352,7 @@ class RiskScoreModel(Base):
     fraud_weight: Mapped[float] = mapped_column(Float, default=0.0)
     compliance_weight: Mapped[float] = mapped_column(Float, default=0.0)
     verification_weight: Mapped[float] = mapped_column(Float, default=0.0)
-    explanation: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    explanation: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     __table_args__ = (
         CheckConstraint("risk_score >= 0 AND risk_score <= 100", name="chk_risk_score"),

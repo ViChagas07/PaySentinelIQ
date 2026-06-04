@@ -3,6 +3,8 @@
 # ============================================================
 
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -295,19 +297,22 @@ class PayrollCreateRequest(BaseModel):
     period_end: str
     gross_pay: float = Field(gt=0)
     tax_withheld: float = Field(ge=0)
-    deductions: list[dict] | None = None
+    deductions: list[dict[str, Any]] | None = None
 
 
 class PaginatedResponse(BaseModel):
     model_config = ConfigDict(strict=True)
-    data: list
+    data: list[Any]
     total: int
     page: int
     page_size: int
     total_pages: int
 
 
-def _filter_payrolls(status: str | None = None, employee_id: str | None = None) -> list[dict]:
+def _filter_payrolls(
+    status: str | None = None,
+    employee_id: str | None = None,
+) -> list[dict[str, Any]]:
     result = _MOCK_PAYROLLS
     if status:
         result = [p for p in result if p["status"] == status]
@@ -323,7 +328,7 @@ async def list_payrolls(
     page_size: int = Query(20, ge=1, le=100),
     status: str | None = None,
     employee_id: str | None = None,
-):
+) -> PaginatedResponse:
     """List payrolls for the current tenant with optional filters."""
     filtered = _filter_payrolls(status, employee_id)
     total = len(filtered)
@@ -343,20 +348,20 @@ async def list_payrolls(
 async def get_payroll(
     payroll_id: str,
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> PayrollResponse:
     """Get a single payroll by ID."""
     for p in _MOCK_PAYROLLS:
         if p["id"] == payroll_id:
-            return PayrollResponse(**p)
+            return PayrollResponse(**p)  # type: ignore[arg-type]
     raise NotFoundError("Payroll", payroll_id)
 
 
 @router.post("", response_model=PayrollResponse, status_code=201)
 async def create_payroll(
     body: PayrollCreateRequest,
-    payload: dict = Depends(require_hr_or_payroll),
+    payload: dict[str, Any] = Depends(require_hr_or_payroll),
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> PayrollResponse:
     """Create a new payroll entry."""
     return PayrollResponse(
         id="mock-id",
@@ -376,8 +381,8 @@ async def create_payroll(
 @router.patch("/{payroll_id}/approve")
 async def approve_payroll(
     payroll_id: str,
-    payload: dict = Depends(require_hr_or_payroll),
+    payload: dict[str, Any] = Depends(require_hr_or_payroll),
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> dict[str, Any]:
     """Approve a payroll. Emits PayrollApprovedEvent."""
     return {"status": "approved", "payroll_id": payroll_id}

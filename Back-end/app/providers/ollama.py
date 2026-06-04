@@ -50,13 +50,16 @@ class OllamaProvider(BaseLLMProvider):
             return self._chat_model
 
         # Prefer the newer official langchain_ollama package if available
+        chat_ollama_cls: Any
         try:
-            from langchain_ollama import ChatOllama  # type: ignore[import-untyped]
+            from langchain_ollama import ChatOllama as _OfficialChatOllama
 
+            chat_ollama_cls = _OfficialChatOllama
             logger.info("Using langchain_ollama.ChatOllama (official package)")
         except ImportError:
-            from langchain_community.chat_models import ChatOllama  # type: ignore[import-untyped]
+            from langchain_community.chat_models import ChatOllama as _FallbackChatOllama
 
+            chat_ollama_cls = _FallbackChatOllama
             logger.info("Using langchain_community.chat_models.ChatOllama (fallback)")
 
         kwargs: dict[str, Any] = {
@@ -78,7 +81,7 @@ class OllamaProvider(BaseLLMProvider):
         # Timeout for streaming (non-streaming handled by httpx adapter)
         kwargs["timeout"] = self.config.timeout
 
-        self._chat_model = ChatOllama(**kwargs)
+        self._chat_model = chat_ollama_cls(**kwargs)
         logger.info(
             "Ollama chat model initialized: model=%s, base_url=%s",
             self.config.model,

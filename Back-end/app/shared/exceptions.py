@@ -22,8 +22,10 @@ class PSIDomainError(Exception):
 
 
 class AuthenticationError(PSIDomainError):
-    def __init__(self, message: str = "Authentication failed"):
-        super().__init__(message, code="AUTHENTICATION_ERROR")
+    def __init__(
+        self, message: str = "Authentication failed", details: dict[str, Any] | None = None
+    ) -> None:
+        super().__init__(message, code="AUTHENTICATION_ERROR", details=details)
 
 
 class AuthorizationError(PSIDomainError):
@@ -32,12 +34,12 @@ class AuthorizationError(PSIDomainError):
 
 
 class InvalidCredentialsError(AuthenticationError):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("Invalid email or password")
 
 
 class TokenExpiredError(AuthenticationError):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("Token has expired")
 
 

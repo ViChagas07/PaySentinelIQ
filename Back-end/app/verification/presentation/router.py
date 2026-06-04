@@ -3,6 +3,8 @@
 # ============================================================
 
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, File, UploadFile
 from pydantic import BaseModel, ConfigDict
 
@@ -17,8 +19,8 @@ class VerificationResponse(BaseModel):
     document_id: str
     status: str
     risk_score: float
-    extracted_fields: dict = {}
-    fraud_indicators: list = []
+    extracted_fields: dict[str, Any] = {}
+    fraud_indicators: list[dict[str, Any]] = []
     ocr_confidence: float | None = None
     ai_explanation: str | None = None
 
@@ -35,8 +37,8 @@ class UploadResponse(BaseModel):
 async def upload_document(
     file: UploadFile = File(...),
     tenant_id: str = Depends(get_current_tenant_id),
-    payload: dict = Depends(require_fraud_analyst),
-):
+    payload: dict[str, Any] = Depends(require_fraud_analyst),
+) -> UploadResponse:
     """
     Upload a document for verification.
     Triggers async OCR + AI analysis pipeline via Celery.
@@ -61,7 +63,7 @@ async def upload_document(
 async def get_verification(
     verification_id: str,
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> VerificationResponse:
     """Get verification status and results."""
     return VerificationResponse(
         id=verification_id,
@@ -88,8 +90,8 @@ async def get_verification(
 async def trigger_verification(
     document_id: str,
     tenant_id: str = Depends(get_current_tenant_id),
-    payload: dict = Depends(require_fraud_analyst),
-):
+    payload: dict[str, Any] = Depends(require_fraud_analyst),
+) -> dict[str, Any]:
     """Manually trigger re-verification of a document."""
     # In production: trigger Celery task
     from app.tasks import analyze_document

@@ -5,6 +5,7 @@
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -109,7 +110,7 @@ def create_app() -> FastAPI:
 
     # ── Health Check ──
     @app.get("/health", tags=["Health"])
-    async def health_check():
+    async def health_check() -> dict[str, Any]:
         return {
             "status": "healthy",
             "version": settings.APP_VERSION,
@@ -117,7 +118,7 @@ def create_app() -> FastAPI:
         }
 
     @app.get("/health/llm", tags=["Health"])
-    async def llm_health_check():
+    async def llm_health_check() -> dict[str, Any]:
         """Return LLM provider status for monitoring/diagnostics."""
         try:
             from app.ai_agents.llm_service import get_llm_service

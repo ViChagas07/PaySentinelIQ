@@ -5,7 +5,7 @@
 
 import json
 import os
-from typing import Any
+from typing import Any, cast
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -49,6 +49,6 @@ def invoke_lambda(
             InvocationType=invocation_type,
             Payload=json.dumps(payload).encode("utf-8"),
         )
-        return response
+        return cast(dict[str, Any], response)
     except (ClientError, BotoCoreError) as exc:
         raise ServiceError(f"Falha ao invocar Lambda '{function_name}': {exc}") from exc

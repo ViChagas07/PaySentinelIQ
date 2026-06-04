@@ -6,6 +6,7 @@
 
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
@@ -29,7 +30,7 @@ class FraudAlertResponse(BaseModel):
     anomaly_category: str
     description: str
     ai_explanation: str | None = None
-    flagged_fields: list = []
+    flagged_fields: list[Any] = []
     status: str
     assigned_to: str | None = None
     created_at: str
@@ -68,7 +69,7 @@ async def _alerts_query(
     anomaly_category: str | None = None,
     skip: int = 0,
     limit: int = 20,
-):
+) -> list[FraudAlertModel]:
     """Build and execute a filtered fraud alerts query."""
     stmt = select(FraudAlertModel).where(FraudAlertModel.tenant_id == tenant_id)
     if risk_level:
@@ -79,10 +80,10 @@ async def _alerts_query(
         stmt = stmt.where(FraudAlertModel.anomaly_category == anomaly_category)
     stmt = stmt.order_by(FraudAlertModel.created_at.desc()).offset(skip).limit(limit)
     result = await db.execute(stmt)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
-def _alert_to_dict(alert: FraudAlertModel) -> dict:
+def _alert_to_dict(alert: FraudAlertModel) -> dict[str, Any]:
     """Convert a FraudAlertModel ORM instance to a dict matching the front-end schema."""
     flagged = []
     if alert.flagged_fields:
@@ -118,7 +119,7 @@ async def list_fraud_alerts(
     risk_level: str | None = None,
     status: str | None = None,
     anomaly_category: str | None = None,
-):
+) -> dict[str, Any]:
     """List fraud alerts with filtering. Returns real data from the database."""
     tid = uuid.UUID(tenant_id)
     skip = (page - 1) * page_size
@@ -151,7 +152,7 @@ async def list_fraud_alerts(
 async def analyze_document(
     body: DocumentAnalyzeRequest,
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> dict[str, Any]:
     """
     Submit a document for real-time 7-stage fraud analysis.
     Returns the complete PSI Fraud Analysis Report.
@@ -193,7 +194,7 @@ async def analyze_document(
 async def get_fraud_stats(
     tenant_id: str = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     """Get fraud alert counts by status from real user data."""
     tid = uuid.UUID(tenant_id)
 
@@ -229,7 +230,7 @@ async def get_fraud_alert(
     alert_id: str,
     tenant_id: str = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     """Get a single fraud alert with full details from the database."""
     tid = uuid.UUID(tenant_id)
     stmt = select(FraudAlertModel).where(
@@ -252,10 +253,10 @@ async def get_fraud_alert(
 async def resolve_fraud_alert(
     alert_id: str,
     body: FraudAlertResolveRequest,
-    payload: dict = Depends(require_fraud_analyst),
+    payload: dict[str, Any] = Depends(require_fraud_analyst),
     tenant_id: str = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     """Resolve a fraud alert in the database."""
     tid = uuid.UUID(tenant_id)
     stmt = select(FraudAlertModel).where(

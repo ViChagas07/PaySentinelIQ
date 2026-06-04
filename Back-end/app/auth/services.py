@@ -6,6 +6,7 @@
 import hashlib
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 
 import pyotp
 from jose import JWTError, jwt
@@ -31,11 +32,11 @@ class AuthService:
 
     @staticmethod
     def hash_password(password: str) -> str:
-        return pwd_context.hash(password)
+        return cast(str, pwd_context.hash(password))
 
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        return pwd_context.verify(plain_password, hashed_password)
+        return cast(bool, pwd_context.verify(plain_password, hashed_password))
 
     # ── JWT Token Generation ──
 
@@ -44,7 +45,7 @@ class AuthService:
         user_id: str,
         tenant_id: str,
         role: str,
-        extra_claims: dict | None = None,
+        extra_claims: dict[str, Any] | None = None,
     ) -> str:
         now = datetime.now(UTC)
         payload = {
@@ -59,11 +60,11 @@ class AuthService:
         if extra_claims:
             payload.update(extra_claims)
 
-        return jwt.encode(
+        return cast(str, jwt.encode(
             payload,
             settings.JWT_SECRET_KEY.get_secret_value(),
             algorithm=settings.JWT_ALGORITHM,
-        )
+        ))
 
     @staticmethod
     def create_refresh_token(user_id: str) -> tuple[str, str]:
@@ -77,32 +78,32 @@ class AuthService:
             "exp": now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
             "jti": jti,
         }
-        raw_token = jwt.encode(
+        raw_token = cast(str, jwt.encode(
             payload,
             settings.JWT_SECRET_KEY.get_secret_value(),
             algorithm=settings.JWT_ALGORITHM,
-        )
+        ))
         hashed_token = hashlib.sha256(raw_token.encode()).hexdigest()
         return raw_token, hashed_token
 
     # ── Token Verification ──
 
     @staticmethod
-    def decode_token(token: str) -> dict:
+    def decode_token(token: str) -> dict[str, Any]:
         try:
             payload = jwt.decode(
                 token,
                 settings.JWT_SECRET_KEY.get_secret_value(),
                 algorithms=[settings.JWT_ALGORITHM],
             )
-            return payload
+            return cast(dict[str, Any], payload)
         except JWTError as e:
             if "expired" in str(e).lower():
                 raise TokenExpiredError() from e
             raise AuthenticationError("Invalid token") from e
 
     @staticmethod
-    def verify_access_token(token: str) -> dict:
+    def verify_access_token(token: str) -> dict[str, Any]:
         payload = AuthService.decode_token(token)
         if payload.get("type") != "access":
             raise AuthenticationError("Invalid token type")
@@ -112,19 +113,19 @@ class AuthService:
 
     @staticmethod
     def generate_mfa_secret() -> str:
-        return pyotp.random_base32()
+        return cast(str, pyotp.random_base32())
 
     @staticmethod
     def get_mfa_uri(secret: str, email: str) -> str:
-        return pyotp.totp.TOTP(secret).provisioning_uri(
+        return cast(str, pyotp.totp.TOTP(secret).provisioning_uri(
             name=email,
             issuer_name=settings.MFA_ISSUER,
-        )
+        ))
 
     @staticmethod
     def verify_mfa_code(secret: str, code: str) -> bool:
         totp = pyotp.TOTP(secret)
-        return totp.verify(code)
+        return cast(bool, totp.verify(code))
 
     # ── RBAC Enforcement ──
 

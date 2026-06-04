@@ -5,6 +5,7 @@
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Any
 
 from app.shared.domain_primitives import UserRole
 
@@ -27,8 +28,8 @@ class User:
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
-    def verify_password(self, password: str, hasher) -> bool:
-        return hasher.verify(password, self.hashed_password)
+    def verify_password(self, password: str, hasher: Any) -> bool:
+        return bool(hasher.verify(password, self.hashed_password))
 
     def enable_mfa(self, secret: str) -> None:
         self.mfa_secret = secret

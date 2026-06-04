@@ -4,6 +4,7 @@
 # ============================================================
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
@@ -171,7 +172,7 @@ def _get_ai_response(message: str) -> tuple[str, list[str]]:
 async def ai_chat(
     body: ChatRequest,
     tenant_id: str = Depends(get_current_tenant_id),
-):
+) -> ChatResponse:
     """
     AI-powered chat assistant for payroll fraud & risk intelligence Q&A.
 
@@ -189,8 +190,8 @@ async def ai_chat(
         from app.ai_agents.llm_service import get_llm_service
 
         llm = await get_llm_service()
-        if llm.is_healthy():
-            llm_response = await llm.chat(
+        if llm.is_healthy():  # type: ignore[attr-defined]
+            llm_response = await llm.chat(  # type: ignore[attr-defined]
                 messages=[
                     {
                         "role": "system",
@@ -223,7 +224,7 @@ async def ai_chat(
 
 
 @router.get("/suggestions")
-async def get_chat_suggestions(tenant_id: str = Depends(get_current_tenant_id)):
+async def get_chat_suggestions(tenant_id: str = Depends(get_current_tenant_id)) -> dict[str, Any]:
     """Return suggested conversation starters for the AI Assistant."""
     return {
         "suggestions": [

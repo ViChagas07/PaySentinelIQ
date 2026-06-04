@@ -36,7 +36,7 @@ class OpenAIProvider(BaseLLMProvider):
         if self._chat_model is not None:
             return self._chat_model
 
-        from langchain_openai import ChatOpenAI  # type: ignore[import-untyped]
+        from langchain_openai import ChatOpenAI
 
         self._chat_model = ChatOpenAI(
             model=self.config.model,

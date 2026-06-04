@@ -5,6 +5,7 @@
 # No hardcoded/mock/dummy data.
 # ============================================================
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -28,7 +29,7 @@ router = APIRouter()
 async def get_dashboard_kpis(
     tenant_id: str = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     """Return KPI metrics based on real user activity for the given tenant."""
     tid = UUID(tenant_id)
 
@@ -109,7 +110,7 @@ async def get_dashboard_kpis(
 async def get_dashboard_trends(
     tenant_id: str = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[dict[str, Any]]:
     """Return monthly payroll verification trend data based on real user activity."""
     tid = UUID(tenant_id)
 
@@ -170,7 +171,7 @@ async def get_dashboard_trends(
 async def get_dashboard_heatmap(
     tenant_id: str = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[dict[str, Any]]:
     """Return department-level risk concentration based on real employee & fraud data."""
     tid = UUID(tenant_id)
 
@@ -235,7 +236,7 @@ async def get_dashboard_heatmap(
 async def get_dashboard_risk_distribution(
     tenant_id: str = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[dict[str, Any]]:
     """Return risk score distribution from real verification reports."""
     tid = UUID(tenant_id)
 
@@ -273,7 +274,7 @@ async def get_dashboard_risk_distribution(
 async def get_ai_insights(
     tenant_id: str = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     """Return AI-generated fraud insights based on real fraud alerts."""
     tid = UUID(tenant_id)
 
@@ -317,7 +318,7 @@ async def get_ai_insights(
 async def get_ai_insights_feed(
     tenant_id: str = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[dict[str, Any]]:
     """Return lightweight AI insights feed from real fraud alerts."""
     tid = UUID(tenant_id)
 
