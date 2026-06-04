@@ -6,11 +6,11 @@
 import asyncio
 from logging.config import fileConfig
 
+import alembic.context as context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-import alembic.context as context
 from app.shared.base_model import Base
 from app.shared.settings import get_settings
 
