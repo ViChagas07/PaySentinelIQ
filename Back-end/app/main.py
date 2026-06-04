@@ -3,6 +3,7 @@
 # Creates and configures the FastAPI app with all middleware, routers
 # ============================================================
 
+import logging
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
@@ -20,6 +21,7 @@ from app.shared.sentry import init_sentry
 from app.shared.settings import get_settings
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 # ── Sentry must be initialized BEFORE FastAPI app is created ──
 init_sentry()
@@ -28,8 +30,12 @@ init_sentry()
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifecycle: startup and shutdown."""
-    # Startup
-    await get_redis()  # Initialize Redis connection pool
+    # Startup — Initialize Redis (non-blocking — fails gracefully)
+    try:
+        await get_redis()
+        logger.info("Redis connection pool initialized")
+    except Exception as exc:
+        logger.warning("Redis initialization deferred: %s", exc)
 
     # Initialize LLM provider health check (non-blocking — fails gracefully)
     try:
@@ -37,9 +43,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
         llm_service = await get_llm_service()
         info = llm_service.get_info()
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.info(
             "LLM service initialized: provider=%s model=%s healthy=%s",
             info["provider"],
@@ -47,14 +50,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             info["healthy"],
         )
     except Exception as exc:
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.warning("LLM service initialization deferred: %s", exc)
 
     yield
     # Shutdown
-    await close_redis()
+    try:
+        await close_redis()
+    except Exception as exc:
+        logger.warning("Redis shutdown error (non-fatal): %s", exc)
     await engine.dispose()
 
 

@@ -1,0 +1,30 @@
+# ============================================================
+# PaySentinelIQ — Railway Configuration (Back-end)
+# ============================================================
+# Railway docs: https://docs.railway.com/deployments/monorepo
+# Railpack docs: https://railpack.com/languages/python
+#
+# IMPORTANTE: No dashboard do Railway, configure:
+#   Root Directory = Back-end/
+#
+# Isso faz com que o Railpack analise a pasta Back-end/
+# e detecte automaticamente Python + Poetry + FastAPI.
+# ============================================================
+
+[build]
+# O Railpack já detecta Python/Poetry automaticamente
+# via pyproject.toml + poetry.lock. Só precisamos
+# customizar o comando de build se necessário.
+# Por ora, deixamos o Railpack fazer o build padrão.
+# builder = "nixpacks"   # Desnecessário com Railpack
+
+[deploy]
+# Comando de start customizado para o padrão factory do FastAPI
+startCommand = "uvicorn app.main:create_app --factory --host 0.0.0.0 --port $PORT --workers 4"
+
+# Health check — Railway usa para verificar se o app subiu
+healthcheckPath = "/health"
+
+# Reinicialização automática em caso de falha
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
