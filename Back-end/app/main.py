@@ -108,6 +108,15 @@ def create_app() -> FastAPI:
             },
         )
 
+    # ── Root — returns 200 so ZAP spider / load balancers are happy ──
+    @app.get("/", tags=["Health"])
+    async def root() -> dict[str, Any]:
+        return {
+            "name": settings.APP_NAME,
+            "version": settings.APP_VERSION,
+            "environment": settings.ENVIRONMENT,
+        }
+
     # ── Health Check ──
     @app.get("/health", tags=["Health"])
     async def health_check() -> dict[str, Any]:

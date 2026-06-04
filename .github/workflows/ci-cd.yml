@@ -217,8 +217,12 @@ jobs:
           echo "API process is running (PID $API_PID)"
 
           # ── 4. Run ZAP baseline scan via Docker ──
-          # Mount workspace/Back-end so reports end up in the working-directory
-          # where the upload step expects them.
+          # Ensure the target dir is world-writable so the ZAP container
+          # (running as the `zap` user) can write reports.
+          TARGET_DIR="${{ github.workspace }}/Back-end"
+          mkdir -p "$TARGET_DIR"
+          chmod 777 "$TARGET_DIR"
+
           docker run \
             -v "${{ github.workspace }}/Back-end:/zap/wrk/:rw" \
             --network=host \
