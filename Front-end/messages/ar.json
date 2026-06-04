@@ -239,7 +239,11 @@
     "daysAgo": "قبل {count} يوم",
     "emptyInsights": "لا توجد رؤى بعد—قم برفع مستند لرؤية تحليل AI",
     "hoursAgo": "قبل {count} ساعة",
-    "justNow": "الآن"
+    "justNow": "الآن",
+    "dataUnavailable": "البيانات غير متوفرة",
+    "dataUnavailableDescription": "تعذر الاتصال بالخادم. إعادة المحاولة تلقائياً...",
+    "noData": "لا توجد بيانات بعد",
+    "noDataDescription": "ابدأ بمعالجة كشوف الرواتب وستظهر مقاييس لوحة التحكم هنا."
   },
   "settings": {
     "title": "الإعدادات",

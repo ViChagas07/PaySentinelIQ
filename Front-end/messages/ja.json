@@ -239,7 +239,11 @@
     "daysAgo": "{count}日前",
     "emptyInsights": "まだインサイトはありません—ドキュメントをアップロードしてAI分析をご確認ください",
     "hoursAgo": "{count}時間前",
-    "justNow": "たった今"
+    "justNow": "たった今",
+    "dataUnavailable": "データ利用不可",
+    "dataUnavailableDescription": "サーバーに接続できません。自動的に再試行しています...",
+    "noData": "データがまだありません",
+    "noDataDescription": "給与処理を開始すると、ダッシュボードのメトリクスがここに表示されます。"
   },
   "settings": {
     "title": "設定",

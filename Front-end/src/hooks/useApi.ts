@@ -285,6 +285,8 @@ export function useMarkNotificationRead() {
 // Dashboard Hooks
 // ============================================================
 
+const FAST_RETRY = { retry: 1, retryDelay: 500 } as const;
+
 export function useDashboardKpis() {
   return useQuery({
     queryKey: queryKeys.dashboard.kpis,
@@ -297,7 +299,10 @@ export function useDashboardKpis() {
         high_risk_docs: number;
         compliance_incidents: number;
       }>("/dashboard/kpis"),
-    refetchInterval: 30_000,
+    staleTime: 5_000,
+    refetchInterval: 10_000,
+    refetchOnMount: true,
+    ...FAST_RETRY,
   });
 }
 
@@ -308,7 +313,10 @@ export function useDashboardTrends() {
       api.get<Array<{ month: string; volume: number; verified: number; flagged: number; passRate: number }>>(
         "/dashboard/trends"
       ),
-    refetchInterval: 60_000,
+    staleTime: 8_000,
+    refetchInterval: 15_000,
+    refetchOnMount: true,
+    ...FAST_RETRY,
   });
 }
 
@@ -325,7 +333,10 @@ export function useDashboardHeatmap() {
           riskLevel: string;
         }>
       >("/dashboard/heatmap"),
-    refetchInterval: 60_000,
+    staleTime: 8_000,
+    refetchInterval: 15_000,
+    refetchOnMount: true,
+    ...FAST_RETRY,
   });
 }
 
@@ -340,7 +351,10 @@ export function useDashboardRiskDistribution() {
           color: string;
         }>
       >("/dashboard/risk-distribution"),
-    refetchInterval: 120_000,
+    staleTime: 10_000,
+    refetchInterval: 20_000,
+    refetchOnMount: true,
+    ...FAST_RETRY,
   });
 }
 

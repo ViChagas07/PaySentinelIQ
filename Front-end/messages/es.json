@@ -239,7 +239,11 @@
     "daysAgo": "hace {count}d",
     "emptyInsights": "Aún no hay información — suba un documento para ver el análisis de IA",
     "hoursAgo": "hace {count}h",
-    "justNow": "Ahora mismo"
+    "justNow": "Ahora mismo",
+    "dataUnavailable": "Datos no disponibles",
+    "dataUnavailableDescription": "No se pudo conectar al servidor. Reintentando automáticamente...",
+    "noData": "Sin datos aún",
+    "noDataDescription": "Comience a procesar nóminas y sus métricas aparecerán aquí."
   },
   "settings": {
     "title": "Configuración",

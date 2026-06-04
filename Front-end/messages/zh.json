@@ -239,7 +239,11 @@
     "daysAgo": "{count}天前",
     "emptyInsights": "暂无洞察—上传文档以查看AI分析",
     "hoursAgo": "{count}小时前",
-    "justNow": "刚刚"
+    "justNow": "刚刚",
+    "dataUnavailable": "数据不可用",
+    "dataUnavailableDescription": "无法连接到服务器。正在自动重试...",
+    "noData": "暂无数据",
+    "noDataDescription": "开始处理工资单，您的仪表板指标将显示在此处。"
   },
   "settings": {
     "title": "设置",

@@ -239,7 +239,11 @@
     "daysAgo": "il y a {count}j",
     "emptyInsights": "Pas encore d'informations — téléversez un document pour voir l'analyse IA",
     "hoursAgo": "il y a {count}h",
-    "justNow": "À l'instant"
+    "justNow": "À l'instant",
+    "dataUnavailable": "Données indisponibles",
+    "dataUnavailableDescription": "Impossible de se connecter au serveur. Nouvelle tentative automatique...",
+    "noData": "Pas encore de données",
+    "noDataDescription": "Commencez à traiter les paies et vos métriques apparaîtront ici."
   },
   "settings": {
     "title": "Paramètres",

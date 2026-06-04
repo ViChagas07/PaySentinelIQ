@@ -16,6 +16,7 @@ import { LazyPayrollTrendChart, LazyFraudHeatmap, LazyRiskDistributionChart, Laz
 import {
   DollarSign, ShieldCheck, AlertTriangle, Brain, Clock, Scale,
   FileWarning, ArrowUpRight, ArrowDownRight, Calendar, ChevronDown,
+  Database, WifiOff,
   type LucideIcon,
 } from "lucide-react";
 import { useDashboardKpis } from "@/hooks/useApi";
@@ -136,7 +137,7 @@ export default function DashboardPage() {
   const [open, setOpen] = useState(false);
 
   // ── Real KPI data from the API (user's actual activity) ──
-  const { data: kpis, isLoading: kpisLoading } = useDashboardKpis();
+  const { data: kpis, isLoading: kpisLoading, isError: kpisError, isSuccess: kpisSuccess } = useDashboardKpis();
 
   const periodLabels: Record<Period, string> = {
     lastWeek: t("lastWeek"),
@@ -312,20 +313,46 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Grid — sempre visível, mostra 0 quando não há dados do usuário */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {kpisLoading
-          ? Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-4">
-                  <div className="h-4 w-20 animate-pulse rounded bg-psi-border/50 mb-3" />
-                  <div className="h-8 w-16 animate-pulse rounded bg-psi-border/30 mb-2" />
-                  <div className="h-3 w-24 animate-pulse rounded bg-psi-border/30" />
-                </CardContent>
-              </Card>
-            ))
-          : kpiData.map((kpi, i) => (
-              <KpiCard key={kpi.label} kpi={kpi} index={i} />
-            ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+        {kpisLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <div className="h-4 w-20 animate-pulse rounded bg-psi-border/50 mb-3" />
+                <div className="h-8 w-16 animate-pulse rounded bg-psi-border/30 mb-2" />
+                <div className="h-3 w-24 animate-pulse rounded bg-psi-border/30" />
+              </CardContent>
+            </Card>
+          ))
+        ) : kpisError ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+            <div className="rounded-full bg-psi-fraud/10 p-4 mb-4">
+              <WifiOff className="h-8 w-8 text-psi-fraud" />
+            </div>
+            <p className="text-lg font-semibold text-psi-text-primary mb-1">
+              {t("dataUnavailable")}
+            </p>
+            <p className="text-sm text-psi-text-secondary max-w-md">
+              {t("dataUnavailableDescription")}
+            </p>
+          </div>
+        ) : !kpisSuccess ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+            <div className="rounded-full bg-psi-navy/50 p-4 mb-4">
+              <Database className="h-8 w-8 text-psi-text-secondary" />
+            </div>
+            <p className="text-lg font-semibold text-psi-text-primary mb-1">
+              {t("noData")}
+            </p>
+            <p className="text-sm text-psi-text-secondary max-w-md">
+              {t("noDataDescription")}
+            </p>
+          </div>
+        ) : (
+          kpiData.map((kpi, i) => (
+            <KpiCard key={kpi.label} kpi={kpi} index={i} />
+          ))
+        )}
       </div>
 
       {/* Main Content Grid: Chart + AI Feed */}

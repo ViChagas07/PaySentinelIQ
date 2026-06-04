@@ -54,11 +54,17 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
     ...extraHeaders,
   };
 
+  const timeoutSignal = AbortSignal.timeout(8_000);
+  const combinedSignal = rest.signal
+    ? AbortSignal.any([rest.signal, timeoutSignal])
+    : timeoutSignal;
+
   const response = await fetch(buildUrl(path, params), {
     ...rest,
     headers,
     body: body ? JSON.stringify(body) : undefined,
     credentials: "include",
+    signal: combinedSignal,
   });
 
   if (!response.ok) {
