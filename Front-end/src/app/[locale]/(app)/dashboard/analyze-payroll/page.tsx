@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { generateId } from "@/stores/analysis-store";
 
-function generateMockPayrollResult(fileName: string): AnalysisResult {
+function generateMockPayrollResult(fileName: string, locale: string): AnalysisResult {
   const riskScore = Math.floor(Math.random() * 100);
   return {
     id: generateId(),
@@ -68,10 +68,10 @@ export default function AnalyzePayrollPage() {
     if (files.length === 0 || isProcessing) return;
     clearResults(); startPipeline();
     setTimeout(() => {
-      const newResults = files.filter((f) => f.status === "done").map((f) => generateMockPayrollResult(f.name));
+      const newResults = files.filter((f) => f.status === "done").map((f) => generateMockPayrollResult(f.name, locale));
       newResults.forEach((r) => { addResult(r); addHistoryEntry({ id: r.id, fileName: r.fileName, documentType: "payroll", uploadDate: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" }), status: r.riskScore >= 70 ? "flagged" : "completed", riskScore: r.riskScore, processingDuration: r.processingDuration, aiSummary: r.aiSummary, resultId: r.id }); });
     }, 12000);
-  }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry]);
+  }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry, locale]);
 
   const showResults = results.length > 0 && !isProcessing && currentStage === "complete";
   const canAnalyze = files.filter((f) => f.status === "done").length > 0 && !isProcessing;

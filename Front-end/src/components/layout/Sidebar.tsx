@@ -297,6 +297,7 @@ function SidebarItem({
   isActive: boolean;
   collapsed: boolean;
 }) {
+  const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
 

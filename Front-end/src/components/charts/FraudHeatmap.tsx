@@ -86,7 +86,7 @@ export function FraudHeatmap() {
   }
 
   // Transform for bubble chart: X=payrolls, Y=riskScore, Z(size)=flaggedCount
-  const chartData = (heatmapData || []).map((d: DepartmentRisk) => ({
+  const chartData = ((heatmapData || []) as DepartmentRisk[]).map((d) => ({
     ...d,
     z: Math.max(d.flaggedCount * 25, 100),
   }));

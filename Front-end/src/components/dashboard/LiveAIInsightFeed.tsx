@@ -61,7 +61,7 @@ function getCategoryLabel(category: string): string {
   return map[category] || "catOther";
 }
 
-function timeAgo(dateStr: string, t: (key: string, params?: Record<string, unknown>) => string): string {
+function timeAgo(dateStr: string, t: (key: string, params?: Record<string, string | number | Date>) => string): string {
   if (!dateStr) return "";
   const now = new Date();
   const date = new Date(dateStr);
@@ -81,7 +81,7 @@ function InsightRow({
   title, riskLevel, category, timeAgoStr, index, t,
 }: {
   title: string; riskLevel: RiskLevel; category: string; timeAgoStr: string; index: number;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, params?: Record<string, string | number | Date>) => string;
 }) {
   const style = riskStyles[riskLevel];
 

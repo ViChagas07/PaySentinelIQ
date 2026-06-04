@@ -86,16 +86,27 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 };
 
+const sentryOrg = process.env.SENTRY_ORG ?? "paysentineliq";
+const sentryProject = process.env.SENTRY_PROJECT ?? "paysentineliq-frontend";
+const isSentryConfigured = Boolean(process.env.SENTRY_AUTH_TOKEN);
+
 export default withSentryConfig(withNextIntl(nextConfig), {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: "paysentineliq",
+  org: sentryOrg,
+  project: sentryProject,
 
-  project: "javascript-nextjs",
+  // ══ Source map upload control ═══════════════════════════════════════
+  // If SENTRY_AUTH_TOKEN is missing, disable source map upload so the
+  // build doesn't fail when Sentry is not fully configured (e.g. local
+  // dev or preview deployments without the secret).
+  sourcemaps: {
+    disable: !isSentryConfigured,
+  },
 
   // Only print logs for uploading source maps in CI
-  silent: !process.env.CI,
+  silent: isSentryConfigured && !process.env.CI,
 
   // For all available options, see:
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
