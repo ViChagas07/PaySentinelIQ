@@ -164,20 +164,61 @@ jobs:
         run: |
           docker compose -f docker/docker-compose.yml up -d postgres redis
 
-      - name: Start API
+      - name: Wait for postgres
         run: |
-          poetry run uvicorn app.main:create_app \
+          timeout 30 sh -c 'until pg_isready -h localhost -p 5432 -U psi; do sleep 2; done'
+
+      - name: Start API & ZAP scan
+        env:
+          DATABASE_URL: postgresql+asyncpg://psi:psi_secret@localhost:5432/paysentineliq
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET_KEY: zap-scan-secret-key-for-ci
+          ENVIRONMENT: test
+        run: |
+          # ── 1. Start API in background ──
+          nohup poetry run uvicorn app.main:create_app \
             --factory \
             --host 0.0.0.0 \
-            --port 8000 &
+            --port 8000 > /tmp/api.log 2>&1 &
 
-          sleep 20
+          # ── 2. Wait for health endpoint ──
+          echo "Waiting for API at http://localhost:8000/health ..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+              echo "API is ready (attempt $i)"
+              break
+            fi
+            echo "  ... attempt $i"
+            sleep 1
+          done
 
-      - name: ZAP scan
-        uses: zaproxy/action-baseline@v0.12.0
+          # ── 3. Run ZAP baseline scan via Docker ──
+          # (Using docker run directly instead of the action so the API
+          #  background process stays alive in the same step.)
+          docker run \
+            -v "${{ github.workspace }}:/zap/wrk/:rw" \
+            --network=host \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+            -t http://localhost:8000 \
+            -J report_json.json \
+            -w report_md.md \
+            -r report_html.html
+
+          # Capture exit code but don't fail the build on ZAP findings
+          ZAP_EXIT=$?
+          echo "ZAP scan exit code: $ZAP_EXIT"
+          exit $ZAP_EXIT
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          target: "http://localhost:8000"
-          fail_action: warn
+          name: zap-reports
+          path: |
+            report_json.json
+            report_md.md
+            report_html.html
 
 
   docker:
