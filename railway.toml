@@ -1,0 +1,36 @@
+# ============================================================
+# PaySentinelIQ — Railway Configuration (Repository Root)
+# ============================================================
+#
+# Railway docs: https://docs.railway.com/deployments/monorepo
+# Railpack docs: https://railpack.com/languages/python
+#
+# Este arquivo fica na RAIZ do repositório para que o Railway
+# o encontre SEM precisar configurar "Root Directory".
+#
+# O BuildCommand instala as dependências do Back-end/ com Poetry,
+# e o StartCommand executa o proxy main.py da raiz que redireciona
+# para o app real em Back-end/app/main.py.
+#
+# ═══════════════════════════════════════════════════════════════
+# RECOMENDAÇÃO (quando puder configurar no dashboard):
+#   No Railway Dashboard → Settings → Root Directory = "Back-end/"
+#   Assim este arquivo e o main.js de proxy poderão ser removidos.
+# ═══════════════════════════════════════════════════════════════
+# ============================================================
+
+[build]
+# Instala o Poetry e todas as dependências do projeto
+buildCommand = "pip install poetry && cd Back-end && poetry config virtualenvs.create false && poetry install --no-root --no-interaction --no-ansi"
+
+[deploy]
+# Comando de start usando o proxy main.js da raiz
+# uvicorn encontra 'app = create_app()' em main.py (raiz)
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 4"
+
+# Health check
+healthcheckPath = "/health"
+
+# Reinicialização automática
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
