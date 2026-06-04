@@ -19,6 +19,8 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
+
 # Ensure the Back-end directory is on sys.path so we can import app modules
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BACKEND_DIR))
@@ -183,15 +185,26 @@ def check_flush_and_shutdown() -> bool:
 
 # ── Pytest wrappers (use `assert` to avoid PytestReturnNotNoneWarning) ──
 
+# Skip tests that need a real SENTRY_DSN unless the env var is set.
+# CI never sets it; developers set it manually when needed.
+_SENTRY_DSN_SET: bool = bool(os.environ.get("SENTRY_DSN"))
+_skip_no_dsn = pytest.mark.skipif(
+    not _SENTRY_DSN_SET,
+    reason="SENTRY_DSN not configured — set env var SENTRY_DSN to run Sentry e2e tests",
+)
 
+
+@_skip_no_dsn
 def test_sentry_initialization() -> None:
     assert check_sentry_initialization()
 
 
+@_skip_no_dsn
 def test_capture_message() -> None:
     assert check_capture_message()
 
 
+@_skip_no_dsn
 def test_capture_exception() -> None:
     assert check_capture_exception()
 
