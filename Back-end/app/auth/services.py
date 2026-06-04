@@ -119,22 +119,19 @@ class AuthService:
 
     @staticmethod
     def generate_mfa_secret() -> str:
-        return cast(str, pyotp.random_base32())
+        return pyotp.random_base32()
 
     @staticmethod
     def get_mfa_uri(secret: str, email: str) -> str:
-        return cast(
-            str,
-            pyotp.totp.TOTP(secret).provisioning_uri(
-                name=email,
-                issuer_name=settings.MFA_ISSUER,
-            ),
+        return pyotp.totp.TOTP(secret).provisioning_uri(
+            name=email,
+            issuer_name=settings.MFA_ISSUER,
         )
 
     @staticmethod
     def verify_mfa_code(secret: str, code: str) -> bool:
         totp = pyotp.TOTP(secret)
-        return cast(bool, totp.verify(code))
+        return totp.verify(code)
 
     # ── RBAC Enforcement ──
 

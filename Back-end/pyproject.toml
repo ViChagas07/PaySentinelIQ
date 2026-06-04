@@ -32,7 +32,9 @@ dependencies = [
     "prometheus-fastapi-instrumentator>=7.0.0",
     "sentry-sdk[fastapi]>=2.16.0",
     "websockets>=13.0",
-    "orjson>=3.10.0"
+    "orjson>=3.10.0",
+    "pyotp>=2.9.0",
+    "email-validator>=2.2.0"
 ]
 
 
