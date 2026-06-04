@@ -124,8 +124,9 @@ export default async function LocaleLayout({
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"} crossOrigin="anonymous" />
         {/* Preconnect to CDN for font assets (self-hosted by Next.js, but icon fonts if any) */}
         <link rel="preload" href="/favicon.png" as="image" type="image/png" />
-        <link rel="icon" href="/favicon.png" sizes="any" type="image/png" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" href="/favicon.png" sizes="96x96" type="image/png" />
+        <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+        <link rel="apple-touch-icon" href="/favicon-192x192.png" sizes="192x192" />
         <meta name="theme-color" content="#0A1628" />
         <meta name="color-scheme" content="dark light" />
         {/* Structured Data */}
