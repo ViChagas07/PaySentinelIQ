@@ -4,12 +4,14 @@
 # development and staging environments — NEVER in production.
 # ============================================================
 
+import asyncio
 import logging
 import math
 from typing import Any, Literal
 
 import sentry_sdk
 from fastapi import APIRouter, HTTPException, Query
+from sentry_sdk.consts import VERSION as SENTRY_SDK_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +30,10 @@ async def sentry_status_check() -> dict[str, Any]:
     dsn = sentry_sdk.get_current_scope().client.dsn if client else None
 
     return {
-        "sentry_initialized": client is not None and client.is_active(),
-        "environment": str(sentry_sdk.get_current_scope()._scope.get("environment")),  # type: ignore[attr-defined]
+        "sentry_initialized": client.is_active(),
+        "environment": str(client.options.get("environment")),
         "dsn_masked": str(dsn)[:30] + "..." if dsn else None,
-        "sdk_version": sentry_sdk.consts.VERSION,
+        "sdk_version": SENTRY_SDK_VERSION,
     }
 
 
@@ -54,7 +56,7 @@ async def trigger_unhandled_exception(
     a few seconds (Sentry flushes on shutdown / periodically).
     """
     if error_type == "zero_division":
-        result = 1 / 0  # noqa: F841 — intentionally triggers ZeroDivisionError
+        _ = 1 / 0  # intentionally triggers ZeroDivisionError
     elif error_type == "value_error":
         raise ValueError("Sentry debug: deliberate ValueError for testing")
     elif error_type == "index_error":
@@ -160,8 +162,6 @@ async def performance_test(
 
         with sentry_sdk.start_span(op="io", description="simulated_db_query"):
             # Simulated I/O wait
-            import asyncio
-
             await asyncio.sleep(0.1)
 
     return {

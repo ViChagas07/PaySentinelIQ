@@ -7,14 +7,14 @@ import json
 import os
 from typing import Any, cast
 
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
+import boto3  # type: ignore[import-untyped]
+from botocore.exceptions import BotoCoreError, ClientError  # type: ignore[import-untyped]
 
 from app.shared.exceptions import ServiceError
 
 # ── Cliente SQS ─────────────────────────────────────────────
 
-sqs = boto3.client(
+sqs: Any = boto3.client(
     "sqs",
     region_name=os.getenv("AWS_REGION", "us-east-1"),
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -41,7 +41,7 @@ def send_event(event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         raise ServiceError("SQS_QUEUE_URL não configurada. Defina no .env para usar a fila.")
 
     try:
-        response = sqs.send_message(
+        response: Any = sqs.send_message(
             QueueUrl=QUEUE_URL,
             MessageBody=json.dumps(
                 {

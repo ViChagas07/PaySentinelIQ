@@ -4,16 +4,16 @@
 # ============================================================
 
 import os
-from typing import cast
+from typing import Any, cast
 
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
+import boto3  # type: ignore[import-untyped]
+from botocore.exceptions import BotoCoreError, ClientError  # type: ignore[import-untyped]
 
 from app.shared.exceptions import ServiceError
 
 # ── Cliente S3 ──────────────────────────────────────────────
 
-s3 = boto3.client(
+s3: Any = boto3.client(
     "s3",
     region_name=os.getenv("AWS_REGION", "us-east-1"),
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -75,7 +75,7 @@ def download_file(filename: str) -> bytes:
         raise ServiceError("S3_BUCKET não configurado.")
 
     try:
-        response = s3.get_object(Bucket=BUCKET_NAME, Key=filename)
+        response: Any = s3.get_object(Bucket=BUCKET_NAME, Key=filename)
         return cast(bytes, response["Body"].read())
     except (ClientError, BotoCoreError) as exc:
         raise ServiceError(f"Falha ao baixar arquivo do S3: {exc}") from exc

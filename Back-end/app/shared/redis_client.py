@@ -47,7 +47,7 @@ class RedisCache:
         value = await client.get(key)
         if value is not None:
             try:
-                return json.loads(value)
+                return json.loads(cast(str, value))
             except (json.JSONDecodeError, TypeError):
                 return value
         return None
@@ -67,9 +67,12 @@ class RedisCache:
     @staticmethod
     async def delete_pattern(pattern: str) -> None:
         client = await get_redis()
-        cursor = 0
+        cursor: int = 0
         while True:
-            cursor, keys = await client.scan(cursor, match=pattern, count=100)
+            result = await cast(Any, client).scan(
+                cursor, match=pattern, count=100
+            )
+            cursor, keys = cast(tuple[int, list[str]], result)
             if keys:
                 await client.delete(*keys)
             if cursor == 0:
@@ -86,26 +89,26 @@ class RedisPubSub:
         client = await get_redis()
         full_channel = f"{RedisPubSub.CHANNEL_PREFIX}:{channel}"
         payload = json.dumps(message, default=str)
-        return cast(int, await client.publish(full_channel, payload))
+        return cast(int, await cast(Any, client).publish(full_channel, payload))
 
     @staticmethod
     async def subscribe(channel: str) -> PubSub:
         client = await get_redis()
         full_channel = f"{RedisPubSub.CHANNEL_PREFIX}:{channel}"
-        pubsub = client.pubsub()
+        pubsub = cast(Any, client).pubsub()
         await pubsub.subscribe(full_channel)
-        return pubsub
+        return cast(PubSub, pubsub)
 
     @staticmethod
     async def listen(pubsub: PubSub) -> AsyncGenerator[dict[str, Any], None]:
         """Async generator yielding decoded messages from a subscription."""
-        async for msg in pubsub.listen():
-            if msg["type"] == "message":
+        async for msg in cast(Any, pubsub).listen():
+            if msg.get("type") == "message":
+                raw_data = msg.get("data")
                 try:
-                    data = json.loads(msg["data"])
-                    yield data
+                    data = json.loads(cast(str, raw_data))
+                    yield cast(dict[str, Any], data)
                 except (json.JSONDecodeError, TypeError):
-                    raw = msg["data"]
-                    if isinstance(raw, bytes):
-                        raw = raw.decode("utf-8", errors="replace")
-                    yield {"raw": raw}
+                    if isinstance(raw_data, bytes):
+                        raw_data = raw_data.decode("utf-8", errors="replace")
+                    yield {"raw": raw_data}

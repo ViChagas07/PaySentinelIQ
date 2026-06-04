@@ -7,14 +7,14 @@ import json
 import os
 from typing import Any, cast
 
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
+import boto3  # type: ignore[import-untyped]
+from botocore.exceptions import BotoCoreError, ClientError  # type: ignore[import-untyped]
 
 from app.shared.exceptions import ServiceError
 
 # ── Cliente Lambda ──────────────────────────────────────────
 
-lambda_client = boto3.client(
+lambda_client: Any = boto3.client(
     "lambda",
     region_name=os.getenv("AWS_REGION", "us-east-1"),
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -44,7 +44,7 @@ def invoke_lambda(
         ServiceError: Se a invocação falhar.
     """
     try:
-        response = lambda_client.invoke(
+        response: Any = lambda_client.invoke(
             FunctionName=function_name,
             InvocationType=invocation_type,
             Payload=json.dumps(payload).encode("utf-8"),

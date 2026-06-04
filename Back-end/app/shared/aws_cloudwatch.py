@@ -4,16 +4,17 @@
 # ============================================================
 
 import os
+import time
 from typing import Any, cast
 
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
+import boto3  # type: ignore[import-untyped]
+from botocore.exceptions import BotoCoreError, ClientError  # type: ignore[import-untyped]
 
 from app.shared.exceptions import ServiceError
 
 # ── Cliente CloudWatch Logs ─────────────────────────────────
 
-logs = boto3.client(
+logs: Any = boto3.client(
     "logs",
     region_name=os.getenv("AWS_REGION", "us-east-1"),
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -45,10 +46,8 @@ def put_log_event(
     Raises:
         ServiceError: Se o envio falhar.
     """
-    import time as time_module
-
     if timestamp is None:
-        timestamp = int(time_module.time() * 1000)
+        timestamp = int(time.time() * 1000)
 
     # ── Garantir que o log group existe ──
     _ensure_log_group(log_group)
@@ -57,7 +56,7 @@ def put_log_event(
     _ensure_log_stream(log_group, log_stream)
 
     try:
-        response = logs.put_log_events(
+        response: Any = logs.put_log_events(
             logGroupName=log_group,
             logStreamName=log_stream,
             logEvents=[
@@ -77,7 +76,7 @@ def _ensure_log_group(log_group: str) -> None:
     try:
         logs.create_log_group(logGroupName=log_group)
     except ClientError as exc:
-        code = exc.response.get("Error", {}).get("Code", "")
+        code: str | None = exc.response.get("Error", {}).get("Code", "")
         # ResourceAlreadyExistsException é esperado e ignorado
         if code != "ResourceAlreadyExistsException":
             raise ServiceError(f"Falha ao criar log group '{log_group}': {exc}") from exc
@@ -88,6 +87,6 @@ def _ensure_log_stream(log_group: str, log_stream: str) -> None:
     try:
         logs.create_log_stream(logGroupName=log_group, logStreamName=log_stream)
     except ClientError as exc:
-        code = exc.response.get("Error", {}).get("Code", "")
+        code: str | None = exc.response.get("Error", {}).get("Code", "")
         if code != "ResourceAlreadyExistsException":
             raise ServiceError(f"Falha ao criar log stream '{log_stream}': {exc}") from exc
