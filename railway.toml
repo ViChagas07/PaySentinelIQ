@@ -24,9 +24,9 @@
 buildCommand = "pip install --no-cache-dir poetry && cd Back-end && python -m poetry config virtualenvs.create false && python -m poetry install --no-root --no-interaction --no-ansi"
 
 [deploy]
-# Comando de start usando o proxy main.js da raiz
-# uvicorn encontra 'app = create_app()' em main.py (raiz)
-startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 4"
+# Comando de start usando o proxy main.py da raiz
+# Usa python -m uvicorn (garante PATH) em vez de uvicorn direto
+startCommand = "python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
 
 # Health check
 healthcheckPath = "/health"
