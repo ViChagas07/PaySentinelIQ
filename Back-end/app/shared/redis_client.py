@@ -26,7 +26,7 @@ async def get_redis() -> Redis:
     if redis_pool is None:
         redis_pool = cast(
             Redis,
-            aioredis.from_url(
+            aioredis.from_url(  # type: ignore[no-untyped-call]
                 settings.REDIS_URL,
                 decode_responses=True,
                 max_connections=50,
@@ -161,10 +161,7 @@ class RedisPubSub:
 
         full_channel = f"{RedisPubSub.CHANNEL_PREFIX}:{channel}"
 
-        pubsub = cast(
-            PubSub,
-            client.pubsub(),
-        )
+        pubsub = client.pubsub()
 
         await pubsub.subscribe(
             full_channel,

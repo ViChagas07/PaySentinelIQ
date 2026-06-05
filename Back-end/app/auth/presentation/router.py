@@ -88,7 +88,7 @@ async def google_login(
 
     # 1. Verify the Google ID token
     try:
-        google_user = id_token.verify_oauth2_token(
+        google_user = id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
             credential,
             google_requests.Request(),
             settings.GOOGLE_CLIENT_ID,

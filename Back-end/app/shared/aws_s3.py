@@ -6,8 +6,8 @@
 import os
 from typing import Any, cast
 
-import boto3  # type: ignore[import-untyped]
-from botocore.exceptions import BotoCoreError, ClientError  # type: ignore[import-untyped]
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 
 from app.shared.exceptions import ServiceError
 
