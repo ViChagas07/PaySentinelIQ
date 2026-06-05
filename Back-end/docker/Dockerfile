@@ -13,7 +13,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml poetry.lock ./
 RUN pip install --no-cache-dir poetry && \
     poetry config virtualenvs.in-project true && \
-    poetry install --no-root --no-interaction --no-ansi
+    poetry install --no-root --no-interaction --no-ansi && \
+    # Upgrade vulnerable packages INSIDE the virtualenv so they get
+    # carried into the production stage via the COPY below.
+    pip install --no-cache-dir --upgrade \
+        wheel==0.46.2 \
+        "jaraco.context>=6.1.0"
 
 # ─────────────────────────────────────────────
 FROM python:3.11-slim AS production
@@ -23,15 +28,11 @@ WORKDIR /app
 # Create non-root user
 RUN groupadd -r psi && useradd -r -g psi psi
 
-# Runtime system deps + upgrade vulnerable packages BEFORE copying
-# the virtualenv (pip is still available from the base image).
+# Runtime system deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     curl \
-    && rm -rf /var/lib/apt/lists/* && \
-    pip install --no-cache-dir --upgrade \
-    wheel==0.46.2 \
-    "jaraco.context>=6.1.0"
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy ONLY the project's virtualenv site-packages (not Poetry's own deps).
 # This avoids bringing build‑time tools into production.
