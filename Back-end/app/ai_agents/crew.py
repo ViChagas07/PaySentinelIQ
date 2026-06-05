@@ -3,8 +3,9 @@
 # Multi-agent pipeline with wired tools and 7-stage pipeline integration.
 #
 # LLM Provider: Uses the provider abstraction layer (app.providers).
-# Default: Ollama (local, llama3, zero API cost).
-# Configurable via LLM_PROVIDER env var to any supported provider.
+# Supports: Ollama (local, llama3, zero API cost), Gemini (cloud, prod),
+#           OpenAI (cloud, fallback).
+# Configurable via LLM_PROVIDER env var.
 # ============================================================
 
 import logging

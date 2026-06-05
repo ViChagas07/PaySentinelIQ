@@ -130,9 +130,9 @@ class LLMService:
             if not is_healthy:
                 raise ProviderUnavailableError(
                     f"LLM provider '{self.provider.get_info().provider_name}' is not available. "
-                    f"Ensure Ollama is running ('ollama serve') and model "
-                    f"'{self.provider.config.model}' "
-                    f"is pulled ('ollama pull {self.provider.config.model}')."
+                    f"Ensure the provider is properly configured. "
+                    f"For Ollama: run 'ollama serve' and pull the model. "
+                    f"For Gemini: check your GEMINI_API_KEY and GEMINI_MODEL in .env."
                 )
 
         self._initialized = True

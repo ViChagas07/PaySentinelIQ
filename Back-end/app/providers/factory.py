@@ -12,6 +12,7 @@ from functools import lru_cache
 from typing import Any
 
 from app.providers.base import BaseLLMProvider, LLMConfig
+from app.providers.gemini import GeminiProvider
 from app.providers.ollama import OllamaProvider
 from app.providers.openai import OpenAIProvider
 
@@ -71,12 +72,17 @@ class LLMProviderFactory:
                 raise ValueError("OPENAI_API_KEY is required for OpenAI provider")
             return OpenAIProvider(config=config, api_key=api_key)
 
-        # Future providers will be added here
+        if provider_type == ProviderType.GEMINI:
+            api_key = kwargs.get("api_key")
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY is required for Gemini provider")
+            return GeminiProvider(config=config, api_key=api_key)
+
+        # Reserved for future providers
         if provider_type in (
             ProviderType.ANTHROPIC,
             ProviderType.BEDROCK,
             ProviderType.GROQ,
-            ProviderType.GEMINI,
         ):
             raise NotImplementedError(
                 f"Provider '{provider_type.value}' is reserved but not yet implemented."
@@ -93,10 +99,20 @@ def _resolve_llm_config() -> LLMConfig:
     from app.shared.settings import get_settings
 
     settings = get_settings()
+    provider = settings.LLM_PROVIDER
+
+    # Determine which model to use based on the active provider
+    if provider == ProviderType.OLLAMA.value:
+        model = settings.OLLAMA_MODEL
+    elif provider == ProviderType.GEMINI.value:
+        model = settings.GEMINI_MODEL
+    elif provider == ProviderType.OPENAI.value:
+        model = settings.OPENAI_MODEL
+    else:
+        model = settings.OLLAMA_MODEL  # sensible fallback
+
     return LLMConfig(
-        model=settings.OLLAMA_MODEL
-        if ProviderType.OLLAMA.value == settings.LLM_PROVIDER
-        else settings.OPENAI_MODEL,
+        model=model,
         temperature=settings.AI_TEMPERATURE,
         max_tokens=settings.AI_MAX_TOKENS,
         timeout=settings.OLLAMA_TIMEOUT,
@@ -132,6 +148,14 @@ def get_llm_provider() -> BaseLLMProvider:
         if not api_key:
             raise ValueError(
                 "OPENAI_API_KEY is required when LLM_PROVIDER is 'openai'. "
+                "Set LLM_PROVIDER=ollama for local inference."
+            )
+        extra_kwargs["api_key"] = api_key
+    elif provider_type == ProviderType.GEMINI:
+        api_key = settings.GEMINI_API_KEY.get_secret_value() if settings.GEMINI_API_KEY else None
+        if not api_key:
+            raise ValueError(
+                "GEMINI_API_KEY is required when LLM_PROVIDER is 'gemini'. "
                 "Set LLM_PROVIDER=ollama for local inference."
             )
         extra_kwargs["api_key"] = api_key
@@ -192,6 +216,20 @@ def get_crewai_llm() -> Any:
             return None
         return CrewAILLM(
             model=settings.OPENAI_MODEL,
+            api_key=api_key,
+            temperature=settings.AI_TEMPERATURE,
+            max_tokens=settings.AI_MAX_TOKENS,
+        )
+
+    if provider_type == ProviderType.GEMINI.value:
+        api_key = settings.GEMINI_API_KEY.get_secret_value() if settings.GEMINI_API_KEY else None
+        if not api_key:
+            logger.warning("GEMINI_API_KEY not set — cannot create CrewAI LLM for Gemini")
+            return None
+        # CrewAI LLM uses LiteLLM under the hood;
+        # model format for Gemini is "gemini/<model_name>"
+        return CrewAILLM(
+            model=f"gemini/{settings.GEMINI_MODEL}",
             api_key=api_key,
             temperature=settings.AI_TEMPERATURE,
             max_tokens=settings.AI_MAX_TOKENS,

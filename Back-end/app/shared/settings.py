@@ -94,6 +94,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: SecretStr | None = None
     OPENAI_MODEL: str = "gpt-4o"
 
+    # ── Gemini (Google AI — production cloud LLM) ──
+    GEMINI_API_KEY: SecretStr | None = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+
     # ── Anthropic (Cloud LLM — reserved for future use) ──
     ANTHROPIC_API_KEY: SecretStr | None = None
 
