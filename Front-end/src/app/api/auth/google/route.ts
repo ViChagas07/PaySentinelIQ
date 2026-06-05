@@ -126,8 +126,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Build user object matching the User interface ──
+    const user = {
+      id: userId,
+      email,
+      full_name: name || email?.split("@")[0] || "User",
+      avatar_url: picture || null,
+      role: "admin" as const,
+      tenant_id: "tenant_default",
+      mfa_enabled: false,
+      last_login: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+    };
+
     return NextResponse.json({
       success: true,
+      user,
+      token: access_token,
       userId,
       email,
       name,

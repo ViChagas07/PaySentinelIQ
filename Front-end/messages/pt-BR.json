@@ -235,7 +235,7 @@
     "catUnauthorizedDeduction": "Dedução Não Autorizada",
     "catOther": "Outro",
     "authRequiredTitle": "Acesso Restrito",
-    "authRequiredDescription": "Cadastre-se / faça Login para ter poder visualizar os seus dados em tempo-real!",
+    "authRequiredDescription": "Cadastre-se / faça Login para poder visualizar os seus dados em tempo-real!",
     "authRequiredCta": "Cadastre-se / Fazer Login",
     "authRequiredChart": "Faça login para visualizar os gráficos",
     "justNow": "Agora mesmo",
