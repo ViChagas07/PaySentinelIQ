@@ -3,7 +3,7 @@
 // Typed hooks for all domain endpoints with Zod validation
 // ============================================================
 
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiClientError } from "@/lib/api";
 import type {
   Payroll,
@@ -285,76 +285,89 @@ export function useMarkNotificationRead() {
 // Dashboard Hooks
 // ============================================================
 
+// ── Dashboard KPIs response type ── //
+export type DashboardKpisResponse = {
+  payrolls_processed: number;
+  verification_rate: number;
+  fraud_alerts: number;
+  ai_confidence: number;
+  high_risk_docs: number;
+  compliance_incidents: number;
+};
+
+export type DashboardTrendsResponse = Array<{
+  month: string;
+  volume: number;
+  verified: number;
+  flagged: number;
+  passRate: number;
+}>;
+
+export type DashboardHeatmapResponse = Array<{
+  name: string;
+  payrolls: number;
+  riskScore: number;
+  flaggedCount: number;
+  riskLevel: string;
+}>;
+
+export type DashboardRiskDistributionResponse = Array<{
+  range: string;
+  count: number;
+  color: string;
+}>;
+
 const FAST_RETRY = { retry: 1, retryDelay: 500 } as const;
 
-export function useDashboardKpis() {
+export function useDashboardKpis(enabled = true) {
   return useQuery({
     queryKey: queryKeys.dashboard.kpis,
     queryFn: () =>
-      api.get<{
-        payrolls_processed: number;
-        verification_rate: number;
-        fraud_alerts: number;
-        ai_confidence: number;
-        high_risk_docs: number;
-        compliance_incidents: number;
-      }>("/dashboard/kpis"),
+      api.get<DashboardKpisResponse>("/dashboard/kpis"),
     staleTime: 5_000,
     refetchInterval: 10_000,
     refetchOnMount: true,
     ...FAST_RETRY,
+    enabled,
   });
 }
 
-export function useDashboardTrends() {
+export function useDashboardTrends(enabled = true) {
   return useQuery({
     queryKey: queryKeys.dashboard.trends,
     queryFn: () =>
-      api.get<Array<{ month: string; volume: number; verified: number; flagged: number; passRate: number }>>(
-        "/dashboard/trends"
-      ),
+      api.get<DashboardTrendsResponse>("/dashboard/trends"),
     staleTime: 8_000,
     refetchInterval: 15_000,
     refetchOnMount: true,
     ...FAST_RETRY,
+    enabled,
   });
 }
 
-export function useDashboardHeatmap() {
+export function useDashboardHeatmap(enabled = true) {
   return useQuery({
     queryKey: queryKeys.dashboard.heatmap,
     queryFn: () =>
-      api.get<
-        Array<{
-          name: string;
-          payrolls: number;
-          riskScore: number;
-          flaggedCount: number;
-          riskLevel: string;
-        }>
-      >("/dashboard/heatmap"),
+      api.get<DashboardHeatmapResponse>("/dashboard/heatmap"),
     staleTime: 8_000,
     refetchInterval: 15_000,
     refetchOnMount: true,
     ...FAST_RETRY,
+    enabled,
   });
 }
 
-export function useDashboardRiskDistribution() {
+export function useDashboardRiskDistribution(enabled = true) {
   return useQuery({
     queryKey: queryKeys.dashboard.riskDistribution,
     queryFn: () =>
-      api.get<
-        Array<{
-          range: string;
-          count: number;
-          color: string;
-        }>
-      >("/dashboard/risk-distribution"),
+      api.get<DashboardRiskDistributionResponse>("/dashboard/risk-distribution"),
     staleTime: 10_000,
     refetchInterval: 20_000,
     refetchOnMount: true,
     ...FAST_RETRY,
+    enabled,
   });
 }
 

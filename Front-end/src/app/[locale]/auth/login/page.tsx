@@ -17,6 +17,7 @@ import {
   ArrowRight, CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores";
 
 // ── Animated Background ── //
 
@@ -88,85 +89,84 @@ export default function AuthPage() {
   const [signUpSuccess, setSignUpSuccess] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
-  // ── Google OIDC ── //
-
-  const handleGoogleCredentialResponse = useCallback(
-    async (response: { credential: string }) => {
-      try {
-        const res = await fetch("/api/auth/google", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ credential: response.credential }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setSignInError(data.error || t("googleSignInFailed"));
-          return;
-        }
-
-        // Success — redirect to dashboard
-        router.push(`/${locale}`);
-      } catch {
-        setSignInError(t("googleSignInRetry"));
-      }
-    },
-    [locale, router]
-  );
+  // ── Google OIDC / GIS Popup OAuth ── //
 
   useEffect(() => {
-    // Define callback that Google's script calls when loaded
-    (window as any).__googleOidcInit = () => {
-      if ((window as any).google?.accounts?.id) {
-        (window as any).google.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-          callback: handleGoogleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-        });
-      }
-    };
-
-    // Check if script already loaded
-    if ((window as any).google?.accounts?.id) {
-      (window as any).__googleOidcInit();
-    } else {
-      // Load Google Identity Services script
-      const script = document.createElement("script");
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
-      script.onload = () => (window as any).__googleOidcInit?.();
-      script.onerror = () => console.error("Failed to load Google Sign-In script");
-      document.body.appendChild(script);
+    // Load Google Identity Services script if not already present
+    if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+      return;
     }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => console.error("Failed to load Google Sign-In script");
+    document.body.appendChild(script);
 
     return () => {
-      delete (window as any).__googleOidcInit;
+      const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (existing) {
+        document.body.removeChild(existing);
+      }
     };
-  }, [handleGoogleCredentialResponse]);
+  }, []);
 
-  const triggerGoogleSignIn = () => {
+  const loginStore = useAuthStore((s) => s.login);
+
+  const triggerGoogleSignIn = useCallback(() => {
     const google = (window as any).google;
-    if (google?.accounts?.id) {
-      // Re-initialize in case callback changed
-      google.accounts.id.initialize({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      google.accounts.id.prompt((notification: any) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.warn("Google sign-in prompt not displayed:", notification.getNotDisplayedReason());
-          setSignInError(t("googleSignInDismissed"));
-        }
-      });
-    } else {
+    if (!google?.accounts?.oauth2) {
+      console.warn("GIS library not loaded yet");
       setSignInError(t("googleSignInUnavailable"));
+      return;
     }
-  };
+
+    // Use initTokenClient which opens a REAL browser popup window
+    // (unlike the deprecated One Tap prompt() that gets suppressed by browsers)
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      scope: "openid profile email",
+      callback: async (response: any) => {
+        if (response.access_token) {
+          try {
+            const res = await fetch("/api/auth/google", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ access_token: response.access_token }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+              setSignInError(data.error || t("googleSignInFailed"));
+              return;
+            }
+
+            // Update auth store with user + token from the backend
+            if (data.user && data.token) {
+              loginStore(data.user, data.token);
+            }
+
+            // Success — redirect to dashboard
+            router.push(`/${locale}`);
+          } catch {
+            setSignInError(t("googleSignInRetry"));
+          }
+        } else if (response.error) {
+          console.error("Google OAuth error:", response.error);
+          if (response.error === "popup_closed" || response.error === "user_cancelled") {
+            setSignInError(t("googleSignInDismissed"));
+          } else {
+            setSignInError(t("googleSignInFailed"));
+          }
+        }
+      },
+    });
+
+    // Request access token — this opens a proper popup window
+    client.requestAccessToken();
+  }, [locale, router, t, loginStore]);
 
   // ── Sign In handler ── //
   const handleSignIn = async (e: React.FormEvent) => {
@@ -183,6 +183,23 @@ export default function AuthPage() {
     // Simulate auth — TODO: connect to real API
     setTimeout(() => {
       setSignInLoading(false);
+
+      // Persist auth state so the dashboard knows the user is logged in
+      loginStore(
+        {
+          id: crypto.randomUUID(),
+          email: signInEmail,
+          full_name: signInEmail.split("@")[0] || "Usuário",
+          avatar_url: null,
+          role: "viewer",
+          tenant_id: "demo",
+          mfa_enabled: false,
+          last_login: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        },
+        "demo-jwt-token"
+      );
+
       router.push(`/${locale}`);
     }, 1500);
   };
@@ -236,6 +253,27 @@ export default function AuthPage() {
 
       setSignUpSuccess(true);
       setSignUpLoading(false);
+
+      // Persist auth state if the API returns user + token
+      if (data.user && data.token) {
+        loginStore(data.user, data.token);
+      } else {
+        // Fallback: set a minimal demo user so the dashboard unlocks
+        loginStore(
+          {
+            id: crypto.randomUUID(),
+            email: signUpEmail,
+            full_name: signUpName,
+            avatar_url: null,
+            role: "viewer",
+            tenant_id: "demo",
+            mfa_enabled: false,
+            last_login: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+          },
+          "demo-jwt-token"
+        );
+      }
 
       // Auto-redirect after showing success
       setTimeout(() => {

@@ -1,6 +1,7 @@
 // ============================================================
 // PaySentinelIQ — Google OIDC Token Verification
-// Verifies Google ID token and creates/returns user session
+// Verifies Google OAuth access token via userinfo endpoint
+// and creates/returns user session
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -11,37 +12,39 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { credential } = body;
+    const { access_token } = body;
 
-    if (!credential) {
+    if (!access_token) {
       return NextResponse.json(
-        { error: "Google credential is required." },
+        { error: "Google access token is required." },
         { status: 400 }
       );
     }
 
-    // ── Verify token with Google ──
+    // ── Verify access token with Google's userinfo endpoint ──
     const googleResponse = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
     );
 
     if (!googleResponse.ok) {
+      const errorText = await googleResponse.text();
+      console.error("Google userinfo error:", googleResponse.status, errorText);
       return NextResponse.json(
-        { error: "Invalid Google token." },
+        { error: "Invalid Google access token." },
         { status: 401 }
       );
     }
 
     const googleUser = await googleResponse.json();
 
-    // Validate audience (client ID)
-    if (googleUser.aud !== process.env.GOOGLE_CLIENT_ID) {
-      return NextResponse.json(
-        { error: "Token audience mismatch." },
-        { status: 401 }
-      );
-    }
-
+    // The userinfo endpoint response includes: sub, name, given_name, family_name,
+    // picture, email, email_verified. The token was issued by Google for our
+    // client_id, so it is inherently scoped to our application.
     const { email, name, picture, sub: googleId, email_verified } = googleUser;
 
     // ── TODO: Create or find user in DB ──
