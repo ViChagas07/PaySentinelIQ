@@ -28,6 +28,12 @@ declare global {
         api: string,
         callback: () => void
       ) => void;
+
+      client: {
+        init: (config: {
+          discoveryDocs: string[];
+        }) => Promise<void>;
+      };
     };
   }
 }
@@ -38,15 +44,13 @@ const GOOGLE_CLIENT_ID =
 const GOOGLE_API_KEY =
   process.env.NEXT_PUBLIC_GOOGLE_API_KEY || "";
 
+const SCOPES = [
+  "https://www.googleapis.com/auth/drive.readonly"
+].join(" ");
 
-/*
-  Escopo reduzido:
-  Permite selecionar arquivos do Drive
-  sem pedir acesso amplo ao Drive inteiro.
-*/
-
-const SCOPES =
-  "https://www.googleapis.com/auth/drive.file";
+const DISCOVERY_DOCS = [
+  "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
+];
 
 export interface PickedFile {
   id: string;
@@ -67,214 +71,150 @@ export function useGooglePicker() {
   const [error, setError] =
     useState<string | null>(null);
 
-  const tokenClientRef =
-    useRef<any>(null);
+  const tokenClientRef = useRef<any>(null);
 
-  const pickerCallbackRef =
-    useRef<
-      ((files: PickedFile[]) => void) | null
-    >(null);
+  const pickerCallbackRef = useRef<
+    ((files: PickedFile[]) => void) | null
+  >(null);
 
-  const loadingRef =
-    useRef(false);
-
-  const oauthActiveRef =
-    useRef(false);
-
-  /*
-   ─────────────────────────────
-   Load Google Identity Services
-   ─────────────────────────────
-  */
+  const loadingRef = useRef(false);
+  const oauthActiveRef = useRef(false);
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
 
-    const loadGIS = () => {
-      if (
-        window.google?.accounts
-          ?.oauth2
-      ) {
+    const loadGis = () => {
+      if (window.google?.accounts?.oauth2) {
         tokenClientRef.current =
-          window.google.accounts.oauth2.initTokenClient(
-            {
-              client_id:
-                GOOGLE_CLIENT_ID,
+          window.google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
 
-              scope: SCOPES,
+            scope: SCOPES,
 
-              callback: (
-                response
-              ) => {
-                if (
-                  response.error
-                ) {
-                  setError(
-                    response.error
-                  );
+            callback: (response) => {
+              if (response.error) {
+                setError(response.error);
 
-                  setLoading(
-                    false
-                  );
+                setLoading(false);
 
-                  loadingRef.current =
-                    false;
+                loadingRef.current = false;
+                oauthActiveRef.current = false;
 
-                  oauthActiveRef.current =
-                    false;
+                return;
+              }
 
-                  return;
-                }
+              setToken(response.access_token);
 
-                setToken(
-                  response.access_token
-                );
+              setLoading(false);
 
-                setLoading(
-                  false
-                );
+              loadingRef.current = false;
+              oauthActiveRef.current = false;
 
-                loadingRef.current =
-                  false;
-
-                oauthActiveRef.current =
-                  false;
-
-                if (
+              if (
+                pickerCallbackRef.current &&
+                response.access_token
+              ) {
+                openPickerWithToken(
+                  response.access_token,
                   pickerCallbackRef.current
-                ) {
-                  openPickerWithToken(
-                    response.access_token,
-                    pickerCallbackRef.current
-                  );
+                );
 
-                  pickerCallbackRef.current =
-                    null;
-                }
-              },
-            }
-          );
+                pickerCallbackRef.current =
+                  null;
+              }
+            },
+          });
       }
     };
 
-    if (
-      !document.querySelector(
+    const existingScript =
+      document.querySelector(
         'script[src="https://accounts.google.com/gsi/client"]'
-      )
-    ) {
+      );
+
+    if (!existingScript) {
       const script =
-        document.createElement(
-          "script"
-        );
+        document.createElement("script");
 
       script.src =
         "https://accounts.google.com/gsi/client";
 
       script.async = true;
 
-      script.onload =
-        loadGIS;
+      script.onload = loadGis;
 
-      document.head.appendChild(
-        script
-      );
+      document.head.appendChild(script);
     } else {
-      loadGIS();
+      loadGis();
     }
   }, []);
 
-  /*
-   ─────────────────────────────
-   Detect popup close
-   ─────────────────────────────
-  */
-
   useEffect(() => {
-    const handleFocus =
-      () => {
-        if (
-          oauthActiveRef.current &&
-          loadingRef.current
-        ) {
-          loadingRef.current =
-            false;
+    const handleFocus = () => {
+      if (
+        oauthActiveRef.current &&
+        loadingRef.current
+      ) {
+        loadingRef.current = false;
+        oauthActiveRef.current = false;
 
-          oauthActiveRef.current =
-            false;
+        setLoading(false);
 
-          setLoading(
-            false
-          );
+        pickerCallbackRef.current?.([]);
 
-          pickerCallbackRef.current?.(
-            []
-          );
-
-          pickerCallbackRef.current =
-            null;
-        }
-      };
+        pickerCallbackRef.current =
+          null;
+      }
+    };
 
     window.addEventListener(
       "focus",
       handleFocus
     );
 
-    return () =>
+    return () => {
       window.removeEventListener(
         "focus",
         handleFocus
       );
+    };
   }, []);
 
-  /*
-   ─────────────────────────────
-   Load Picker API
-   ─────────────────────────────
-  */
-
   const loadPickerApi =
-    useCallback(() => {
-      return new Promise<void>(
-        (resolve) => {
-          if (
-            window.gapi
-          ) {
-            resolve();
-            return;
-          }
-
-          const script =
-            document.createElement(
-              "script"
-            );
-
-          script.src =
-            "https://apis.google.com/js/api.js";
-
-          script.async =
-            true;
-
-          script.onload =
-            () => {
-              window.gapi!.load(
-                "picker",
-                resolve
-              );
-            };
-
-          document.head.appendChild(
-            script
-          );
+    useCallback((): Promise<void> => {
+      return new Promise((resolve) => {
+        if (window.gapi) {
+          resolve();
+          return;
         }
-      );
-    }, []);
 
-  /*
-   ─────────────────────────────
-   Open Picker
-   ─────────────────────────────
-  */
+        const script =
+          document.createElement("script");
+
+        script.src =
+          "https://apis.google.com/js/api.js";
+
+        script.async = true;
+
+        script.onload = () => {
+          window.gapi!.load(
+            "client:picker",
+            async () => {
+              await window.gapi!.client.init({
+                discoveryDocs:
+                  DISCOVERY_DOCS,
+              });
+
+              resolve();
+            }
+          );
+        };
+
+        document.head.appendChild(
+          script
+        );
+      });
+    }, []);
 
   const openPickerWithToken =
     useCallback(
@@ -288,19 +228,14 @@ export function useGooglePicker() {
 
         const view =
           new window.google!.picker.DocsView()
-            .setIncludeFolders(
-              true
-            )
+            .setIncludeFolders(true)
             .setMimeTypes(
               "application/pdf,image/png,image/jpeg,image/jpg"
             );
 
         const picker =
           new window.google!.picker.PickerBuilder()
-
-            .addView(
-              view
-            )
+            .addView(view)
 
             .setOAuthToken(
               accessToken
@@ -311,22 +246,16 @@ export function useGooglePicker() {
             )
 
             .setCallback(
-              (
-                data: any
-              ) => {
+              (data: any) => {
                 if (
                   data.action ===
-                  window.google
-                    ?.picker
-                    .Action
-                    .PICKED
+                  window.google!.picker
+                    .Action.PICKED
                 ) {
                   const docs =
                     data[
-                      window
-                        .google
-                        ?.picker
-                        .Response
+                      window.google!
+                        .picker.Response
                         .DOCUMENTS
                     ];
 
@@ -334,7 +263,7 @@ export function useGooglePicker() {
                     docs.map(
                       (
                         doc: any
-                      ) => ({
+                      ): PickedFile => ({
                         id: doc.id,
                         name:
                           doc.name,
@@ -345,34 +274,22 @@ export function useGooglePicker() {
                         url:
                           doc.url,
                         thumbnailUrl:
-                          doc
-                            .thumbnails?.[0]
-                            ?.url ||
                           doc.iconUrl,
                       })
                     );
 
-                  onPick(
-                    files
-                  );
+                  onPick(files);
                 }
               }
             )
 
             .build();
 
-        picker.setVisible(
-          true
-        );
+        picker.setVisible(true);
       },
+
       [loadPickerApi]
     );
-
-  /*
-   ─────────────────────────────
-   Main function
-   ─────────────────────────────
-  */
 
   const openPicker =
     useCallback(
@@ -382,20 +299,11 @@ export function useGooglePicker() {
         ) => void
       ) => {
         if (
-          !GOOGLE_CLIENT_ID
-        ) {
-          setError(
-            "Missing Google Client ID"
-          );
-
-          return;
-        }
-
-        if (
+          !GOOGLE_CLIENT_ID ||
           !GOOGLE_API_KEY
         ) {
           setError(
-            "Missing Google API Key"
+            "Google Drive not configured."
           );
 
           return;
@@ -413,38 +321,19 @@ export function useGooglePicker() {
         pickerCallbackRef.current =
           onPick;
 
-        setLoading(
-          true
-        );
+        setLoading(true);
 
-        loadingRef.current =
-          true;
-
-        oauthActiveRef.current =
-          true;
-
-        setError(
-          null
-        );
+        loadingRef.current = true;
+        oauthActiveRef.current = true;
 
         tokenClientRef.current?.requestAccessToken();
       },
-      [
-        token,
-        openPickerWithToken
-      ]
-    );
 
-  const signOut =
-    useCallback(() => {
-      setToken(
-        null
-      );
-    }, []);
+      [token, openPickerWithToken]
+    );
 
   return {
     openPicker,
-    signOut,
     loading,
     error,
     token,
@@ -452,31 +341,4 @@ export function useGooglePicker() {
       !!GOOGLE_CLIENT_ID &&
       !!GOOGLE_API_KEY,
   };
-}
-
-export async function fetchGoogleFileContent(
-  fileUrl: string,
-  accessToken: string
-): Promise<Blob> {
-
-  const response =
-    await fetch(
-      fileUrl,
-      {
-        headers: {
-          Authorization:
-            `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-  if (
-    !response.ok
-  ) {
-    throw new Error(
-      `Failed: ${response.statusText}`
-    );
-  }
-
-  return response.blob();
 }
