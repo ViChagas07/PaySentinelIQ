@@ -104,7 +104,6 @@ class RedisCache:
         cursor = 0
 
         while True:
-
             scan_result = cast(
                 tuple[int, list[str]],
                 await client.scan(
@@ -136,9 +135,7 @@ class RedisPubSub:
 
         client = await get_redis()
 
-        full_channel = (
-            f"{RedisPubSub.CHANNEL_PREFIX}:{channel}"
-        )
+        full_channel = f"{RedisPubSub.CHANNEL_PREFIX}:{channel}"
 
         payload = json.dumps(
             message,
@@ -162,9 +159,7 @@ class RedisPubSub:
 
         client = await get_redis()
 
-        full_channel = (
-            f"{RedisPubSub.CHANNEL_PREFIX}:{channel}"
-        )
+        full_channel = f"{RedisPubSub.CHANNEL_PREFIX}:{channel}"
 
         pubsub = cast(
             PubSub,
@@ -186,7 +181,6 @@ class RedisPubSub:
     ]:
 
         async for raw_msg in pubsub.listen():
-
             msg = cast(
                 dict[str, Any],
                 raw_msg,
@@ -201,12 +195,9 @@ class RedisPubSub:
                 continue
 
             try:
-
                 parsed = cast(
                     dict[str, Any],
-                    json.loads(
-                        cast(str, data)
-                    ),
+                    json.loads(cast(str, data)),
                 )
 
                 yield parsed
@@ -215,7 +206,6 @@ class RedisPubSub:
                 json.JSONDecodeError,
                 TypeError,
             ):
-
                 if isinstance(
                     data,
                     bytes,
@@ -225,6 +215,4 @@ class RedisPubSub:
                         errors="replace",
                     )
 
-                yield {
-                    "raw": str(data)
-                }
+                yield {"raw": str(data)}
