@@ -342,3 +342,27 @@ export function useGooglePicker() {
       !!GOOGLE_API_KEY,
   };
 }
+
+/* ═══════════════════════════════════════════════════
+   Fetch file content from Google Drive URL
+   ═══════════════════════════════════════════════════ */
+
+export async function fetchGoogleFileContent(
+  fileUrl: string,
+  accessToken: string
+): Promise<Blob> {
+
+  const response = await fetch(fileUrl, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch file: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return await response.blob();
+}
