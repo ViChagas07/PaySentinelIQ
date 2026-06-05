@@ -3,9 +3,13 @@
 // ============================================================
 
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { User, Tenant, FraudAlert, Notification } from "@/types";
 
-// ── Auth Store ── //
+// ── Auth Store (persisted to localStorage) ── //
+// Once the user signs up / logs in, their session survives page refreshes
+// and browser restarts. Only clearing site data (localStorage) forces a
+// re-login.
 
 interface AuthStore {
   user: User | null;
@@ -19,24 +23,44 @@ interface AuthStore {
   setLoading: (loading: boolean) => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  isLoading: true,
-  setUser: (user) => set({ user }),
-  setToken: (token) => set({ token }),
-  login: (user, token) =>
-    set({ user, token, isAuthenticated: true, isLoading: false }),
-  logout: () =>
-    set({
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
       user: null,
       token: null,
       isAuthenticated: false,
-      isLoading: false,
+      isLoading: true, // true until rehydrated from localStorage
+      setUser: (user) => set({ user }),
+      setToken: (token) => set({ token }),
+      login: (user, token) =>
+        set({ user, token, isAuthenticated: true, isLoading: false }),
+      logout: () =>
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+        }),
+      setLoading: (isLoading) => set({ isLoading }),
     }),
-  setLoading: (isLoading) => set({ isLoading }),
-}));
+    {
+      name: "psi-auth", // localStorage key
+      storage: createJSONStorage(() => localStorage),
+      // Only persist data fields — functions are re-created by Zustand
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
+      }),
+      // After rehydration from localStorage, mark loading as done
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.setLoading(false);
+        }
+      },
+    }
+  )
+);
 
 // ── Tenant Store ── //
 
