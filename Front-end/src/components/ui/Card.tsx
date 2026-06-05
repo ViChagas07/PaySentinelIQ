@@ -1,5 +1,6 @@
 // ============================================================
-// PaySentinelIQ — Card Component
+// PaySentinelIQ — Card Component (Glassmorphism Edition)
+// Premium glass cards with subtle aura glow and hover effects
 // ============================================================
 
 import { forwardRef, type HTMLAttributes } from "react";
@@ -8,22 +9,35 @@ import { cn } from "@/lib/utils";
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "interactive" | "alert";
   glow?: boolean;
+  glass?: boolean; // Enhanced glassmorphism variant
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = "default", glow, children, ...props }, ref) => {
+  ({ className, variant = "default", glow, glass, children, ...props }, ref) => {
+    const isInteractive = variant === "interactive";
+
     return (
       <div
         ref={ref}
         className={cn(
-          "rounded-xl border border-psi-border p-6 transition-all duration-200",
+          "rounded-xl border p-6 transition-all duration-300",
+          // Glassmorphism base — applies to all variants for a cohesive look
+          "bg-psi-graphite/70 backdrop-blur-xl border-white/[0.06] shadow-lg shadow-black/20",
           {
-            "bg-psi-graphite": variant === "default",
-            "bg-psi-graphite cursor-pointer hover:border-psi-electric/40 hover:shadow-lg hover:shadow-psi-electric/5":
-              variant === "interactive",
-            "bg-psi-graphite border-psi-fraud/40": variant === "alert",
+            // Default: glass card with subtle backdrop blur
+            "bg-psi-graphite/70": variant === "default",
+            // Interactive: subtle lift on hover with glow border
+            "bg-psi-graphite/70 cursor-pointer card-aura-hover border-white/[0.06]":
+              isInteractive,
+            // Alert: maintains glass but with fraud-colored border
+            "bg-psi-graphite/70 border-psi-fraud/30": variant === "alert",
           },
-          glow && "shadow-lg shadow-psi-electric/10",
+          // Enhanced glassmorphism override
+          glass && "glass-card-strong",
+          // Glow prop adds initial subtle aura shadow
+          glow && "aura-glow-blue",
+          // Specific hover for interactive variant
+          isInteractive && "hover:border-psi-electric/25 hover:shadow-lg hover:shadow-psi-electric/8",
           className
         )}
         {...props}

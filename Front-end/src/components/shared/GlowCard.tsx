@@ -43,8 +43,8 @@ export function GlowCard({
           intensityMap[glowIntensity]
         )}
       />
-      {/* Content */}
-      <div className={cn("relative rounded-xl border border-psi-border bg-psi-graphite/60 backdrop-blur-sm", !noPadding && "px-6 py-5 md:px-8 md:py-6")}>
+      {/* Content — glass surface with backdrop blur */}
+      <div className={cn("relative rounded-xl border border-white/[0.06] bg-psi-graphite/60 backdrop-blur-xl shadow-xl", !noPadding && "px-6 py-5 md:px-8 md:py-6")}>
         {children}
       </div>
     </div>
@@ -52,20 +52,36 @@ export function GlowCard({
 }
 
 /* ═══════════════════════════════════════════════════
-   Glass Card — glassmorphism card with frosted bg
+   Glass Card — premium glassmorphism with aura glow
    ═══════════════════════════════════════════════════ */
 
 export function GlassCard({
   children,
   className,
+  hover = false,
+  glowColor = "blue",
 }: {
   children: React.ReactNode;
   className?: string;
+  /** Enable subtle hover lift + border glow */
+  hover?: boolean;
+  /** Glow accent color */
+  glowColor?: "blue" | "cyan" | "violet" | "emerald" | "none";
 }) {
+  const glowClasses: Record<string, string> = {
+    blue: "hover:shadow-psi-electric/10",
+    cyan: "hover:shadow-cyan-500/10",
+    violet: "hover:shadow-violet-500/10",
+    emerald: "hover:shadow-emerald-500/10",
+    none: "",
+  };
+
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl shadow-2xl",
+        "rounded-xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl shadow-2xl transition-all duration-300",
+        hover && "card-aura-hover cursor-pointer",
+        glowColor !== "none" && glowClasses[glowColor],
         className
       )}
     >

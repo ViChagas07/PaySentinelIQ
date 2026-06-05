@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { AIAssistantPanel } from "@/components/dashboard/AIAssistantPanel";
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
+import { AIAuraBackground } from "@/components/shared/AIAuraBackground";
 
 function ContentSkeleton() {
   const t = useTranslations("common");
@@ -25,12 +26,16 @@ function ContentSkeleton() {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-dvh overflow-hidden bg-background">
+    <div className="flex h-dvh overflow-hidden bg-background relative">
+      {/* Premium AI aura background — behind all content */}
+      <AIAuraBackground />
+
+      {/* Content layer — sits above the background */}
       <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0 relative z-10">
         <Navbar />
         <div className="flex flex-1 overflow-hidden">
-          <main id="main-content" className="flex-1 overflow-y-auto overflow-x-hidden" tabIndex={-1}>
+          <main id="main-content" className="flex-1 overflow-y-auto overflow-x-hidden relative z-10" tabIndex={-1}>
             <ErrorBoundary>
               <Suspense fallback={<ContentSkeleton />}>
                 <div className="p-3 sm:p-4 md:p-6 lg:p-8">

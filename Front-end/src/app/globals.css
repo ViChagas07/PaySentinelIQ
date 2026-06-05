@@ -16,6 +16,18 @@
   --spacing-2xl: 2.5rem;
   /* Default primary RGB (blue) — overridden by SettingsProvider */
   --psi-primary-rgb: 30, 111, 255;
+
+  /* ── Aura / Glassmorphism Tokens ── */
+  --aura-blue: rgba(59, 130, 246, 0.08);
+  --aura-cyan: rgba(6, 182, 212, 0.06);
+  --aura-violet: rgba(124, 58, 237, 0.06);
+  --aura-emerald: rgba(16, 185, 129, 0.05);
+  --aura-blue-strong: rgba(59, 130, 246, 0.15);
+  --glass-bg: rgba(17, 24, 39, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-hover: rgba(59, 130, 246, 0.15);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glass-shadow-hover: 0 8px 32px rgba(59, 130, 246, 0.12);
 }
 
 @theme {
@@ -196,6 +208,121 @@
 @keyframes pulse-alert { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 @keyframes count-up { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin-slow { to { transform: rotate(360deg); } }
+@keyframes aura-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(2%, -1%) scale(1.02); }
+  50% { transform: translate(-1%, 2%) scale(0.98); }
+  75% { transform: translate(1%, -2%) scale(1.01); }
+}
+@keyframes pulse-signal {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+@keyframes glow-subtle {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ── Glassmorphism Utilities ── */
+.glass-card {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--glass-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.glass-card-strong {
+  background-color: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.glass-card-strong:hover {
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 8px 40px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+/* ── Aura glow utilities ── */
+.aura-glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.08), 0 0 60px rgba(59, 130, 246, 0.04);
+}
+
+.aura-glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.08), 0 0 60px rgba(6, 182, 212, 0.04);
+}
+
+.aura-glow-violet {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.08), 0 0 60px rgba(124, 58, 237, 0.04);
+}
+
+.aura-glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.08), 0 0 60px rgba(16, 185, 129, 0.04);
+}
+
+/* ── Signal pulse ring ── */
+.signal-pulse {
+  animation: pulse-signal 2s ease-in-out infinite;
+}
+
+/* ── Card hover enhancement ── */
+.card-aura-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-aura-hover:hover {
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 24px rgba(59, 130, 246, 0.1), 0 0 60px rgba(59, 130, 246, 0.04);
+}
+
+/* ── Button aura effect ── */
+.btn-aura {
+  position: relative;
+  isolation: isolate;
+}
+
+.btn-aura::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.15), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.btn-aura:hover::before {
+  opacity: 1;
+}
+
+/* Override for .light theme — reduce glass opacity */
+.light .glass-card {
+  background-color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.light .glass-card-strong {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.light .card-aura-hover:hover {
+  box-shadow: 0 4px 24px rgba(59, 130, 246, 0.08);
+}
 
 /* ═══════════════════════════════════════════════════
    GLOBAL RESETS
