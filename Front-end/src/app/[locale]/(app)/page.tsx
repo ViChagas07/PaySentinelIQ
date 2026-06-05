@@ -18,7 +18,7 @@ import { LazyPayrollTrendChart, LazyFraudHeatmap, LazyRiskDistributionChart, Laz
 import {
   DollarSign, ShieldCheck, AlertTriangle, Brain, Clock, Scale,
   FileWarning, ArrowUpRight, ArrowDownRight, Calendar, ChevronDown,
-  Database, WifiOff, LogIn, Sparkles, Lock,
+  WifiOff, LogIn, Sparkles, Lock,
   type LucideIcon,
 } from "lucide-react";
 import { useDashboardKpis } from "@/hooks/useApi";
@@ -464,34 +464,25 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           ))
-        ) : kpisError ? (
-          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-            <div className="rounded-full bg-psi-fraud/10 p-4 mb-4">
-              <WifiOff className="h-8 w-8 text-psi-fraud" />
-            </div>
-            <p className="text-lg font-semibold text-psi-text-primary mb-1">
-              {t("dataUnavailable")}
-            </p>
-            <p className="text-sm text-psi-text-secondary max-w-md">
-              {t("dataUnavailableDescription")}
-            </p>
-          </div>
-        ) : !kpisSuccess ? (
-          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-            <div className="rounded-full bg-psi-navy/50 p-4 mb-4">
-              <Database className="h-8 w-8 text-psi-text-secondary" />
-            </div>
-            <p className="text-lg font-semibold text-psi-text-primary mb-1">
-              {t("noData")}
-            </p>
-            <p className="text-sm text-psi-text-secondary max-w-md">
-              {t("noDataDescription")}
-            </p>
-          </div>
         ) : (
-          kpiData.map((kpi, i) => (
-            <KpiCard key={kpi.label} kpi={kpi} index={i} />
-          ))
+          // ── Show KPI cards — even if API errored, use fallback zeros ──
+          // If the API is unavailable (backend still in development, offline,
+          // or no data yet), we render zeros instead of a "server down" error
+          // screen. A real server-down indicator only appears when the user
+          // is genuinely offline (navigator.onLine).
+          <>
+            {kpisError && typeof navigator !== "undefined" && !navigator.onLine && (
+              <div className="col-span-full flex items-center gap-3 rounded-lg border border-psi-warning/30 bg-psi-warning/5 px-4 py-3 mb-2">
+                <WifiOff className="h-4 w-4 text-psi-warning shrink-0" />
+                <p className="text-xs text-psi-text-secondary">
+                  {t("dataUnavailableDescription")}
+                </p>
+              </div>
+            )}
+            {kpiData.map((kpi, i) => (
+              <KpiCard key={kpi.label} kpi={kpi} index={i} />
+            ))}
+          </>
         )}
       </div>
 

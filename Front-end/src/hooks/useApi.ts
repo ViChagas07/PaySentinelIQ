@@ -324,10 +324,11 @@ export function useDashboardKpis(enabled = true) {
     queryKey: queryKeys.dashboard.kpis,
     queryFn: () =>
       api.get<DashboardKpisResponse>("/dashboard/kpis"),
-    staleTime: 5_000,
-    refetchInterval: 10_000,
+    staleTime: 10_000,
+    refetchInterval: 30_000,
     refetchOnMount: true,
-    ...FAST_RETRY,
+    retry: false,               // Don't retry — if backend is unavailable, show zeros gracefully
+    placeholderData: (prev) => prev,  // Keep showing last data (or undefined) while refetching
     enabled,
   });
 }
@@ -337,10 +338,11 @@ export function useDashboardTrends(enabled = true) {
     queryKey: queryKeys.dashboard.trends,
     queryFn: () =>
       api.get<DashboardTrendsResponse>("/dashboard/trends"),
-    staleTime: 8_000,
-    refetchInterval: 15_000,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
     refetchOnMount: true,
-    ...FAST_RETRY,
+    retry: false,
+    placeholderData: (prev) => prev,
     enabled,
   });
 }
@@ -350,10 +352,11 @@ export function useDashboardHeatmap(enabled = true) {
     queryKey: queryKeys.dashboard.heatmap,
     queryFn: () =>
       api.get<DashboardHeatmapResponse>("/dashboard/heatmap"),
-    staleTime: 8_000,
-    refetchInterval: 15_000,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
     refetchOnMount: true,
-    ...FAST_RETRY,
+    retry: false,
+    placeholderData: (prev) => prev,
     enabled,
   });
 }
@@ -363,10 +366,11 @@ export function useDashboardRiskDistribution(enabled = true) {
     queryKey: queryKeys.dashboard.riskDistribution,
     queryFn: () =>
       api.get<DashboardRiskDistributionResponse>("/dashboard/risk-distribution"),
-    staleTime: 10_000,
-    refetchInterval: 20_000,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
     refetchOnMount: true,
-    ...FAST_RETRY,
+    retry: false,
+    placeholderData: (prev) => prev,
     enabled,
   });
 }
