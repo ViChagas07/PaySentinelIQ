@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
@@ -212,6 +212,36 @@ export function Sidebar() {
     [user?.role, user]
   );
 
+  // Collect all hrefs from filtered items (flattened)
+  const allItemHrefs = useMemo(
+    () => filteredSections.flatMap((s) => s.items.map((i) => i.href)),
+    [filteredSections]
+  );
+
+  // Identify hrefs that are a parent prefix of another item in the nav
+  // (e.g. "/dashboard" is prefix of "/dashboard/analyze-payroll")
+  // These items should ONLY match via exact equality, NOT via startsWith.
+  const parentHrefs = useMemo(() => {
+    const parents = new Set<string>();
+    for (const href of allItemHrefs) {
+      for (const other of allItemHrefs) {
+        if (other !== href && other.startsWith(href + "/")) {
+          parents.add(href);
+          break;
+        }
+      }
+    }
+    return parents;
+  }, [allItemHrefs]);
+
+  // Active check: exact match OR (non-parent items match sub-routes via startsWith)
+  const isItemActive = useCallback(
+    (itemHref: string) =>
+      pathname === itemHref ||
+      (!parentHrefs.has(itemHref) && pathname.startsWith(itemHref + "/")),
+    [pathname, parentHrefs]
+  );
+
   return (
     <>
       {/* Mobile overlay */}
@@ -271,7 +301,7 @@ export function Sidebar() {
                 key={item.href}
                 item={item}
                 label={t(item.labelKey as any)}
-                isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
+                isActive={isItemActive(item.href)}
                 collapsed={sidebarCollapsed}
               />
             ))}
