@@ -589,9 +589,14 @@
     "verificationCenter": "验证中心"
   },
   "payroll": {
-    "pageTitle": "薪资生成中心",
-    "pageDescription": "用于薪资创建、税务计算、薪资模拟、PDF生成和数字签名的财务工作区。",
-    "pageBadge": "财务"
+    "pageTitle": "AI支付智能中心", "pageDescription": "智能支付验证、欺诈检测和预测分析。", "pageBadge": "AI金融",
+    "hero": { "title": "支付智能中心", "subtitle": "智能支付验证、欺诈检测和预测分析。", "statusCard": { "pendingAnalyses": "待分析", "scheduledPayments": "计划付款", "aiConfidence": "AI置信度", "riskAlerts": "风险警报", "noData": "暂无数据", "loading": "加载中..." } },
+    "upload": { "title": "智能发票录入", "description": "上传文档进行AI提取和分析", "dragDrop": "将文件拖放到此处", "selectFile": "选择文件", "supportedFormats": "PDF、PNG、JPG、发票、收据", "extracted": { "beneficiary": "收款人", "amount": "金额", "dueDate": "到期日", "category": "类别", "cnpj": "CNPJ", "barcode": "条形码", "confidence": "AI置信度", "risk": "风险指标" }, "noDocument": "未上传文档", "noDocumentDesc": "上传支付文档即可查看提取的数据", "scanning": "AI正在扫描您的文档..." },
+    "scanner": { "title": "欺诈风险扫描器", "description": "AI驱动的文档验证和欺诈分析", "check": { "beneficiaryValidation": "收款人验证", "cnpjConsistency": "CNPJ一致性", "barcodeIntegrity": "条形码完整性", "duplicateDetection": "重复检测", "suspiciousValues": "可疑值", "historicalInconsistency": "历史不一致", "patternAnomaly": "模式异常检测" }, "riskScore": "风险评分", "aiConfidence": "AI置信度", "threatLevel": "威胁等级", "recommendations": "建议", "noData": "未分析文档", "noDataDesc": "上传文档以运行风险扫描" },
+    "queue": { "title": "付款队列", "description": "智能付款管道管理", "column": { "pending": "待处理", "scheduled": "已计划", "completed": "已完成" }, "empty": { "pending": "无待处理付款", "pendingDesc": "等待处理的付款将显示在此处", "scheduled": "无计划付款", "scheduledDesc": "您的计划付款将显示在此处", "completed": "无已完成付款", "completedDesc": "已处理的付款将显示在此处" }, "card": { "documentType": "文档", "beneficiary": "收款人", "dueDate": "到期日", "status": "状态", "riskBadge": "风险" } },
+    "simulation": { "title": "未来付款模拟", "description": "未来付款流的预测分析", "upcomingPayments": "即将付款", "forecastAnalysis": "预测分析", "cashFlowPrediction": "现金流预测", "riskTrend": "风险趋势", "noData": "暂无预测数据", "noDataDesc": "拥有足够的付款历史后，预测数据将显示在此处", "monthly": "每月", "weekly": "每周", "daily": "每日" },
+    "assistant": { "title": "AI支付助手", "badge": "AI生成", "noRecommendations": "暂无建议", "noRecommendationsDesc": "处理付款时将显示AI建议", "confidence": "AI置信度", "recommendation": { "duplicatePayment": "检测到可能的重复付款", "invoiceDue": "发票明天到期", "unusualPattern": "识别到异常值模式", "missingValidation": "缺少付款验证" } },
+    "actions": { "payNow": "立即付款", "schedulePayment": "计划付款", "generatePix": "生成PIX副本", "exportData": "导出数据", "connectBank": "连接银行", "comingSoon": "将在未来版本中提供" }
   },
   "employees": {
     "pageDescription": "员工目录，包含风险评分、薪资历史、验证状态和AI驱动的异常检测。",

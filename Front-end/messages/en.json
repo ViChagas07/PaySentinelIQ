@@ -589,9 +589,118 @@
     "severityCritical": "Critical"
   },
   "payroll": {
-    "pageTitle": "Payroll Generation Center",
-    "pageDescription": "Financial workspace for payroll creation, tax calculations, salary simulation, PDF generation, and digital signatures.",
-    "pageBadge": "Finance"
+    "pageTitle": "AI Payment Intelligence Center",
+    "pageDescription": "Intelligent payment validation, fraud detection and predictive analysis.",
+    "pageBadge": "AI Finance",
+    "hero": {
+      "title": "Payment Intelligence Center",
+      "subtitle": "Intelligent payment validation, fraud detection and predictive analysis.",
+      "statusCard": {
+        "pendingAnalyses": "Pending Analyses",
+        "scheduledPayments": "Scheduled Payments",
+        "aiConfidence": "AI Confidence Level",
+        "riskAlerts": "Risk Alerts",
+        "noData": "No data yet",
+        "loading": "Loading..."
+      }
+    },
+    "upload": {
+      "title": "Smart Invoice Intake",
+      "description": "Upload documents for AI-powered extraction and analysis",
+      "dragDrop": "Drag & drop files here",
+      "selectFile": "Select files",
+      "supportedFormats": "PDF, PNG, JPG, payment slips, invoices, bills",
+      "extracted": {
+        "beneficiary": "Beneficiary",
+        "amount": "Amount",
+        "dueDate": "Due Date",
+        "category": "Category",
+        "cnpj": "CNPJ",
+        "barcode": "Barcode",
+        "confidence": "AI Confidence",
+        "risk": "Risk Indicator"
+      },
+      "noDocument": "No document uploaded",
+      "noDocumentDesc": "Upload a payment document to see the extracted data here",
+      "scanning": "AI is scanning your document..."
+    },
+    "scanner": {
+      "title": "Fraud Risk Scanner",
+      "description": "AI-powered document verification and fraud analysis",
+      "check": {
+        "beneficiaryValidation": "Beneficiary validation",
+        "cnpjConsistency": "CNPJ consistency",
+        "barcodeIntegrity": "Barcode integrity",
+        "duplicateDetection": "Duplicate detection",
+        "suspiciousValues": "Suspicious values",
+        "historicalInconsistency": "Historical inconsistency",
+        "patternAnomaly": "Pattern anomaly detection"
+      },
+      "riskScore": "Risk Score",
+      "aiConfidence": "AI Confidence",
+      "threatLevel": "Threat Level",
+      "recommendations": "Recommendations",
+      "noData": "No document analyzed",
+      "noDataDesc": "Upload a document to run the fraud risk scanner"
+    },
+    "queue": {
+      "title": "Payment Queue",
+      "description": "Intelligent payment pipeline management",
+      "column": {
+        "pending": "Pending",
+        "scheduled": "Scheduled",
+        "completed": "Completed"
+      },
+      "empty": {
+        "pending": "No pending payments",
+        "pendingDesc": "Payments awaiting processing will appear here",
+        "scheduled": "No scheduled payments",
+        "scheduledDesc": "Your scheduled payments will appear here",
+        "completed": "No completed payments",
+        "completedDesc": "Processed payments will appear here"
+      },
+      "card": {
+        "documentType": "Document",
+        "beneficiary": "Beneficiary",
+        "dueDate": "Due date",
+        "status": "Status",
+        "riskBadge": "Risk"
+      }
+    },
+    "simulation": {
+      "title": "Future Payment Simulation",
+      "description": "Predictive analysis of upcoming payment flow",
+      "upcomingPayments": "Upcoming Payments",
+      "forecastAnalysis": "Forecast Analysis",
+      "cashFlowPrediction": "Cash Flow Prediction",
+      "riskTrend": "Risk Trend",
+      "noData": "No prediction data available",
+      "noDataDesc": "Prediction data will appear once you have enough payment history",
+      "monthly": "Monthly",
+      "weekly": "Weekly",
+      "daily": "Daily"
+    },
+    "assistant": {
+      "title": "AI Payment Assistant",
+      "badge": "AI Generated",
+      "noRecommendations": "No recommendations yet",
+      "noRecommendationsDesc": "AI recommendations will appear as you process payments",
+      "confidence": "AI Confidence",
+      "recommendation": {
+        "duplicatePayment": "Potential duplicate payment detected",
+        "invoiceDue": "Invoice due tomorrow",
+        "unusualPattern": "Unusual value pattern identified",
+        "missingValidation": "Missing payroll validation"
+      }
+    },
+    "actions": {
+      "payNow": "Pay Now",
+      "schedulePayment": "Schedule Payment",
+      "generatePix": "Generate PIX Copy",
+      "exportData": "Export Payment Data",
+      "connectBank": "Connect Bank",
+      "comingSoon": "Available in future release"
+    }
   },
   "employees": {
     "pageTitle": "Employee Directory",

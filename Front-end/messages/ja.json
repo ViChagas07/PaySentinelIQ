@@ -589,9 +589,14 @@
     "verificationCenter": "検証センター"
   },
   "payroll": {
-    "pageTitle": "給与生成センター",
-    "pageDescription": "給与作成、税計算、給与シミュレーションのための財務ワークスペース。",
-    "pageBadge": "財務"
+    "pageTitle": "AI支払いインテリジェンスセンター", "pageDescription": "インテリジェントな支払い検証、不正検出、予測分析。", "pageBadge": "AI財務",
+    "hero": { "title": "支払いインテリジェンスセンター", "subtitle": "インテリジェントな支払い検証、不正検出、予測分析。", "statusCard": { "pendingAnalyses": "保留中の分析", "scheduledPayments": "予定された支払い", "aiConfidence": "AI信頼度", "riskAlerts": "リスクアラート", "noData": "データなし", "loading": "読み込み中..." } },
+    "upload": { "title": "スマート請求書取込", "description": "AIによる抽出・分析のためのドキュメントをアップロード", "dragDrop": "ファイルをここにドロップ", "selectFile": "ファイルを選択", "supportedFormats": "PDF, PNG, JPG, 請求書, 領収書", "extracted": { "beneficiary": "受取人", "amount": "金額", "dueDate": "期限日", "category": "カテゴリ", "cnpj": "CNPJ", "barcode": "バーコード", "confidence": "AI信頼度", "risk": "リスク指標" }, "noDocument": "ドキュメントがアップロードされていません", "noDocumentDesc": "支払いドキュメントをアップロードすると抽出データが表示されます", "scanning": "AIがドキュメントをスキャンしています..." },
+    "scanner": { "title": "不正リスクスキャナー", "description": "AIによるドキュメント検証と不正分析", "check": { "beneficiaryValidation": "受取人検証", "cnpjConsistency": "CNPJ整合性", "barcodeIntegrity": "バーコード整合性", "duplicateDetection": "重複検出", "suspiciousValues": "疑わしい値", "historicalInconsistency": "履歴の不整合", "patternAnomaly": "パターン異常検出" }, "riskScore": "リスクスコア", "aiConfidence": "AI信頼度", "threatLevel": "脅威レベル", "recommendations": "推奨事項", "noData": "分析されたドキュメントはありません", "noDataDesc": "ドキュメントをアップロードしてリスクスキャンを実行" },
+    "queue": { "title": "支払いキュー", "description": "インテリジェントな支払いパイプライン管理", "column": { "pending": "保留中", "scheduled": "予定", "completed": "完了" }, "empty": { "pending": "保留中の支払いはありません", "pendingDesc": "処理待ちの支払いはここに表示されます", "scheduled": "予定された支払いはありません", "scheduledDesc": "予定された支払いはここに表示されます", "completed": "完了した支払いはありません", "completedDesc": "処理済みの支払いはここに表示されます" }, "card": { "documentType": "ドキュメント", "beneficiary": "受取人", "dueDate": "期限日", "status": "ステータス", "riskBadge": "リスク" } },
+    "simulation": { "title": "将来の支払いシミュレーション", "description": "将来の支払いフローの予測分析", "upcomingPayments": "今後の支払い", "forecastAnalysis": "予測分析", "cashFlowPrediction": "キャッシュフロー予測", "riskTrend": "リスク傾向", "noData": "予測データは利用できません", "noDataDesc": "十分な支払い履歴があれば予測データが表示されます", "monthly": "月次", "weekly": "週次", "daily": "日次" },
+    "assistant": { "title": "AI支払いアシスタント", "badge": "AI生成", "noRecommendations": "まだ推奨事項はありません", "noRecommendationsDesc": "支払い処理時にAI推奨事項が表示されます", "confidence": "AI信頼度", "recommendation": { "duplicatePayment": "重複支払いの可能性を検出", "invoiceDue": "請求書の期限は明日です", "unusualPattern": "異常な値パターンを特定", "missingValidation": "支払い検証が不足しています" } },
+    "actions": { "payNow": "今すぐ支払う", "schedulePayment": "支払いを予定", "generatePix": "PIXコピーを生成", "exportData": "データをエクスポート", "connectBank": "銀行を接続", "comingSoon": "将来のリリースで利用可能" }
   },
   "employees": {
     "pageDescription": "リスクスコア付き従業員ディレクトリとAI異常検出。",

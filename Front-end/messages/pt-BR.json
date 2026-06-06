@@ -589,9 +589,118 @@
     "severityCritical": "Crítico"
   },
   "payroll": {
-    "pageTitle": "Central de Geração de Pagamentos",
-    "pageDescription": "Área financeira para criação de pagamentos, cálculos fiscais, simulação salarial, geração de PDF e assinaturas digitais.",
-    "pageBadge": "Financeiro"
+    "pageTitle": "Central de Inteligência de Pagamentos com IA",
+    "pageDescription": "Validação inteligente de pagamentos, detecção de fraudes e análise preditiva.",
+    "pageBadge": "IA Financeira",
+    "hero": {
+      "title": "Central de Inteligência de Pagamentos",
+      "subtitle": "Validação inteligente de pagamentos, detecção de fraudes e análise preditiva.",
+      "statusCard": {
+        "pendingAnalyses": "Análises Pendentes",
+        "scheduledPayments": "Pagamentos Agendados",
+        "aiConfidence": "Nível de Confiança da IA",
+        "riskAlerts": "Alertas de Risco",
+        "noData": "Nenhum dado ainda",
+        "loading": "Carregando..."
+      }
+    },
+    "upload": {
+      "title": "Captura Inteligente de Faturas",
+      "description": "Envie documentos para extração e análise por IA",
+      "dragDrop": "Arraste arquivos aqui",
+      "selectFile": "Selecionar arquivos",
+      "supportedFormats": "PDF, PNG, JPG, boletos, faturas, contas",
+      "extracted": {
+        "beneficiary": "Beneficiário",
+        "amount": "Valor",
+        "dueDate": "Vencimento",
+        "category": "Categoria",
+        "cnpj": "CNPJ",
+        "barcode": "Código de Barras",
+        "confidence": "Confiança da IA",
+        "risk": "Indicador de Risco"
+      },
+      "noDocument": "Nenhum documento enviado",
+      "noDocumentDesc": "Envie um documento de pagamento para ver os dados extraídos aqui",
+      "scanning": "IA está escaneando seu documento..."
+    },
+    "scanner": {
+      "title": "Scanner de Risco de Fraude",
+      "description": "Verificação de documentos e análise de fraude com IA",
+      "check": {
+        "beneficiaryValidation": "Validação do beneficiário",
+        "cnpjConsistency": "Consistência do CNPJ",
+        "barcodeIntegrity": "Integridade do código de barras",
+        "duplicateDetection": "Detecção de duplicidade",
+        "suspiciousValues": "Valores suspeitos",
+        "historicalInconsistency": "Inconsistência histórica",
+        "patternAnomaly": "Detecção de anomalia de padrão"
+      },
+      "riskScore": "Pontuação de Risco",
+      "aiConfidence": "Confiança da IA",
+      "threatLevel": "Nível de Ameaça",
+      "recommendations": "Recomendações",
+      "noData": "Nenhum documento analisado",
+      "noDataDesc": "Envie um documento para executar o scanner de risco de fraude"
+    },
+    "queue": {
+      "title": "Fila de Pagamentos",
+      "description": "Gerenciamento inteligente de pipeline de pagamentos",
+      "column": {
+        "pending": "Pendente",
+        "scheduled": "Agendado",
+        "completed": "Concluído"
+      },
+      "empty": {
+        "pending": "Nenhum pagamento pendente",
+        "pendingDesc": "Pagamentos aguardando processamento aparecerão aqui",
+        "scheduled": "Nenhum pagamento agendado",
+        "scheduledDesc": "Seus pagamentos agendados aparecerão aqui",
+        "completed": "Nenhum pagamento concluído",
+        "completedDesc": "Pagamentos processados aparecerão aqui"
+      },
+      "card": {
+        "documentType": "Documento",
+        "beneficiary": "Beneficiário",
+        "dueDate": "Vencimento",
+        "status": "Status",
+        "riskBadge": "Risco"
+      }
+    },
+    "simulation": {
+      "title": "Simulação de Pagamentos Futuros",
+      "description": "Análise preditiva do fluxo de pagamentos futuro",
+      "upcomingPayments": "Pagamentos Futuros",
+      "forecastAnalysis": "Análise de Previsão",
+      "cashFlowPrediction": "Previsão de Fluxo de Caixa",
+      "riskTrend": "Tendência de Risco",
+      "noData": "Nenhum dado de previsão disponível",
+      "noDataDesc": "Dados de previsão aparecerão quando houver histórico de pagamentos suficiente",
+      "monthly": "Mensal",
+      "weekly": "Semanal",
+      "daily": "Diário"
+    },
+    "assistant": {
+      "title": "Assistente de Pagamentos com IA",
+      "badge": "Gerado por IA",
+      "noRecommendations": "Nenhuma recomendação ainda",
+      "noRecommendationsDesc": "Recomendações de IA aparecerão conforme você processar pagamentos",
+      "confidence": "Confiança da IA",
+      "recommendation": {
+        "duplicatePayment": "Possível pagamento duplicado detectado",
+        "invoiceDue": "Fatura vence amanhã",
+        "unusualPattern": "Padrão de valor incomum identificado",
+        "missingValidation": "Validação de pagamento ausente"
+      }
+    },
+    "actions": {
+      "payNow": "Pagar Agora",
+      "schedulePayment": "Agendar Pagamento",
+      "generatePix": "Gerar Cópia PIX",
+      "exportData": "Exportar Dados",
+      "connectBank": "Conectar Banco",
+      "comingSoon": "Disponível em versão futura"
+    }
   },
   "employees": {
     "pageTitle": "Funcionários",
