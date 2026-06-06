@@ -668,7 +668,11 @@
     "patternUnusualFrequencyDesc": "بلغ نشاط التحميل ذروته بشكل ملحوظ فوق المتوسط اليومي خارج ساعات العمل. احتمال استخراج بيانات.",
     "highConfidence": "ثقة عالية",
     "mediumConfidence": "ثقة متوسطة",
-    "aiFlagged": "مُعلَّم بواسطة الذكاء الاصطناعي"
+    "aiFlagged": "مُعلَّم بواسطة الذكاء الاصطناعي",
+    "emptyTimelineDescription": "لم يتم تسجيل أي أحداث بعد. سيتم ملء الجدول الزمني مع حدوث الأنشطة.",
+    "activityHeatmapEmpty": "ستظهر بيانات النشاط هنا بمرور الوقت.",
+    "noPatterns": "لم يتم اكتشاف أنماط مشبوهة",
+    "emptyPatternsDescription": "لم يتم اكتشاف أنماط مشبوهة بعد. ستظهر الأنماط أثناء معالجة النظام للبيانات."
   },
   "aiInsights": {
     "pageTitle": "لوحة رؤى PSI",
@@ -702,7 +706,9 @@
     "exportPDF": "تصدير PDF",
     "exportCSV": "تصدير CSV",
     "shareReport": "مشاركة التقرير",
-    "generateReport": "إنشاء تقرير تنفيذي"
+    "generateReport": "إنشاء تقرير تنفيذي",
+    "noDataAvailable": "لا توجد بيانات متاحة بعد. سيتم ملء التقارير أثناء تحليل المستندات.",
+    "notAvailable": "غير متاح"
   },
   "profile": {
     "pageTitle": "مركز الهوية والقيادة",

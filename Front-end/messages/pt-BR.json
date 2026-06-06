@@ -622,7 +622,7 @@
     "eventType": "Tipo de Evento",
     "riskLevel": "Nível de Risco",
     "dateRange": "Período",
-    "status": "Status",
+    "status": "Situação",
     "aiGeneratedOnly": "Apenas IA",
     "clearFilters": "Limpar Filtros",
     "today": "Hoje",
@@ -668,7 +668,11 @@
     "patternUnusualFrequencyDesc": "Atividade de upload atingiu pico significativamente acima da média diária durante horários não comerciais. Possível extração de dados.",
     "highConfidence": "Alta Confiança",
     "mediumConfidence": "Confiança Média",
-    "aiFlagged": "Sinalizado por IA"
+    "aiFlagged": "Sinalizado por IA",
+    "emptyTimelineDescription": "Nenhum evento registrado ainda. A linha do tempo será preenchida conforme as atividades ocorrerem.",
+    "activityHeatmapEmpty": "Os dados de atividade aparecerão aqui com o tempo.",
+    "noPatterns": "Nenhum padrão suspeito detectado",
+    "emptyPatternsDescription": "Nenhum padrão suspeito detectado ainda. Os padrões aparecerão à medida que o sistema processar os dados."
   },
   "aiInsights": {
     "pageTitle": "Painel de Insights PSI",
@@ -702,7 +706,9 @@
     "exportPDF": "Exportar PDF",
     "exportCSV": "Exportar CSV",
     "shareReport": "Compartilhar Relatório",
-    "generateReport": "Gerar Relatório Executivo"
+    "generateReport": "Gerar Relatório Executivo",
+    "noDataAvailable": "Nenhum dado disponível ainda. Os relatórios serão preenchidos à medida que os documentos forem analisados.",
+    "notAvailable": "N/D"
   },
   "profile": {
     "pageTitle": "Centro de Identidade & Comando",

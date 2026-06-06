@@ -668,7 +668,11 @@
     "patternUnusualFrequencyDesc": "L'activité de téléchargement a culminé bien au-dessus de la moyenne quotidienne en dehors des heures ouvrables. Possible extraction de données.",
     "highConfidence": "Haute confiance",
     "mediumConfidence": "Confiance moyenne",
-    "aiFlagged": "Signalé par IA"
+    "aiFlagged": "Signalé par IA",
+    "emptyTimelineDescription": "Aucun événement enregistré pour le moment. La chronologie se remplira au fur et à mesure des activités.",
+    "activityHeatmapEmpty": "Les données d'activité apparaîtront ici au fil du temps.",
+    "noPatterns": "Aucun motif suspect détecté",
+    "emptyPatternsDescription": "Aucun motif suspect détecté pour le moment. Les motifs apparaîtront au fur et à mesure que le système traite les données."
   },
   "aiInsights": {
     "pageTitle": "Tableau de Bord Insights",
@@ -702,7 +706,9 @@
     "exportPDF": "Exporter PDF",
     "exportCSV": "Exporter CSV",
     "shareReport": "Partager le rapport",
-    "generateReport": "Générer un rapport exécutif"
+    "generateReport": "Générer un rapport exécutif",
+    "noDataAvailable": "Aucune donnée disponible pour le moment. Les rapports se rempliront au fur et à mesure de l'analyse des documents.",
+    "notAvailable": "N/D"
   },
   "profile": {
     "pageTitle": "Centre d'Identité & de Commandement",

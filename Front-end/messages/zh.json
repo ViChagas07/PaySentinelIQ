@@ -668,7 +668,11 @@
     "patternUnusualFrequencyDesc": "在非工作时间，上传活动显著高于日均水平。可能存在数据提取。",
     "highConfidence": "高置信度",
     "mediumConfidence": "中置信度",
-    "aiFlagged": "AI标记"
+    "aiFlagged": "AI标记",
+    "emptyTimelineDescription": "尚未记录任何事件。时间线将随着活动的发生而填充。",
+    "activityHeatmapEmpty": "活动数据将随时间显示在此处。",
+    "noPatterns": "未检测到可疑模式",
+    "emptyPatternsDescription": "尚未检测到可疑模式。模式将在系统处理数据时出现。"
   },
   "aiInsights": {
     "pageTitle": "PSI洞察仪表板",
@@ -702,7 +706,9 @@
     "exportPDF": "导出PDF",
     "exportCSV": "导出CSV",
     "shareReport": "分享报告",
-    "generateReport": "生成高管报告"
+    "generateReport": "生成高管报告",
+    "noDataAvailable": "尚无可用数据。报告将在文档分析后填充。",
+    "notAvailable": "无"
   },
   "profile": {
     "pageTitle": "身份与指挥中心",

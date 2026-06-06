@@ -668,7 +668,11 @@
     "patternUnusualFrequencyDesc": "営業時間外にアップロードアクティビティが1日平均を大幅に上回るピークに達しました。データ抽出の可能性。",
     "highConfidence": "高信頼度",
     "mediumConfidence": "中信頼度",
-    "aiFlagged": "AIフラグ付き"
+    "aiFlagged": "AIフラグ付き",
+    "emptyTimelineDescription": "まだイベントは記録されていません。アクティビティが発生するとタイムラインが表示されます。",
+    "activityHeatmapEmpty": "アクティビティデータは時間の経過とともにここに表示されます。",
+    "noPatterns": "不審なパターンは検出されませんでした",
+    "emptyPatternsDescription": "不審なパターンはまだ検出されていません。システムがデータを処理するにつれてパターンが表示されます。"
   },
   "aiInsights": {
     "pageTitle": "PSIインサイトダッシュボード",
@@ -702,7 +706,9 @@
     "exportPDF": "PDFにエクスポート",
     "exportCSV": "CSVにエクスポート",
     "shareReport": "レポートを共有",
-    "generateReport": "エグゼクティブレポートを生成"
+    "generateReport": "エグゼクティブレポートを生成",
+    "noDataAvailable": "まだデータはありません。ドキュメントが分析されるとレポートが表示されます。",
+    "notAvailable": "なし"
   },
   "profile": {
     "pageTitle": "アイデンティティ＆コマンドセンター",

@@ -651,7 +651,7 @@
     "less": "Weniger",
     "more": "Mehr",
     "events": "Ereignisse",
-    "live": "Live",
+    "live": "Echtzeit",
     "realtime": "Echtzeit",
     "timelineTitle": "Ereignis-Zeitleiste",
     "noEvents": "Keine Ereignisse entsprechen Ihren Filtern",
@@ -668,7 +668,11 @@
     "patternUnusualFrequencyDesc": "Upload-Aktivität erreichte außerhalb der Geschäftszeiten einen deutlichen Höhepunkt über dem Tagesdurchschnitt. Mögliche Datenextraktion.",
     "highConfidence": "Hohe Konfidenz",
     "mediumConfidence": "Mittlere Konfidenz",
-    "aiFlagged": "Von KI markiert"
+    "aiFlagged": "Von KI markiert",
+    "emptyTimelineDescription": "Noch keine Ereignisse aufgezeichnet. Der Zeitverlauf wird gefüllt, sobald Aktivitäten auftreten.",
+    "activityHeatmapEmpty": "Aktivitätsdaten werden hier mit der Zeit angezeigt.",
+    "noPatterns": "Keine verdächtigen Muster erkannt",
+    "emptyPatternsDescription": "Noch keine verdächtigen Muster erkannt. Muster werden angezeigt, sobald das System Daten verarbeitet."
   },
   "aiInsights": {
     "pageTitle": "PSI-Erkenntnis-Dashboard",
@@ -693,7 +697,7 @@
     "cause": "Ursache",
     "occurrences": "Vorkommen",
     "averageRisk": "Durchschn. Risiko",
-    "trend": "Trend",
+    "trend": "Verlauf",
     "aiInsightsTitle": "KI-Erkenntniszusammenfassung",
     "aiInsightText": "KI-Erkenntnisse werden automatisch generiert, sobald Dokumente analysiert werden. Risikobewertungen, Anomaliezusammenfassungen und empfohlene Aktionen erscheinen hier.",
     "confidence": "Konfidenz",
@@ -702,7 +706,9 @@
     "exportPDF": "PDF exportieren",
     "exportCSV": "CSV exportieren",
     "shareReport": "Bericht teilen",
-    "generateReport": "Executive Report erstellen"
+    "generateReport": "Executive Report erstellen",
+    "noDataAvailable": "Noch keine Daten verfügbar. Berichte werden gefüllt, sobald Dokumente analysiert werden.",
+    "notAvailable": "N/V"
   },
   "profile": {
     "pageTitle": "Identitäts- & Kommandozentrale",

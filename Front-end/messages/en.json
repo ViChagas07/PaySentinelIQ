@@ -668,7 +668,11 @@
     "patternUnusualFrequencyDesc": "Upload activity peaked significantly above the daily average during off-hours. Possible data extraction.",
     "highConfidence": "High Confidence",
     "mediumConfidence": "Medium Confidence",
-    "aiFlagged": "AI Flagged"
+    "aiFlagged": "AI Flagged",
+    "emptyTimelineDescription": "No events have been recorded yet. Timeline will populate as activities occur.",
+    "activityHeatmapEmpty": "Activity data will appear here over time.",
+    "noPatterns": "No suspicious patterns detected",
+    "emptyPatternsDescription": "No suspicious patterns detected yet. Patterns will appear as the system processes data."
   },
   "aiInsights": {
     "pageTitle": "PSI Insight Dashboard",
@@ -702,7 +706,9 @@
     "exportPDF": "Export PDF",
     "exportCSV": "Export CSV",
     "shareReport": "Share Report",
-    "generateReport": "Generate Executive Report"
+    "generateReport": "Generate Executive Report",
+    "noDataAvailable": "No data available yet. Reports will populate as documents are analyzed.",
+    "notAvailable": "N/A"
   },
   "profile": {
     "pageTitle": "Identity & Command Center",

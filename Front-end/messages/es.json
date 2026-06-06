@@ -668,7 +668,11 @@
     "patternUnusualFrequencyDesc": "Actividad de carga alcanzó un pico significativamente por encima del promedio diario durante horas no laborables. Posible extracción de datos.",
     "highConfidence": "Confianza Alta",
     "mediumConfidence": "Confianza Media",
-    "aiFlagged": "Marcado por IA"
+    "aiFlagged": "Marcado por IA",
+    "emptyTimelineDescription": "Aún no se han registrado eventos. La línea de tiempo se completará a medida que ocurran actividades.",
+    "activityHeatmapEmpty": "Los datos de actividad aparecerán aquí con el tiempo.",
+    "noPatterns": "No se detectaron patrones sospechosos",
+    "emptyPatternsDescription": "Aún no se detectaron patrones sospechosos. Los patrones aparecerán a medida que el sistema procese datos."
   },
   "aiInsights": {
     "pageTitle": "Panel de Insights PSI",
@@ -702,7 +706,9 @@
     "exportPDF": "Exportar PDF",
     "exportCSV": "Exportar CSV",
     "shareReport": "Compartir Informe",
-    "generateReport": "Generar Informe Ejecutivo"
+    "generateReport": "Generar Informe Ejecutivo",
+    "noDataAvailable": "Aún no hay datos disponibles. Los informes se completarán a medida que se analicen los documentos.",
+    "notAvailable": "N/D"
   },
   "profile": {
     "pageTitle": "Centro de Identidad & Comando",
