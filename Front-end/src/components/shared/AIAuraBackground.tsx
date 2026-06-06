@@ -2,12 +2,15 @@
 // PaySentinelIQ — AI Aura Background
 // Premium futuristic animated background system
 // Layers: dark base → floating blobs → AI network → grid → noise
+// Colors dynamically synchronise with Settings → Appearance → Main Color.
 // ============================================================
 
 "use client";
 
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { motion, useAnimationFrame } from "framer-motion";
+import { useSettingsStore } from "@/stores/settings-store";
+import { generateNetworkColors, type NetworkColorSet } from "@/lib/network-colors";
 
 // ── Constants ── //
 const NODE_COUNT = 42;
@@ -101,13 +104,13 @@ interface Pulse {
   distances: number[]; // pre-computed distances from source
 }
 
-// ── Blob configuration ── //
-const BLOBS = [
-  { color: "rgba(59, 130, 246,", size: 700, x: "15%", y: "10%", duration: 28, delay: 0 },
-  { color: "rgba(6, 182, 212,", size: 550, x: "75%", y: "70%", duration: 32, delay: 3 },
-  { color: "rgba(124, 58, 237,", size: 450, x: "60%", y: "15%", duration: 26, delay: 6 },
-  { color: "rgba(16, 185, 129,", size: 300, x: "25%", y: "75%", duration: 35, delay: 9 },
-  { color: "rgba(59, 130, 246,", size: 600, x: "50%", y: "45%", duration: 30, delay: 2 },
+// ── Blob positional configuration (layout stays fixed per index) ── //
+const BLOB_LAYOUT = [
+  { size: 700, x: "15%", y: "10%", duration: 28, delay: 0 },
+  { size: 550, x: "75%", y: "70%", duration: 32, delay: 3 },
+  { size: 450, x: "60%", y: "15%", duration: 26, delay: 6 },
+  { size: 300, x: "25%", y: "75%", duration: 35, delay: 9 },
+  { size: 600, x: "50%", y: "45%", duration: 30, delay: 2 },
 ] as const;
 
 // ── Animation variants for blobs ── //
@@ -125,6 +128,18 @@ function blobPath(index: number) {
 
 // ── Component ── //
 export function AIAuraBackground() {
+  // ── Theme-aware colours ── //
+  const primaryColor = useSettingsStore((s) => s.primaryColor);
+  const colors = useMemo<NetworkColorSet>(
+    () => generateNetworkColors(primaryColor),
+    [primaryColor],
+  );
+  // Numeric RGB components for programmatic colour interpolation
+  const rgb = useMemo(() => {
+    const parts = colors.rgb.split(",").map(Number);
+    return { r: parts[0], g: parts[1], b: parts[2] };
+  }, [colors.rgb]);
+
   // ── Static graph (computed once) ── //
   const graph = useMemo(() => {
     const nodes = generateNodes(NODE_COUNT);
@@ -225,27 +240,32 @@ export function AIAuraBackground() {
     return glows;
   }, [nodeGlows, graph.edges]);
 
-  // ── Edge glow color blending ── //
+  // ── Edge glow colour blending (derived from primary color) ── //
   const edgeColor = useCallback(
     (glow: number) => {
-      if (glow < 0.01) return `rgba(59,130,246,0.06)`;
-      // Transition from blue to cyan to emerald as glow intensifies
-      const r = Math.round(59 + (6 - 59) * glow);
-      const g = Math.round(130 + (182 - 130) * glow);
-      const b = Math.round(246 + (212 - 246) * glow);
+      if (glow < 0.01) return colors.line;
+      // Brighten the base RGB toward a lighter version
+      const r = Math.min(255, Math.round(rgb.r + (255 - rgb.r) * glow * 0.5));
+      const g = Math.min(255, Math.round(rgb.g + (255 - rgb.g) * glow * 0.5));
+      const b = Math.min(255, Math.round(rgb.b + (255 - rgb.b) * glow * 0.5));
       return `rgba(${r},${g},${b},${0.06 + glow * 0.5})`;
     },
-    []
+    [colors.line, rgb],
   );
 
-  // ── Node glow color ── //
+  // ── Node glow colour (derived from primary color) ── //
   const nodeColor = useCallback(
     (glow: number, baseOpacity: number) => {
-      if (glow < 0.01) return `rgba(148,163,184,${baseOpacity})`;
-      // Glowing nodes shift toward electric blue / cyan
-      return `rgba(147,197,253,${baseOpacity + glow * 0.7})`;
+      if (glow < 0.01) {
+        // Muted greyish version of the primary colour
+        const muted = (c: number) => Math.round(c * 0.45 + 100);
+        return `rgba(${muted(rgb.r)},${muted(rgb.g)},${muted(rgb.b)},${baseOpacity})`;
+      }
+      // Bright glowing version
+      const bright = (c: number) => Math.min(255, Math.round(c + (255 - c) * glow * 0.55));
+      return `rgba(${bright(rgb.r)},${bright(rgb.g)},${bright(rgb.b)},${baseOpacity + glow * 0.7})`;
     },
-    []
+    [rgb],
   );
 
   // ── Render ── //
@@ -255,29 +275,30 @@ export function AIAuraBackground() {
       aria-hidden="true"
       style={{ zIndex: 0 }}
     >
-      {/* ─── Layer 2: Aura Blobs ─── */}
+      {/* ─── Layer 2: Aura Blobs (colour-synced) ─── */}
       {!reducedMotion &&
-        BLOBS.map((blob, i) => {
+        BLOB_LAYOUT.map((layout, i) => {
           const path = blobPath(i);
           return (
             <motion.div
               key={i}
               className="absolute rounded-full will-change-transform"
               style={{
-                width: blob.size,
-                height: blob.size,
-                left: `calc(${blob.x} - ${blob.size / 2}px)`,
-                top: `calc(${blob.y} - ${blob.size / 2}px)`,
-                background: `${blob.color} 0.08)`,
+                width: layout.size,
+                height: layout.size,
+                left: `calc(${layout.x} - ${layout.size / 2}px)`,
+                top: `calc(${layout.y} - ${layout.size / 2}px)`,
+                background: colors.blobs[i] ?? colors.blobs[0],
                 filter: "blur(100px)",
+                transition: "background 0.7s ease",
               }}
               animate={{
                 x: path.x,
                 y: path.y,
               }}
               transition={{
-                duration: blob.duration,
-                delay: blob.delay,
+                duration: layout.duration,
+                delay: layout.delay,
                 repeat: Infinity,
                 ease: "easeInOut",
                 repeatType: "mirror",
@@ -295,8 +316,8 @@ export function AIAuraBackground() {
       >
         <defs>
           <radialGradient id="node-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(147,197,253,0.8)" />
-            <stop offset="100%" stopColor="rgba(147,197,253,0)" />
+            <stop offset="0%" stopColor={`rgba(${colors.rgb},0.8)`} />
+            <stop offset="100%" stopColor={`rgba(${colors.rgb},0)`} />
           </radialGradient>
         </defs>
 
@@ -314,7 +335,7 @@ export function AIAuraBackground() {
               y2={to.y}
               stroke={edgeColor(glow)}
               strokeWidth={0.8 + glow * 1.5}
-              style={{ transition: "stroke 0.15s ease" }}
+              style={{ transition: "stroke 0.7s ease, stroke-width 0.15s ease" }}
             />
           );
         })}
@@ -341,7 +362,7 @@ export function AIAuraBackground() {
                 cy={node.y}
                 r={isGlowing ? node.r * 1.6 : node.r}
                 fill={nodeColor(glow, node.baseOpacity)}
-                style={{ transition: "r 0.15s ease, fill 0.15s ease" }}
+                style={{ transition: "r 0.15s ease, fill 0.7s ease" }}
               />
             </g>
           );
@@ -353,12 +374,13 @@ export function AIAuraBackground() {
         className="absolute inset-0"
         style={{
           backgroundImage: [
-            "linear-gradient(rgba(59,130,246,0.06) 1px, transparent 1px)",
-            "linear-gradient(90deg, rgba(59,130,246,0.06) 1px, transparent 1px)",
+            `linear-gradient(${colors.grid} 1px, transparent 1px)`,
+            `linear-gradient(90deg, ${colors.grid} 1px, transparent 1px)`,
           ].join(", "),
           backgroundSize: "60px 60px",
           maskImage: "radial-gradient(ellipse at center, black 30%, transparent 70%)",
           WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 70%)",
+          transition: "background-image 0.7s ease",
         }}
       />
 
@@ -381,10 +403,11 @@ export function AIAuraBackground() {
           className="absolute inset-0"
           style={{
             background: [
-              "radial-gradient(ellipse 70% 60% at 20% 20%, rgba(59,130,246,0.06) 0%, transparent 70%)",
-              "radial-gradient(ellipse 50% 50% at 80% 80%, rgba(6,182,212,0.04) 0%, transparent 60%)",
-              "radial-gradient(ellipse 40% 40% at 60% 30%, rgba(124,58,237,0.04) 0%, transparent 50%)",
+              `radial-gradient(ellipse 70% 60% at 20% 20%, ${colors.fallbackGradients[0] ?? colors.blobs[0]} 0%, transparent 70%)`,
+              `radial-gradient(ellipse 50% 50% at 80% 80%, ${colors.fallbackGradients[1] ?? colors.blobs[1]} 0%, transparent 60%)`,
+              `radial-gradient(ellipse 40% 40% at 60% 30%, ${colors.fallbackGradients[2] ?? colors.blobs[2]} 0%, transparent 50%)`,
             ].join(", "),
+            transition: "background 0.7s ease",
           }}
         />
       )}

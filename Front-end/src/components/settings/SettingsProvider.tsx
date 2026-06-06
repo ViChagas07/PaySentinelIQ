@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useSettingsStore, type PrimaryColor, type BackgroundColor } from "@/stores/settings-store";
+import { generateNetworkColors } from "@/lib/network-colors";
 
 const PRIMARY_COLOR_MAP: Record<PrimaryColor, { light: string; dark: string; rgb: string }> = {
   blue:    { light: "#1E6FFF", dark: "#3B82F6", rgb: "30,111,255" },
@@ -70,6 +71,21 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty("--color-accent", primary);
     root.style.setProperty("--color-ring", primary);
     root.style.setProperty("--psi-primary-rgb", palette.rgb);
+
+    // ── Network background colours (drives AIAuraBackground) ── //
+    const net = generateNetworkColors(primaryColor);
+    root.style.setProperty("--network-line", net.line);
+    root.style.setProperty("--network-line-glow", net.lineGlow);
+    root.style.setProperty("--network-node", net.node);
+    root.style.setProperty("--network-node-glow", net.nodeGlow);
+    root.style.setProperty("--network-glow-halo", net.glowHalo);
+    root.style.setProperty("--network-grid", net.grid);
+    net.blobs.forEach((blob, i) => {
+      root.style.setProperty(`--network-blob-${i + 1}`, blob);
+    });
+    net.fallbackGradients.forEach((fg, i) => {
+      root.style.setProperty(`--network-fallback-${i + 1}`, fg);
+    });
 
     // Reset any previously overridden semantic tokens back to CSS defaults,
     // then re-apply only if the selected color coincides with that semantic role.
