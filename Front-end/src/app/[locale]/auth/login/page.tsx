@@ -310,7 +310,7 @@ export default function AuthPage() {
               alt={tc("appName")}
               width={128}
               height={128}
-              className="mx-auto mb-3 h-32 w-auto object-contain drop-shadow-[0_0_24px_rgba(56,189,248,0.3)]"
+              className="mx-auto mb-0 h-32 w-auto object-contain drop-shadow-[0_0_24px_rgba(56,189,248,0.3)]"
               priority
             />
           </motion.div>
