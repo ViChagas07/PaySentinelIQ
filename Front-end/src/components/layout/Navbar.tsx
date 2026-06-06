@@ -12,10 +12,116 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useUIStore, useAuthStore, useTenantStore, useAlertStore } from "@/stores";
 import {
-  Search, Menu, Bell, Bot, ChevronDown, Building2, User, LogOut, Settings, LogIn,
+  Search, Menu, Bell, ChevronDown, Building2, User, LogOut, Settings, LogIn,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+
+// ── Animated AI Robot Icon ── //
+function AnimatedBotIcon({ isHovered }: { isHovered: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      {/* Antenna */}
+      <path d="M12 3v2" />
+      <circle cx="12" cy="2.5" r="1" fill="currentColor" stroke="none" />
+
+      {/* Head housing */}
+      <rect x="3" y="6" width="18" height="12" rx="3.5" />
+
+      {/* Left eye — blinks by scaling Y to near-zero */}
+      <motion.g
+        animate={isHovered ? { scaleY: [1, 0.1, 1] } : { scaleY: 1 }}
+        transition={{ duration: 0.35, times: [0, 0.5, 1], ease: "easeInOut" }}
+        style={{ originX: "8.5px", originY: "11px" }}
+      >
+        <circle cx="8.5" cy="11" r="1.4" fill="currentColor" stroke="none" />
+      </motion.g>
+
+      {/* Right eye */}
+      <motion.g
+        animate={isHovered ? { scaleY: [1, 0.1, 1] } : { scaleY: 1 }}
+        transition={{ duration: 0.35, times: [0, 0.5, 1], ease: "easeInOut" }}
+        style={{ originX: "15.5px", originY: "11px" }}
+      >
+        <circle cx="15.5" cy="11" r="1.4" fill="currentColor" stroke="none" />
+      </motion.g>
+
+      {/* Subtle smile */}
+      <path d="M8.5 15.2a3.2 3.2 0 0 0 7 0" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+// ── Animated Notification Bell Icon ── //
+function AnimatedBellIcon({ isHovered }: { isHovered: boolean }) {
+  return (
+    <motion.span
+      className="inline-flex"
+      style={{ display: "inline-flex", transformOrigin: "50% 2px" }}
+      animate={isHovered ? {
+        rotate: [0, -10, 10, -7, 7, -4, 4, 0],
+      } : {
+        rotate: 0,
+      }}
+      transition={{ duration: 0.55, ease: "easeInOut" }}
+    >
+      <Bell className="h-5 w-5" />
+    </motion.span>
+  );
+}
+
+// ── Reusable hover button with icon animation + levitation ── //
+function HoverButton({
+  icon,
+  isOpen,
+  activeClass,
+  inactiveClass,
+  onClick,
+  label,
+  children,
+}: {
+  icon: (isHovered: boolean) => React.ReactNode;
+  isOpen: boolean;
+  activeClass: string;
+  inactiveClass: string;
+  onClick: () => void;
+  label: string;
+  children?: React.ReactNode;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={cn(
+        "relative rounded-lg p-2 transition-colors",
+        isOpen ? activeClass : inactiveClass
+      )}
+      aria-label={label}
+      aria-expanded={isOpen}
+    >
+      <motion.span
+        className="flex items-center justify-center"
+        animate={hovered ? { y: -2 } : { y: 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25, mass: 0.4 }}
+      >
+        {icon(hovered)}
+      </motion.span>
+      {children}
+    </button>
+  );
+}
 
 export function Navbar() {
   const t = useTranslations("nav");
@@ -99,37 +205,29 @@ export function Navbar() {
       {/* Right actions */}
       <div className="flex items-center gap-1">
         {/* AI Assistant quick toggle */}
-        <button
+        <HoverButton
+          icon={(hovered) => <AnimatedBotIcon isHovered={hovered} />}
+          isOpen={aiPanelOpen}
+          activeClass="text-psi-electric bg-psi-electric/10"
+          inactiveClass="text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-electric"
           onClick={toggleAiPanel}
-          className={cn(
-            "relative rounded-lg p-2 transition-colors",
-            aiPanelOpen
-              ? "text-psi-electric bg-psi-electric/10"
-              : "text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-electric"
-          )}
-          aria-label={t("aiAssistant")}
-          aria-expanded={aiPanelOpen}
+          label={t("aiAssistant")}
         >
-          <Bot className="h-5 w-5" />
           <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-psi-emerald opacity-75" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-psi-emerald" />
           </span>
-        </button>
+        </HoverButton>
 
         {/* Notifications */}
-        <button
+        <HoverButton
+          icon={(hovered) => <AnimatedBellIcon isHovered={hovered} />}
+          isOpen={notificationsPanelOpen}
+          activeClass="text-psi-text-primary bg-psi-border/50"
+          inactiveClass="text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-text-primary"
           onClick={toggleNotificationsPanel}
-          className={cn(
-            "relative rounded-lg p-2 transition-colors",
-            notificationsPanelOpen
-              ? "text-psi-text-primary bg-psi-border/50"
-              : "text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-text-primary"
-          )}
-          aria-label={t("notificationsAria", { count: unreadCount })}
-          aria-expanded={notificationsPanelOpen}
+          label={t("notificationsAria", { count: unreadCount })}
         >
-          <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
@@ -138,7 +236,7 @@ export function Navbar() {
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
-        </button>
+        </HoverButton>
 
         {/* Tenant selector */}
         <div className="relative">
