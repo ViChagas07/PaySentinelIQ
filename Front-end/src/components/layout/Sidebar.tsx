@@ -32,13 +32,27 @@ import {
 
 // ── Navigation Item Types ── //
 
+/** Valid translation keys for badge labels in the "nav" namespace */
+type NavBadgeKey = "badgeAI" | "new";
+
+/** Valid translation keys for navigation labels in the "nav" namespace */
+type NavLabelKey =
+  | "dashboard" | "payroll"
+  | "verification" | "fraudIntelligence" | "aiInsights"
+  | "analyzePayroll" | "analyzeBankSlip"
+  | "reports" | "auditLogs"
+  | "notifications" | "settings";
+
 interface NavItem {
   /** Translation key from the "nav" namespace */
-  labelKey: string;
+  labelKey: NavLabelKey;
   href: string;
   icon: LucideIcon;
   roles: UserRole[];
+  /** Static badge text (e.g. a number like "5") */
   badge?: string;
+  /** Translation key for the badge label from the "nav" namespace (e.g. "badgeAI", "new") */
+  badgeKey?: NavBadgeKey;
   badgeVariant?: "primary" | "success" | "warning" | "destructive";
   children?: NavItem[];
 }
@@ -77,7 +91,7 @@ const navigationSections: NavSection[] = [
         href: "/verification-center",
         icon: ShieldCheck,
         roles: ["admin", "fraud_analyst", "compliance_officer"],
-        badge: "AI",
+        badgeKey: "badgeAI",
         badgeVariant: "primary",
       },
       {
@@ -91,7 +105,7 @@ const navigationSections: NavSection[] = [
         href: "/ai-insights",
         icon: Brain,
         roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager"],
-        badge: "New",
+        badgeKey: "new",
         badgeVariant: "success",
       },
     ],
@@ -104,7 +118,7 @@ const navigationSections: NavSection[] = [
         href: "/dashboard/analyze-payroll",
         icon: FileText,
         roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager", "payroll_specialist", "auditor", "viewer"],
-        badge: "AI",
+        badgeKey: "badgeAI",
         badgeVariant: "primary",
       },
       {
@@ -112,7 +126,7 @@ const navigationSections: NavSection[] = [
         href: "/dashboard/analyze-bank-slip",
         icon: Barcode,
         roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager", "payroll_specialist", "auditor", "viewer"],
-        badge: "AI",
+        badgeKey: "badgeAI",
         badgeVariant: "warning",
       },
       {
@@ -264,7 +278,7 @@ export function Sidebar() {
               <SidebarItem
                 key={item.href}
                 item={item}
-                label={t(item.labelKey as any)}
+                label={t(item.labelKey)}
                 isActive={isItemActive(item.href)}
                 collapsed={sidebarCollapsed}
               />
@@ -296,6 +310,10 @@ function SidebarItem({
   const hasChildren = item.children && item.children.length > 0;
 
   const Icon = item.icon;
+
+  // Resolve badge text: use translation key if badgeKey is set, otherwise use static badge value
+  const resolvedBadge = item.badgeKey ? t(item.badgeKey) : item.badge;
+  const hasBadge = !!(item.badge || item.badgeKey);
 
   // Determine badge color class
   const badgeColorClass = {
@@ -354,14 +372,14 @@ function SidebarItem({
               <span className="flex-1 text-left">{label}</span>
             )}
 
-            {!collapsed && item.badge && (
+            {!collapsed && hasBadge && (
               <span
                 className={cn(
                   "rounded-md border px-1.5 py-0.5 text-[10px] font-bold leading-none",
                   badgeColorClass[item.badgeVariant || "primary"]
                 )}
               >
-                {item.badge}
+                {resolvedBadge}
               </span>
             )}
 
@@ -376,7 +394,7 @@ function SidebarItem({
             )}
 
             {/* Collapsed badge dot */}
-            {collapsed && item.badge && item.badgeVariant === "destructive" && (
+            {collapsed && hasBadge && item.badgeVariant === "destructive" && (
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-psi-fraud animate-pulse-alert" />
             )}
           </motion.div>
@@ -453,19 +471,19 @@ function SidebarItem({
             <span className="flex-1 text-left">{label}</span>
           )}
 
-          {!collapsed && item.badge && (
+          {!collapsed && hasBadge && (
             <span
               className={cn(
                 "rounded-md border px-1.5 py-0.5 text-[10px] font-bold leading-none",
                 badgeColorClass[item.badgeVariant || "primary"]
               )}
             >
-              {item.badge}
+              {resolvedBadge}
             </span>
           )}
 
           {/* Collapsed badge dot */}
-          {collapsed && item.badge && item.badgeVariant === "destructive" && (
+          {collapsed && hasBadge && item.badgeVariant === "destructive" && (
             <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-psi-fraud animate-pulse-alert" />
           )}
         </motion.div>
