@@ -75,7 +75,7 @@ function AnimatedMetricCard({
       transition={{ duration: 0.4, delay, ease: "easeOut" }}
     >
       <Card variant="interactive" glow className="group h-full">
-        <CardContent className="p-5">
+        <CardContent className="p-6">
           <div className="flex items-start justify-between mb-3">
             <p className="text-xs font-semibold text-psi-text-secondary uppercase tracking-widest truncate pr-2">
               {label}
@@ -379,7 +379,7 @@ export default function ProfilePage() {
               </div>
 
               {/* ── Right: Metrics Grid ── */}
-              <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="flex-1 grid grid-cols-2 gap-4">
                 <AnimatedMetricCard
                   icon={FileText}
                   label={t("metrics.documentsAnalyzed") || "Documents Analyzed"}
