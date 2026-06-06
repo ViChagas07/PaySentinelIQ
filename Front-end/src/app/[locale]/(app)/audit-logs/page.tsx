@@ -139,7 +139,7 @@ function EmptyTimeline() {
         {t("noEvents") || "No events yet"}
       </p>
       <p className="text-xs text-psi-text-secondary max-w-xs">
-        {t("emptyTimelineDescription") || "The timeline will populate automatically as users interact with the system and AI analyses are performed."}
+        {t("emptyTimelineDescription") || "No events have been recorded yet. Timeline will populate as activities occur."}
       </p>
     </div>
   );
@@ -232,7 +232,7 @@ export default function AuditLogsPage() {
             </Badge>
           </div>
           <p className="text-sm text-psi-text-secondary">
-            {t("pageDescription") || "Immutable activity timeline tracking user actions, AI decisions, analyst reviews, and system events."}
+            {t("pageDescription") || "Immutable event timeline for audit and forensic analysis."}
           </p>
         </div>
       </motion.div>
@@ -413,7 +413,7 @@ export default function AuditLogsPage() {
                     {t("noPatterns") || "No suspicious patterns detected"}
                   </p>
                   <p className="text-xs text-psi-text-secondary max-w-xs">
-                    {t("emptyPatternsDescription") || "As the AI analyzes documents and user behavior, suspicious patterns will appear here automatically."}
+                    {t("emptyPatternsDescription") || "No suspicious patterns detected yet. Patterns will appear as the system processes data."}
                   </p>
                 </div>
               </CardContent>

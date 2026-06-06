@@ -121,7 +121,7 @@ export default function ReportsPage() {
       </motion.div>
 
       {/* ── 2. KPI Cards — empty/loading state ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
           <motion.div
             key={i}
@@ -184,7 +184,7 @@ export default function ReportsPage() {
               <EmptySection
                 icon={PieChartIcon}
                 title={t("riskDistribution") || "Risk Distribution"}
-                description="No data available yet. Start analyzing documents to see risk distribution."
+                description={t("noDataAvailable") || "No data available yet"}
               />
             </CardContent>
           </Card>
@@ -210,7 +210,7 @@ export default function ReportsPage() {
               <EmptySection
                 icon={TrendingUp}
                 title={t("fraudTrendAnalysis") || "Fraud Trend Analysis"}
-                description="Trend data will appear here as documents are processed and analyzed."
+                description={t("noDataAvailable") || "No data available yet"}
               />
             </CardContent>
           </Card>
@@ -234,7 +234,7 @@ export default function ReportsPage() {
             <EmptySection
               icon={Inbox}
               title={t("fraudCauses") || "Top Fraud Causes"}
-              description="Detected fraud causes will be listed here once analysis begins."
+              description={t("noDataAvailable") || "No data available yet"}
             />
           </CardContent>
         </Card>

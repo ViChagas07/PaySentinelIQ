@@ -57,7 +57,7 @@ const navigationSections: NavSection[] = [
     items: [
       {
         labelKey: "dashboard",
-        href: "/dashboard",
+        href: "/",
         icon: LayoutDashboard,
         roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager", "payroll_specialist", "auditor", "viewer"],
       },
@@ -85,8 +85,6 @@ const navigationSections: NavSection[] = [
         href: "/fraud-intelligence",
         icon: AlertTriangle,
         roles: ["admin", "fraud_analyst", "auditor"],
-        badge: "3",
-        badgeVariant: "destructive",
       },
       {
         labelKey: "aiInsights",
@@ -230,7 +228,7 @@ export function Sidebar() {
       >
         {/* Logo — clickable, navigates to dashboard */}
         <Link
-          href="/dashboard"
+          href="/"
           onClick={() => setSidebarMobileOpen(false)}
           className={cn(
             "flex h-16 items-center border-b border-border transition-opacity hover:opacity-80",
