@@ -341,36 +341,81 @@ function SidebarItem({
     destructive: "bg-psi-fraud/15 text-psi-fraud border-psi-fraud/30",
   };
 
+  // ── Shared hover slide animation ── //
+  const hoverSlide = {
+    rest: { x: 0 },
+    hover: { x: 6 },
+  };
+
+  const hoverTransition = {
+    type: "spring" as const,
+    stiffness: 400,
+    damping: 25,
+    mass: 0.5,
+  };
+
   if (hasChildren) {
     return (
       <li>
         <button
           onClick={() => collapsed || setIsOpen(!isOpen)}
           className={cn(
-            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+            "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 overflow-hidden",
             isActive
               ? "bg-psi-electric/10 text-psi-electric"
               : "text-psi-text-secondary hover:bg-psi-border/30 hover:text-psi-text-primary"
           )}
           aria-expanded={isOpen}
         >
-          <Icon
-            className={cn(
-              "h-5 w-5 shrink-0",
-              isActive ? "text-psi-electric" : "text-psi-text-secondary"
+          <motion.div
+            className="flex items-center gap-3 w-full"
+            variants={hoverSlide}
+            transition={hoverTransition}
+            initial="rest"
+            whileHover="hover"
+          >
+            {/* Active indicator bar */}
+            {isActive && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-0.5 rounded-r-full bg-psi-electric" />
             )}
-          />
-          {!collapsed && (
-            <>
+
+            <Icon
+              className={cn(
+                "h-5 w-5 shrink-0 transition-colors",
+                isActive ? "text-psi-electric" : "text-psi-text-secondary"
+              )}
+            />
+
+            {!collapsed && (
               <span className="flex-1 text-left">{label}</span>
+            )}
+
+            {!collapsed && item.badge && (
+              <span
+                className={cn(
+                  "rounded-md border px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                  badgeColorClass[item.badgeVariant || "primary"]
+                )}
+              >
+                {item.badge}
+              </span>
+            )}
+
+            {/* Chevron */}
+            {!collapsed && (
               <ChevronDown
                 className={cn(
-                  "h-4 w-4 transition-transform",
+                  "h-4 w-4 transition-transform shrink-0",
                   isOpen && "rotate-180"
                 )}
               />
-            </>
-          )}
+            )}
+
+            {/* Collapsed badge dot */}
+            {collapsed && item.badge && item.badgeVariant === "destructive" && (
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-psi-fraud animate-pulse-alert" />
+            )}
+          </motion.div>
         </button>
         {!collapsed && (
           <AnimatePresence>
@@ -386,9 +431,17 @@ function SidebarItem({
                   <li key={child.href}>
                     <Link
                       href={child.href}
-                      className="block rounded-lg px-3 py-2 text-sm text-psi-text-secondary hover:bg-psi-border/30 hover:text-psi-text-primary transition-colors"
+                      className="group relative block rounded-lg px-3 py-2 text-sm text-psi-text-secondary hover:bg-psi-border/30 hover:text-psi-text-primary transition-colors"
                     >
-                      {t(child.labelKey)}
+                      <motion.span
+                        className="flex items-center gap-3"
+                        variants={hoverSlide}
+                        transition={hoverTransition}
+                        initial="rest"
+                        whileHover="hover"
+                      >
+                        {t(child.labelKey)}
+                      </motion.span>
                     </Link>
                   </li>
                 ))}
@@ -405,7 +458,7 @@ function SidebarItem({
       <Link
         href={item.href}
         className={cn(
-          "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+          "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 overflow-hidden",
           isActive
             ? "bg-psi-electric/10 text-psi-electric"
             : "text-psi-text-secondary hover:bg-psi-border/30 hover:text-psi-text-primary"
@@ -413,37 +466,45 @@ function SidebarItem({
         aria-current={isActive ? "page" : undefined}
         title={collapsed ? label : undefined}
       >
-        {/* Active indicator bar */}
-        {isActive && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-0.5 rounded-r-full bg-psi-electric" />
-        )}
-
-        <Icon
-          className={cn(
-            "h-5 w-5 shrink-0 transition-colors",
-            isActive ? "text-psi-electric" : "text-psi-text-secondary group-hover:text-psi-text-primary"
+        <motion.div
+          className="flex items-center gap-3 w-full"
+          variants={hoverSlide}
+          transition={hoverTransition}
+          initial="rest"
+          whileHover="hover"
+        >
+          {/* Active indicator bar */}
+          {isActive && (
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-0.5 rounded-r-full bg-psi-electric" />
           )}
-        />
 
-        {!collapsed && (
-          <span className="flex-1 text-left">{label}</span>
-        )}
-
-        {!collapsed && item.badge && (
-          <span
+          <Icon
             className={cn(
-              "rounded-md border px-1.5 py-0.5 text-[10px] font-bold leading-none",
-              badgeColorClass[item.badgeVariant || "primary"]
+              "h-5 w-5 shrink-0 transition-colors",
+              isActive ? "text-psi-electric" : "text-psi-text-secondary group-hover:text-psi-text-primary"
             )}
-          >
-            {item.badge}
-          </span>
-        )}
+          />
 
-        {/* Collapsed badge dot */}
-        {collapsed && item.badge && item.badgeVariant === "destructive" && (
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-psi-fraud animate-pulse-alert" />
-        )}
+          {!collapsed && (
+            <span className="flex-1 text-left">{label}</span>
+          )}
+
+          {!collapsed && item.badge && (
+            <span
+              className={cn(
+                "rounded-md border px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                badgeColorClass[item.badgeVariant || "primary"]
+              )}
+            >
+              {item.badge}
+            </span>
+          )}
+
+          {/* Collapsed badge dot */}
+          {collapsed && item.badge && item.badgeVariant === "destructive" && (
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-psi-fraud animate-pulse-alert" />
+          )}
+        </motion.div>
       </Link>
     </li>
   );
