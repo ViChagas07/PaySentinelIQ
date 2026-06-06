@@ -379,7 +379,7 @@ export default function ProfilePage() {
               </div>
 
               {/* ── Right: Metrics Grid ── */}
-              <div className="flex-1 grid grid-cols-2 gap-4">
+              <div className="flex-1 grid grid-cols-1 gap-4">
                 <AnimatedMetricCard
                   icon={FileText}
                   label={t("metrics.documentsAnalyzed") || "Documents Analyzed"}
