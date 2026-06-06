@@ -61,12 +61,15 @@ function AnimatedMetricCard({
   value,
   subtitle,
   delay = 0,
+  progress,
 }: {
   icon: React.ElementType;
   label: string;
   value: string;
   subtitle: string;
   delay?: number;
+  /** Real progress percentage 0-100. Omit/undefined to keep the bar empty. */
+  progress?: number;
 }) {
   return (
     <motion.div
@@ -90,14 +93,16 @@ function AnimatedMetricCard({
             </span>
           </div>
           <p className="text-xs text-psi-text-secondary/50 italic">{subtitle}</p>
-          {/* Mini animated pulse bar */}
+          {/* Mini pulse bar — fills from 0→progress only when real data exists */}
           <div className="mt-3 h-1 w-full rounded-full bg-psi-border/20 overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-psi-electric/40 to-psi-emerald/40"
-              initial={{ width: "0%" }}
-              animate={{ width: `${40 + Math.random() * 50}%` }}
-              transition={{ duration: 1.5, delay: delay + 0.5, ease: "easeOut" }}
-            />
+            {progress !== undefined && (
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-psi-electric/40 to-psi-emerald/40"
+                initial={{ width: "0%" }}
+                animate={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
+                transition={{ duration: 1.5, delay: delay + 0.5, ease: "easeOut" }}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
