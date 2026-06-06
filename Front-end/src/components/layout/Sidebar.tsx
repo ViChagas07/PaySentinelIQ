@@ -19,18 +19,13 @@ import {
   FileText,
   ShieldCheck,
   AlertTriangle,
-  Scale,
   Brain,
   DollarSign,
-  FileSearch,
   FileBarChart,
-  Users,
-  Building2,
   ScrollText,
   Bell,
   Settings,
   ChevronDown,
-  ScanLine,
   Barcode,
   type LucideIcon,
 } from "lucide-react";
@@ -94,12 +89,6 @@ const navigationSections: NavSection[] = [
         badgeVariant: "destructive",
       },
       {
-        labelKey: "compliance",
-        href: "/compliance",
-        icon: Scale,
-        roles: ["admin", "compliance_officer", "auditor"],
-      },
-      {
         labelKey: "aiInsights",
         href: "/ai-insights",
         icon: Brain,
@@ -112,12 +101,6 @@ const navigationSections: NavSection[] = [
   {
     sectionKey: "sections.analysis",
     items: [
-      {
-        labelKey: "documentAnalysis",
-        href: "/documents",
-        icon: FileSearch,
-        roles: ["admin", "fraud_analyst", "compliance_officer"],
-      },
       {
         labelKey: "analyzePayroll",
         href: "/dashboard/analyze-payroll",
@@ -145,23 +128,6 @@ const navigationSections: NavSection[] = [
         href: "/audit-logs",
         icon: ScrollText,
         roles: ["admin", "auditor", "compliance_officer"],
-      },
-    ],
-  },
-  {
-    sectionKey: "sections.data",
-    items: [
-      {
-        labelKey: "employees",
-        href: "/employees",
-        icon: Users,
-        roles: ["admin", "hr_manager", "payroll_specialist"],
-      },
-      {
-        labelKey: "companies",
-        href: "/companies",
-        icon: Building2,
-        roles: ["admin", "auditor"],
       },
     ],
   },

@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { LazyPayrollTrendChart, LazyFraudHeatmap, LazyRiskDistributionChart, LazyLiveAIInsightFeed } from "@/components/charts/LazyCharts";
 import {
-  DollarSign, ShieldCheck, AlertTriangle, Brain, Clock, Scale,
+  DollarSign, ShieldCheck, AlertTriangle, Brain, Clock,
   FileWarning, ArrowUpRight, ArrowDownRight, Calendar, ChevronDown,
   WifiOff, LogIn, Sparkles, Lock,
   type LucideIcon,
@@ -276,11 +276,6 @@ export default function DashboardPage() {
           value: null, change: null, changeType: "increase", changeContext: "bad",
           icon: FileWarning, color: "text-psi-warning", bgColor: "bg-psi-warning/10", changeLabel: vsLabel,
         },
-        {
-          label: t("complianceIncidents"),
-          value: null, change: null, changeType: "decrease", changeContext: "good",
-          icon: Scale, color: "text-psi-emerald", bgColor: "bg-psi-emerald/10", changeLabel: vsLabel,
-        },
       ];
     }
 
@@ -290,7 +285,6 @@ export default function DashboardPage() {
       fraud_alerts: 0,
       ai_confidence: 0,
       high_risk_docs: 0,
-      compliance_incidents: 0,
     };
 
     return [
@@ -349,17 +343,6 @@ export default function DashboardPage() {
         icon: FileWarning,
         color: "text-psi-warning",
         bgColor: "bg-psi-warning/10",
-        changeLabel: vsLabel,
-      },
-      {
-        label: t("complianceIncidents"),
-        value: d.compliance_incidents,
-        change: 0,
-        changeType: "decrease",
-        changeContext: "good",
-        icon: Scale,
-        color: "text-psi-emerald",
-        bgColor: "bg-psi-emerald/10",
         changeLabel: vsLabel,
       },
     ];
@@ -455,7 +438,7 @@ export default function DashboardPage() {
           ))
         ) : kpisLoading ? (
           // ── Loading skeleton ──
-          Array.from({ length: 6 }).map((_, i) => (
+          Array.from({ length: 5 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-4">
                 <div className="h-4 w-20 animate-pulse rounded bg-psi-border/50 mb-3" />

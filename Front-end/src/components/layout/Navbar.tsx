@@ -6,16 +6,29 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Link as IntlLink, useRouter } from "@/i18n/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useUIStore, useAuthStore, useTenantStore, useAlertStore } from "@/stores";
+import { useUIStore, useAuthStore, useAlertStore } from "@/stores";
 import {
-  Search, Menu, Bell, ChevronDown, Building2, User, LogOut, Settings, LogIn,
+  Search, Menu, Bell, ChevronDown, Globe, User, LogOut, Settings, LogIn,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+
+// ── Available locales for the language switcher ── //
+const LOCALES = [
+  { code: "en", label: "English" },
+  { code: "pt-BR", label: "Português (Brasil)" },
+  { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
+  { code: "de", label: "Deutsch" },
+  { code: "ja", label: "日本語" },
+  { code: "zh", label: "中文" },
+  { code: "ru", label: "Русский" },
+  { code: "ar", label: "العربية" },
+];
 
 // ── Animated AI Robot Icon ── //
 function AnimatedBotIcon({ isHovered }: { isHovered: boolean }) {
@@ -127,6 +140,7 @@ export function Navbar() {
   const t = useTranslations("nav");
   const tc = useTranslations("common");
   const ta = useTranslations("auth");
+  const locale = useLocale();
   const router = useRouter();
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const setSidebarMobileOpen = useUIStore((s) => s.setSidebarMobileOpen);
@@ -137,14 +151,11 @@ export function Navbar() {
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const logout = useAuthStore((s) => s.logout);
-  const currentTenant = useTenantStore((s) => s.currentTenant);
-  const availableTenants = useTenantStore((s) => s.availableTenants);
-  const setCurrentTenant = useTenantStore((s) => s.setCurrentTenant);
   const unreadCount = useAlertStore((s) => s.unreadCount);
 
   const [searchFocused, setSearchFocused] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showTenantMenu, setShowTenantMenu] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
   const userInitials = user?.full_name
     ?.split(" ")
@@ -238,60 +249,59 @@ export function Navbar() {
           )}
         </HoverButton>
 
-        {/* Tenant selector */}
+        {/* Settings gear */}
+        <IntlLink
+          href="/settings"
+          className="rounded-lg p-2 text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-text-primary transition-colors"
+          aria-label={t("settings")}
+        >
+          <Settings className="h-5 w-5" />
+        </IntlLink>
+
+        {/* Language switcher globe */}
         <div className="relative">
           <button
-            onClick={() => setShowTenantMenu(!showTenantMenu)}
-            className="hidden sm:flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-text-primary transition-colors"
-            aria-expanded={showTenantMenu}
+            onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+            className="rounded-lg p-2 text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-text-primary transition-colors"
+            aria-expanded={showLanguageMenu}
+            aria-label={tc("language")}
             aria-haspopup="true"
           >
-            <Building2 className="h-4 w-4 text-psi-electric" />
-            <span className="max-w-[120px] truncate">
-              {currentTenant?.name || t("selectCompany")}
-            </span>
-            <ChevronDown
-              className={cn(
-                "h-3.5 w-3.5 transition-transform",
-                showTenantMenu && "rotate-180"
-              )}
-            />
+            <Globe className="h-5 w-5" />
           </button>
 
           <AnimatePresence>
-            {showTenantMenu && (
+            {showLanguageMenu && (
               <motion.div
                 initial={{ opacity: 0, y: -8, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.96 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-2xl shadow-black/30 overflow-hidden z-50"
+                className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-card shadow-2xl shadow-black/30 overflow-hidden z-50"
               >
                 <div className="px-3 py-2 border-b border-border">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-psi-text-secondary/60">
-                    {t("switchCompany")}
+                    {tc("language")}
                   </p>
                 </div>
-                {availableTenants.map((tenant) => (
-                  <button
-                    key={tenant.id}
-                    onClick={() => {
-                      setCurrentTenant(tenant);
-                      setShowTenantMenu(false);
-                    }}
+                {LOCALES.map(({ code, label }) => (
+                  <IntlLink
+                    key={code}
+                    href="/"
+                    locale={code}
+                    onClick={() => setShowLanguageMenu(false)}
                     className={cn(
                       "flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors",
-                      tenant.id === currentTenant?.id
+                      locale === code
                         ? "bg-psi-electric/10 text-psi-electric"
                         : "text-psi-text-secondary hover:bg-psi-border/30 hover:text-psi-text-primary"
                     )}
                   >
-                    <Building2 className="h-4 w-4" />
-                    <span className="flex-1 text-left">{tenant.name}</span>
-                    {tenant.id === currentTenant?.id && (
+                    <span className="flex-1 text-left">{label}</span>
+                    {locale === code && (
                       <span className="h-1.5 w-1.5 rounded-full bg-psi-electric" />
                     )}
-                  </button>
+                  </IntlLink>
                 ))}
               </motion.div>
             )}
