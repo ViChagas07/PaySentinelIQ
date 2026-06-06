@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/Switch";
 import { Separator } from "@/components/ui/Separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { useAuthStore } from "@/stores";
+import { useActiveStatus } from "@/hooks/useActiveStatus";
 import {
   // Hero icons
   User, Mail, Shield, Camera, Award, Zap, Flame, Search,
@@ -31,7 +32,7 @@ import {
   // Navigation
   ChevronRight, ChevronDown, LogOut,
   // Other
-  Star, Sparkles, ArrowUpRight, Radio, Gauge,
+  Sparkles, Radio, Gauge,
 } from "lucide-react";
 
 // ── Color mapping for activity types ── //
@@ -74,23 +75,23 @@ function AnimatedMetricCard({
       transition={{ duration: 0.4, delay, ease: "easeOut" }}
     >
       <Card variant="interactive" glow className="group h-full">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-2">
-            <p className="text-[10px] font-semibold text-psi-text-secondary uppercase tracking-widest truncate pr-2">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between mb-3">
+            <p className="text-xs font-semibold text-psi-text-secondary uppercase tracking-widest truncate pr-2">
               {label}
             </p>
-            <div className="rounded-lg bg-psi-electric/10 p-1.5 shrink-0 group-hover:bg-psi-electric/20 transition-colors">
-              <Icon className="h-3.5 w-3.5 text-psi-electric" />
+            <div className="rounded-lg bg-psi-electric/10 p-2 shrink-0 group-hover:bg-psi-electric/20 transition-colors">
+              <Icon className="h-5 w-5 text-psi-electric" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1 mb-0.5">
-            <span className="text-2xl font-bold text-psi-text-primary tabular-nums tracking-tight">
+          <div className="flex items-baseline gap-1 mb-1">
+            <span className="text-3xl font-bold text-psi-text-primary tabular-nums tracking-tight">
               {value}
             </span>
           </div>
-          <p className="text-[11px] text-psi-text-secondary/50 italic">{subtitle}</p>
+          <p className="text-xs text-psi-text-secondary/50 italic">{subtitle}</p>
           {/* Mini animated pulse bar */}
-          <div className="mt-2 h-0.5 w-full rounded-full bg-psi-border/20 overflow-hidden">
+          <div className="mt-3 h-1 w-full rounded-full bg-psi-border/20 overflow-hidden">
             <motion.div
               className="h-full rounded-full bg-gradient-to-r from-psi-electric/40 to-psi-emerald/40"
               initial={{ width: "0%" }}
@@ -173,6 +174,7 @@ export default function ProfilePage() {
   const tset = useTranslations("settings");
   const user = useAuthStore((s) => s.user);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isActive, lastActiveAt } = useActiveStatus();
 
   // ── Local state for toggles/selections ── //
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -189,40 +191,13 @@ export default function ProfilePage() {
   const [selectedSensitivity, setSelectedSensitivity] = useState("medium");
   const [selectedExplanation, setSelectedExplanation] = useState("balanced");
 
-  // ── Active sessions (placeholder) ── //
-  const sessions = [
-    {
-      device: "Chrome on Windows",
-      location: "São Paulo, Brazil",
-      ip: "191.xxx.xxx.xxx",
-      time: "Active now",
-      current: true,
-    },
-    {
-      device: "Safari on macOS",
-      location: "New York, USA",
-      ip: "74.xxx.xxx.xxx",
-      time: "2 hours ago",
-      current: false,
-    },
-  ];
-
-  // ── Recent login activity (placeholder) ── //
-  const loginActivity = [
-    { browser: "Chrome 125", location: "São Paulo, Brazil", ip: "191.xxx.xxx.xxx", time: "Just now", device: "Windows 11" },
-    { browser: "Safari 17", location: "New York, USA", ip: "74.xxx.xxx.xxx", time: "2 hours ago", device: "macOS 15" },
-    { browser: "Firefox 127", location: "London, UK", ip: "89.xxx.xxx.xxx", time: "3 days ago", device: "Windows 11" },
-  ];
-
-  // ── Activity timeline (placeholder) ── //
-  const activities = [
-    { icon: Upload as React.ElementType, color: "upload" as const, title: t("activityHistory.uploadedDocument")?.replace("{document}", "payroll_q2_2026.pdf") || "Uploaded payroll_q2_2026.pdf", time: t("activityHistory.timeYesterday") || "Yesterday" },
-    { icon: AlertTriangle as React.ElementType, color: "fraud" as const, title: t("activityHistory.detectedFraud")?.replace("{type}", "salary anomaly").replace("{document}", "Engineering Dept.") || "Detected suspicious salary anomaly in Engineering Dept.", time: t("activityHistory.timeDaysAgo")?.replace("{count}", "2") || "2 days ago" },
-    { icon: FileText as React.ElementType, color: "analysis" as const, title: t("activityHistory.analyzedDocument")?.replace("{document}", "Q1 Payroll").replace("{result}", "3 flags") || "Analyzed Q1 Payroll — 3 flags", time: t("activityHistory.timeDaysAgo")?.replace("{count}", "3") || "3 days ago" },
-    { icon: BarChart3 as React.ElementType, color: "report" as const, title: t("activityHistory.generatedReport") || "Generated executive report", time: t("activityHistory.timeDaysAgo")?.replace("{count}", "4") || "4 days ago" },
-    { icon: Flag as React.ElementType, color: "flag" as const, title: t("activityHistory.flaggedAnomaly")?.replace("{type}", "timesheet").replace("{department}", "Operations") || "Flagged timesheet anomaly in Operations", time: t("activityHistory.timeDaysAgo")?.replace("{count}", "5") || "5 days ago" },
-    { icon: Settings as React.ElementType, color: "settings" as const, title: t("activityHistory.modifiedSettings") || "Modified security settings", time: t("activityHistory.timeDaysAgo")?.replace("{count}", "7") || "7 days ago" },
-  ];
+  // ── Activity timeline (real data — currently empty) ── //
+  const activities: {
+    icon: React.ElementType;
+    color: "upload" | "fraud" | "report" | "analysis" | "flag" | "settings";
+    title: string;
+    time: string;
+  }[] = [];
 
   // ── AI model selection options ── //
   const aiModels = [
@@ -242,6 +217,27 @@ export default function ProfilePage() {
     { value: "balanced", label: t("aiPreferences.explanationBalanced") || "Balanced" },
     { value: "detailed", label: t("aiPreferences.explanationDetailed") || "Detailed" },
   ];
+
+  // ── Format last-seen timestamp into a human-readable string ── //
+  function formatLastSeen(dt: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - dt.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr  = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+
+    if (diffSec < 60) return t("status.justNow") || "just now";
+    if (diffMin < 60) return t("status.minutesAgo", { count: diffMin }) || `${diffMin}m ago`;
+    if (diffHr < 24)  return t("status.hoursAgo", { count: diffHr }) || `${diffHr}h ago`;
+    if (diffDay < 7)  return t("status.daysAgo", { count: diffDay }) || `${diffDay}d ago`;
+    return dt.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
   const userInitials = user?.full_name
     ?.split(" ")
@@ -366,15 +362,18 @@ export default function ProfilePage() {
                     <Mail className="h-3.5 w-3.5" />
                     <span>{user?.email || "analyst@paysentineliq.com"}</span>
                   </div>
-                  {/* Status badges */}
+                  {/* Status — dynamic active / last-seen */}
                   <div className="flex items-center gap-2 justify-center lg:justify-start pt-1">
-                    <Badge variant="success" dot className="text-[10px]">
-                      Active
-                    </Badge>
-                    <Badge variant="primary" dot className="text-[10px]">
-                      <Star className="h-2.5 w-2.5 mr-0.5" />
-                      Premium
-                    </Badge>
+                    {isActive ? (
+                      <Badge variant="success" dot className="text-[10px]">
+                        {t("status.online") || "Online"}
+                      </Badge>
+                    ) : (
+                      <Badge variant="warning" dot className="text-[10px]">
+                        {t("status.lastSeen", { time: formatLastSeen(lastActiveAt!) }) ||
+                          `Last seen ${formatLastSeen(lastActiveAt!)}`}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
@@ -728,44 +727,16 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-              <div className="space-y-3">
-                {sessions.map((session, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start justify-between gap-3 rounded-lg border border-white/[0.04] bg-white/[0.01] p-3"
-                  >
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className={cn(
-                        "shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
-                        session.current ? "bg-psi-emerald/10" : "bg-psi-electric/10"
-                      )}>
-                        <Monitor className={cn("h-4 w-4", session.current ? "text-psi-emerald" : "text-psi-electric")} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-psi-text-primary truncate">
-                            {session.device}
-                          </p>
-                          {session.current && (
-                            <Badge variant="success" className="text-[9px] px-1.5 py-0">
-                              {t("securityCenter.sessionsCurrent") || "Current"}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-psi-text-secondary/60">
-                          {session.location} · {session.ip}
-                        </p>
-                        <p className="text-[11px] text-psi-text-secondary/40 mt-0.5">{session.time}</p>
-                      </div>
-                    </div>
-                    {!session.current && (
-                      <Button variant="ghost" size="sm" className="shrink-0 text-psi-fraud hover:text-psi-fraud" disabled>
-                        <LogOut className="h-3 w-3" />
-                        {t("securityCenter.terminate") || "Terminate"}
-                      </Button>
-                    )}
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="mb-3 rounded-2xl bg-psi-electric/5 p-3 ring-1 ring-psi-electric/10">
+                  <Monitor className="h-6 w-6 text-psi-electric/40" />
+                </div>
+                <p className="text-sm font-medium text-psi-text-primary">
+                  {t("securityCenter.noSessions") || "No active sessions"}
+                </p>
+                <p className="text-xs text-psi-text-secondary/60 mt-1">
+                  {t("securityCenter.noSessionsDesc") || "Session data will appear when you log in from other devices"}
+                </p>
               </div>
             </div>
 
@@ -786,27 +757,16 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-              {/* Table-like header */}
-              <div className="hidden sm:grid grid-cols-5 gap-3 px-3 py-2 text-[10px] font-semibold text-psi-text-secondary/50 uppercase tracking-wider border-b border-white/[0.04] mb-2">
-                <span>Browser</span>
-                <span>Location</span>
-                <span>IP</span>
-                <span>Time</span>
-                <span>Device</span>
-              </div>
-              <div className="space-y-2">
-                {loginActivity.map((entry, i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-1 sm:grid-cols-5 gap-1 sm:gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.02] transition-colors text-sm"
-                  >
-                    <span className="text-psi-text-primary font-medium sm:font-normal">{entry.browser}</span>
-                    <span className="text-psi-text-secondary text-xs sm:text-sm">{entry.location}</span>
-                    <span className="text-psi-text-secondary/60 text-xs font-mono">{entry.ip}</span>
-                    <span className="text-psi-text-secondary/60 text-xs">{entry.time}</span>
-                    <span className="text-psi-text-secondary/60 text-xs">{entry.device}</span>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="mb-3 rounded-2xl bg-psi-electric/5 p-3 ring-1 ring-psi-electric/10">
+                  <Clock className="h-6 w-6 text-psi-electric/40" />
+                </div>
+                <p className="text-sm font-medium text-psi-text-primary">
+                  {t("securityCenter.noActivity") || "No recent login activity"}
+                </p>
+                <p className="text-xs text-psi-text-secondary/60 mt-1">
+                  {t("securityCenter.noActivityDesc") || "Login history will appear here"}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -1124,105 +1084,7 @@ export default function ProfilePage() {
         </Card>
       </motion.div>
 
-      {/* ═══════════════════════════════════════════════════════
-         SECTION 6 — Personal AI Assistant Card
-         ═══════════════════════════════════════════════════════ */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.35, ease: "easeOut" }}
-      >
-        <Card glow className="relative overflow-hidden">
-          {/* Gradient aura background */}
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-psi-electric/[0.06] via-psi-emerald/[0.03] to-transparent rounded-full blur-[100px] animate-pulse" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-purple-500/[0.04] via-psi-electric/[0.02] to-transparent rounded-full blur-[80px]" />
-          </div>
 
-          <CardContent className="relative z-10 p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row items-start gap-6">
-              {/* AI Orb icon */}
-              <div className="shrink-0">
-                <div className="relative w-16 h-16">
-                  <motion.div
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-br from-psi-electric/30 to-psi-emerald/20 blur-xl"
-                    animate={{ scale: [1, 1.1, 1], opacity: [0.4, 0.7, 0.4] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-psi-electric/20 to-psi-emerald/10 border border-psi-electric/20 flex items-center justify-center">
-                    <Brain className="h-8 w-8 text-psi-electric" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 min-w-0 space-y-4">
-                {/* Header */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg font-semibold text-psi-text-primary">
-                    {t("aiAssistant.title") || "Personal AI Intelligence Brief"}
-                  </h3>
-                  <Badge variant="primary" className="text-[10px]">
-                    <Sparkles className="h-2.5 w-2.5 mr-1" />
-                    {t("aiAssistant.badge") || "AI Generated"}
-                  </Badge>
-                </div>
-
-                {/* AI Insight Text */}
-                <p className="text-sm text-psi-text-secondary/80 leading-relaxed">
-                  {t("aiAssistant.description") || "Your activity indicates high use of fraud analysis tools. AI recommends enabling predictive alerts to stay ahead of emerging threats."}
-                </p>
-
-                {/* Confidence + Recommendations */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
-                  {/* Confidence Score */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-semibold text-psi-text-secondary uppercase tracking-wider">
-                      {t("aiAssistant.confidence") || "AI Confidence"}
-                    </span>
-                    <div className="w-24 h-2 rounded-full bg-psi-border/20 overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-psi-electric to-psi-emerald"
-                        initial={{ width: "0%" }}
-                        animate={{ width: "76%" }}
-                        transition={{ duration: 1.5, delay: 0.6, ease: "easeOut" }}
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-psi-emerald tabular-nums">76%</span>
-                  </div>
-                </div>
-
-                {/* Recommendations */}
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-psi-text-secondary uppercase tracking-wider">
-                    {t("aiAssistant.recommendations") || "Recommendations"}
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {[1, 2, 3].map((rec) => (
-                      <div
-                        key={rec}
-                        className="flex items-start gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] p-2.5"
-                      >
-                        <ArrowUpRight className="h-3.5 w-3.5 text-psi-electric mt-0.5 shrink-0" />
-                        <p className="text-xs text-psi-text-secondary/80 leading-relaxed">
-                          {t(`aiAssistant.recommendation${rec}`) || `Recommendation ${rec}`}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* CTA */}
-                <div className="flex justify-end">
-                  <Button variant="outline" size="sm" disabled>
-                    <Eye className="h-3.5 w-3.5" />
-                    {t("aiAssistant.viewFullBrief") || "View Full Intelligence Brief"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
     </div>
   );
 }

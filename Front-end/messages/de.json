@@ -714,6 +714,14 @@
     "pageTitle": "Identitäts- & Kommandozentrale",
     "pageDescription": "Ihre persönliche Kommandozentrale in der KI-Betrugsbekämpfungsplattform — verwalten Sie Ihre Identität, Sicherheit und KI-Präferenzen.",
     "pageBadge": "Identitätszentrum",
+    "status": {
+      "online": "Online",
+      "lastSeen": "Zuletzt gesehen {time}",
+      "justNow": "gerade eben",
+      "minutesAgo": "vor {count}Min",
+      "hoursAgo": "vor {count}h",
+      "daysAgo": "vor {count}T"
+    },
     "metrics": {
       "documentsAnalyzed": "Analysierte Dokumente",
       "fraudDetections": "Betrugserkennungen",
@@ -739,8 +747,12 @@
       "sessionsCardDesc": "Verwalten Sie mit Ihrem Konto verbundene Geräte",
       "sessionsCurrent": "Aktuelle Sitzung",
       "terminate": "Beenden",
+      "noSessions": "Keine aktiven Sitzungen",
+      "noSessionsDesc": "Sitzungsdaten werden angezeigt, wenn Sie sich von anderen Geräten anmelden",
       "recentActivityTitle": "Letzte Anmeldeaktivität",
-      "recentActivityDesc": "Überprüfen Sie die letzten Anmeldungen bei Ihrem Konto"
+      "recentActivityDesc": "Überprüfen Sie die letzten Anmeldungen bei Ihrem Konto",
+      "noActivity": "Keine kürzliche Anmeldeaktivität",
+      "noActivityDesc": "Der Anmeldeverlauf wird hier angezeigt"
     },
     "aiPreferences": {
       "title": "KI-Präferenzen",

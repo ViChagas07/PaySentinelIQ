@@ -714,6 +714,14 @@
     "pageTitle": "アイデンティティ＆コマンドセンター",
     "pageDescription": "AI不正インテリジェンスプラットフォーム内のパーソナルコマンドセンター — アイデンティティ、セキュリティ、AI設定を管理します。",
     "pageBadge": "アイデンティティセンター",
+    "status": {
+      "online": "オンライン",
+      "lastSeen": "最終アクセス {time}",
+      "justNow": "たった今",
+      "minutesAgo": "{count}分前",
+      "hoursAgo": "{count}時間前",
+      "daysAgo": "{count}日前"
+    },
     "metrics": {
       "documentsAnalyzed": "分析済みドキュメント",
       "fraudDetections": "検出された不正",
@@ -739,8 +747,12 @@
       "sessionsCardDesc": "アカウントに接続されたデバイスを管理",
       "sessionsCurrent": "現在のセッション",
       "terminate": "終了",
+      "noSessions": "アクティブなセッションはありません",
+      "noSessionsDesc": "他のデバイスからログインするとセッションデータが表示されます",
       "recentActivityTitle": "最近のログイン活動",
-      "recentActivityDesc": "アカウントへの最近のサインインを確認"
+      "recentActivityDesc": "アカウントへの最近のサインインを確認",
+      "noActivity": "最近のログイン活動はありません",
+      "noActivityDesc": "ログイン履歴はここに表示されます"
     },
     "aiPreferences": {
       "title": "AI設定",

@@ -714,6 +714,14 @@
     "pageTitle": "Centro de Identidade & Comando",
     "pageDescription": "Seu centro de comando pessoal dentro da plataforma de inteligência antifraude — gerencie sua identidade, segurança e preferências de IA.",
     "pageBadge": "Centro de Identidade",
+    "status": {
+      "online": "Online",
+      "lastSeen": "Visto pela última vez {time}",
+      "justNow": "agora mesmo",
+      "minutesAgo": "{count}min atrás",
+      "hoursAgo": "{count}h atrás",
+      "daysAgo": "{count}d atrás"
+    },
     "metrics": {
       "documentsAnalyzed": "Documentos Analisados",
       "fraudDetections": "Fraudes Detectadas",
@@ -739,8 +747,12 @@
       "sessionsCardDesc": "Gerencie dispositivos conectados à sua conta",
       "sessionsCurrent": "Sessão atual",
       "terminate": "Encerrar",
+      "noSessions": "Nenhuma sessão ativa",
+      "noSessionsDesc": "Dados de sessão aparecerão quando você fizer login de outros dispositivos",
       "recentActivityTitle": "Atividade de Login Recente",
-      "recentActivityDesc": "Revise os acessos recentes à sua conta"
+      "recentActivityDesc": "Revise os acessos recentes à sua conta",
+      "noActivity": "Nenhuma atividade de login recente",
+      "noActivityDesc": "O histórico de login aparecerá aqui"
     },
     "aiPreferences": {
       "title": "Preferências de IA",

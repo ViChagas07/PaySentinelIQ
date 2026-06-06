@@ -714,6 +714,14 @@
     "pageTitle": "مركز الهوية والقيادة",
     "pageDescription": "مركز القيادة الشخصي الخاص بك داخل منصة استخبارات مكافحة الاحتيال بالذكاء الاصطناعي — إدارة هويتك وأمانك وتفضيلات الذكاء الاصطناعي.",
     "pageBadge": "مركز الهوية",
+    "status": {
+      "online": "متصل",
+      "lastSeen": "آخر ظهور {time}",
+      "justNow": "الآن",
+      "minutesAgo": "قبل {count} دقيقة",
+      "hoursAgo": "قبل {count} ساعة",
+      "daysAgo": "قبل {count} يوم"
+    },
     "metrics": {
       "documentsAnalyzed": "المستندات التي تم تحليلها",
       "fraudDetections": "حالات الاحتيال المكتشفة",
@@ -739,8 +747,12 @@
       "sessionsCardDesc": "إدارة الأجهزة المتصلة بحسابك",
       "sessionsCurrent": "الجلسة الحالية",
       "terminate": "إنهاء",
+      "noSessions": "لا توجد جلسات نشطة",
+      "noSessionsDesc": "ستظهر بيانات الجلسة عند تسجيل الدخول من أجهزة أخرى",
       "recentActivityTitle": "نشاط تسجيل الدخول الأخير",
-      "recentActivityDesc": "مراجعة عمليات تسجيل الدخول الأخيرة لحسابك"
+      "recentActivityDesc": "مراجعة عمليات تسجيل الدخول الأخيرة لحسابك",
+      "noActivity": "لا يوجد نشاط تسجيل دخول حديث",
+      "noActivityDesc": "سيظهر سجل تسجيل الدخول هنا"
     },
     "aiPreferences": {
       "title": "تفضيلات الذكاء الاصطناعي",

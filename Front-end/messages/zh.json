@@ -714,6 +714,14 @@
     "pageTitle": "身份与指挥中心",
     "pageDescription": "您在AI反欺诈情报平台内的个人指挥中心 — 管理您的身份、安全和AI偏好设置。",
     "pageBadge": "身份中心",
+    "status": {
+      "online": "在线",
+      "lastSeen": "上次访问 {time}",
+      "justNow": "刚刚",
+      "minutesAgo": "{count}分钟前",
+      "hoursAgo": "{count}小时前",
+      "daysAgo": "{count}天前"
+    },
     "metrics": {
       "documentsAnalyzed": "已分析文档",
       "fraudDetections": "欺诈检测",
@@ -739,8 +747,12 @@
       "sessionsCardDesc": "管理连接到您账户的设备",
       "sessionsCurrent": "当前会话",
       "terminate": "终止",
+      "noSessions": "没有活跃会话",
+      "noSessionsDesc": "当您从其他设备登录时，会话数据将显示在此处",
       "recentActivityTitle": "最近的登录活动",
-      "recentActivityDesc": "查看最近登录您账户的记录"
+      "recentActivityDesc": "查看最近登录您账户的记录",
+      "noActivity": "没有最近的登录活动",
+      "noActivityDesc": "登录历史将显示在此处"
     },
     "aiPreferences": {
       "title": "AI偏好设置",

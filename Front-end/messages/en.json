@@ -714,6 +714,14 @@
     "pageTitle": "Identity & Command Center",
     "pageDescription": "Your personal command center inside the AI fraud intelligence platform — manage your identity, security, and AI preferences.",
     "pageBadge": "Identity Center",
+    "status": {
+      "online": "Online",
+      "lastSeen": "Last seen {time}",
+      "justNow": "just now",
+      "minutesAgo": "{count}m ago",
+      "hoursAgo": "{count}h ago",
+      "daysAgo": "{count}d ago"
+    },
     "metrics": {
       "documentsAnalyzed": "Documents Analyzed",
       "fraudDetections": "Fraud Detections",
@@ -739,8 +747,12 @@
       "sessionsCardDesc": "Manage devices connected to your account",
       "sessionsCurrent": "Current session",
       "terminate": "Terminate",
+      "noSessions": "No active sessions",
+      "noSessionsDesc": "Session data will appear when you log in from other devices",
       "recentActivityTitle": "Recent Login Activity",
-      "recentActivityDesc": "Review recent sign-ins to your account"
+      "recentActivityDesc": "Review recent sign-ins to your account",
+      "noActivity": "No recent login activity",
+      "noActivityDesc": "Login history will appear here"
     },
     "aiPreferences": {
       "title": "AI Preferences",
