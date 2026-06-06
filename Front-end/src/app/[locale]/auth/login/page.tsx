@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores";
+import { AppName } from "@/components/shared/AppName";
 
 // ── Animated Background ── //
 
@@ -313,10 +314,23 @@ export default function AuthPage() {
               priority
             />
           </motion.div>
+
+          {/* App name — locale-aware, with colour highlight matching user's chosen primary colour */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
+          >
+            <AppName
+              as="h1"
+              className="text-xl sm:text-2xl text-psi-text-primary mb-2"
+            />
+          </motion.div>
+
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
             className="text-xs text-psi-text-secondary/60 tracking-wide"
           >
             {tc("tagline")}
