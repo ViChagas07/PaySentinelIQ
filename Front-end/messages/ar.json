@@ -136,7 +136,6 @@
     "verification": "مركز التحقق",
     "fraudIntelligence": "استخبارات الاحتيال",
     "compliance": "الامتثال",
-    "aiInsights": "رؤى الذكاء",
     "documentAnalysis": "تحليل المستندات",
     "analyzePayroll": "كشف الرواتب",
     "analyzeBankSlip": "قسيمة بنكية",
@@ -678,11 +677,6 @@
     "activityHeatmapEmpty": "ستظهر بيانات النشاط هنا بمرور الوقت.",
     "noPatterns": "لم يتم اكتشاف أنماط مشبوهة",
     "emptyPatternsDescription": "لم يتم اكتشاف أنماط مشبوهة بعد. ستظهر الأنماط أثناء معالجة النظام للبيانات."
-  },
-  "aiInsights": {
-    "pageTitle": "لوحة رؤى PSI",
-    "pageDescription": "مركز استدلال AI مع تصور المخاطر.",
-    "pageBadge": "استدلال AI"
   },
   "reports": {
     "pageTitle": "مركز الاستخبارات التنفيذية",

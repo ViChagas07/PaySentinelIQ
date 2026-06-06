@@ -136,7 +136,6 @@
     "verification": "Верификация",
     "fraudIntelligence": "Антифрод",
     "compliance": "Комплаенс",
-    "aiInsights": "AI-аналитика",
     "documentAnalysis": "Анализ документов",
     "analyzePayroll": "Платежка",
     "analyzeBankSlip": "Банковский Слип",
@@ -678,11 +677,6 @@
     "activityHeatmapEmpty": "Данные об активности будут отображаться здесь со временем.",
     "noPatterns": "Подозрительных закономерностей не обнаружено",
     "emptyPatternsDescription": "Подозрительных закономерностей пока не обнаружено. Закономерности появятся по мере обработки данных системой."
-  },
-  "aiInsights": {
-    "pageTitle": "AI-аналитика PSI",
-    "pageDescription": "Центр AI-рассуждений с визуализацией рисков.",
-    "pageBadge": "Рассуждение ИИ"
   },
   "reports": {
     "pageTitle": "Центр исполнительной разведки",

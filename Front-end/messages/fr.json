@@ -136,7 +136,6 @@
     "verification": "Centre de Vérification",
     "fraudIntelligence": "Intelligence Anti-Fraude",
     "compliance": "Conformité",
-    "aiInsights": "Insights IA",
     "documentAnalysis": "Analyse de Documents",
     "analyzePayroll": "Paie",
     "analyzeBankSlip": "Bordereau Bancaire",
@@ -680,11 +679,6 @@
     "activityHeatmapEmpty": "Les données d'activité apparaîtront ici au fil du temps.",
     "noPatterns": "Aucun motif suspect détecté",
     "emptyPatternsDescription": "Aucun motif suspect détecté pour le moment. Les motifs apparaîtront au fur et à mesure que le système traite les données."
-  },
-  "aiInsights": {
-    "pageTitle": "Tableau de Bord Insights",
-    "pageDescription": "Centre de raisonnement IA avec visualisations de risque.",
-    "pageBadge": "Raisonnement IA"
   },
   "reports": {
     "pageTitle": "Centre de Renseignement Exécutif",

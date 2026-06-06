@@ -19,7 +19,6 @@ import {
   FileText,
   ShieldCheck,
   AlertTriangle,
-  Brain,
   DollarSign,
   FileBarChart,
   ScrollText,
@@ -38,7 +37,7 @@ type NavBadgeKey = "badgeAI" | "new";
 /** Valid translation keys for navigation labels in the "nav" namespace */
 type NavLabelKey =
   | "dashboard" | "payroll"
-  | "verification" | "fraudIntelligence" | "aiInsights"
+  | "verification" | "fraudIntelligence"
   | "analyzePayroll" | "analyzeBankSlip"
   | "reports" | "auditLogs"
   | "notifications" | "settings";
@@ -99,14 +98,6 @@ const navigationSections: NavSection[] = [
         href: "/fraud-intelligence",
         icon: AlertTriangle,
         roles: ["admin", "fraud_analyst", "auditor"],
-      },
-      {
-        labelKey: "aiInsights",
-        href: "/ai-insights",
-        icon: Brain,
-        roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager"],
-        badgeKey: "new",
-        badgeVariant: "success",
       },
     ],
   },

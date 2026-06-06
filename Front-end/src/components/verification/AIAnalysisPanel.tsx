@@ -1,6 +1,8 @@
 // ============================================================
 // PaySentinelIQ — AI Analysis Panel
-// Right-side panel with risk score, extracted fields, fraud indicators, AI explanation
+// Right-side panel driven entirely by real verification data.
+// No mock/simulated content — each tab shows genuine data or
+// a transparent empty state.
 // ============================================================
 
 "use client";
@@ -10,21 +12,17 @@ import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { RiskGauge } from "./RiskGauge";
 import {
   ShieldCheck,
   AlertTriangle,
   Brain,
-  FileText,
-  Clock,
-  Link,
-  ChevronDown,
-  Database,
   ScanEye,
+  FileText,
+  Inbox,
 } from "lucide-react";
 
-// ── Types (data comes from API, never hardcoded) ── //
+// ── Public types (data comes from API, never hardcoded) ── //
 
 export interface ExtractedField {
   field: string;
@@ -40,22 +38,44 @@ export interface FraudIndicatorItem {
   description: string;
 }
 
-// ── Main Panel — accepts real data as props ── //
+export interface MetadataItem {
+  label: string;
+  value: string;
+  anomaly?: boolean;
+}
+
+export interface AIFinding {
+  severity: "critical" | "high" | "medium" | "low";
+  description: string;
+}
+
+export interface AISummary {
+  summary: string;
+  findings: AIFinding[];
+  recommendedActions: string[];
+  modelName: string;
+  completedAt: string; // ISO date string
+}
+
+// ── Main Panel — accepts real data as props, never falls back to fake data ── //
 
 export function AIAnalysisPanel({
   extractedFields = [],
   fraudIndicators = [],
   riskScore = 0,
+  metadata = [],
+  aiSummary,
 }: {
   extractedFields?: ExtractedField[];
   fraudIndicators?: FraudIndicatorItem[];
   riskScore?: number;
+  metadata?: MetadataItem[];
+  aiSummary?: AISummary | null;
 }) {
   const t = useTranslations("verification");
-  const tc = useTranslations("common");
 
   const tabs = [
-    { id: "fields", label: t("tabExtractedFields"), icon: Database },
+    { id: "fields", label: t("tabExtractedFields"), icon: ShieldCheck },
     { id: "fraud", label: t("tabFraudIndicators"), icon: AlertTriangle },
     { id: "metadata", label: t("tabMetadata"), icon: ScanEye },
     { id: "explanation", label: t("tabAIExplanation"), icon: Brain },
@@ -63,45 +83,50 @@ export function AIAnalysisPanel({
 
   const [activeTab, setActiveTab] = useState("fields");
 
+  const hasAnyData =
+    extractedFields.length > 0 ||
+    fraudIndicators.length > 0 ||
+    metadata.length > 0 ||
+    aiSummary != null ||
+    riskScore > 0;
+
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="px-6 py-4 border-b border-psi-border">
         <div className="flex items-center gap-2 mb-1">
           <Brain className="h-4 w-4 text-psi-electric" />
           <h2 className="text-base font-semibold text-psi-text-primary">{t("aiAnalysis")}</h2>
-          <Badge variant="primary" className="ml-auto text-[10px]">
-            {t("confidenceLabel", { value: 92 })}
-          </Badge>
         </div>
         <p className="text-xs text-psi-text-secondary">
-          {t("aiAnalysisDescription")}
+          {hasAnyData ? t("aiAnalysisDescription") : t("aiAnalysisIdle")}
         </p>
       </div>
 
-      {/* Risk Score */}
+      {/* ── Risk Score (only meaningful when > 0) ── */}
       <div className="flex justify-center py-5 border-b border-psi-border bg-psi-graphite/30">
         <RiskGauge score={riskScore} size={130} strokeWidth={8} label={t("riskScore")} />
       </div>
 
-      {/* Tabs */}
+      {/* ── Tabs ── */}
       <div className="flex border-b border-psi-border">
         {tabs.map((tab) => {
           const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-all border-b-2 -mb-px",
-                activeTab === tab.id
+                isActive
                   ? "border-psi-electric text-psi-electric"
                   : "border-transparent text-psi-text-secondary hover:text-psi-text-primary"
               )}
             >
               <Icon className="h-3.5 w-3.5" />
               {tab.label}
-              {tab.id === "fraud" && (
+              {tab.id === "fraud" && fraudIndicators.length > 0 && (
                 <span className="ml-1 rounded-full bg-psi-fraud h-1.5 w-1.5 animate-pulse-alert" />
               )}
             </button>
@@ -109,7 +134,7 @@ export function AIAnalysisPanel({
         })}
       </div>
 
-      {/* Tab Content */}
+      {/* ── Tab Content ── */}
       <div className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
@@ -122,37 +147,90 @@ export function AIAnalysisPanel({
           >
             {/* ── Extracted Fields ── */}
             {activeTab === "fields" && (
-              <div className="space-y-2">
-                <p className="text-xs text-psi-text-secondary mb-3">
-                  {t("fieldsDescription")}
-                </p>
-                {extractedFields.map((field) => (
-                  <FieldRow key={field.field} field={field} />
-                ))}
-              </div>
+              extractedFields.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-psi-text-secondary mb-3">
+                    {t("fieldsDescription")}
+                  </p>
+                  {extractedFields.map((field) => (
+                    <FieldRow key={field.field} field={field} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyTab
+                  icon={ShieldCheck}
+                  message={t("noExtractedFields")}
+                />
+              )
             )}
 
             {/* ── Fraud Indicators ── */}
             {activeTab === "fraud" && (
-              <div className="space-y-3">
-                <p className="text-xs text-psi-text-secondary mb-3">
-                  {t("indicatorsDetected", { count: fraudIndicators.length })}
-                </p>
-                {fraudIndicators.map((indicator) => (
-                  <FraudIndicatorCard key={indicator.id} indicator={indicator} />
-                ))}
-              </div>
+              fraudIndicators.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-psi-text-secondary mb-3">
+                    {t("indicatorsDetected", { count: fraudIndicators.length })}
+                  </p>
+                  {fraudIndicators.map((indicator) => (
+                    <FraudIndicatorCard key={indicator.id} indicator={indicator} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyTab
+                  icon={AlertTriangle}
+                  message={t("noFraudIndicators")}
+                />
+              )
             )}
 
             {/* ── Metadata Analysis ── */}
-            {activeTab === "metadata" && <MetadataPanel />}
+            {activeTab === "metadata" && (
+              metadata.length > 0 ? (
+                <MetadataPanel items={metadata} />
+              ) : (
+                <EmptyTab
+                  icon={ScanEye}
+                  message={t("noMetadata")}
+                />
+              )
+            )}
 
             {/* ── AI Explanation ── */}
-            {activeTab === "explanation" && <AIExplanationPanel />}
+            {activeTab === "explanation" && (
+              aiSummary ? (
+                <AIExplanationPanel summary={aiSummary} />
+              ) : (
+                <EmptyTab
+                  icon={Brain}
+                  message={t("noAIExplanation")}
+                />
+              )
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+// ── Empty Tab ── //
+
+function EmptyTab({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
+  const t = useTranslations("verification");
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex flex-col items-center justify-center py-16 gap-3"
+    >
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-psi-graphite/60 border border-psi-border">
+        <Icon className="h-5 w-5 text-psi-text-secondary/40" />
+      </div>
+      <p className="text-sm text-psi-text-secondary/60 text-center max-w-[220px]">
+        {message}
+      </p>
+    </motion.div>
   );
 }
 
@@ -253,27 +331,16 @@ function FraudIndicatorCard({ indicator }: { indicator: FraudIndicatorItem }) {
   );
 }
 
-// ── Metadata Panel ── //
+// ── Metadata Panel (fully data-driven) ── //
 
-function MetadataPanel() {
+function MetadataPanel({ items }: { items: MetadataItem[] }) {
   const t = useTranslations("verification");
-  const metadata = [
-    { label: t("metadataFileType"), value: "PDF 1.7" },
-    { label: t("metadataFileSize"), value: "2.4 MB" },
-    { label: t("metadataPages"), value: "3" },
-    { label: t("metadataCreated"), value: "2025-01-05 14:32 UTC", anomaly: true },
-    { label: t("metadataModified"), value: "2025-01-06 09:15 UTC" },
-    { label: t("metadataAuthor"), value: "payroll@acmecorp.com" },
-    { label: t("metadataSoftware"), value: "Microsoft Excel / PDF Printer", anomaly: true },
-    { label: t("metadataPDFProducer"), value: "wkhtmltopdf 0.12.6" },
-  ];
-
   return (
     <div className="space-y-2">
       <p className="text-xs text-psi-text-secondary mb-3">
         {t("metadataDescription")}
       </p>
-      {metadata.map((item) => (
+      {items.map((item) => (
         <div
           key={item.label}
           className={cn(
@@ -296,69 +363,76 @@ function MetadataPanel() {
   );
 }
 
-// ── AI Explanation Panel ── //
+// ── AI Explanation Panel (fully data-driven) ── //
 
-function AIExplanationPanel() {
+function AIExplanationPanel({ summary }: { summary: AISummary }) {
   const t = useTranslations("verification");
   return (
     <div className="space-y-4">
+      {/* Summary */}
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Brain className="h-4 w-4 text-psi-electric" />
           <h4 className="text-sm font-semibold text-psi-text-primary">{t("reasoningSummary")}</h4>
         </div>
         <div className="rounded-lg border border-psi-border bg-psi-graphite/40 p-4">
-          <p className="text-sm text-psi-text-secondary leading-relaxed">
-            The AI model analyzed this payroll document through multiple verification layers
-            (optical character recognition, metadata integrity, cross-reference with HR database,
-            and anomaly detection algorithms) and identified{' '}
-            <span className="text-psi-fraud font-semibold">5 high-confidence anomalies</span> that
-            require analyst review.
-          </p>
-          <div className="mt-3 pt-3 border-t border-psi-border space-y-2">
-            <p className="text-xs text-psi-text-secondary flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-psi-fraud" />
-              Primary concern: salary discrepancy exceeds 3σ threshold
-            </p>
-            <p className="text-xs text-psi-text-secondary flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-psi-fraud" />
-              Secondary concern: tax ID cross-reference conflict
-            </p>
-            <p className="text-xs text-psi-text-secondary flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-psi-warning" />
-              Metadata inconsistency suggests possible document manipulation
-            </p>
+          <p className="text-sm text-psi-text-secondary leading-relaxed">{summary.summary}</p>
+          {summary.findings.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-psi-border space-y-2">
+              {summary.findings.map((finding, i) => (
+                <p
+                  key={i}
+                  className="text-xs text-psi-text-secondary flex items-start gap-2"
+                >
+                  <span
+                    className={cn(
+                      "mt-1 h-1.5 w-1.5 shrink-0 rounded-full",
+                      finding.severity === "critical" || finding.severity === "high"
+                        ? "bg-psi-fraud"
+                        : finding.severity === "medium"
+                        ? "bg-psi-warning"
+                        : "bg-psi-emerald"
+                    )}
+                  />
+                  {finding.description}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Recommended Actions */}
+      {summary.recommendedActions.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-psi-text-primary mb-2">{t("recommendedActions")}</h4>
+          <div className="space-y-2">
+            {summary.recommendedActions.map((action, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-2 rounded-lg border border-psi-border bg-psi-graphite/30 p-3"
+              >
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-psi-electric/15 text-[10px] font-bold text-psi-electric">
+                  {i + 1}
+                </span>
+                <p className="text-xs text-psi-text-secondary leading-relaxed">{action}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
-      <div>
-        <h4 className="text-sm font-semibold text-psi-text-primary mb-2">{t("recommendedActions")}</h4>
-        <div className="space-y-2">
-          {[
-            "Cross-reference salary with HR promotion records for Q1 2025",
-            "Verify employee identity and tax documentation with issuing authority",
-            "Request original, unmodified payroll document from the source system",
-            "Escalate to fraud investigation team if salary discrepancy confirmed",
-          ].map((action, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-2 rounded-lg border border-psi-border bg-psi-graphite/30 p-3"
-            >
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-psi-electric/15 text-[10px] font-bold text-psi-electric">
-                {i + 1}
-              </span>
-              <p className="text-xs text-psi-text-secondary leading-relaxed">{action}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
+      {/* Footer */}
       <div className="flex items-center gap-2 text-xs text-psi-text-secondary pt-1">
-        <Clock className="h-3.5 w-3.5" />
-        <span>{t("analysisCompleted", { time: "3 minutes ago" })}</span>
-        <span className="text-psi-text-secondary/50">·</span>
-        <span>{t("modelInfo", { model: "PSI-Verify v3.2" })}</span>
+        {summary.completedAt && (
+          <>
+            <span>{t("analysisCompleted", { time: summary.completedAt })}</span>
+            <span className="text-psi-text-secondary/50">·</span>
+          </>
+        )}
+        {summary.modelName && (
+          <span>{t("modelInfo", { model: summary.modelName })}</span>
+        )}
       </div>
     </div>
   );

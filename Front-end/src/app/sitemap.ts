@@ -9,7 +9,6 @@ const PAGES = [
   { path: "/verification-center", priority: 0.9, changeFreq: "hourly" as const },
   { path: "/compliance", priority: 0.8, changeFreq: "daily" as const },
   { path: "/payroll", priority: 0.8, changeFreq: "daily" as const },
-  { path: "/ai-insights", priority: 0.7, changeFreq: "daily" as const },
   { path: "/employees", priority: 0.7, changeFreq: "weekly" as const },
   { path: "/companies", priority: 0.7, changeFreq: "weekly" as const },
   { path: "/reports", priority: 0.6, changeFreq: "weekly" as const },

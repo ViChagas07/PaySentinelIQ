@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/Badge";
 import { PayrollTrendChart } from "@/components/charts/PayrollTrendChart";
 import { FraudHeatmap } from "@/components/charts/FraudHeatmap";
 import { RiskDistributionChart } from "@/components/charts/RiskDistributionChart";
-import { LiveAIInsightFeed } from "@/components/dashboard/LiveAIInsightFeed";
 import {
   DollarSign,
   ShieldCheck,
@@ -262,7 +261,6 @@ export default function DashboardPage() {
         </Card>
 
         {/* Live AI Insights Feed — 1 col */}
-        <LiveAIInsightFeed />
       </div>
 
       {/* Bottom Row */}

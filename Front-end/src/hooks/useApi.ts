@@ -10,7 +10,6 @@ import type {
   FraudAlert,
   VerificationResult,
   ComplianceRecord,
-  AIInsight,
   AuditLogEntry,
   Employee,
   Notification,
@@ -42,11 +41,7 @@ export const queryKeys = {
     list: (params?: Record<string, unknown>) => ["compliance", "list", params] as const,
     detail: (id: string) => ["compliance", "detail", id] as const,
   },
-  aiInsights: {
-    all: ["ai-insights"] as const,
-    list: (params?: Record<string, unknown>) => ["ai-insights", "list", params] as const,
-    feed: ["ai-insights", "feed"] as const,
-  },
+  // aiInsights removed
   auditLogs: {
     all: ["audit-logs"] as const,
     list: (params?: Record<string, unknown>) => ["audit-logs", "list", params] as const,
@@ -202,24 +197,6 @@ export function useComplianceRecord(id: string) {
 
 // ============================================================
 // AI Insights Hooks
-// ============================================================
-
-export function useAIInsights(params?: Record<string, unknown>) {
-  return useQuery({
-    queryKey: queryKeys.aiInsights.list(params),
-    queryFn: () => api.get<PaginatedResponse<AIInsight>>("/ai-insights", params as Record<string, string | number | boolean | undefined>),
-    refetchInterval: 60_000,
-  });
-}
-
-export function useAIInsightFeed() {
-  return useQuery({
-    queryKey: queryKeys.aiInsights.feed,
-    queryFn: () => api.get<AIInsight[]>("/ai-insights/feed"),
-    refetchInterval: 15_000, // Live feed every 15s
-  });
-}
-
 // ============================================================
 // Audit Log Hooks
 // ============================================================

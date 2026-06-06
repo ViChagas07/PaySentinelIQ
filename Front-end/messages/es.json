@@ -136,7 +136,6 @@
     "verification": "Centro de Verificación",
     "fraudIntelligence": "Inteligencia Antifraude",
     "compliance": "Cumplimiento",
-    "aiInsights": "Insights de IA",
     "documentAnalysis": "Análisis de Documentos",
     "analyzePayroll": "Nómina",
     "analyzeBankSlip": "Boleta Bancaria",
@@ -680,11 +679,6 @@
     "activityHeatmapEmpty": "Los datos de actividad aparecerán aquí con el tiempo.",
     "noPatterns": "No se detectaron patrones sospechosos",
     "emptyPatternsDescription": "Aún no se detectaron patrones sospechosos. Los patrones aparecerán a medida que el sistema procese datos."
-  },
-  "aiInsights": {
-    "pageTitle": "Panel de Insights PSI",
-    "pageDescription": "Centro de razonamiento IA con visualizaciones de puntuación de riesgo y recomendaciones de verificación.",
-    "pageBadge": "Razonamiento IA"
   },
   "reports": {
     "pageTitle": "Centro de Inteligencia Ejecutiva",

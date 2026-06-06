@@ -48,21 +48,6 @@ export const LazyRiskDistributionChart = dynamic(
   }
 );
 
-export const LazyLiveAIInsightFeed = dynamic(
-  () => import("@/components/dashboard/LiveAIInsightFeed").then((mod) => ({ default: mod.LiveAIInsightFeed })),
-  {
-    loading: () => (
-      <div className="rounded-xl border border-psi-border bg-psi-graphite p-6 space-y-3">
-        <div className="h-5 w-36 animate-pulse rounded bg-psi-border/50" />
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-16 w-full animate-pulse rounded-lg bg-psi-border/30" />
-        ))}
-      </div>
-    ),
-    ssr: false,
-  }
-);
-
 // ── Wrapper component with Suspense boundary ──
 export function ChartSuspense({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
   return <Suspense fallback={fallback || <ChartSkeleton />}>{children}</Suspense>;

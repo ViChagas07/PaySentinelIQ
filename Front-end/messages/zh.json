@@ -136,7 +136,6 @@
     "verification": "验证中心",
     "fraudIntelligence": "欺诈情报",
     "compliance": "合规情报",
-    "aiInsights": "AI洞察",
     "reports": "报告",
     "auditLogs": "审计日志",
     "employees": "员工",
@@ -678,11 +677,6 @@
     "activityHeatmapEmpty": "活动数据将随时间显示在此处。",
     "noPatterns": "未检测到可疑模式",
     "emptyPatternsDescription": "尚未检测到可疑模式。模式将在系统处理数据时出现。"
-  },
-  "aiInsights": {
-    "pageTitle": "PSI洞察仪表板",
-    "pageDescription": "AI推理中心，包含风险评分可视化、动画推理分解、异常总结和验证建议。",
-    "pageBadge": "AI推理"
   },
   "reports": {
     "pageTitle": "高管情报中心",

@@ -136,7 +136,6 @@
     "verification": "検証センター",
     "fraudIntelligence": "不正インテリジェンス",
     "compliance": "コンプライアンス",
-    "aiInsights": "AIインサイト",
     "documentAnalysis": "文書分析",
     "analyzePayroll": "給与",
     "analyzeBankSlip": "銀行伝票",
@@ -678,11 +677,6 @@
     "activityHeatmapEmpty": "アクティビティデータは時間の経過とともにここに表示されます。",
     "noPatterns": "不審なパターンは検出されませんでした",
     "emptyPatternsDescription": "不審なパターンはまだ検出されていません。システムがデータを処理するにつれてパターンが表示されます。"
-  },
-  "aiInsights": {
-    "pageTitle": "PSIインサイトダッシュボード",
-    "pageDescription": "リスク可視化付きAI推論センター。",
-    "pageBadge": "AI推論"
   },
   "reports": {
     "pageTitle": "エグゼクティブインテリジェンスセンター",

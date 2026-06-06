@@ -14,7 +14,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { LazyPayrollTrendChart, LazyFraudHeatmap, LazyRiskDistributionChart, LazyLiveAIInsightFeed } from "@/components/charts/LazyCharts";
+import { LazyPayrollTrendChart, LazyFraudHeatmap, LazyRiskDistributionChart } from "@/components/charts/LazyCharts";
 import {
   DollarSign, ShieldCheck, AlertTriangle, Brain, Clock,
   FileWarning, ArrowUpRight, ArrowDownRight, Calendar, ChevronDown,
@@ -471,8 +471,8 @@ export default function DashboardPage() {
 
       {/* Main Content Grid: Chart + AI Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Payroll Trends — 2 cols */}
-        <Card className="lg:col-span-2">
+        {/* Payroll Trends — full width */}
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>{t("payrollTrend")}</CardTitle>
             <p className="text-xs text-psi-text-secondary">
@@ -517,20 +517,6 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Live AI Insights Feed — 1 col */}
-        {isGuarded ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("liveInsights")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PlaceholderChart icon={Lock} label={t("authRequiredChart") || "Faça login para visualizar"} />
-            </CardContent>
-          </Card>
-        ) : (
-          <LazyLiveAIInsightFeed />
-        )}
       </div>
 
       {/* Bottom Row */}

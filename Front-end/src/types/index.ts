@@ -16,7 +16,6 @@ export interface Tenant {
 
 export type TenantFeature =
   | "fraud_detection"
-  | "ai_insights"
   | "compliance_intelligence"
   | "payroll_generation"
   | "document_analysis"

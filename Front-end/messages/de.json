@@ -136,7 +136,6 @@
     "verification": "Prüfzentrum",
     "fraudIntelligence": "Betrugserkennung",
     "compliance": "Compliance",
-    "aiInsights": "KI-Einblicke",
     "documentAnalysis": "Dokumentenanalyse",
     "analyzePayroll": "Gehaltsabrechnung",
     "analyzeBankSlip": "Zahlungsbeleg",
@@ -678,11 +677,6 @@
     "activityHeatmapEmpty": "Aktivitätsdaten werden hier mit der Zeit angezeigt.",
     "noPatterns": "Keine verdächtigen Muster erkannt",
     "emptyPatternsDescription": "Noch keine verdächtigen Muster erkannt. Muster werden angezeigt, sobald das System Daten verarbeitet."
-  },
-  "aiInsights": {
-    "pageTitle": "PSI-Erkenntnis-Dashboard",
-    "pageDescription": "KI-Analysezentrum mit Risikovisualisierungen.",
-    "pageBadge": "KI-Schlussfolgerung"
   },
   "reports": {
     "pageTitle": "Führungs-Informationszentrum",
