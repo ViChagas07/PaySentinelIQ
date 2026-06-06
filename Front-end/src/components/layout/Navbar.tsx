@@ -14,7 +14,7 @@ import { useUIStore, useAuthStore, useAlertStore } from "@/stores";
 import {
   Search, Menu, Bell, ChevronDown, Globe, User, LogOut, Settings, LogIn,
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 
 // ── Available locales for the language switcher ── //
@@ -163,6 +163,9 @@ export function Navbar() {
     .join("")
     .toUpperCase() || "U";
 
+  // Upgrade Google profile picture to high resolution (256×256)
+  const highResAvatarUrl = user?.avatar_url?.replace(/=s96-c$/, "=s256-c");
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur-md px-4 lg:px-6">
       {/* Mobile menu toggle */}
@@ -249,15 +252,6 @@ export function Navbar() {
           )}
         </HoverButton>
 
-        {/* Settings gear */}
-        <IntlLink
-          href="/settings"
-          className="rounded-lg p-2 text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-text-primary transition-colors"
-          aria-label={t("settings")}
-        >
-          <Settings className="h-5 w-5" />
-        </IntlLink>
-
         {/* Language switcher globe */}
         <div className="relative">
           <button
@@ -318,6 +312,14 @@ export function Navbar() {
             aria-label={t("userMenu")}
           >
             <Avatar className="h-8 w-8 border-2 border-border">
+              {isAuthenticated && highResAvatarUrl && (
+                <AvatarImage
+                  src={highResAvatarUrl}
+                  alt={user?.full_name || ""}
+                  className="object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              )}
               <AvatarFallback className={cn(
                 "text-xs font-bold",
                 isAuthenticated
@@ -361,13 +363,14 @@ export function Navbar() {
                       <p className="text-xs text-psi-text-secondary">{user?.email}</p>
                     </div>
                     <div className="py-1">
-                      <button
+                      <IntlLink
+                        href="/profile"
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-psi-text-secondary hover:bg-psi-border/30 hover:text-psi-text-primary transition-colors"
                         onClick={() => setShowUserMenu(false)}
                       >
                         <User className="h-4 w-4" />
                         {t("profile")}
-                      </button>
+                      </IntlLink>
                       <IntlLink
                         href="/settings"
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-psi-text-secondary hover:bg-psi-border/30 hover:text-psi-text-primary transition-colors"
