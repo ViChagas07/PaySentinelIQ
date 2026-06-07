@@ -235,7 +235,11 @@ export function useNotifications(params?: { unread_only?: boolean; severity?: st
   return useQuery({
     queryKey: [...queryKeys.notifications.list, params],
     queryFn: () => api.get<PaginatedResponse<Notification>>("/notifications", params as Record<string, string | number | boolean | undefined>),
+    staleTime: 10_000,
     refetchInterval: 30_000,
+    placeholderData: (prev) => prev, // Keep previous data visible during refetch failures
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
   });
 }
 
@@ -243,7 +247,11 @@ export function useUnreadNotificationCount() {
   return useQuery({
     queryKey: queryKeys.notifications.unreadCount,
     queryFn: () => api.get<{ count: number }>("/notifications/unread-count"),
+    staleTime: 10_000,
     refetchInterval: 15_000,
+    placeholderData: (prev) => prev,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
   });
 }
 
@@ -303,6 +311,9 @@ export function useNotificationSettings() {
         slack_alerts: boolean;
         in_app_alerts: boolean;
       }>("/notifications/settings"),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+    retry: 2,
   });
 }
 

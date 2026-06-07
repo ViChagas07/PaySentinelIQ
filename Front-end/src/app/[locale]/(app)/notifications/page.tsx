@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Bell, Settings2, CheckCheck, XCircle, Loader2 } from "lucide-react";
+import { Bell, Settings2, CheckCheck, XCircle, Loader2, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { GlowCard } from "@/components/shared/GlowCard";
@@ -144,8 +144,11 @@ export default function NotificationsPage() {
     [updateSettingsMutation],
   );
 
-  // ── Loading State ──
-  if (isLoading) {
+  // ── Determine if we have any usable data ──
+  const hasAnyData = allNotifications.length > 0 || (notificationsData?.data && notificationsData.data.length > 0);
+
+  // ── Loading State (no data at all yet) ──
+  if (isLoading && !hasAnyData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px]">
         <Loader2 className="h-10 w-10 animate-spin text-psi-electric" />
@@ -154,8 +157,8 @@ export default function NotificationsPage() {
     );
   }
 
-  // ── Error State ──
-  if (isError) {
+  // ── Error State (only when truly empty — no cached data, no store data) ──
+  if (isError && !hasAnyData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] text-center">
         <XCircle className="h-12 w-12 text-psi-fraud mb-4" />
@@ -259,6 +262,22 @@ export default function NotificationsPage() {
             </motion.div>
           </div>
         </header>
+
+        {/* ── Connectivity warning banner (only when refetch fails but cached data exists) ── */}
+        {isError && hasAnyData && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl border border-psi-warning/30 bg-psi-warning/10 text-psi-warning text-sm"
+            role="alert"
+          >
+            <WifiOff className="h-4 w-4 shrink-0" />
+            <span>
+              Unable to refresh notifications. Showing last known data.{" "}
+              {error instanceof Error ? error.message : "Check your connection."}
+            </span>
+          </motion.div>
+        )}
 
         {/* ── Main Content Area ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
