@@ -323,14 +323,20 @@ class NotificationModel(Base):
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), nullable=False, default="normal") # Added severity
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     action_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True, name="metadata") # Added metadata, renamed to metadata_
 
     __table_args__ = (
         CheckConstraint(
-            "type IN ('fraud_alert','verification_complete',"
-            "'compliance_alert','system','ai_insight')",
+            "type IN ('payment','fraud_alert','verification_complete',"
+            "'compliance_alert','document_event','system','ai_insight','critical')", # Updated types
             name="chk_notification_type",
+        ),
+        CheckConstraint(
+            "severity IN ('critical','warning','normal','success','ai')", # Added severity check
+            name="chk_notification_severity",
         ),
     )
 
@@ -397,6 +403,10 @@ class UserSettingsModel(Base):
     push_notifications: Mapped[bool] = mapped_column(Boolean, default=False)
     desktop_alerts: Mapped[bool] = mapped_column(Boolean, default=False)
     sound_alerts: Mapped[bool] = mapped_column(Boolean, default=False)
+    whatsapp_alerts: Mapped[bool] = mapped_column(Boolean, default=False) # New
+    telegram_alerts: Mapped[bool] = mapped_column(Boolean, default=False) # New
+    slack_alerts: Mapped[bool] = mapped_column(Boolean, default=False) # New
+    in_app_alerts: Mapped[bool] = mapped_column(Boolean, default=True) # New, default to true
     alert_threshold: Mapped[int] = mapped_column(Integer, default=70)
     fraud_alert_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     digest_frequency: Mapped[str] = mapped_column(String(20), default="daily")

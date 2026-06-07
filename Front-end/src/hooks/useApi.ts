@@ -231,10 +231,10 @@ export function useEmployee(id: string) {
 // Notification Hooks
 // ============================================================
 
-export function useNotifications() {
+export function useNotifications(params?: { unread_only?: boolean; severity?: string; type?: string }) {
   return useQuery({
-    queryKey: queryKeys.notifications.list,
-    queryFn: () => api.get<PaginatedResponse<Notification>>("/notifications"),
+    queryKey: [...queryKeys.notifications.list, params],
+    queryFn: () => api.get<PaginatedResponse<Notification>>("/notifications", params as Record<string, string | number | boolean | undefined>),
     refetchInterval: 30_000,
   });
 }
@@ -255,6 +255,54 @@ export function useMarkNotificationRead() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     },
+  });
+}
+
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => api.post("/notifications/read-all"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    },
+  });
+}
+
+export function useDismissNotification() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/notifications/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    },
+  });
+}
+
+export function useUpdateNotificationSettings() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (settings: Record<string, boolean>) =>
+      api.patch("/notifications/settings", settings),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications", "settings"] as const });
+    },
+  });
+}
+
+export function useNotificationSettings() {
+  return useQuery({
+    queryKey: ["notifications", "settings"] as const,
+    queryFn: () =>
+      api.get<{
+        email_alerts: boolean;
+        whatsapp_alerts: boolean;
+        telegram_alerts: boolean;
+        slack_alerts: boolean;
+        in_app_alerts: boolean;
+      }>("/notifications/settings"),
   });
 }
 

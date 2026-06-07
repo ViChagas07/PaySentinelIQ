@@ -815,7 +815,8 @@
     }
   },
   "notifications": {
-    "pageDescription": "欺诈检测、验证结果、合规更新和AI洞察的实时警报。",
+    "pageTitle": "通知中心",
+    "pageDescription": "实时追踪关键事件、支付、可疑活动和AI生成的警报。",
     "panelTitle": "通知",
     "panelClose": "关闭通知",
     "panelEmpty": "暂无通知，一切最新！",
@@ -832,19 +833,106 @@
     "ai_insight": "AI 洞察",
     "viewDetails": "查看详情",
     "dismiss": "忽略",
-    "mock_1_msg": "在物流部门发现潜在虚构员工。风险评分：94/100。需要立即审查。",
     "mock_1_title": "检测到严重欺诈警报",
-    "mock_2_msg": "Q2工资批次#12487验证成功。通过率98.4%。47份文档被标记需审查。",
+    "mock_1_msg": "在物流部门发现潜在虚构员工。风险评分：94/100。需要立即审查。",
     "mock_2_title": "批量验证完成",
-    "mock_3_msg": "在运营部门检测到异常加班模式—超出周平均340%。12名员工受影响。",
+    "mock_2_msg": "Q2工资批次#12487验证成功。通过率98.4%。47份文档被标记需审查。",
     "mock_3_title": "AI洞察：加班异常",
-    "mock_4_msg": "SOC 2 Type II年度审计计划于6月15日进行。确保所有文档为最新版本。",
+    "mock_3_msg": "在运营部门检测到异常加班模式—超出周平均340%。12名员工受影响。",
     "mock_4_title": "合规：SOC 2审计到期",
-    "mock_5_msg": "用于文档伪造检测的新AI模型已部署。准确率提升2.3%。模型版本：FORGE-v4。",
+    "mock_4_msg": "SOC 2 Type II年度审计计划于6月15日进行。确保所有文档为最新版本。",
     "mock_5_title": "系统更新：v3.2.1已部署",
-    "mock_6_msg": "员工#EMP-4821在2026-05-01期间收到重复工资。两笔付款均已被标记并冻结。",
+    "mock_5_msg": "用于文档伪造检测的新AI模型已部署。准确率提升2.3%。模型版本：FORGE-v4。",
     "mock_6_title": "检测到重复付款",
-    "pageTitle": "通知"
+    "mock_6_msg": "员工#EMP-4821在2026-05-01期间收到重复工资。两笔付款均已被标记并冻结。",
+    "header": {
+      "title": "通知中心",
+      "subtitle": "实时追踪关键事件、支付、可疑活动和AI生成的警报。",
+      "unreadLabel": "未读",
+      "markAllRead": "全部标读",
+      "settings": "设置"
+    },
+    "filters": {
+      "all": "全部",
+      "payments": "支付",
+      "fraudDetection": "欺诈检测",
+      "documents": "文档",
+      "aiInsights": "AI洞察",
+      "compliance": "合规",
+      "system": "系统",
+      "critical": "紧急"
+    },
+    "feed": {
+      "emptyState": "未找到通知",
+      "noNotifications": "一切最新！暂时没有新通知。",
+      "clearFilters": "清除筛选",
+      "filterAriaLabel": "按类型筛选通知"
+    },
+    "deliveryCenter": {
+      "title": "投递渠道",
+      "description": "配置您希望如何接收平台通知",
+      "channels": {
+        "email": {
+          "label": "邮件",
+          "description": "直接通过邮件接收支付和欺诈警报",
+          "enabled": "已启用",
+          "disabled": "已禁用"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "description": "在WhatsApp上即时接收风险警报",
+          "enabled": "已启用",
+          "disabled": "已禁用"
+        },
+        "telegram": {
+          "label": "Telegram",
+          "description": "接收AI通知和监控事件",
+          "enabled": "已启用",
+          "disabled": "已禁用"
+        },
+        "slack": {
+          "label": "Slack",
+          "description": "将运营警报发送到团队频道",
+          "enabled": "已启用",
+          "disabled": "已禁用"
+        },
+        "inApp": {
+          "label": "应用内通知",
+          "description": "在平台内接收实时通知",
+          "enabled": "已启用",
+          "disabled": "已禁用"
+        }
+      },
+      "saveSettings": "保存设置",
+      "saving": "保存中...",
+      "saved": "设置已保存"
+    },
+    "severity": {
+      "critical": "紧急",
+      "warning": "警告",
+      "normal": "普通",
+      "success": "成功",
+      "ai": "AI"
+    },
+    "actions": {
+      "view": "查看",
+      "dismiss": "忽略",
+      "openDocument": "打开文档",
+      "openPayment": "打开支付",
+      "resolve": "解决",
+      "markAsRead": "标为已读",
+      "markAsUnread": "标为未读"
+    },
+    "badges": {
+      "aiGenerated": "AI生成",
+      "unread": "未读",
+      "new": "新"
+    },
+    "empty": {
+      "title": "空的通知中心",
+      "description": "没有通知匹配选定的筛选条件。",
+      "clearFilters": "清除所有筛选"
+    }
   },
   "documents": {
     "pageDescription": "深度文档取证分析，包含OCR、元数据分析、伪造检测和AI驱动的内容验证。",

@@ -26,6 +26,7 @@ celery_app = Celery(
         "app.tasks.ai_tasks",
         "app.tasks.payroll_tasks",
         "app.tasks.compliance_tasks",
+        "app.tasks.notification_tasks",
     ],
 )
 

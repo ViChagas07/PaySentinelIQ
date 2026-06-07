@@ -240,3 +240,14 @@ async def push_dashboard_update(metrics: dict[str, Any]) -> None:
             "metrics": metrics,
         },
     )
+
+
+async def push_notification(notification_data: dict[str, Any]) -> None:
+    """
+    Called by Celery tasks to push real-time notifications
+    to connected WebSocket clients on the notifications channel.
+    """
+    await ws_manager.broadcast(
+        "notifications",
+        notification_data,
+    )

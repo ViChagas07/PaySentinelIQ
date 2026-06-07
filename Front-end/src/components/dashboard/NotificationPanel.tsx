@@ -10,20 +10,24 @@ import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useUIStore, useAlertStore } from "@/stores";
-import { Bell, X, CheckCheck, AlertTriangle, ShieldCheck, FileSearch, Cpu, Info, ChevronRight, Eye, Trash2 } from "lucide-react";
+import { Bell, X, CheckCheck, AlertTriangle, ShieldCheck, FileSearch, Cpu, Info, ChevronRight, Eye, Trash2, Wallet, FileText } from "lucide-react";
 import type { Notification } from "@/types";
+import type { NotificationSeverity } from "../notifications/types"; // Import NotificationSeverity
 
 // ── Real notifications come from the useNotifications API hook ──
 // Notifications are synced via useAlertStore which connects to the API.
 
-// ── Icon per notification type ── //
+// ── Icon and color per notification type/severity ── //
 
-const typeConfig: Record<Notification["type"], { icon: typeof Bell; color: string; bg: string }> = {
-  fraud_alert: { icon: AlertTriangle, color: "text-psi-fraud", bg: "bg-psi-fraud/10" },
-  verification_complete: { icon: ShieldCheck, color: "text-psi-emerald", bg: "bg-psi-emerald/10" },
-  compliance_alert: { icon: FileSearch, color: "text-psi-warning", bg: "bg-psi-warning/10" },
-  ai_insight: { icon: Cpu, color: "text-psi-electric", bg: "bg-psi-electric/10" },
-  system: { icon: Info, color: "text-psi-text-secondary", bg: "bg-psi-border/50" },
+const typeConfig: Record<Notification["type"], { icon: typeof Bell; color: string; bg: string; defaultSeverity: NotificationSeverity }> = {
+  fraud_alert: { icon: AlertTriangle, color: "text-psi-fraud", bg: "bg-psi-fraud/10", defaultSeverity: "critical" },
+  verification_complete: { icon: ShieldCheck, color: "text-psi-emerald", bg: "bg-psi-emerald/10", defaultSeverity: "success" },
+  compliance_alert: { icon: FileSearch, color: "text-psi-warning", bg: "bg-psi-warning/10", defaultSeverity: "warning" },
+  ai_insight: { icon: Cpu, color: "text-psi-electric", bg: "bg-psi-electric/10", defaultSeverity: "ai" },
+  system: { icon: Info, color: "text-psi-text-secondary", bg: "bg-psi-border/50", defaultSeverity: "normal" },
+  payment: { icon: Wallet, color: "text-psi-electric", bg: "bg-psi-electric/10", defaultSeverity: "normal" },
+  document_event: { icon: FileText, color: "text-psi-text-secondary", bg: "bg-psi-border/50", defaultSeverity: "normal" },
+  critical: { icon: AlertTriangle, color: "text-psi-fraud", bg: "bg-psi-fraud/10", defaultSeverity: "critical" }, // For general critical notifications
 };
 
 // ── Relative time formatter ── //

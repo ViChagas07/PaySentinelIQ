@@ -815,7 +815,8 @@
     }
   },
   "notifications": {
-    "pageDescription": "Echtzeit-Benachrichtigungen für Betrugserkennung und Compliance-Updates.",
+    "pageTitle": "Benachrichtigungszentrale",
+    "pageDescription": "Verfolgen Sie kritische Ereignisse, Zahlungen, verdächtige Aktivitäten und KI-generierte Warnungen in Echtzeit.",
     "panelTitle": "Benachrichtigungen",
     "panelClose": "Benachrichtigungen schließen",
     "panelEmpty": "Noch keine Benachrichtigungen. Alles aktuell!",
@@ -832,19 +833,106 @@
     "ai_insight": "KI-Einblick",
     "viewDetails": "Details anzeigen",
     "dismiss": "Verwerfen",
-    "mock_1_msg": "Potentieller Geistermitarbeiter in der Logistikabteilung identifiziert. Risikobewertung: 94/100. Sofortige Überprüfung erforderlich.",
     "mock_1_title": "Kritischer Betrugsalarm erkannt",
-    "mock_2_msg": "Q2-Lohncharge #12487 erfolgreich verifiziert. 98,4% Erfolgsquote. 47 Dokumente zur Überprüfung markiert.",
+    "mock_1_msg": "Potentieller Geistermitarbeiter in der Logistikabteilung identifiziert. Risikobewertung: 94/100. Sofortige Überprüfung erforderlich.",
     "mock_2_title": "Batch-Verifizierung abgeschlossen",
-    "mock_3_msg": "Ungewöhnliches Überstundenmuster in der Betriebsabteilung festgestellt — 340% über dem Wochendurchschnitt. 12 Mitarbeiter betroffen.",
+    "mock_2_msg": "Q2-Lohncharge #12487 erfolgreich verifiziert. 98,4% Erfolgsquote. 47 Dokumente zur Überprüfung markiert.",
     "mock_3_title": "KI-Einblick: Überstundenanomalie",
-    "mock_4_msg": "SOC 2 Typ II Jahresprüfung für den 15. Juni geplant. Stellen Sie sicher, dass alle Unterlagen aktuell sind.",
+    "mock_3_msg": "Ungewöhnliches Überstundenmuster in der Betriebsabteilung festgestellt — 340% über dem Wochendurchschnitt. 12 Mitarbeiter betroffen.",
     "mock_4_title": "Compliance: SOC 2-Prüfung fällig",
-    "mock_5_msg": "Neues KI-Modell zur Dokumentenfälschungserkennung bereitgestellt. Genauigkeit um 2,3% verbessert. Version: FORGE-v4.",
+    "mock_4_msg": "SOC 2 Typ II Jahresprüfung für den 15. Juni geplant. Stellen Sie sicher, dass alle Unterlagen aktuell sind.",
     "mock_5_title": "Systemupdate: v3.2.1 bereitgestellt",
-    "mock_6_msg": "Mitarbeiter #EMP-4821 erhielt doppelte Gehaltszahlung für den Zeitraum 2026-05-01. Beide Zahlungen markiert und eingefroren.",
+    "mock_5_msg": "Neues KI-Modell zur Dokumentenfälschungserkennung bereitgestellt. Genauigkeit um 2,3% verbessert. Version: FORGE-v4.",
     "mock_6_title": "Doppelte Zahlung erkannt",
-    "pageTitle": "Benachrichtigungen"
+    "mock_6_msg": "Mitarbeiter #EMP-4821 erhielt doppelte Gehaltszahlung für den Zeitraum 2026-05-01. Beide Zahlungen markiert und eingefroren.",
+    "header": {
+      "title": "Benachrichtigungszentrale",
+      "subtitle": "Verfolgen Sie kritische Ereignisse, Zahlungen, verdächtige Aktivitäten und KI-generierte Warnungen in Echtzeit.",
+      "unreadLabel": "ungelesen",
+      "markAllRead": "Alle Marke.",
+      "settings": "Einstellungen"
+    },
+    "filters": {
+      "all": "Alle",
+      "payments": "Zahlungen",
+      "fraudDetection": "Betrugserkennung",
+      "documents": "Dokumente",
+      "aiInsights": "KI-Einblicke",
+      "compliance": "Compliance",
+      "system": "System",
+      "critical": "Kritisch"
+    },
+    "feed": {
+      "emptyState": "Keine Benachrichtigungen gefunden",
+      "noNotifications": "Alles aktuell! Keine neuen Benachrichtigungen im Moment.",
+      "clearFilters": "Filter löschen",
+      "filterAriaLabel": "Benachrichtigungen nach Typ filtern"
+    },
+    "deliveryCenter": {
+      "title": "Zustellkanäle",
+      "description": "Konfigurieren Sie, wie Sie Plattform-Benachrichtigungen erhalten möchten",
+      "channels": {
+        "email": {
+          "label": "E-Mail",
+          "description": "Erhalten Sie Zahlungs- und Betrugswarnungen direkt per E-Mail",
+          "enabled": "Aktiviert",
+          "disabled": "Deaktiviert"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "description": "Erhalten Sie sofortige Risikowarnungen auf WhatsApp",
+          "enabled": "Aktiviert",
+          "disabled": "Deaktiviert"
+        },
+        "telegram": {
+          "label": "Telegram",
+          "description": "Erhalten Sie KI-Benachrichtigungen und Überwachungsereignisse",
+          "enabled": "Aktiviert",
+          "disabled": "Deaktiviert"
+        },
+        "slack": {
+          "label": "Slack",
+          "description": "Senden Sie betriebliche Warnungen an Team-Kanäle",
+          "enabled": "Aktiviert",
+          "disabled": "Deaktiviert"
+        },
+        "inApp": {
+          "label": "In-App-Benachrichtigungen",
+          "description": "Erhalten Sie Echtzeit-Benachrichtigungen in der Plattform",
+          "enabled": "Aktiviert",
+          "disabled": "Deaktiviert"
+        }
+      },
+      "saveSettings": "Einstellungen Speichern",
+      "saving": "Speichere...",
+      "saved": "Einstellungen Gespeichert"
+    },
+    "severity": {
+      "critical": "Kritisch",
+      "warning": "Warnung",
+      "normal": "Normal",
+      "success": "Erfolg",
+      "ai": "KI"
+    },
+    "actions": {
+      "view": "Anzeigen",
+      "dismiss": "Verwerfen",
+      "openDocument": "Dokument Öffnen",
+      "openPayment": "Zahlung Öffnen",
+      "resolve": "Lösen",
+      "markAsRead": "Als Gelesen Markieren",
+      "markAsUnread": "Als Ungelesen Markieren"
+    },
+    "badges": {
+      "aiGenerated": "KI-Generiert",
+      "unread": "Ungelesen",
+      "new": "Neu"
+    },
+    "empty": {
+      "title": "Leere Benachrichtigungszentrale",
+      "description": "Keine Benachrichtigungen entsprechen den ausgewählten Filtern.",
+      "clearFilters": "Alle Filter Löschen"
+    }
   },
   "documents": {
     "pageDescription": "Forensische Dokumentenanalyse mit OCR und Fälschungserkennung.",

@@ -817,7 +817,8 @@
     }
   },
   "notifications": {
-    "pageDescription": "Alertas en tiempo real para detección de fraude, resultados de verificación e insights de IA.",
+    "pageTitle": "Centro de Notificaciones",
+    "pageDescription": "Rastree eventos críticos, pagos, actividades sospechosas y alertas generadas por IA en tiempo real.",
     "panelTitle": "Notificaciones",
     "panelClose": "Cerrar notificaciones",
     "panelEmpty": "¡Sin notificaciones aún. Está al día!",
@@ -834,19 +835,106 @@
     "ai_insight": "Insight de IA",
     "viewDetails": "Ver detalles",
     "dismiss": "Descartar",
-    "mock_1_msg": "Posible empleado fantasma identificado en el departamento de Logística. Puntuación de riesgo: 94/100. Se requiere revisión inmediata.",
     "mock_1_title": "Alerta crítica de fraude detectada",
-    "mock_2_msg": "Lote de nómina Q2 #12487 verificado exitosamente. 98.4% de tasa de aprobación. 47 documentos marcados para revisión.",
+    "mock_1_msg": "Posible empleado fantasma identificado en el departamento de Logística. Puntuación de riesgo: 94/100. Se requiere revisión inmediata.",
     "mock_2_title": "Verificación por lote completada",
-    "mock_3_msg": "Patrón inusual de horas extra detectado en Operaciones — 340% sobre el promedio semanal. 12 empleados afectados.",
+    "mock_2_msg": "Lote de nómina Q2 #12487 verificado exitosamente. 98.4% de tasa de aprobación. 47 documentos marcados para revisión.",
     "mock_3_title": "Insight IA: Anomalía de horas extra",
-    "mock_4_msg": "Auditoría anual SOC 2 Tipo II programada para el 15 de junio. Asegúrese de que toda la documentación esté actualizada.",
+    "mock_3_msg": "Patrón inusual de horas extra detectado en Operaciones — 340% sobre el promedio semanal. 12 empleados afectados.",
     "mock_4_title": "Cumplimiento: Auditoría SOC 2 próxima",
-    "mock_5_msg": "Nuevo modelo de IA para detección de falsificación de documentos desplegado. Precisión mejorada en 2.3%. Versión: FORGE-v4.",
+    "mock_4_msg": "Auditoría anual SOC 2 Tipo II programada para el 15 de junio. Asegúrese de que toda la documentación esté actualizada.",
     "mock_5_title": "Actualización del sistema: v3.2.1 desplegada",
-    "mock_6_msg": "El empleado #EMP-4821 recibió nómina duplicada para el período 2026-05-01. Ambos pagos marcados y congelados.",
+    "mock_5_msg": "Nuevo modelo de IA para detección de falsificación de documentos desplegado. Precisión mejorada en 2.3%. Versión: FORGE-v4.",
     "mock_6_title": "Pago duplicado detectado",
-    "pageTitle": "Notificaciones"
+    "mock_6_msg": "El empleado #EMP-4821 recibió nómina duplicada para el período 2026-05-01. Ambos pagos marcados y congelados.",
+    "header": {
+      "title": "Centro de Notificaciones",
+      "subtitle": "Rastree eventos críticos, pagos, actividades sospechosas y alertas generadas por IA en tiempo real.",
+      "unreadLabel": "sin leer",
+      "markAllRead": "Marcar Todo",
+      "settings": "Configuración"
+    },
+    "filters": {
+      "all": "Todas",
+      "payments": "Pagos",
+      "fraudDetection": "Detección de Fraude",
+      "documents": "Documentos",
+      "aiInsights": "Insights de IA",
+      "compliance": "Cumplimiento",
+      "system": "Sistema",
+      "critical": "Críticas"
+    },
+    "feed": {
+      "emptyState": "No se encontraron notificaciones",
+      "noNotifications": "¡Está al día! No hay notificaciones nuevas en este momento.",
+      "clearFilters": "Limpiar filtros",
+      "filterAriaLabel": "Filtrar notificaciones por tipo"
+    },
+    "deliveryCenter": {
+      "title": "Canales de Entrega",
+      "description": "Configure cómo desea recibir notificaciones de la plataforma",
+      "channels": {
+        "email": {
+          "label": "Correo Electrónico",
+          "description": "Reciba alertas de pagos y fraudes directamente por correo",
+          "enabled": "Activado",
+          "disabled": "Desactivado"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "description": "Reciba alertas de riesgo instantáneas en WhatsApp",
+          "enabled": "Activado",
+          "disabled": "Desactivado"
+        },
+        "telegram": {
+          "label": "Telegram",
+          "description": "Reciba notificaciones de IA y eventos de monitoreo",
+          "enabled": "Activado",
+          "disabled": "Desactivado"
+        },
+        "slack": {
+          "label": "Slack",
+          "description": "Envíe alertas operativas a canales de equipo",
+          "enabled": "Activado",
+          "disabled": "Desactivado"
+        },
+        "inApp": {
+          "label": "Notificaciones en la App",
+          "description": "Reciba notificaciones en tiempo real dentro de la plataforma",
+          "enabled": "Activado",
+          "disabled": "Desactivado"
+        }
+      },
+      "saveSettings": "Guardar Configuración",
+      "saving": "Guardando...",
+      "saved": "Configuración guardada"
+    },
+    "severity": {
+      "critical": "Crítico",
+      "warning": "Advertencia",
+      "normal": "Normal",
+      "success": "Éxito",
+      "ai": "IA"
+    },
+    "actions": {
+      "view": "Ver",
+      "dismiss": "Descartar",
+      "openDocument": "Abrir Documento",
+      "openPayment": "Abrir Pago",
+      "resolve": "Resolver",
+      "markAsRead": "Marcar como Leído",
+      "markAsUnread": "Marcar como No Leído"
+    },
+    "badges": {
+      "aiGenerated": "Generado por IA",
+      "unread": "Sin Leer",
+      "new": "Nueva"
+    },
+    "empty": {
+      "title": "Centro de Notificaciones Vacío",
+      "description": "No hay notificaciones que coincidan con los filtros seleccionados.",
+      "clearFilters": "Limpiar todos los filtros"
+    }
   },
   "documents": {
     "pageDescription": "Análisis forense de documentos con OCR, análisis de metadatos, detección de falsificaciones y verificación por IA.",

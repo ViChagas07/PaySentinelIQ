@@ -251,11 +251,14 @@ export type AuditAction =
 export interface Notification {
   id: string;
   user_id: string;
-  type: "fraud_alert" | "verification_complete" | "compliance_alert" | "system" | "ai_insight";
+  tenant_id: string; // Added tenant_id for consistency
+  type: "payment" | "fraud_alert" | "verification_complete" | "compliance_alert" | "document_event" | "system" | "ai_insight" | "critical";
   title: string;
   message: string;
+  severity: "critical" | "warning" | "normal" | "success" | "ai";
   is_read: boolean;
   action_url: string | null;
+  metadata: Record<string, any>; // Added metadata field
   created_at: string;
 }
 

@@ -815,7 +815,8 @@
     }
   },
   "notifications": {
-    "pageDescription": "不正検出、検証結果、コンプライアンス更新のリアルタイムアラート。",
+    "pageTitle": "通知センター",
+    "pageDescription": "重要なイベント、支払い、不審なアクティビティ、AI生成アラートをリアルタイムで追跡します。",
     "panelTitle": "通知",
     "panelClose": "通知を閉じる",
     "panelEmpty": "通知はまだありません。すべて最新です！",
@@ -832,19 +833,106 @@
     "ai_insight": "AIインサイト",
     "viewDetails": "詳細を見る",
     "dismiss": "閉じる",
-    "mock_1_msg": "物流部門で潜在的な架空従業員が特定されました。リスクスコア:94/100。即時レビューが必要です。",
     "mock_1_title": "重大な不正アラートが検出されました",
-    "mock_2_msg": "Q2給与バッチ#12487が正常に検証されました。合格率98.4%。47件の文書がレビュー対象としてフラグされました。",
+    "mock_1_msg": "物流部門で潜在的な架空従業員が特定されました。リスクスコア:94/100。即時レビューが必要です。",
     "mock_2_title": "バッチ検証が完了しました",
-    "mock_3_msg": "運用部門で異常な時間外パターンが検出されました—週間平均を340%上回っています。12名の従業員が影響を受けています。",
+    "mock_2_msg": "Q2給与バッチ#12487が正常に検証されました。合格率98.4%。47件の文書がレビュー対象としてフラグされました。",
     "mock_3_title": "AIインサイト:時間外異常",
-    "mock_4_msg": "SOC 2タイプII年次監査が6月15日に予定されています。すべての文書が最新であることを確認してください。",
+    "mock_3_msg": "運用部門で異常な時間外パターンが検出されました—週間平均を340%上回っています。12名の従業員が影響を受けています。",
     "mock_4_title": "コンプライアンス:SOC2監査期限",
-    "mock_5_msg": "文書偽造検出のための新しいAIモデルがデプロイされました。精度が2.3%向上。モデルバージョン:FORGE-v4。",
+    "mock_4_msg": "SOC 2タイプII年次監査が6月15日に予定されています。すべての文書が最新であることを確認してください。",
     "mock_5_title": "システムアップデート:v3.2.1がデプロイされました",
-    "mock_6_msg": "従業員#EMP-4821が期間2026-05-01に重複した給与を受け取りました。両方の支払いがフラグされ凍結されました。",
+    "mock_5_msg": "文書偽造検出のための新しいAIモデルがデプロイされました。精度が2.3%向上。モデルバージョン:FORGE-v4。",
     "mock_6_title": "重複支払いが検出されました",
-    "pageTitle": "通知"
+    "mock_6_msg": "従業員#EMP-4821が期間2026-05-01に重複した給与を受け取りました。両方の支払いがフラグされ凍結されました。",
+    "header": {
+      "title": "通知センター",
+      "subtitle": "重要なイベント、支払い、不審なアクティビティ、AI生成アラートをリアルタイムで追跡します。",
+      "unreadLabel": "未読",
+      "markAllRead": "すべて既読",
+      "settings": "設定"
+    },
+    "filters": {
+      "all": "すべて",
+      "payments": "支払い",
+      "fraudDetection": "不正検出",
+      "documents": "文書",
+      "aiInsights": "AIインサイト",
+      "compliance": "コンプライアンス",
+      "system": "システム",
+      "critical": "緊急"
+    },
+    "feed": {
+      "emptyState": "通知が見つかりません",
+      "noNotifications": "すべて最新です！現在新しい通知はありません。",
+      "clearFilters": "フィルターをクリア",
+      "filterAriaLabel": "タイプで通知をフィルター"
+    },
+    "deliveryCenter": {
+      "title": "配信チャネル",
+      "description": "プラットフォーム通知の受信方法を設定",
+      "channels": {
+        "email": {
+          "label": "メール",
+          "description": "支払いおよび不正アラートをメールで直接受信",
+          "enabled": "有効",
+          "disabled": "無効"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "description": "WhatsAppで即座にリスクアラートを受信",
+          "enabled": "有効",
+          "disabled": "無効"
+        },
+        "telegram": {
+          "label": "Telegram",
+          "description": "AI通知と監視イベントを受信",
+          "enabled": "有効",
+          "disabled": "無効"
+        },
+        "slack": {
+          "label": "Slack",
+          "description": "運用アラートをチームチャンネルに送信",
+          "enabled": "有効",
+          "disabled": "無効"
+        },
+        "inApp": {
+          "label": "アプリ内通知",
+          "description": "プラットフォーム内でリアルタイム通知を受信",
+          "enabled": "有効",
+          "disabled": "無効"
+        }
+      },
+      "saveSettings": "設定を保存",
+      "saving": "保存中...",
+      "saved": "設定を保存しました"
+    },
+    "severity": {
+      "critical": "緊急",
+      "warning": "警告",
+      "normal": "通常",
+      "success": "成功",
+      "ai": "AI"
+    },
+    "actions": {
+      "view": "表示",
+      "dismiss": "閉じる",
+      "openDocument": "文書を開く",
+      "openPayment": "支払いを開く",
+      "resolve": "解決",
+      "markAsRead": "既読にする",
+      "markAsUnread": "未読にする"
+    },
+    "badges": {
+      "aiGenerated": "AI生成",
+      "unread": "未読",
+      "new": "新着"
+    },
+    "empty": {
+      "title": "空の通知センター",
+      "description": "選択したフィルターに一致する通知がありません。",
+      "clearFilters": "すべてのフィルターをクリア"
+    }
   },
   "documents": {
     "pageDescription": "OCR、メタデータ分析、偽造検出による詳細な文書フォレンジック。",

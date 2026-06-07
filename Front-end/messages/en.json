@@ -929,8 +929,8 @@
     }
   },
   "notifications": {
-    "pageTitle": "Notifications",
-    "pageDescription": "Real-time alerts for fraud detection, verification results, compliance updates, and AI insights.",
+    "pageTitle": "Notification Center",
+    "pageDescription": "Track critical events, payments, suspicious activities, and AI-generated alerts in real time.",
     "panelTitle": "Notifications",
     "panelClose": "Close notifications",
     "panelEmpty": "No notifications yet. You're all caught up!",
@@ -958,7 +958,95 @@
     "mock_5_title": "System update: v3.2.1 deployed",
     "mock_5_msg": "New AI model for document forgery detection deployed. Accuracy improved by 2.3%. Model version: FORGE-v4.",
     "mock_6_title": "Duplicate payment detected",
-    "mock_6_msg": "Employee #EMP-4821 received duplicate payroll for period 2026-05-01. Both payments flagged and frozen."
+    "mock_6_msg": "Employee #EMP-4821 received duplicate payroll for period 2026-05-01. Both payments flagged and frozen.",
+    "header": {
+      "title": "Notification Center",
+      "subtitle": "Track critical events, payments, suspicious activities, and AI-generated alerts in real time.",
+      "unreadLabel": "unread",
+      "markAllRead": "Mark All",
+      "settings": "Settings"
+    },
+    "filters": {
+      "all": "All",
+      "payments": "Payments",
+      "fraudDetection": "Fraud Detection",
+      "documents": "Documents",
+      "aiInsights": "AI Insights",
+      "compliance": "Compliance",
+      "system": "System",
+      "critical": "Critical"
+    },
+    "feed": {
+      "emptyState": "No notifications found",
+      "noNotifications": "You're all caught up! No new notifications at the moment.",
+      "clearFilters": "Clear filters",
+      "filterAriaLabel": "Filter notifications by type"
+    },
+    "deliveryCenter": {
+      "title": "Delivery Channels",
+      "description": "Configure how you want to receive platform notifications",
+      "channels": {
+        "email": {
+          "label": "Email",
+          "description": "Receive payment and fraud alerts directly by email",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "description": "Receive instant risk alerts on WhatsApp",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "telegram": {
+          "label": "Telegram",
+          "description": "Receive AI notifications and monitoring events",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "slack": {
+          "label": "Slack",
+          "description": "Send operational alerts to team channels",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "inApp": {
+          "label": "In-App Notifications",
+          "description": "Receive real-time notifications within the platform",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        }
+      },
+      "saveSettings": "Save Settings",
+      "saving": "Saving...",
+      "saved": "Settings saved"
+    },
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "normal": "Normal",
+      "success": "Success",
+      "ai": "AI"
+    },
+    "actions": {
+      "view": "View",
+      "dismiss": "Dismiss",
+      "openDocument": "Open Document",
+      "openPayment": "Open Payment",
+      "resolve": "Resolve",
+      "markAsRead": "Mark as Read",
+      "markAsUnread": "Mark as Unread"
+    },
+    "badges": {
+      "aiGenerated": "AI Generated",
+      "unread": "Unread",
+      "new": "New"
+    },
+    "empty": {
+      "title": "Empty Notification Center",
+      "description": "No notifications match the selected filters.",
+      "clearFilters": "Clear all filters"
+    }
   },
   "documents": {
     "pageTitle": "Document Analysis",

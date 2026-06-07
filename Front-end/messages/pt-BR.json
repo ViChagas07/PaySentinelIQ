@@ -929,8 +929,8 @@
     }
   },
   "notifications": {
-    "pageTitle": "Notificações",
-    "pageDescription": "Alertas em tempo real para detecção de fraudes, resultados de verificação, atualizações de compliance e insights de IA.",
+    "pageTitle": "Central de Notificações",
+    "pageDescription": "Acompanhe eventos críticos, pagamentos, atividades suspeitas e alertas gerados por IA em tempo real.",
     "panelTitle": "Notificações",
     "panelClose": "Fechar notificações",
     "panelEmpty": "Nenhuma notificação ainda. Você está em dia!",
@@ -958,7 +958,95 @@
     "mock_5_title": "Atualização do sistema: v3.2.1 implantada",
     "mock_5_msg": "Novo modelo de IA para detecção de falsificação de documentos implantado. Precisão melhorada em 2.3%. Versão do modelo: FORGE-v4.",
     "mock_6_title": "Pagamento duplicado detectado",
-    "mock_6_msg": "Funcionário #EMP-4821 recebeu pagamento duplicado no período 2026-05-01. Ambos os pagamentos sinalizados e congelados."
+    "mock_6_msg": "Funcionário #EMP-4821 recebeu pagamento duplicado no período 2026-05-01. Ambos os pagamentos sinalizados e congelados.",
+    "header": {
+      "title": "Central de Notificações",
+      "subtitle": "Acompanhe eventos críticos, pagamentos, atividades suspeitas e alertas gerados por IA em tempo real.",
+      "unreadLabel": "não lidas",
+      "markAllRead": "Marcar tudo",
+      "settings": "Configurações"
+    },
+    "filters": {
+      "all": "Todas",
+      "payments": "Pagamentos",
+      "fraudDetection": "Detecção de Fraude",
+      "documents": "Documentos",
+      "aiInsights": "Insights de IA",
+      "compliance": "Compliance",
+      "system": "Sistema",
+      "critical": "Críticas"
+    },
+    "feed": {
+      "emptyState": "Nenhuma notificação encontrada",
+      "noNotifications": "Você está em dia! Nenhuma notificação nova no momento.",
+      "clearFilters": "Limpar filtros",
+      "filterAriaLabel": "Filtrar notificações por tipo"
+    },
+    "deliveryCenter": {
+      "title": "Canais de Entrega",
+      "description": "Configure como deseja receber notificações da plataforma",
+      "channels": {
+        "email": {
+          "label": "E-mail",
+          "description": "Receba alertas de pagamentos e fraudes diretamente por e-mail",
+          "enabled": "Ativado",
+          "disabled": "Desativado"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "description": "Receba alertas de risco instantâneos no WhatsApp",
+          "enabled": "Ativado",
+          "disabled": "Desativado"
+        },
+        "telegram": {
+          "label": "Telegram",
+          "description": "Receba notificações de IA e eventos de monitoramento",
+          "enabled": "Ativado",
+          "disabled": "Desativado"
+        },
+        "slack": {
+          "label": "Slack",
+          "description": "Envie alertas operacionais para canais de equipe",
+          "enabled": "Ativado",
+          "disabled": "Desativado"
+        },
+        "inApp": {
+          "label": "Notificações no App",
+          "description": "Receba notificações em tempo real dentro da plataforma",
+          "enabled": "Ativado",
+          "disabled": "Desativado"
+        }
+      },
+      "saveSettings": "Salvar Configurações",
+      "saving": "Salvando...",
+      "saved": "Configurações salvas"
+    },
+    "severity": {
+      "critical": "Crítico",
+      "warning": "Aviso",
+      "normal": "Normal",
+      "success": "Sucesso",
+      "ai": "IA"
+    },
+    "actions": {
+      "view": "Visualizar",
+      "dismiss": "Descartar",
+      "openDocument": "Abrir Documento",
+      "openPayment": "Abrir Pagamento",
+      "resolve": "Resolver",
+      "markAsRead": "Marcar como Lida",
+      "markAsUnread": "Marcar como Não Lida"
+    },
+    "badges": {
+      "aiGenerated": "Gerado por IA",
+      "unread": "Não lida",
+      "new": "Nova"
+    },
+    "empty": {
+      "title": "Central de Notificações Vazia",
+      "description": "Nenhuma notificação corresponde aos filtros selecionados.",
+      "clearFilters": "Limpar todos os filtros"
+    }
   },
   "documents": {
     "pageTitle": "Análise de Documentos",
