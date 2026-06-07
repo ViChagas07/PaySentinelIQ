@@ -106,13 +106,13 @@ interface Pulse {
 
 // ── Blob positional configuration (layout stays fixed per index) ── //
 const BLOB_LAYOUT = [
-  { size: 700, x: "5%",  y: "10%", duration: 28, delay: 0 },
-  { size: 550, x: "85%", y: "70%", duration: 32, delay: 3 },
+  { size: 700, x: "15%", y: "10%", duration: 28, delay: 0 },
+  { size: 550, x: "95%", y: "70%", duration: 32, delay: 3 },
   { size: 450, x: "60%", y: "15%", duration: 26, delay: 6 },
-  { size: 300, x: "15%", y: "75%", duration: 35, delay: 9 },
-  { size: 600, x: "45%", y: "45%", duration: 30, delay: 2 },
-  { size: 400, x: "2%",  y: "55%", duration: 33, delay: 5 },
-  { size: 350, x: "10%", y: "90%", duration: 29, delay: 8 },
+  { size: 300, x: "25%", y: "75%", duration: 35, delay: 9 },
+  { size: 600, x: "50%", y: "45%", duration: 30, delay: 2 },
+  { size: 400, x: "98%", y: "30%", duration: 33, delay: 5 },
+  { size: 350, x: "88%", y: "90%", duration: 29, delay: 8 },
 ] as const;
 
 // ── Animation variants for blobs ── //
