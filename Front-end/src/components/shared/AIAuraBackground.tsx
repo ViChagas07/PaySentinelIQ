@@ -106,11 +106,13 @@ interface Pulse {
 
 // ── Blob positional configuration (layout stays fixed per index) ── //
 const BLOB_LAYOUT = [
-  { size: 700, x: "15%", y: "10%", duration: 28, delay: 0 },
-  { size: 550, x: "75%", y: "70%", duration: 32, delay: 3 },
+  { size: 700, x: "5%",  y: "10%", duration: 28, delay: 0 },
+  { size: 550, x: "85%", y: "70%", duration: 32, delay: 3 },
   { size: 450, x: "60%", y: "15%", duration: 26, delay: 6 },
-  { size: 300, x: "25%", y: "75%", duration: 35, delay: 9 },
-  { size: 600, x: "50%", y: "45%", duration: 30, delay: 2 },
+  { size: 300, x: "15%", y: "75%", duration: 35, delay: 9 },
+  { size: 600, x: "45%", y: "45%", duration: 30, delay: 2 },
+  { size: 400, x: "2%",  y: "55%", duration: 33, delay: 5 },
+  { size: 350, x: "10%", y: "90%", duration: 29, delay: 8 },
 ] as const;
 
 // ── Animation variants for blobs ── //
@@ -122,6 +124,8 @@ function blobPath(index: number) {
     { x: [0, 60, -50, -20, 0], y: [0, -40, 60, -70, 0] },
     { x: [0, -30, 70, -50, 0], y: [0, -70, -20, 60, 0] },
     { x: [0, 40, -60, 80, 0], y: [0, 60, 30, -50, 0] },
+    { x: [0, -50, 20, 70, 0], y: [0, 40, -90, -10, 0] },
+    { x: [0, 35, -70, -30, 0], y: [0, -30, 50, -80, 0] },
   ];
   return paths[index % paths.length];
 }
@@ -378,8 +382,8 @@ export function AIAuraBackground() {
             `linear-gradient(90deg, ${colors.grid} 1px, transparent 1px)`,
           ].join(", "),
           backgroundSize: "60px 60px",
-          maskImage: "radial-gradient(ellipse at center, black 30%, transparent 70%)",
-          WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 70%)",
+          maskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)",
+          WebkitMaskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)",
           transition: "background-image 0.7s ease",
         }}
       />

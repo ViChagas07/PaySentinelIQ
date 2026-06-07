@@ -225,7 +225,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-background transition-all duration-300 lg:relative",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border/30 bg-psi-navy/85 backdrop-blur-xl transition-all duration-300 lg:relative",
           sidebarCollapsed ? "w-[72px]" : "w-64",
           sidebarMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}

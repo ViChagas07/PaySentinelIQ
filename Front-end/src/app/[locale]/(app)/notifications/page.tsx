@@ -171,10 +171,11 @@ export default function NotificationsPage() {
 
   // ── Main Content ──
   return (
-    <div className="relative min-h-dvh-no-nav px-4 py-8 lg:px-8 space-y-8 animated-background">
+    <div className="relative px-4 py-8 lg:px-8 space-y-8 min-h-[calc(100dvh-4rem)]">
       <div
-        className="absolute inset-0 z-0 aura-glow-blue animate-pulse-subtle"
+        className="absolute inset-0 z-0 aura-glow-blue"
         aria-hidden="true"
+        style={{ animation: "pulse-alert 4s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}
       />
       <div className="relative z-10 space-y-8">
         {/* ── Header Section ── */}

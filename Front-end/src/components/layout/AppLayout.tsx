@@ -26,8 +26,8 @@ function ContentSkeleton() {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-dvh overflow-hidden bg-background relative">
-      {/* Premium AI aura background — behind all content */}
+    <div className="flex h-dvh overflow-hidden relative">
+      {/* Premium AI aura background — serves as the actual page background */}
       <AIAuraBackground />
 
       {/* Content layer — sits above the background */}
