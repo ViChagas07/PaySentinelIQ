@@ -382,8 +382,10 @@ export function AIAuraBackground() {
             `linear-gradient(90deg, ${colors.grid} 1px, transparent 1px)`,
           ].join(", "),
           backgroundSize: "60px 60px",
-          maskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)",
-          WebkitMaskImage: "radial-gradient(ellipse at center, black 50%, transparent 90%)",
+          maskImage:
+            "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
           transition: "background-image 0.7s ease",
         }}
       />

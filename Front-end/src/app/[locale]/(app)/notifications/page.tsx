@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { Bell, Settings2, CheckCheck, XCircle, Loader2, WifiOff } from "lucide-react";
+import { Bell, Settings2, CheckCheck, XCircle, Loader2, WifiOff, Clock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { GlowCard } from "@/components/shared/GlowCard";
 import { NotificationFilterPanel } from "@/components/notifications/NotificationFilterPanel";
 import { NotificationCard } from "@/components/notifications/NotificationCard";
 import { NotificationDeliveryCenter } from "@/components/notifications/NotificationDeliveryCenter";
@@ -25,9 +23,71 @@ import {
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useAlertStore } from "@/stores";
 
+// ── Browser online/offline subscription ──
+function subscribeToOnlineStatus(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
+function getOnlineSnapshot() {
+  return typeof navigator !== "undefined" && navigator.onLine;
+}
+
+// ── Explicit page states ──
+type PageState = "loading" | "ready" | "empty" | "error" | "offline" | "timeout";
+
+function derivePageState(
+  isLoading: boolean,
+  isError: boolean,
+  isSuccess: boolean,
+  error: Error | null,
+  notificationCount: number,
+  isOnline: boolean,
+): PageState {
+  // Offline — check before anything else
+  if (!isOnline) {
+    // If we have cached data, treat as ready (with warning banner)
+    if (notificationCount > 0) return "ready";
+    return "offline";
+  }
+
+  // Still loading, no data yet
+  if (isLoading && notificationCount === 0) {
+    return "loading";
+  }
+
+  // Error occurred
+  if (isError) {
+    const msg = error?.message?.toLowerCase() ?? "";
+    if (msg.includes("timeout") || msg.includes("abort")) {
+      return "timeout";
+    }
+    // If we have data despite the error, treat as ready with stale data
+    if (notificationCount > 0) {
+      return "ready";
+    }
+    return "error";
+  }
+
+  // Success but no notifications
+  if (isSuccess && notificationCount === 0) {
+    return "empty";
+  }
+
+  // Success with data
+  return "ready";
+}
+
 export default function NotificationsPage() {
   const t = useTranslations("notifications");
   const tCommon = useTranslations("common");
+
+  // ── Reactive online status ──
+  const isOnline = useSyncExternalStore(subscribeToOnlineStatus, getOnlineSnapshot, () => true);
 
   // ── Filter State ──
   const [activeFilter, setActiveFilter] = useState<NotificationFilterType>("all");
@@ -37,7 +97,9 @@ export default function NotificationsPage() {
     data: notificationsData,
     isLoading,
     isError,
+    isSuccess,
     error,
+    refetch,
   } = useNotifications();
 
   const { data: unreadCountData } = useUnreadNotificationCount();
@@ -49,7 +111,7 @@ export default function NotificationsPage() {
   const dismissMutation = useDismissNotification();
   const updateSettingsMutation = useUpdateNotificationSettings();
 
-  // ── Realtime WebSocket ──
+  // ── Realtime WebSocket (ALWAYS active — even during empty/error states) ──
   useRealtimeNotifications(true);
 
   // ── Alert Store (realtime bridge) ──
@@ -61,8 +123,7 @@ export default function NotificationsPage() {
     [notificationsData],
   );
 
-  // Merge API notifications with realtime store notifications for instant UI
-  // Deduplicate by ID, preferring store (newer) entries
+  // Merge API notifications with realtime store notifications
   const allNotifications: Notification[] = useMemo(() => {
     const storeIds = new Set(storeNotifications.map((n) => n.id));
     const apiOnly = apiNotifications.filter((n) => !storeIds.has(n.id));
@@ -73,12 +134,21 @@ export default function NotificationsPage() {
     unreadCountData?.count ??
     allNotifications.filter((n) => !n.is_read).length;
 
+  // ── Explicit page state ──
+  const pageState = derivePageState(
+    isLoading,
+    isError,
+    isSuccess,
+    error as Error | null,
+    allNotifications.length,
+    isOnline,
+  );
+
   // ── Filter Logic ──
   const filteredNotifications = useMemo(() => {
     if (activeFilter === "all") return allNotifications;
     if (activeFilter === "critical")
       return allNotifications.filter((n) => n.severity === "critical");
-    // Map filter types to notification types
     const typeMap: Record<string, string> = {
       payments: "payment",
       fraud_detection: "fraud_alert",
@@ -109,9 +179,7 @@ export default function NotificationsPage() {
   // ── Handlers ──
   const handleMarkAsRead = useCallback(
     (id: string, isRead: boolean) => {
-      if (isRead) {
-        markReadMutation.mutate(id);
-      }
+      if (isRead) markReadMutation.mutate(id);
     },
     [markReadMutation],
   );
@@ -129,9 +197,7 @@ export default function NotificationsPage() {
 
   const handleViewNotification = useCallback(
     (id: string, url: string) => {
-      if (url && url !== "#") {
-        window.location.href = url;
-      }
+      if (url && url !== "#") window.location.href = url;
       handleMarkAsRead(id, true);
     },
     [handleMarkAsRead],
@@ -144,44 +210,178 @@ export default function NotificationsPage() {
     [updateSettingsMutation],
   );
 
-  // ── Determine if we have any usable data ──
-  const hasAnyData = allNotifications.length > 0 || (notificationsData?.data && notificationsData.data.length > 0);
+  // ── Feed content based on state ──
+  const renderFeedContent = () => {
+    switch (pageState) {
+      case "loading":
+        return (
+          <motion.div
+            key="feed-loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center p-12 min-h-[300px] rounded-xl glass-card"
+          >
+            <Loader2 className="h-10 w-10 animate-spin text-psi-electric mb-4" />
+            <p className="text-psi-text-secondary">{tCommon("loading")}</p>
+          </motion.div>
+        );
 
-  // ── Loading State (no data at all yet) ──
-  if (isLoading && !hasAnyData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[500px]">
-        <Loader2 className="h-10 w-10 animate-spin text-psi-electric" />
-        <p className="mt-4 text-psi-text-secondary">{tCommon("loading")}</p>
-      </div>
-    );
-  }
+      case "error":
+        return (
+          <motion.div
+            key="feed-error"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center p-12 text-center min-h-[300px] rounded-xl glass-card"
+          >
+            <XCircle className="h-12 w-12 text-psi-fraud mb-4" />
+            <h3 className="text-lg font-semibold text-psi-text-primary mb-2">
+              Unable to load notifications
+            </h3>
+            <p className="text-psi-text-secondary max-w-sm mb-4">
+              Server temporarily unavailable. Please try again.
+            </p>
+            <Button variant="outline" onClick={() => refetch()}>
+              {tCommon("retry")}
+            </Button>
+          </motion.div>
+        );
 
-  // ── Error State (only when truly empty — no cached data, no store data) ──
-  if (isError && !hasAnyData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] text-center">
-        <XCircle className="h-12 w-12 text-psi-fraud mb-4" />
-        <h2 className="text-xl font-semibold text-psi-text-primary mb-2">
-          {tCommon("error")}
-        </h2>
-        <p className="text-psi-text-secondary max-w-md">
-          {(error as Error)?.message || "Unable to load notifications. Please try again."}
-        </p>
-      </div>
-    );
-  }
+      case "offline":
+        return (
+          <motion.div
+            key="feed-offline"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center p-12 text-center min-h-[300px] rounded-xl glass-card"
+          >
+            <WifiOff className="h-12 w-12 text-psi-warning mb-4" />
+            <h3 className="text-lg font-semibold text-psi-text-primary mb-2">
+              You are offline
+            </h3>
+            <p className="text-psi-text-secondary max-w-sm">
+              Reconnect to receive updates. Notifications will appear automatically when your connection returns.
+            </p>
+          </motion.div>
+        );
 
-  // ── Main Content ──
+      case "timeout":
+        return (
+          <motion.div
+            key="feed-timeout"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center p-12 text-center min-h-[300px] rounded-xl glass-card"
+          >
+            <Clock className="h-12 w-12 text-psi-warning mb-4" />
+            <h3 className="text-lg font-semibold text-psi-text-primary mb-2">
+              Connection timeout
+            </h3>
+            <p className="text-psi-text-secondary max-w-sm mb-4">
+              The server took too long to respond. Retrying automatically...
+            </p>
+            <Button variant="outline" onClick={() => refetch()}>
+              {tCommon("retry")}
+            </Button>
+          </motion.div>
+        );
+
+      case "empty":
+        return (
+          <motion.div
+            key="feed-empty"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-col items-center justify-center p-12 text-center min-h-[300px] rounded-xl glass-card"
+          >
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Bell className="h-14 w-14 text-psi-electric/40 mb-4" />
+            </motion.div>
+            <h3 className="text-xl font-semibold text-psi-text-primary mb-2">
+              No notifications yet
+            </h3>
+            <p className="text-psi-text-secondary max-w-md">
+              Payment activities, fraud alerts, AI insights and system events will appear here automatically in real time.
+            </p>
+            {activeFilter !== "all" && (
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setActiveFilter("all")}
+              >
+                {t("empty.clearFilters")}
+              </Button>
+            )}
+          </motion.div>
+        );
+
+      case "ready":
+      default:
+        if (filteredNotifications.length === 0) {
+          // Active filter produced no results
+          return (
+            <motion.div
+              key="feed-filtered-empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center p-12 text-center min-h-[300px] rounded-xl glass-card"
+            >
+              <Bell className="h-12 w-12 text-psi-border mb-4" />
+              <h3 className="text-xl font-semibold text-psi-text-primary mb-2">
+                {t("empty.title")}
+              </h3>
+              <p className="text-psi-text-secondary max-w-sm mb-4">
+                {t("empty.description")}
+              </p>
+              <Button variant="outline" onClick={() => setActiveFilter("all")}>
+                {t("empty.clearFilters")}
+              </Button>
+            </motion.div>
+          );
+        }
+
+        return (
+          <motion.div
+            key="notifications-list"
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
+            className="space-y-4"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredNotifications.map((notification) => (
+                <NotificationCard
+                  key={notification.id}
+                  notification={notification}
+                  onView={handleViewNotification}
+                  onDismiss={handleDismissNotification}
+                  onMarkReadToggle={handleMarkAsRead}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        );
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // RENDER — page structure ALWAYS visible
+  // ═══════════════════════════════════════════════════════
   return (
     <div className="relative px-4 py-8 lg:px-8 space-y-8 min-h-[calc(100dvh-4rem)]">
+      {/* Aura glow */}
       <div
         className="absolute inset-0 z-0 aura-glow-blue"
         aria-hidden="true"
         style={{ animation: "pulse-alert 4s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}
       />
+
       <div className="relative z-10 space-y-8">
-        {/* ── Header Section ── */}
+        {/* ── Header (ALWAYS visible) ── */}
         <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <motion.h1
@@ -242,7 +442,7 @@ export default function NotificationsPage() {
               </Button>
             </motion.div>
 
-            {/* Notification Preferences */}
+            {/* Settings */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -263,27 +463,37 @@ export default function NotificationsPage() {
           </div>
         </header>
 
-        {/* ── Connectivity warning banner (only when refetch fails but cached data exists) ── */}
-        {isError && hasAnyData && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl border border-psi-warning/30 bg-psi-warning/10 text-psi-warning text-sm"
-            role="alert"
-          >
-            <WifiOff className="h-4 w-4 shrink-0" />
-            <span>
-              Unable to refresh notifications. Showing last known data.{" "}
-              {error instanceof Error ? error.message : "Check your connection."}
-            </span>
-          </motion.div>
-        )}
+        {/* ── Status banner (error/offline/timeout while data exists) ── */}
+        {(pageState === "error" || pageState === "offline" || pageState === "timeout") &&
+          allNotifications.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-psi-warning/30 bg-psi-warning/10 text-psi-warning text-sm"
+              role="alert"
+            >
+              {pageState === "offline" ? (
+                <WifiOff className="h-4 w-4 shrink-0" />
+              ) : pageState === "timeout" ? (
+                <Clock className="h-4 w-4 shrink-0" />
+              ) : (
+                <XCircle className="h-4 w-4 shrink-0" />
+              )}
+              <span>
+                {pageState === "offline"
+                  ? "You are offline. Showing last known notifications."
+                  : pageState === "timeout"
+                    ? "Connection timeout. Showing cached notifications."
+                    : "Unable to refresh. Showing last known data."}
+              </span>
+            </motion.div>
+          )}
 
-        {/* ── Main Content Area ── */}
+        {/* ── Main Content Area (ALWAYS visible) ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Notification Filters and Feed */}
+          {/* Filters + Feed */}
           <div className="lg:col-span-2 flex flex-col gap-6">
-            {/* Filter Panel */}
+            {/* Filter Panel (ALWAYS visible) */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -296,66 +506,18 @@ export default function NotificationsPage() {
               />
             </motion.div>
 
-            {/* Notification Feed */}
+            {/* Feed — content swaps based on state */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.7 }}
-              className="flex-1 space-y-4"
+              className="flex-1"
             >
-              <AnimatePresence mode="wait">
-                {filteredNotifications.length > 0 ? (
-                  <motion.div
-                    key="notifications-list"
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    variants={{
-                      visible: { transition: { staggerChildren: 0.05 } },
-                    }}
-                    className="space-y-4"
-                  >
-                    {filteredNotifications.map((notification) => (
-                      <NotificationCard
-                        key={notification.id}
-                        notification={notification}
-                        onView={handleViewNotification}
-                        onDismiss={handleDismissNotification}
-                        onMarkReadToggle={handleMarkAsRead}
-                      />
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="empty-state"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex flex-col items-center justify-center p-12 text-center h-full min-h-[300px] rounded-xl glass-card"
-                  >
-                    <Bell className="h-12 w-12 text-psi-border mb-4" />
-                    <h3 className="text-xl font-semibold text-psi-text-primary mb-2">
-                      {t("empty.title")}
-                    </h3>
-                    <p className="text-psi-text-secondary max-w-sm mb-4">
-                      {t("empty.description")}
-                    </p>
-                    {activeFilter !== "all" && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setActiveFilter("all")}
-                      >
-                        {t("empty.clearFilters")}
-                      </Button>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {renderFeedContent()}
             </motion.div>
           </div>
 
-          {/* ── Right Sidebar: Delivery Channels ── */}
+          {/* Delivery Center (ALWAYS visible) */}
           <aside className="lg:col-span-1" id="delivery-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
