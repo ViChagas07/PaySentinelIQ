@@ -236,10 +236,10 @@ export function useNotifications(params?: { unread_only?: boolean; severity?: st
     queryKey: [...queryKeys.notifications.list, params],
     queryFn: () => api.get<PaginatedResponse<Notification>>("/notifications", params as Record<string, string | number | boolean | undefined>),
     staleTime: 10_000,
-    refetchInterval: 30_000,
-    placeholderData: (prev) => prev, // Keep previous data visible during refetch failures
-    retry: 2,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
+    refetchInterval: 15_000,       // 15s polling — fast enough to feel realtime, slow enough to avoid excess
+    placeholderData: (prev) => prev,
+    retry: 3,                      // 3 attempts before showing error
+    retryDelay: 3_000,             // 3s between retries
   });
 }
 
@@ -250,8 +250,8 @@ export function useUnreadNotificationCount() {
     staleTime: 10_000,
     refetchInterval: 15_000,
     placeholderData: (prev) => prev,
-    retry: 2,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
+    retry: 3,
+    retryDelay: 3_000,
   });
 }
 

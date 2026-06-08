@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useSyncExternalStore } from "react";
+import { useState, useMemo, useCallback, useEffect, useSyncExternalStore, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Settings2, CheckCheck, XCircle, Loader2, WifiOff, Clock } from "lucide-react";
@@ -47,16 +47,18 @@ function derivePageState(
   error: Error | null,
   notificationCount: number,
   isOnline: boolean,
+  hasCachedData: boolean,
+  minLoadingElapsed: boolean,
 ): PageState {
   // Offline — check before anything else
   if (!isOnline) {
     // If we have cached data, treat as ready (with warning banner)
-    if (notificationCount > 0) return "ready";
+    if (hasCachedData) return "ready";
     return "offline";
   }
 
-  // Still loading, no data yet
-  if (isLoading && notificationCount === 0) {
+  // Still loading — enforce minimum 600ms display to prevent flicker
+  if ((isLoading || !minLoadingElapsed) && !hasCachedData) {
     return "loading";
   }
 
@@ -64,12 +66,13 @@ function derivePageState(
   if (isError) {
     const msg = error?.message?.toLowerCase() ?? "";
     if (msg.includes("timeout") || msg.includes("abort")) {
+      // If we have cached data (even empty), show ready with warning — not timeout page
+      if (hasCachedData) return "ready";
       return "timeout";
     }
-    // If we have data despite the error, treat as ready with stale data
-    if (notificationCount > 0) {
-      return "ready";
-    }
+    // If we have cached data (even empty), treat as ready with stale data + warning banner
+    if (hasCachedData) return "ready";
+    // No cached data at all — genuine error
     return "error";
   }
 
@@ -88,6 +91,21 @@ export default function NotificationsPage() {
 
   // ── Reactive online status ──
   const isOnline = useSyncExternalStore(subscribeToOnlineStatus, getOnlineSnapshot, () => true);
+
+  // ── Minimum loading display (600ms) to prevent flicker ──
+  const [minLoadingElapsed, setMinLoadingElapsed] = useState(false);
+  const loadingStartRef = useRef(Date.now());
+
+  useEffect(() => {
+    const elapsed = Date.now() - loadingStartRef.current;
+    const remaining = Math.max(0, 600 - elapsed);
+    if (remaining === 0) {
+      setMinLoadingElapsed(true);
+      return;
+    }
+    const timer = setTimeout(() => setMinLoadingElapsed(true), remaining);
+    return () => clearTimeout(timer);
+  }, []);
 
   // ── Filter State ──
   const [activeFilter, setActiveFilter] = useState<NotificationFilterType>("all");
@@ -135,6 +153,10 @@ export default function NotificationsPage() {
     allNotifications.filter((n) => !n.is_read).length;
 
   // ── Explicit page state ──
+  // hasCachedData: true if we've ever received a response (even empty data)
+  // This prevents polling failures from showing error when we have valid empty cached data
+  const hasCachedData = notificationsData !== undefined;
+
   const pageState = derivePageState(
     isLoading,
     isError,
@@ -142,6 +164,8 @@ export default function NotificationsPage() {
     error as Error | null,
     allNotifications.length,
     isOnline,
+    hasCachedData,
+    minLoadingElapsed,
   );
 
   // ── Filter Logic ──
@@ -464,30 +488,29 @@ export default function NotificationsPage() {
         </header>
 
         {/* ── Status banner (error/offline/timeout while data exists) ── */}
-        {(pageState === "error" || pageState === "offline" || pageState === "timeout") &&
-          allNotifications.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-psi-warning/30 bg-psi-warning/10 text-psi-warning text-sm"
-              role="alert"
-            >
-              {pageState === "offline" ? (
-                <WifiOff className="h-4 w-4 shrink-0" />
-              ) : pageState === "timeout" ? (
-                <Clock className="h-4 w-4 shrink-0" />
-              ) : (
-                <XCircle className="h-4 w-4 shrink-0" />
-              )}
-              <span>
-                {pageState === "offline"
-                  ? "You are offline. Showing last known notifications."
-                  : pageState === "timeout"
-                    ? "Connection timeout. Showing cached notifications."
-                    : "Unable to refresh. Showing last known data."}
-              </span>
-            </motion.div>
-          )}
+        {hasCachedData && (isError || !isOnline) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl border border-psi-warning/30 bg-psi-warning/10 text-psi-warning text-sm"
+            role="alert"
+          >
+            {!isOnline ? (
+              <WifiOff className="h-4 w-4 shrink-0" />
+            ) : pageState === "timeout" ? (
+              <Clock className="h-4 w-4 shrink-0" />
+            ) : (
+              <XCircle className="h-4 w-4 shrink-0" />
+            )}
+            <span>
+              {!isOnline
+                ? "You are offline. Showing last known notifications."
+                : pageState === "timeout"
+                  ? "Connection timeout. Showing cached notifications."
+                  : "Unable to refresh. Showing last known data."}
+            </span>
+          </motion.div>
+        )}
 
         {/* ── Main Content Area (ALWAYS visible) ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
