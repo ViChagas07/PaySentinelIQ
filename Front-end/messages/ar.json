@@ -788,6 +788,23 @@
       "systemUpdates": "تحديثات النظام",
       "systemUpdatesDesc": "تلقي إشعارات حول تحديثات النظام والصيانة"
     },
+    "notificationDestinations": {
+      "title": "وجهات الإشعارات",
+      "description": "قم بتكوين المكان الذي يجب أن يسلم فيه PaySentinelIQ تنبيهاتك وأحداثك في الوقت الفعلي.",
+      "emailLabel": "بريد الإشعارات",
+      "emailHelper": "سيتم استخدام هذا العنوان لتلقي إشعارات المنصة.",
+      "telegramLabel": "اسم مستخدم Telegram",
+      "whatsappLabel": "رقم WhatsApp",
+      "slackLabel": "وجهة Slack",
+      "slackHelper": "التنسيق: مساحة العمل/القناة/المستخدم",
+      "saveButton": "حفظ الوجهات",
+      "telegramWarn": "قم بتكوين اسم مستخدم Telegram في الملف الشخصي أولاً.",
+      "whatsappWarn": "قم بتكوين رقم WhatsApp في الملف الشخصي أولاً.",
+      "slackWarn": "قم بتكوين وجهة Slack في الملف الشخصي أولاً.",
+      "browserDenied": "تم رفض إشعارات المتصفح.",
+      "browserDeniedHelp": "قم بتمكين الإشعارات في إعدادات المتصفح.",
+      "openBrowserSettings": "فتح إعدادات إشعارات المتصفح"
+    },
     "activityHistory": {
       "title": "سجل النشاط",
       "description": "إجراءاتك الأخيرة والأحداث على المنصة",

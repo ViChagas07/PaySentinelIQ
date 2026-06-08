@@ -45,9 +45,18 @@ class UserSettingsRequest(BaseModel):
     push_notifications: bool | None = None
     desktop_alerts: bool | None = None
     sound_alerts: bool | None = None
+    whatsapp_alerts: bool | None = None
+    telegram_alerts: bool | None = None
+    slack_alerts: bool | None = None
+    in_app_alerts: bool | None = None
     alert_threshold: int | None = Field(default=None, ge=0, le=100)
     fraud_alert_email: str | None = None
     digest_frequency: str | None = Field(default=None, pattern="^(daily|weekly|monthly|never)$")
+
+    # Notification destinations
+    telegram_username: str | None = Field(default=None, max_length=64)
+    whatsapp_number: str | None = Field(default=None, max_length=32)
+    slack_destination: str | None = Field(default=None, max_length=128)
 
     # Account
     timezone: str | None = None
@@ -85,9 +94,18 @@ class UserSettingsResponse(BaseModel):
     push_notifications: bool = False
     desktop_alerts: bool = False
     sound_alerts: bool = False
+    whatsapp_alerts: bool = False
+    telegram_alerts: bool = False
+    slack_alerts: bool = False
+    in_app_alerts: bool = True
     alert_threshold: int = 70
     fraud_alert_email: str = ""
     digest_frequency: str = "daily"
+
+    # Notification destinations
+    telegram_username: str | None = None
+    whatsapp_number: str | None = None
+    slack_destination: str | None = None
 
     # Account
     timezone: str = "America/Sao_Paulo"

@@ -790,6 +790,23 @@
       "systemUpdates": "Mises à Jour Système",
       "systemUpdatesDesc": "Recevez des notifications sur les mises à jour système"
     },
+    "notificationDestinations": {
+      "title": "Destinations de Notification",
+      "description": "Configurez où PaySentinelIQ doit envoyer vos alertes et événements en temps réel.",
+      "emailLabel": "E-mail de notification",
+      "emailHelper": "Cette adresse sera utilisée pour recevoir les notifications de la plateforme.",
+      "telegramLabel": "Identifiant Telegram",
+      "whatsappLabel": "Numéro WhatsApp",
+      "slackLabel": "Destination Slack",
+      "slackHelper": "Format : workspace/canal/utilisateur",
+      "saveButton": "Enregistrer",
+      "telegramWarn": "Configurez d'abord votre identifiant Telegram dans le Profil.",
+      "whatsappWarn": "Configurez d'abord votre numéro WhatsApp dans le Profil.",
+      "slackWarn": "Configurez d'abord votre destination Slack dans le Profil.",
+      "browserDenied": "Notifications du navigateur refusées.",
+      "browserDeniedHelp": "Activez les notifications dans les paramètres du navigateur.",
+      "openBrowserSettings": "Ouvrir les paramètres de notification"
+    },
     "activityHistory": {
       "title": "Historique d'Activité",
       "description": "Vos actions récentes et événements sur la plateforme",

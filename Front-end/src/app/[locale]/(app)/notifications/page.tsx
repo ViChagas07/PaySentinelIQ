@@ -21,6 +21,7 @@ import {
   useUpdateNotificationSettings,
 } from "@/hooks/useApi";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useOsNotifications } from "@/hooks/useOsNotifications";
 import { useAlertStore } from "@/stores";
 
 // ── Browser online/offline subscription ──
@@ -134,6 +135,10 @@ export default function NotificationsPage() {
 
   // ── Alert Store (realtime bridge) ──
   const storeNotifications = useAlertStore((s) => s.notifications);
+
+  // ── OS Notifications (native browser push when in-app is enabled) ──
+  const inAppEnabled = settingsData?.in_app_alerts ?? true;
+  useOsNotifications(inAppEnabled, storeNotifications);
 
   // ── Derived Data ──
   const apiNotifications: Notification[] = useMemo(

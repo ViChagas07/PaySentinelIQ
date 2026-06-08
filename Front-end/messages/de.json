@@ -788,6 +788,23 @@
       "systemUpdates": "System-Updates",
       "systemUpdatesDesc": "Erhalten Sie Benachrichtigungen zu Systemupdates"
     },
+    "notificationDestinations": {
+      "title": "Benachrichtigungsziele",
+      "description": "Konfigurieren Sie, wohin PaySentinelIQ Ihre Warnungen und Echtzeit-Ereignisse senden soll.",
+      "emailLabel": "Benachrichtigungs-E-Mail",
+      "emailHelper": "Diese Adresse wird für Plattform-Benachrichtigungen verwendet.",
+      "telegramLabel": "Telegram-Benutzername",
+      "whatsappLabel": "WhatsApp-Nummer",
+      "slackLabel": "Slack-Ziel",
+      "slackHelper": "Format: Arbeitsbereich/Kanal/Benutzer",
+      "saveButton": "Ziele speichern",
+      "telegramWarn": "Konfigurieren Sie zuerst Ihren Telegram-Benutzernamen im Profil.",
+      "whatsappWarn": "Konfigurieren Sie zuerst Ihre WhatsApp-Nummer im Profil.",
+      "slackWarn": "Konfigurieren Sie zuerst Ihr Slack-Ziel im Profil.",
+      "browserDenied": "Browser-Benachrichtigungen wurden abgelehnt.",
+      "browserDeniedHelp": "Aktivieren Sie Benachrichtigungen in den Browsereinstellungen.",
+      "openBrowserSettings": "Browser-Benachrichtigungseinstellungen öffnen"
+    },
     "activityHistory": {
       "title": "Aktivitätsverlauf",
       "description": "Ihre letzten Aktionen und Ereignisse auf der Plattform",

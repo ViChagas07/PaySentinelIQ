@@ -788,6 +788,23 @@
       "systemUpdates": "システム更新",
       "systemUpdatesDesc": "システム更新とメンテナンスの通知を受け取る"
     },
+    "notificationDestinations": {
+      "title": "通知先",
+      "description": "PaySentinelIQ がアラートとリアルタイムイベントを配信する場所を設定します。",
+      "emailLabel": "通知メール",
+      "emailHelper": "このアドレスはプラットフォーム通知の受信に使用されます。",
+      "telegramLabel": "Telegram ユーザー名",
+      "whatsappLabel": "WhatsApp 番号",
+      "slackLabel": "Slack 宛先",
+      "slackHelper": "形式: ワークスペース/チャンネル/ユーザー",
+      "saveButton": "宛先を保存",
+      "telegramWarn": "最初にプロフィールで Telegram ユーザー名を設定してください。",
+      "whatsappWarn": "最初にプロフィールで WhatsApp 番号を設定してください。",
+      "slackWarn": "最初にプロフィールで Slack 宛先を設定してください。",
+      "browserDenied": "ブラウザ通知が拒否されました。",
+      "browserDeniedHelp": "ブラウザ設定で通知を有効にしてください。",
+      "openBrowserSettings": "ブラウザ通知設定を開く"
+    },
     "activityHistory": {
       "title": "アクティビティ履歴",
       "description": "プラットフォームでの最近のアクションとイベント",

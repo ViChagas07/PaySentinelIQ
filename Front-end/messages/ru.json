@@ -788,6 +788,23 @@
       "systemUpdates": "Обновления системы",
       "systemUpdatesDesc": "Получать уведомления об обновлениях системы"
     },
+    "notificationDestinations": {
+      "title": "Назначения уведомлений",
+      "description": "Настройте, куда PaySentinelIQ должен доставлять оповещения и события в реальном времени.",
+      "emailLabel": "Email для уведомлений",
+      "emailHelper": "Этот адрес будет использоваться для получения уведомлений платформы.",
+      "telegramLabel": "Имя пользователя Telegram",
+      "whatsappLabel": "Номер WhatsApp",
+      "slackLabel": "Назначение Slack",
+      "slackHelper": "Формат: рабочее пространство/канал/пользователь",
+      "saveButton": "Сохранить",
+      "telegramWarn": "Сначала настройте имя пользователя Telegram в профиле.",
+      "whatsappWarn": "Сначала настройте номер WhatsApp в профиле.",
+      "slackWarn": "Сначала настройте назначение Slack в профиле.",
+      "browserDenied": "Уведомления браузера отклонены.",
+      "browserDeniedHelp": "Включите уведомления в настройках браузера.",
+      "openBrowserSettings": "Открыть настройки уведомлений браузера"
+    },
     "activityHistory": {
       "title": "История активности",
       "description": "Ваши недавние действия и события на платформе",

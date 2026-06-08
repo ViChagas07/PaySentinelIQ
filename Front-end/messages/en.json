@@ -902,6 +902,23 @@
       "systemUpdates": "System Updates",
       "systemUpdatesDesc": "Receive notifications about system updates and maintenance"
     },
+    "notificationDestinations": {
+      "title": "Notification Destinations",
+      "description": "Configure where PaySentinelIQ should deliver your alerts and real-time events.",
+      "emailLabel": "Notification e-mail",
+      "emailHelper": "This address will be used to receive platform notifications.",
+      "telegramLabel": "Telegram Username",
+      "whatsappLabel": "WhatsApp Number",
+      "slackLabel": "Slack Destination",
+      "slackHelper": "Format: workspace/channel/user",
+      "saveButton": "Save Destinations",
+      "telegramWarn": "Configure your Telegram username in Profile first.",
+      "whatsappWarn": "Configure your WhatsApp number in Profile first.",
+      "slackWarn": "Configure your Slack destination in Profile first.",
+      "browserDenied": "Browser notifications were denied.",
+      "browserDeniedHelp": "Enable notifications in your browser settings to receive in-app alerts.",
+      "openBrowserSettings": "Open browser notification settings"
+    },
     "activityHistory": {
       "title": "Activity History",
       "description": "Your recent actions and events on the platform",

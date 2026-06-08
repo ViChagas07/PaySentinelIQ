@@ -33,6 +33,8 @@ import {
   ChevronRight, ChevronDown, LogOut,
   // Other
   Sparkles, Radio, Gauge,
+  // Notification destinations
+  Send, Hash, MessageCircle,
 } from "lucide-react";
 
 // ── Color mapping for activity types ── //
@@ -195,6 +197,11 @@ export default function ProfilePage() {
   const [selectedAI, setSelectedAI] = useState("gemini");
   const [selectedSensitivity, setSelectedSensitivity] = useState("medium");
   const [selectedExplanation, setSelectedExplanation] = useState("balanced");
+
+  // ── Notification destinations ──
+  const [telegramUsername, setTelegramUsername] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [slackDestination, setSlackDestination] = useState("");
 
   // ── Activity timeline (real data — currently empty) ── //
   const activities: {
@@ -1037,6 +1044,126 @@ export default function ProfilePage() {
                 </div>
                 <Switch checked={systemUpd} onCheckedChange={setSystemUpd} className="shrink-0 ml-2" />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 4.5 — Notification Destinations
+         ═══════════════════════════════════════════════════════ */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.28, ease: "easeOut" }}
+      >
+        <Card glow>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Send className="h-4 w-4 text-psi-electric" />
+              <CardTitle>Notification Destinations</CardTitle>
+            </div>
+            <CardDescription>
+              Configure where PaySentinelIQ should deliver your alerts and real-time events.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* ── Notification Email (locked — reads from auth) ── */}
+              <div className="group relative sm:col-span-2">
+                <label className="block text-xs font-medium text-psi-text-secondary mb-1.5">
+                  Notification e-mail
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-psi-electric/50" />
+                  <input
+                    type="email"
+                    value={user?.email || ""}
+                    readOnly
+                    className="w-full h-10 pl-9 pr-3 rounded-lg border border-psi-electric/20 bg-psi-electric/[0.03] text-sm text-psi-text-primary/70 cursor-not-allowed focus:outline-none"
+                  />
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-psi-text-secondary/40" />
+                </div>
+                <p className="text-[11px] text-psi-text-secondary/50 mt-1 ml-1">
+                  This address will be used to receive platform notifications.
+                </p>
+              </div>
+
+              {/* ── Telegram Username ── */}
+              <div className="group relative">
+                <label className="block text-xs font-medium text-psi-text-secondary mb-1.5">
+                  Telegram Username
+                </label>
+                <div className="relative">
+                  <Send className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-psi-text-secondary/40 group-focus-within:text-[#26A5E4] transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="@username"
+                    value={telegramUsername}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\s/g, "").slice(0, 33);
+                      setTelegramUsername(val.startsWith("@") ? val : val ? `@${val}` : "");
+                    }}
+                    maxLength={33}
+                    className="w-full h-10 pl-9 pr-3 rounded-lg border border-white/[0.06] bg-white/[0.03] text-sm text-psi-text-primary placeholder-psi-text-secondary/30 focus:outline-none focus:border-[#26A5E4]/40 focus:ring-1 focus:ring-[#26A5E4]/20 transition-all"
+                  />
+                </div>
+                {telegramUsername && !telegramUsername.startsWith("@") && (
+                  <p className="text-[10px] text-psi-warning mt-1 ml-1">Must start with @</p>
+                )}
+              </div>
+
+              {/* ── WhatsApp Number ── */}
+              <div className="group relative">
+                <label className="block text-xs font-medium text-psi-text-secondary mb-1.5">
+                  WhatsApp Number
+                </label>
+                <div className="relative">
+                  <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-psi-text-secondary/40 group-focus-within:text-[#25D366] transition-colors" />
+                  <input
+                    type="tel"
+                    placeholder="+55 (11) 99999-9999"
+                    value={whatsappNumber}
+                    onChange={(e) => {
+                      // Normalize to E.164
+                      let val = e.target.value.replace(/[^\d+]/g, "");
+                      if (!val.startsWith("+")) val = `+${val}`;
+                      setWhatsappNumber(val.slice(0, 16));
+                    }}
+                    maxLength={16}
+                    className="w-full h-10 pl-9 pr-3 rounded-lg border border-white/[0.06] bg-white/[0.03] text-sm text-psi-text-primary placeholder-psi-text-secondary/30 focus:outline-none focus:border-[#25D366]/40 focus:ring-1 focus:ring-[#25D366]/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* ── Slack Destination ── */}
+              <div className="group relative sm:col-span-2">
+                <label className="block text-xs font-medium text-psi-text-secondary mb-1.5">
+                  Slack Destination
+                </label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-psi-text-secondary/40 group-focus-within:text-[#4A154B] transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="workspace/channel/user"
+                    value={slackDestination}
+                    onChange={(e) => setSlackDestination(e.target.value.slice(0, 128))}
+                    maxLength={128}
+                    className="w-full h-10 pl-9 pr-3 rounded-lg border border-white/[0.06] bg-white/[0.03] text-sm text-psi-text-primary placeholder-psi-text-secondary/30 focus:outline-none focus:border-[#4A154B]/40 focus:ring-1 focus:ring-[#4A154B]/20 transition-all"
+                  />
+                </div>
+                <p className="text-[11px] text-psi-text-secondary/50 mt-1 ml-1">
+                  Format: workspace/channel/user
+                </p>
+              </div>
+            </div>
+
+            {/* Save button */}
+            <div className="flex justify-end mt-6">
+              <Button variant="primary" size="md" disabled>
+                <CheckCircle className="h-4 w-4" />
+                Save Destinations
+              </Button>
             </div>
           </CardContent>
         </Card>

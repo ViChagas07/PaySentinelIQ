@@ -788,6 +788,23 @@
       "systemUpdates": "系统更新",
       "systemUpdatesDesc": "接收系统更新和维护的通知"
     },
+    "notificationDestinations": {
+      "title": "通知目的地",
+      "description": "配置 PaySentinelIQ 发送警报和实时事件的位置。",
+      "emailLabel": "通知邮箱",
+      "emailHelper": "此地址将用于接收平台通知。",
+      "telegramLabel": "Telegram 用户名",
+      "whatsappLabel": "WhatsApp 号码",
+      "slackLabel": "Slack 目的地",
+      "slackHelper": "格式：工作区/频道/用户",
+      "saveButton": "保存目的地",
+      "telegramWarn": "请先在个人资料中配置 Telegram 用户名。",
+      "whatsappWarn": "请先在个人资料中配置 WhatsApp 号码。",
+      "slackWarn": "请先在个人资料中配置 Slack 目的地。",
+      "browserDenied": "浏览器通知已被拒绝。",
+      "browserDeniedHelp": "在浏览器设置中启用以接收应用内提醒。",
+      "openBrowserSettings": "打开浏览器通知设置"
+    },
     "activityHistory": {
       "title": "活动历史",
       "description": "您在平台上的近期操作和事件",
