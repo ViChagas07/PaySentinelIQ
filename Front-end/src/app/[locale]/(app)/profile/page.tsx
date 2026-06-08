@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -26,7 +26,7 @@ import {
   // Form & input icons
   Phone, Calendar, Briefcase, Building2, MapPin, Languages,
   // AI & security
-  Brain, Lock, Eye, AlertTriangle, CheckCircle,
+  Brain, Lock, Eye, AlertTriangle, CheckCircle, Info,
   // Activity
   Upload, FileText, BarChart3, Settings, Flag,
   // Navigation
@@ -212,11 +212,101 @@ export default function ProfilePage() {
   }[] = [];
 
   // ── AI model selection options ── //
-  const aiModels = [
-    { value: "gemini", label: t("aiPreferences.modelGemini") || "Gemini" },
-    { value: "openai", label: t("aiPreferences.modelOpenAI") || "OpenAI" },
-    { value: "local", label: t("aiPreferences.modelLocal") || "Local AI" },
+  interface AIModelOption {
+    value: string;
+    label: string;
+    icon: React.ReactNode;
+    available: boolean;
+    badge: string;
+    badgeClass: string;
+  }
+
+  const aiModels: AIModelOption[] = [
+    {
+      value: "gemini",
+      label: t("aiPreferences.modelGemini") || "Gemini",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none">
+          <path d="M12 2L2 7l10 5 10-5-10-5z" fill="url(#gemini-grad)" />
+          <path d="M2 17l10 5 10-5" stroke="url(#gemini-grad)" strokeWidth="1.5" fill="none" />
+          <path d="M2 12l10 5 10-5" stroke="url(#gemini-grad)" strokeWidth="1.5" fill="none" />
+          <defs>
+            <linearGradient id="gemini-grad" x1="2" y1="2" x2="22" y2="22">
+              <stop stopColor="#4285F4" /><stop offset="1" stopColor="#34A853" />
+            </linearGradient>
+          </defs>
+        </svg>
+      ),
+      available: true,
+      badge: t("aiPreferences.badgeAvailable") || "Disponível",
+      badgeClass: "bg-psi-emerald/15 text-psi-emerald border-psi-emerald/30",
+    },
+    {
+      value: "openai",
+      label: t("aiPreferences.modelOpenAI") || "OpenAI",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none">
+          <path d="M12 2C9.5 2 7 3.5 6 5.5L9 7.5C9.5 6.5 10.5 6 12 6C14.5 6 16.5 8 16.5 10.5C16.5 11 16.5 11.5 16 12C18 12.5 19.5 14 19.5 16C19.5 18.5 17.5 20.5 15 20.5C13 20.5 11.5 19.5 10.5 18L7.5 20C9 21.5 11 22 13 22C17 22 20 19 20 15.5C20 13 18.5 11 16.5 10C17.5 8.5 18 6.5 16.5 5C15 3.5 13.5 2 12 2Z" fill="#74AA9C" />
+          <circle cx="9" cy="13" r="2" fill="#74AA9C" />
+        </svg>
+      ),
+      available: false,
+      badge: t("aiPreferences.badgeComingSoon") || "Em breve",
+      badgeClass: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+    },
+    {
+      value: "grok",
+      label: t("aiPreferences.modelGrok") || "Grok",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="6" stroke="white" strokeWidth="1.5" />
+          <path d="M7 12l3 3 7-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="18" cy="6" r="1.5" fill="white" />
+        </svg>
+      ),
+      available: false,
+      badge: t("aiPreferences.badgeComingSoon") || "Em breve",
+      badgeClass: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+    },
+    {
+      value: "deepseek",
+      label: t("aiPreferences.modelDeepSeek") || "DeepSeek",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none">
+          <path d="M4 4h6l2 4-2 4H4V4z" fill="#4FACFE" />
+          <path d="M14 4h6l-2 4 2 4h-6l2-4-2-4z" fill="#4FACFE" opacity="0.7" />
+          <path d="M4 14h6l2 4-2 4H4v-8z" fill="#4FACFE" opacity="0.5" />
+        </svg>
+      ),
+      available: false,
+      badge: t("aiPreferences.badgeComingSoon") || "Em breve",
+      badgeClass: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+    },
   ];
+
+  // ── Toast state for "coming soon" models ──
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+
+  // Auto-dismiss toast after 3s
+  useEffect(() => {
+    if (!toastMessage) return;
+    setToastVisible(true);
+    const timer = setTimeout(() => {
+      setToastVisible(false);
+      setTimeout(() => setToastMessage(null), 300);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  // ── Handle model selection ──
+  const handleModelSelect = useCallback((model: AIModelOption) => {
+    if (model.available) {
+      setSelectedAI(model.value);
+    } else {
+      setToastMessage(t("aiPreferences.comingSoonToast") || "Esse modelo de IA ainda está em processo de adaptação. Mais novidades em breve!");
+    }
+  }, []);
 
   const sensitivities = [
     { value: "low", label: t("aiPreferences.sensitivityLow") || "Low" },
@@ -811,21 +901,54 @@ export default function ProfilePage() {
                 {aiModels.map((model) => (
                   <button
                     key={model.value}
-                    onClick={() => setSelectedAI(model.value)}
+                    onClick={() => handleModelSelect(model)}
                     className={cn(
-                      "px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-200",
-                      selectedAI === model.value
+                      "relative px-4 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 group",
+                      selectedAI === model.value && model.available
                         ? "border-psi-electric/40 bg-psi-electric/10 text-psi-electric shadow-lg shadow-psi-electric/10"
-                        : "border-white/[0.06] bg-white/[0.02] text-psi-text-secondary hover:border-white/[0.12] hover:text-psi-text-primary"
+                        : !model.available
+                          ? "border-white/[0.04] bg-white/[0.01] text-psi-text-secondary/60 cursor-pointer hover:border-purple-500/20 hover:bg-purple-500/[0.04]"
+                          : "border-white/[0.06] bg-white/[0.02] text-psi-text-secondary hover:border-white/[0.12] hover:text-psi-text-primary"
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      <Brain className="h-3.5 w-3.5" />
-                      {model.label}
+                    <div className="flex items-center gap-2.5">
+                      {/* Icon */}
+                      <span className={cn(
+                        "transition-all duration-300",
+                        selectedAI === model.value && model.available && "drop-shadow-[0_0_6px_rgba(30,111,255,0.5)]",
+                        !model.available && "opacity-50 group-hover:opacity-80"
+                      )}>
+                        {model.icon}
+                      </span>
+                      {/* Label */}
+                      <span>{model.label}</span>
+                      {/* Badge */}
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "ml-1 px-1.5 py-0 text-[10px] font-semibold leading-tight border",
+                          model.badgeClass
+                        )}
+                      >
+                        {model.badge}
+                      </Badge>
                     </div>
                   </button>
                 ))}
               </div>
+
+              {/* ── Coming Soon Toast ── */}
+              {toastMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={toastVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-purple-500/20 bg-purple-500/[0.06] backdrop-blur-md shadow-lg"
+                >
+                  <Info className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
+                  <p className="text-[13px] text-purple-300/90 leading-relaxed">{toastMessage}</p>
+                </motion.div>
+              )}
             </div>
 
             {/* Analysis Sensitivity */}
