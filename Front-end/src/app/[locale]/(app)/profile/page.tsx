@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
 import { Separator } from "@/components/ui/Separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import Image from "next/image";
 import { useAuthStore } from "@/stores";
 import { useActiveStatus } from "@/hooks/useActiveStatus";
 import {
@@ -226,16 +227,13 @@ export default function ProfilePage() {
       value: "gemini",
       label: t("aiPreferences.modelGemini") || "Gemini",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none">
-          <path d="M12 2L2 7l10 5 10-5-10-5z" fill="url(#gemini-grad)" />
-          <path d="M2 17l10 5 10-5" stroke="url(#gemini-grad)" strokeWidth="1.5" fill="none" />
-          <path d="M2 12l10 5 10-5" stroke="url(#gemini-grad)" strokeWidth="1.5" fill="none" />
-          <defs>
-            <linearGradient id="gemini-grad" x1="2" y1="2" x2="22" y2="22">
-              <stop stopColor="#4285F4" /><stop offset="1" stopColor="#34A853" />
-            </linearGradient>
-          </defs>
-        </svg>
+        <Image
+          src="/icons/ai-models/gemini.png"
+          alt="Google Gemini"
+          width={20}
+          height={20}
+          className="shrink-0 object-contain"
+        />
       ),
       available: true,
       badge: t("aiPreferences.badgeAvailable") || "Disponível",
@@ -245,10 +243,13 @@ export default function ProfilePage() {
       value: "openai",
       label: t("aiPreferences.modelOpenAI") || "OpenAI",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none">
-          <path d="M12 2C9.5 2 7 3.5 6 5.5L9 7.5C9.5 6.5 10.5 6 12 6C14.5 6 16.5 8 16.5 10.5C16.5 11 16.5 11.5 16 12C18 12.5 19.5 14 19.5 16C19.5 18.5 17.5 20.5 15 20.5C13 20.5 11.5 19.5 10.5 18L7.5 20C9 21.5 11 22 13 22C17 22 20 19 20 15.5C20 13 18.5 11 16.5 10C17.5 8.5 18 6.5 16.5 5C15 3.5 13.5 2 12 2Z" fill="#74AA9C" />
-          <circle cx="9" cy="13" r="2" fill="#74AA9C" />
-        </svg>
+        <Image
+          src="/icons/ai-models/openai.jpg"
+          alt="OpenAI"
+          width={20}
+          height={20}
+          className="shrink-0 object-contain rounded-sm"
+        />
       ),
       available: false,
       badge: t("aiPreferences.badgeComingSoon") || "Em breve",
@@ -258,11 +259,13 @@ export default function ProfilePage() {
       value: "grok",
       label: t("aiPreferences.modelGrok") || "Grok",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none">
-          <rect x="3" y="3" width="18" height="18" rx="6" stroke="white" strokeWidth="1.5" />
-          <path d="M7 12l3 3 7-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="18" cy="6" r="1.5" fill="white" />
-        </svg>
+        <Image
+          src="/icons/ai-models/grok.png"
+          alt="Grok / xAI"
+          width={20}
+          height={20}
+          className="shrink-0 object-contain"
+        />
       ),
       available: false,
       badge: t("aiPreferences.badgeComingSoon") || "Em breve",
@@ -272,11 +275,13 @@ export default function ProfilePage() {
       value: "deepseek",
       label: t("aiPreferences.modelDeepSeek") || "DeepSeek",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none">
-          <path d="M4 4h6l2 4-2 4H4V4z" fill="#4FACFE" />
-          <path d="M14 4h6l-2 4 2 4h-6l2-4-2-4z" fill="#4FACFE" opacity="0.7" />
-          <path d="M4 14h6l2 4-2 4H4v-8z" fill="#4FACFE" opacity="0.5" />
-        </svg>
+        <Image
+          src="/icons/ai-models/deepseek.webp"
+          alt="DeepSeek"
+          width={20}
+          height={20}
+          className="shrink-0 object-contain"
+        />
       ),
       available: false,
       badge: t("aiPreferences.badgeComingSoon") || "Em breve",
@@ -915,7 +920,7 @@ export default function ProfilePage() {
                       {/* Icon */}
                       <span className={cn(
                         "transition-all duration-300",
-                        selectedAI === model.value && model.available && "drop-shadow-[0_0_6px_rgba(30,111,255,0.5)]",
+                        selectedAI === model.value && model.available && "[&_img]:drop-shadow-[0_0_6px_rgba(30,111,255,0.5)]",
                         !model.available && "opacity-50 group-hover:opacity-80"
                       )}>
                         {model.icon}
