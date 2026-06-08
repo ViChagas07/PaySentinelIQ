@@ -1189,10 +1189,10 @@ export default function ProfilePage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Send className="h-4 w-4 text-psi-electric" />
-              <CardTitle>Notification Destinations</CardTitle>
+              <CardTitle>{t("notificationDestinations.title") || "Notification Destinations"}</CardTitle>
             </div>
             <CardDescription>
-              Configure where PaySentinelIQ should deliver your alerts and real-time events.
+              {t("notificationDestinations.description") || "Configure where PaySentinelIQ should deliver your alerts and real-time events."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1200,7 +1200,7 @@ export default function ProfilePage() {
               {/* ── Notification Email (locked — reads from auth) ── */}
               <div className="group relative sm:col-span-2">
                 <label className="block text-xs font-medium text-psi-text-secondary mb-1.5">
-                  Notification e-mail
+                  {t("notificationDestinations.emailLabel") || "Notification e-mail"}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-psi-electric/50" />
@@ -1213,14 +1213,14 @@ export default function ProfilePage() {
                   <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-psi-text-secondary/40" />
                 </div>
                 <p className="text-[11px] text-psi-text-secondary/50 mt-1 ml-1">
-                  This address will be used to receive platform notifications.
+                  {t("notificationDestinations.emailHelper") || "This address will be used to receive platform notifications."}
                 </p>
               </div>
 
               {/* ── Telegram Username ── */}
               <div className="group relative">
                 <label className="block text-xs font-medium text-psi-text-secondary mb-1.5">
-                  Telegram Username
+                  {t("notificationDestinations.telegramLabel") || "Telegram Username"}
                 </label>
                 <div className="relative">
                   <Send className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-psi-text-secondary/40 group-focus-within:text-[#26A5E4] transition-colors" />
@@ -1244,7 +1244,7 @@ export default function ProfilePage() {
               {/* ── WhatsApp Number ── */}
               <div className="group relative">
                 <label className="block text-xs font-medium text-psi-text-secondary mb-1.5">
-                  WhatsApp Number
+                  {t("notificationDestinations.whatsappLabel") || "WhatsApp Number"}
                 </label>
                 <div className="relative">
                   <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-psi-text-secondary/40 group-focus-within:text-[#25D366] transition-colors" />
@@ -1267,7 +1267,7 @@ export default function ProfilePage() {
               {/* ── Slack Destination ── */}
               <div className="group relative sm:col-span-2">
                 <label className="block text-xs font-medium text-psi-text-secondary mb-1.5">
-                  Slack Destination
+                  {t("notificationDestinations.slackLabel") || "Slack Destination"}
                 </label>
                 <div className="relative">
                   <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-psi-text-secondary/40 group-focus-within:text-[#4A154B] transition-colors" />
@@ -1281,7 +1281,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <p className="text-[11px] text-psi-text-secondary/50 mt-1 ml-1">
-                  Format: workspace/channel/user
+                  {t("notificationDestinations.slackHelper") || "Format: workspace/channel/user"}
                 </p>
               </div>
             </div>
@@ -1290,7 +1290,7 @@ export default function ProfilePage() {
             <div className="flex justify-end mt-6">
               <Button variant="primary" size="md" disabled>
                 <CheckCircle className="h-4 w-4" />
-                Save Destinations
+                {t("notificationDestinations.saveButton") || "Save Destinations"}
               </Button>
             </div>
           </CardContent>
