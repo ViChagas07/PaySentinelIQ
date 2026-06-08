@@ -238,7 +238,7 @@ export default function AuditLogsPage() {
       </motion.div>
 
       {/* Summary Cards — all show zero / empty */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 place-items-center">
         {summaryCards.map((stat, i) => {
           const Icon = stat.icon;
           return (
