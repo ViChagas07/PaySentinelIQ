@@ -156,6 +156,7 @@ export function Navbar() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [globeHovered, setGlobeHovered] = useState(false);
 
   const userInitials = user?.full_name
     ?.split(" ")
@@ -256,12 +257,25 @@ export function Navbar() {
         <div className="relative">
           <button
             onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+            onMouseEnter={() => setGlobeHovered(true)}
+            onMouseLeave={() => setGlobeHovered(false)}
             className="rounded-lg p-2 text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-text-primary transition-colors"
             aria-expanded={showLanguageMenu}
             aria-label={tc("language")}
             aria-haspopup="true"
           >
-            <Globe className="h-5 w-5" />
+            <motion.span
+              className="inline-flex"
+              style={{ display: "inline-flex", perspective: "40px" }}
+              animate={globeHovered ? {
+                rotate: [0, -8, -18, -30, -22, -10, 0],
+              } : {
+                rotate: 0,
+              }}
+              transition={{ duration: 0.7, ease: "easeInOut" }}
+            >
+              <Globe className="h-5 w-5" />
+            </motion.span>
           </button>
 
           <AnimatePresence>
