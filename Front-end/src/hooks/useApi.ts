@@ -439,3 +439,90 @@ export function useLogout() {
     },
   });
 }
+
+// ============================================================
+// Payment Schedule Hooks
+// ============================================================
+
+export interface PaymentSchedule {
+  id: string;
+  due_date: string;
+  amount: number;
+  beneficiary: string;
+  bank_code: string;
+  status: "pending" | "paid" | "overdue" | "cancelled";
+  boleto_data: Record<string, unknown>;
+  created_at: string;
+}
+
+export function usePaymentSchedules(status?: string) {
+  return useQuery({
+    queryKey: ["payment-schedules", status],
+    queryFn: () =>
+      api.get<PaymentSchedule[]>("/settings/payment-schedules", status ? { status } : undefined),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useRegisterPaymentSchedule() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      due_date: string;
+      amount: number;
+      beneficiary: string;
+      bank_code: string;
+      boleto_data: Record<string, unknown>;
+    }) => api.post<{
+      status: string;
+      reason?: string;
+      message?: string;
+      schedule_id?: string;
+    }>("/settings/payment-schedules", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payment-schedules"] });
+    },
+  });
+}
+
+export function useUpdatePaymentStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "paid" | "cancelled" }) =>
+      api.patch(`/settings/payment-schedules/${id}/status?status=${status}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payment-schedules"] });
+    },
+  });
+}
+
+export function useReminderPreferences() {
+  return useQuery({
+    queryKey: ["reminder-preferences"] as const,
+    queryFn: () =>
+      api.get<{
+        every_2_days: boolean;
+        weekly: boolean;
+        monthly: boolean;
+        on_due_date: boolean;
+      }>("/settings/reminders"),
+  });
+}
+
+export function useUpdateReminderPreferences() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (prefs: {
+      every_2_days: boolean;
+      weekly: boolean;
+      monthly: boolean;
+      on_due_date: boolean;
+    }) => api.put("/settings/reminders", prefs),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminder-preferences"] });
+    },
+  });
+}

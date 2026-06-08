@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { PaymentRemindersCard } from "@/components/payroll/PaymentRemindersCard";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -886,6 +887,11 @@ export default function PaymentCenterPage() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 6.5 — Payment Reminders Configuration
+          ═══════════════════════════════════════════════════════ */}
+      <PaymentRemindersCard />
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 7 — Action Area

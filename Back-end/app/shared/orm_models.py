@@ -414,6 +414,11 @@ class UserSettingsModel(Base):
     telegram_username: Mapped[str | None] = mapped_column(String(64), nullable=True)
     whatsapp_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
     slack_destination: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    # Payment reminders
+    reminder_preferences: Mapped[dict[str, Any]] = mapped_column(
+        JSONB,
+        default=lambda: {"every_2_days": False, "weekly": False, "monthly": False, "on_due_date": True},
+    )
     # Account
     timezone: Mapped[str] = mapped_column(String(50), default="America/Sao_Paulo")
     # Developer
@@ -422,5 +427,36 @@ class UserSettingsModel(Base):
     __table_args__ = (
         CheckConstraint(
             "alert_threshold >= 0 AND alert_threshold <= 100", name="chk_alert_threshold"
+        ),
+    )
+
+
+# ============================================================
+# Payment Schedule (Boleto Due Date Tracking)
+# ============================================================
+
+
+class PaymentScheduleModel(Base):
+    __tablename__ = "payment_schedules"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+    )
+    boleto_data: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    amount: Mapped[float] = mapped_column(Float, default=0.0)
+    beneficiary: Mapped[str] = mapped_column(String(300), default="")
+    bank_code: Mapped[str] = mapped_column(String(10), default="")
+    status: Mapped[str] = mapped_column(String(20), default="pending", index=True)
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending','paid','overdue','cancelled')",
+            name="chk_payment_status",
         ),
     )

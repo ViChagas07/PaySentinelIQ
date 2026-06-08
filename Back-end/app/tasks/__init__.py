@@ -27,6 +27,7 @@ celery_app = Celery(
         "app.tasks.payroll_tasks",
         "app.tasks.compliance_tasks",
         "app.tasks.notification_tasks",
+        "app.tasks.payment_reminder_tasks",
     ],
 )
 

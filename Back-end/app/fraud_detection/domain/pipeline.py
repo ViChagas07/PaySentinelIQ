@@ -588,6 +588,27 @@ class FraudDetectionPipeline:
             bc_result = self._call_tool("barcode_decoder", barcode_value=barcode_val)
             extracted["barcode_decoding"] = bc_result
 
+            # Check if overdue
+            if bc_result.get("is_overdue"):
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity.HIGH,
+                        category="temporal",
+                        description=(
+                            "Pagamento vencido! "
+                            f"Data de vencimento: {bc_result.get('vencimento_estimado', 'N/A')}. "
+                            "Selecione um boleto cujo prazo esteja em andamento."
+                        ),
+                        evidence=(
+                            f"Vencimento: {bc_result.get('vencimento_estimado')} | "
+                            f"Valor: {bc_result.get('valor_formatado', 'N/A')}"
+                        ),
+                        confidence=100,
+                        stage_detected="Stage 4",
+                        tool_used="barcode_decoder",
+                    )
+                )
+
         # Parse Pix QR code
         if qr_payload:
             pix_result = self._call_tool("pix_emv_parser", qr_code_payload=qr_payload)

@@ -366,6 +366,14 @@ def barcode_decoder(barcode_value: str, barcode_type: str = "ITF") -> dict[str, 
     # Decode valor
     valor_decimal = int(valor) / 100 if valor.isdigit() else None
 
+    # Check if overdue
+    from datetime import datetime as dt, timezone as tz
+    now = dt.now(tz.utc)
+    is_overdue = vencimento is not None and vencimento.replace(tzinfo=tz.utc) < now
+    days_until_due = None
+    if vencimento and not is_overdue:
+        days_until_due = (vencimento.replace(tzinfo=tz.utc) - now).days
+
     return {
         "valid": True,
         "barcode_type": barcode_type,
@@ -387,6 +395,8 @@ def barcode_decoder(barcode_value: str, barcode_type: str = "ITF") -> dict[str, 
         "valor": valor_decimal,
         "valor_formatado": f"R$ {valor_decimal:,.2f}" if valor_decimal else "N/A",
         "campo_livre": campo_livre,
+        "is_overdue": is_overdue,
+        "days_until_due": days_until_due,
         "confidence": 100,
     }
 
