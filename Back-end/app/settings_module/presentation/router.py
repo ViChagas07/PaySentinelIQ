@@ -97,7 +97,7 @@ class UserSettingsResponse(BaseModel):
     whatsapp_alerts: bool = False
     telegram_alerts: bool = False
     slack_alerts: bool = False
-    in_app_alerts: bool = True
+    in_app_alerts: bool = False
     alert_threshold: int = 70
     fraud_alert_email: str = ""
     digest_frequency: str = "daily"

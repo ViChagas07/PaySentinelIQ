@@ -406,7 +406,7 @@ class UserSettingsModel(Base):
     whatsapp_alerts: Mapped[bool] = mapped_column(Boolean, default=False) # New
     telegram_alerts: Mapped[bool] = mapped_column(Boolean, default=False) # New
     slack_alerts: Mapped[bool] = mapped_column(Boolean, default=False) # New
-    in_app_alerts: Mapped[bool] = mapped_column(Boolean, default=True) # New, default to true
+    in_app_alerts: Mapped[bool] = mapped_column(Boolean, default=False) # Disabled by default — opt-in only
     alert_threshold: Mapped[int] = mapped_column(Integer, default=70)
     fraud_alert_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     digest_frequency: Mapped[str] = mapped_column(String(20), default="daily")

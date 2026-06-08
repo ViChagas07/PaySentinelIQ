@@ -137,7 +137,7 @@ export default function NotificationsPage() {
   const storeNotifications = useAlertStore((s) => s.notifications);
 
   // ── OS Notifications (native browser push when in-app is enabled) ──
-  const inAppEnabled = settingsData?.in_app_alerts ?? true;
+  const inAppEnabled = settingsData?.in_app_alerts ?? false;
   useOsNotifications(inAppEnabled, storeNotifications);
 
   // ── Derived Data ──

@@ -21,7 +21,7 @@ const DEFAULT_CHANNEL_SETTINGS: Record<NotificationDeliveryChannel["id"], boolea
   whatsapp: false,
   telegram: false,
   slack: false,
-  inApp: true,
+  inApp: false,
 };
 
 /**
