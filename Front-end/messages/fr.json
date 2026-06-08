@@ -933,7 +933,9 @@
     "empty": {
       "title": "Centre de Notifications Vide",
       "description": "Aucune notification ne correspond aux filtres sélectionnés.",
-      "clearFilters": "Effacer tous les filtres"
+      "clearFilters": "Effacer tous les filtres",
+      "noNotificationsTitle": "Aucune notification pour le moment",
+      "noNotificationsDescription": "Les activités de paiement, les alertes de fraude, les informations de l'IA et les événements système apparaîtront ici automatiquement en temps réel."
     }
   },
   "documents": {

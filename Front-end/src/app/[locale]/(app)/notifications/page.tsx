@@ -302,10 +302,10 @@ export default function NotificationsPage() {
               <Bell className="h-14 w-14 text-psi-electric/40 mb-4" />
             </motion.div>
             <h3 className="text-xl font-semibold text-psi-text-primary mb-2">
-              No notifications yet
+              {t("empty.noNotificationsTitle")}
             </h3>
             <p className="text-psi-text-secondary max-w-md">
-              Payment activities, fraud alerts, AI insights and system events will appear here automatically in real time.
+              {t("empty.noNotificationsDescription")}
             </p>
             {activeFilter !== "all" && (
               <Button

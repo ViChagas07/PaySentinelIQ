@@ -931,7 +931,9 @@
     "empty": {
       "title": "Leere Benachrichtigungszentrale",
       "description": "Keine Benachrichtigungen entsprechen den ausgewählten Filtern.",
-      "clearFilters": "Alle Filter Löschen"
+      "clearFilters": "Alle Filter Löschen",
+      "noNotificationsTitle": "Noch keine Benachrichtigungen",
+      "noNotificationsDescription": "Zahlungsaktivitäten, Betrugswarnungen, KI-Erkenntnisse und Systemereignisse erscheinen hier automatisch in Echtzeit."
     }
   },
   "documents": {

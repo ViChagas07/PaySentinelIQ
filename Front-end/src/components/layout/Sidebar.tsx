@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useUIStore, useAuthStore } from "@/stores";
 import type { UserRole } from "@/types";
 import { AppName } from "@/components/shared/AppName";
+import { useUnreadNotificationCount } from "@/hooks/useApi";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -142,7 +143,6 @@ const navigationSections: NavSection[] = [
         href: "/notifications",
         icon: Bell,
         roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager", "payroll_specialist", "auditor", "viewer"],
-        badge: "5",
         badgeVariant: "warning",
       },
       {
@@ -166,6 +166,10 @@ export function Sidebar() {
   const setSidebarMobileOpen = useUIStore((s) => s.setSidebarMobileOpen);
   const user = useAuthStore((s) => s.user);
 
+  // ── Live unread notification count for sidebar badge ──
+  const { data: unreadData } = useUnreadNotificationCount();
+  const notificationUnreadCount: number = unreadData?.count ?? 0;
+
   // Filter nav items based on user role — memoized
   // Guests (user=null) see viewer-level items only
   const filteredSections = useMemo(
@@ -173,12 +177,23 @@ export function Sidebar() {
       navigationSections
         .map((section) => ({
           ...section,
-          items: section.items.filter(
-            (item) => user ? item.roles.includes(user.role) : item.roles.includes("viewer")
-          ),
+          items: section.items
+            .filter((item) =>
+              user ? item.roles.includes(user.role) : item.roles.includes("viewer"),
+            )
+            // Inject live unread count into the notifications badge
+            .map((item) => {
+              if (item.href === "/notifications" && notificationUnreadCount > 0) {
+                return { ...item, badge: String(notificationUnreadCount) };
+              }
+              if (item.href === "/notifications" && notificationUnreadCount === 0) {
+                return { ...item, badge: undefined };
+              }
+              return item;
+            }),
         }))
         .filter((section) => section.items.length > 0),
-    [user?.role, user]
+    [user?.role, user, notificationUnreadCount],
   );
 
   // Collect all hrefs from filtered items (flattened)

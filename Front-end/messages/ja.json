@@ -931,7 +931,9 @@
     "empty": {
       "title": "空の通知センター",
       "description": "選択したフィルターに一致する通知がありません。",
-      "clearFilters": "すべてのフィルターをクリア"
+      "clearFilters": "すべてのフィルターをクリア",
+      "noNotificationsTitle": "新しい通知はまだありません",
+      "noNotificationsDescription": "支払い活動、不正検出アラート、AIインサイト、システムイベントがリアルタイムで自動的にここに表示されます。"
     }
   },
   "documents": {

@@ -1,12 +1,10 @@
 # ============================================================
 # PaySentinelIQ — Notifications Router
 # Production endpoints backed by NotificationService + DB.
-# Falls back to rich mock data when the database is unavailable
-# (e.g., during local development without a running DB).
+# Returns real data only — no mock fallbacks.
 # ============================================================
 
 import uuid
-from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -18,134 +16,6 @@ from app.shared.database import get_db
 from app.notifications.services import NotificationService
 
 router = APIRouter()
-
-# ── Rich mock fallback (used when DB is unavailable) ──
-
-_MOCK_NOTIFICATIONS: list[dict[str, Any]] = [
-    {
-        "id": "n1",
-        "user_id": "u1",
-        "tenant_id": "t1",
-        "type": "fraud_alert",
-        "title": "Critical Fraud Alert: Ghost Employee Detected",
-        "message": (
-            "AI detected duplicate bank account across 3 payroll records "
-            "in the Sales department. Risk Score: 91. "
-            "Immediate analyst review required."
-        ),
-        "severity": "critical",
-        "is_read": False,
-        "action_url": "/fraud-intelligence",
-        "metadata": {"department": "Sales", "riskScore": 91, "employeesAffected": 3},
-        "created_at": (datetime.now(UTC).isoformat()),
-    },
-    {
-        "id": "n2",
-        "user_id": "u1",
-        "tenant_id": "t1",
-        "type": "verification_complete",
-        "title": "Document Verification Complete",
-        "message": (
-            "Q1 Payroll batch #2841 verification finished. 98.4% pass rate. "
-            "15 documents flagged for review. Full report available."
-        ),
-        "severity": "success",
-        "is_read": False,
-        "action_url": "/verification-center",
-        "metadata": {"batchId": "#2841", "passRate": "98.4%", "flagged": 15},
-        "created_at": (datetime.now(UTC).isoformat()),
-    },
-    {
-        "id": "n3",
-        "user_id": "u1",
-        "tenant_id": "t1",
-        "type": "ai_insight",
-        "title": "AI Insight: Salary Anomaly Pattern Detected",
-        "message": (
-            "10 employees in Engineering department show unusual "
-            "overtime patterns. Average overtime 340% above company baseline. "
-            "Recommend department-wide audit."
-        ),
-        "severity": "ai",
-        "is_read": False,
-        "action_url": "/fraud-intelligence",
-        "metadata": {"department": "Engineering", "overtimeIncrease": "340%", "employeesAffected": 10},
-        "created_at": (datetime.now(UTC).isoformat()),
-    },
-    {
-        "id": "n4",
-        "user_id": "u1",
-        "tenant_id": "t1",
-        "type": "compliance_alert",
-        "title": "Compliance Alert: LGPD Data Retention Review",
-        "message": (
-            "7 employee records approaching 5-year retention limit "
-            "per LGPD Article 16. Review and anonymize or document "
-            "continued necessity by Jun 30."
-        ),
-        "severity": "warning",
-        "is_read": True,
-        "action_url": "/compliance",
-        "metadata": {"regulation": "LGPD", "dueDate": "Jun 30", "recordsAffected": 7},
-        "created_at": "2025-05-16T10:00:00Z",
-    },
-    {
-        "id": "n5",
-        "user_id": "u1",
-        "tenant_id": "t1",
-        "type": "system",
-        "title": "System Update: AI Pipeline v2.4 Deployed",
-        "message": (
-            "Fraud detection pipeline upgraded to v2.4 with improved "
-            "Brazilian document forgery detection. 7-stage analysis "
-            "now includes CNAE cross-referencing."
-        ),
-        "severity": "normal",
-        "is_read": True,
-        "action_url": None,
-        "metadata": {"version": "v2.4", "feature": "CNAE cross-referencing"},
-        "created_at": "2025-05-15T08:00:00Z",
-    },
-    {
-        "id": "n6",
-        "user_id": "u1",
-        "tenant_id": "t1",
-        "type": "payment",
-        "title": "Invoice #482 Approved",
-        "message": "Payment for invoice #482 (Acme Corp) has been successfully approved and scheduled for tomorrow.",
-        "severity": "normal",
-        "is_read": False,
-        "action_url": "/payroll",
-        "metadata": {"invoiceId": "#482", "company": "Acme Corp", "amount": "$5,000"},
-        "created_at": (datetime.now(UTC).isoformat()),
-    },
-    {
-        "id": "n7",
-        "user_id": "u1",
-        "tenant_id": "t1",
-        "type": "document_event",
-        "title": "New Payslip Uploaded",
-        "message": "A new payslip for John Doe has been uploaded and is awaiting verification.",
-        "severity": "normal",
-        "is_read": False,
-        "action_url": "/verification-center",
-        "metadata": {"employee": "John Doe", "documentType": "Payslip"},
-        "created_at": (datetime.now(UTC).isoformat()),
-    },
-    {
-        "id": "n8",
-        "user_id": "u1",
-        "tenant_id": "t1",
-        "type": "fraud_alert",
-        "title": "Risk Score Exceeded Safe Limit",
-        "message": "Employee #EMP-5678 risk score increased to 85/100 due to multiple timesheet discrepancies.",
-        "severity": "critical",
-        "is_read": False,
-        "action_url": "/fraud-intelligence",
-        "metadata": {"employeeId": "EMP-5678", "riskScore": 85},
-        "created_at": (datetime.now(UTC).isoformat()),
-    },
-]
 
 
 # ── Response Models ──
@@ -179,9 +49,7 @@ class NotificationSettingsRequest(BaseModel):
 
 
 def _notification_to_response(notification: Any) -> dict[str, Any]:
-    """Convert NotificationModel or mock dict to API response format."""
-    if isinstance(notification, dict):
-        return notification
+    """Convert NotificationModel to API response format."""
     return {
         "id": str(notification.id),
         "user_id": str(notification.user_id),
@@ -215,7 +83,7 @@ async def list_notifications(
 ) -> dict[str, Any]:
     """
     List notifications for the current user with optional filtering and pagination.
-    Falls back to mock data if the database query fails.
+    Returns real data from the database — no mock fallbacks.
     """
     try:
         service = NotificationService(db)
@@ -228,39 +96,19 @@ async def list_notifications(
             type=type,
         )
 
-        if notifications:
-            total = len(notifications)
-            return {
-                "data": [_notification_to_response(n) for n in notifications],
-                "total": total,
-                "page": page,
-                "page_size": page_size,
-                "total_pages": max(1, (total + page_size - 1) // page_size),
-            }
-
-        # If DB returned empty, fall back to mock for a richer dev experience
-        raise Exception("Empty result — using mock fallback")
-
-    except Exception:
-        # Fall back to mock data
-        notifications = _MOCK_NOTIFICATIONS
-        if unread_only:
-            notifications = [n for n in notifications if not n["is_read"]]
-        if severity:
-            notifications = [n for n in notifications if n.get("severity") == severity]
-        if type:
-            notifications = [n for n in notifications if n.get("type") == type]
         total = len(notifications)
-        total_pages = max(1, (total + page_size - 1) // page_size)
-        start = (page - 1) * page_size
-        end = start + page_size
         return {
-            "data": notifications[start:end],
+            "data": [_notification_to_response(n) for n in notifications],
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": total_pages,
+            "total_pages": max(1, (total + page_size - 1) // page_size),
         }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch notifications: {str(e)}") from e
 
 
 @router.get("/unread-count")
@@ -273,9 +121,10 @@ async def get_unread_count(
         service = NotificationService(db)
         count = await service.get_unread_notification_count(user_id=uuid.UUID(user_id))
         return {"count": count}
-    except Exception:
-        unread = sum(1 for n in _MOCK_NOTIFICATIONS if not n["is_read"])
-        return {"count": unread}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch unread count: {str(e)}") from e
 
 
 @router.patch("/{notification_id}/read")
@@ -297,6 +146,9 @@ async def mark_as_read(
             "notification_id": str(notification.id),
             "notification": _notification_to_response(notification),
         }
+    except HTTPException:
+        await db.rollback()
+        raise
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -313,6 +165,9 @@ async def mark_all_read(
         count = await service.mark_all_notifications_as_read(user_id=uuid.UUID(user_id))
         await db.commit()
         return {"status": "all_read", "marked_count": count}
+    except HTTPException:
+        await db.rollback()
+        raise
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -333,6 +188,9 @@ async def dismiss_notification(
         )
         await db.commit()
         return result
+    except HTTPException:
+        await db.rollback()
+        raise
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -360,6 +218,8 @@ async def get_notification_settings(
             "fraud_alert_email": settings.fraud_alert_email,
             "digest_frequency": settings.digest_frequency,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
@@ -403,6 +263,9 @@ async def update_notification_settings(
             "slack_alerts": updated.slack_alerts,
             "in_app_alerts": updated.in_app_alerts,
         }
+    except HTTPException:
+        await db.rollback()
+        raise
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=str(e)) from e

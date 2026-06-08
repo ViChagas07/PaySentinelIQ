@@ -1045,7 +1045,9 @@
     "empty": {
       "title": "Central de Notificações Vazia",
       "description": "Nenhuma notificação corresponde aos filtros selecionados.",
-      "clearFilters": "Limpar todos os filtros"
+      "clearFilters": "Limpar todos os filtros",
+      "noNotificationsTitle": "Você não possui notificações novas no momento!",
+      "noNotificationsDescription": "Novas atividades, pagamentos, alertas de fraude e eventos gerados por IA aparecerão aqui automaticamente."
     }
   },
   "documents": {

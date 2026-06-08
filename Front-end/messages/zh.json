@@ -931,7 +931,9 @@
     "empty": {
       "title": "空的通知中心",
       "description": "没有通知匹配选定的筛选条件。",
-      "clearFilters": "清除所有筛选"
+      "clearFilters": "清除所有筛选",
+      "noNotificationsTitle": "暂无新通知",
+      "noNotificationsDescription": "支付活动、欺诈警报、AI 洞察和系统事件将在此处自动实时显示。"
     }
   },
   "documents": {

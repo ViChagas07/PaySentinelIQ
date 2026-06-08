@@ -933,7 +933,9 @@
     "empty": {
       "title": "Centro de Notificaciones Vacío",
       "description": "No hay notificaciones que coincidan con los filtros seleccionados.",
-      "clearFilters": "Limpiar todos los filtros"
+      "clearFilters": "Limpiar todos los filtros",
+      "noNotificationsTitle": "No tienes notificaciones nuevas",
+      "noNotificationsDescription": "Las actividades de pago, alertas de fraude, información de IA y eventos del sistema aparecerán aquí automáticamente en tiempo real."
     }
   },
   "documents": {

@@ -1045,7 +1045,9 @@
     "empty": {
       "title": "Empty Notification Center",
       "description": "No notifications match the selected filters.",
-      "clearFilters": "Clear all filters"
+      "clearFilters": "Clear all filters",
+      "noNotificationsTitle": "No notifications yet",
+      "noNotificationsDescription": "Payment activities, fraud alerts, AI insights and system events will appear here automatically in real time."
     }
   },
   "documents": {
