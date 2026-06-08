@@ -506,7 +506,7 @@ export default function PaymentCenterPage() {
               </div>
 
               {/* Right: Status cards grid — real data only */}
-              <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="flex-1 grid grid-cols-2 gap-3">
                 <StatusCard
                   icon={FileText}
                   label={t("hero.statusCard.pendingAnalyses")}
