@@ -218,7 +218,7 @@ export function Navbar() {
       </div>
 
       {/* Right actions — ml-auto keeps icons tracking the right wall on zoom out */}
-      <div className="flex items-center gap-1 ml-auto pr-1">
+      <div className="flex items-center gap-1 ml-auto pr-3">
         {/* AI Assistant quick toggle */}
         <HoverButton
           icon={(hovered) => <AnimatedBotIcon isHovered={hovered} />}
