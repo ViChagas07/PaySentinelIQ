@@ -287,6 +287,7 @@ export function Sidebar() {
                 label={t(item.labelKey)}
                 isActive={isItemActive(item.href)}
                 collapsed={sidebarCollapsed}
+                onNavigate={() => setSidebarMobileOpen(false)}
               />
             ))}
           </ul>
@@ -305,11 +306,14 @@ function SidebarItem({
   label,
   isActive,
   collapsed,
+  onNavigate,
 }: {
   item: NavItem;
   label: string;
   isActive: boolean;
   collapsed: boolean;
+  /** Called when a navigation link is clicked — used to close the mobile sidebar */
+  onNavigate: () => void;
 }) {
   const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
@@ -419,6 +423,7 @@ function SidebarItem({
                   <li key={child.href}>
                     <Link
                       href={child.href}
+                      onClick={onNavigate}
                       className="group relative block rounded-lg px-3 py-2 text-sm text-psi-text-secondary hover:bg-psi-border/30 hover:text-psi-text-primary transition-colors"
                     >
                       <motion.span
@@ -445,6 +450,7 @@ function SidebarItem({
     <li>
       <Link
         href={item.href}
+        onClick={onNavigate}
         className={cn(
           "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 overflow-hidden",
           isActive
