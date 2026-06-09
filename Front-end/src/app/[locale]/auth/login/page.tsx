@@ -150,7 +150,7 @@ export default function AuthPage() {
             }
 
             // Success — redirect to dashboard
-            router.push(`/${locale}`);
+            router.push(`/${locale}/dashboard`);
           } catch {
             setSignInError(t("googleSignInRetry"));
           }
@@ -201,7 +201,7 @@ export default function AuthPage() {
         "demo-jwt-token"
       );
 
-      router.push(`/${locale}`);
+      router.push(`/${locale}/dashboard`);
     }, 1500);
   };
 
@@ -278,7 +278,7 @@ export default function AuthPage() {
 
       // Auto-redirect after showing success
       setTimeout(() => {
-        router.push(`/${locale}`);
+        router.push(`/${locale}/dashboard`);
       }, 3000);
     } catch {
       setSignUpError(t("networkError"));

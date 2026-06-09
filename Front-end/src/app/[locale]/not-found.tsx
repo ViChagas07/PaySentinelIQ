@@ -17,7 +17,7 @@ export default function NotFound() {
         <p className="text-sm text-psi-text-secondary mb-1">{t("notFound.description")}</p>
         <p className="text-xs text-psi-text-secondary/50 mb-8">{t("notFound.httpStatus")}</p>
         <Link
-          href="/"
+          href="/dashboard"
           className="inline-flex items-center gap-2 rounded-lg bg-psi-electric px-5 py-2.5 text-sm font-medium text-white hover:bg-psi-electric/90 transition-colors"
         >
           <Home className="h-4 w-4" />

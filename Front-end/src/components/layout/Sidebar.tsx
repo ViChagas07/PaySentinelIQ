@@ -71,7 +71,7 @@ const navigationSections: NavSection[] = [
     items: [
       {
         labelKey: "dashboard",
-        href: "/",
+        href: "/dashboard",
         icon: LayoutDashboard,
         roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager", "payroll_specialist", "auditor", "viewer"],
       },
@@ -248,7 +248,7 @@ export function Sidebar() {
       >
         {/* Logo — clickable, navigates to dashboard */}
         <Link
-          href="/"
+          href="/dashboard"
           onClick={() => setSidebarMobileOpen(false)}
           className={cn(
             "flex h-16 items-center border-b border-border transition-opacity hover:opacity-80",

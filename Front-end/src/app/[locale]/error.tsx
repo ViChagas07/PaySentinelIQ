@@ -44,7 +44,7 @@ export default function GlobalError({
                 {t("tryAgain")}
               </button>
               <Link
-                href="/"
+                href="/dashboard"
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-psi-border px-5 py-2.5 text-sm font-medium text-psi-text-secondary hover:bg-white/5 transition-colors"
               >
                 <Home className="h-4 w-4" />
