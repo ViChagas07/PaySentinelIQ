@@ -173,6 +173,29 @@ async def mark_all_read(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@router.delete("/bulk")
+async def delete_notifications_bulk(
+    older_than: str = Query("0d", description="Delete notifications older than: 1d, 3d, 7d, 30d, or 0d for all"),
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Bulk-delete notifications older than a given period for the current user."""
+    try:
+        service = NotificationService(db)
+        deleted_count = await service.delete_notifications_bulk(
+            user_id=uuid.UUID(user_id),
+            older_than=older_than,
+        )
+        await db.commit()
+        return {"status": "deleted", "deleted": deleted_count}
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
 @router.delete("/{notification_id}")
 async def dismiss_notification(
     notification_id: str,

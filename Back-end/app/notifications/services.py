@@ -10,10 +10,11 @@ import uuid
 from typing import List, Optional, Dict, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, func, and_
+from sqlalchemy import select, desc, func, and_, delete
+from datetime import datetime, timedelta, timezone
 
 from app.shared.orm_models import NotificationModel, UserSettingsModel
-from app.shared.exceptions import NotFoundException
+from app.shared.exceptions import NotFoundError
 from app.shared.repository import BaseRepository
 
 class NotificationRepository(BaseRepository[NotificationModel]):
@@ -98,7 +99,7 @@ class NotificationService:
         """
         notification = await self.repository.get(notification_id)
         if not notification or notification.user_id != user_id:
-            raise NotFoundException(f"Notification with ID {notification_id} not found or not accessible.")
+            raise NotFoundError("Notification", str(notification_id))
         
         notification.is_read = True
         self.session.add(notification)
@@ -132,7 +133,7 @@ class NotificationService:
         """
         notification = await self.repository.get(notification_id)
         if not notification or notification.user_id != user_id:
-            raise NotFoundException(f"Notification with ID {notification_id} not found or not accessible.")
+            raise NotFoundError("Notification", str(notification_id))
         
         await self.session.delete(notification)
         await self.session.flush()
@@ -146,7 +147,7 @@ class NotificationService:
         result = await self.session.execute(query)
         settings = result.scalar_one_or_none()
         if not settings:
-            raise NotFoundException(f"User settings for user ID {user_id} not found.")
+            raise NotFoundError("UserSettings", str(user_id))
         return settings
 
     async def update_user_notification_settings(
@@ -195,3 +196,37 @@ class NotificationService:
         self.session.add(settings)
         await self.session.flush()
         return settings
+
+    async def delete_notifications_bulk(
+        self,
+        user_id: uuid.UUID,
+        older_than: str = "0d",
+    ) -> int:
+        """Delete notifications older than a given period for a user.
+
+        Args:
+            user_id: The user whose notifications to delete.
+            older_than: Period string like '1d', '3d', '7d', '30d', or '0d' for all.
+
+        Returns:
+            Number of notifications deleted.
+        """
+        # Parse the older_than period into a timedelta
+        period_map = {"d": 1, "w": 7, "m": 30}
+        unit = older_than[-1].lower() if older_than else "d"
+        multiplier = period_map.get(unit, 1)
+        try:
+            days = int(older_than[:-1]) if len(older_than) > 1 else int(older_than)
+        except (ValueError, TypeError):
+            days = 0
+
+        conditions = [NotificationModel.user_id == user_id]
+
+        if days > 0:
+            cutoff = datetime.now(timezone.utc) - timedelta(days=days * multiplier)
+            conditions.append(NotificationModel.created_at < cutoff)
+
+        stmt = delete(NotificationModel).where(and_(*conditions))
+        result = await self.session.execute(stmt)
+        await self.session.flush()
+        return result.rowcount
