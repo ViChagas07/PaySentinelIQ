@@ -149,15 +149,15 @@ export function TrustBar() {
             <Image
               src="/PSI_Logo2.png"
               alt="PaySentinelIQ"
-              width={120}
-              height={120}
-              className="relative h-28 w-auto object-contain"
+              width={180}
+              height={180}
+              className="relative h-40 w-auto object-contain"
               priority
             />
           </div>
           <AppName
             as="span"
-            className="text-2xl md:text-3xl font-bold tracking-tight text-white"
+            className="text-3xl md:text-4xl font-bold tracking-tight text-white"
           />
         </motion.div>
 
