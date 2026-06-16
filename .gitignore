@@ -55,3 +55,9 @@ next-env.d.ts
 **/.next/
 out/
 **/out/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
