@@ -132,7 +132,7 @@
   },
   "nav": {
     "signIn": "Sign In",
-      "dashboard": "Dashboard",
+      "sidebarLabel": "Main navigation", "menu": "Menu", "dashboard": "Dashboard",
       "unknownUser": "User",
     "payroll": "Lohnzentrum",
     "verification": "Prüfzentrum",
@@ -1224,7 +1224,7 @@
       "stats": "Stats",
       "getStarted": "Get Started",
       "signIn": "Sign In",
-      "dashboard": "Dashboard",
+      "sidebarLabel": "Main navigation", "menu": "Menu", "dashboard": "Dashboard",
       "unknownUser": "User"
     },
     "preview": {

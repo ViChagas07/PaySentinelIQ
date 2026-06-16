@@ -27,6 +27,7 @@ import {
   Settings,
   ChevronDown,
   Barcode,
+  Home,
   type LucideIcon,
 } from "lucide-react";
 
@@ -37,7 +38,7 @@ type NavBadgeKey = "badgeAI" | "new";
 
 /** Valid translation keys for navigation labels in the "nav" namespace */
 type NavLabelKey =
-  | "dashboard" | "payroll"
+  | "menu" | "dashboard" | "payroll"
   | "verification" | "fraudIntelligence"
   | "analyzePayroll" | "analyzeBankSlip"
   | "reports" | "auditLogs"
@@ -69,6 +70,12 @@ const navigationSections: NavSection[] = [
   {
     sectionKey: "sections.core",
     items: [
+      {
+        labelKey: "menu",
+        href: "/",
+        icon: Home,
+        roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager", "payroll_specialist", "auditor", "viewer"],
+      },
       {
         labelKey: "dashboard",
         href: "/dashboard",

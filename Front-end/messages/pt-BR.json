@@ -138,6 +138,8 @@
     "roleViewer": "Visualizador"
   },
   "nav": {
+    "sidebarLabel": "Navegação principal",
+    "menu": "Menu",
     "dashboard": "Painel Principal",
     "payroll": "Central de Pagamentos",
     "verification": "Central de Verificação",

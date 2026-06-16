@@ -138,6 +138,8 @@
     "roleViewer": "Viewer"
   },
   "nav": {
+    "sidebarLabel": "Main navigation",
+    "menu": "Menu",
     "dashboard": "Dashboard",
     "payroll": "Payroll Center",
     "verification": "Verification Center",
