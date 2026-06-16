@@ -97,25 +97,25 @@ export function LandingNav() {
         <nav className="hidden lg:flex items-center gap-1">
           <a
             href="#features"
-            className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05]"
+                        className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05] cursor-pointer"
           >
             {t("nav.features")}
           </a>
           <a
             href="#how-it-works"
-            className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05]"
+                        className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05] cursor-pointer"
           >
             {t("nav.howItWorks")}
           </a>
           <a
             href="#preview"
-            className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05]"
+                        className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05] cursor-pointer"
           >
             {t("nav.preview")}
           </a>
           <a
             href="#stats"
-            className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05]"
+                        className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05] cursor-pointer"
           >
             {t("nav.stats")}
           </a>
@@ -127,7 +127,7 @@ export function LandingNav() {
           <div className="relative hidden sm:block">
             <button
               onClick={() => setLangOpen(!langOpen)}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors"
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer"
               aria-expanded={langOpen}
               aria-label={tc("language")}
             >
@@ -210,7 +210,7 @@ export function LandingNav() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden rounded-lg p-2 text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors"
+            className="lg:hidden rounded-lg p-2 text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer"
             aria-label={mobileOpen ? tc("close") : tc("openMenu")}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -232,28 +232,28 @@ export function LandingNav() {
               <a
                 href="#features"
                 onClick={() => setMobileOpen(false)}
-                className="px-3 py-2.5 text-sm text-white/60 hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors"
+                className="px-3 py-2.5 text-sm text-white/60 hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors cursor-pointer"
               >
                 {t("nav.features")}
               </a>
               <a
                 href="#how-it-works"
                 onClick={() => setMobileOpen(false)}
-                className="px-3 py-2.5 text-sm text-white/60 hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors"
+                className="px-3 py-2.5 text-sm text-white/60 hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors cursor-pointer"
               >
                 {t("nav.howItWorks")}
               </a>
               <a
                 href="#preview"
                 onClick={() => setMobileOpen(false)}
-                className="px-3 py-2.5 text-sm text-white/60 hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors"
+                className="px-3 py-2.5 text-sm text-white/60 hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors cursor-pointer"
               >
                 {t("nav.preview")}
               </a>
               <a
                 href="#stats"
                 onClick={() => setMobileOpen(false)}
-                className="px-3 py-2.5 text-sm text-white/60 hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors"
+                className="px-3 py-2.5 text-sm text-white/60 hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors cursor-pointer"
               >
                 {t("nav.stats")}
               </a>
@@ -290,7 +290,7 @@ export function LandingNav() {
                         setMobileOpen(false);
                         router.push("/dashboard");
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-[#1E6FFF] hover:bg-[#1E6FFF]/5 rounded-lg transition-colors"
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-[#1E6FFF] hover:bg-[#1E6FFF]/5 rounded-lg transition-colors cursor-pointer"
                     >
                       <LayoutDashboard className="h-4 w-4" />
                       {t("nav.dashboard")}
@@ -302,7 +302,7 @@ export function LandingNav() {
                       setMobileOpen(false);
                       router.push("/auth/login");
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm font-medium bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] text-white rounded-lg"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm font-medium bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] text-white rounded-lg cursor-pointer"
                   >
                     <LogIn className="h-4 w-4" />
                     {t("nav.signIn")}
