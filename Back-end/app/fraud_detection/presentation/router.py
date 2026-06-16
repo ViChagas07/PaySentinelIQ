@@ -157,6 +157,7 @@ async def analyze_document(
     Submit a document for real-time 7-stage fraud analysis.
     Returns the complete PSI Fraud Analysis Report.
     This endpoint invokes the full deterministic pipeline immediately.
+    LLM enhancement via CrewAI agents runs if ENABLE_AI_AGENTS=true.
     """
     from app.fraud_detection.domain.pipeline import get_fraud_pipeline
 

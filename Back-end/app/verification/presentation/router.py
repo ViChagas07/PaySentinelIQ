@@ -44,6 +44,17 @@ async def upload_document(
     Triggers async OCR + AI analysis pipeline via Celery.
     Emits DocumentUploadedEvent.
     """
+    from app.shared.settings import get_settings
+
+    settings = get_settings()
+
+    if not settings.ENABLE_OCR:
+        return UploadResponse(
+            document_id="ocr-disabled",
+            status="skipped",
+            message="OCR feature is disabled (ENABLE_OCR=false).",
+        )
+
     # In production:
     # 1. Validate file type/size
     # 2. Upload to S3 with SSE-KMS encryption

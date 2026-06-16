@@ -185,35 +185,42 @@ async def ai_chat(
     conversation_id = body.conversation_id or str(uuid.uuid4())
     response_text, sources = _get_ai_response(body.message)
 
-    # Attempt to use LLM service if available (gracefully degrades to templates)
+    # Attempt to use LLM service if feature flag enabled and provider healthy
+    # Gracefully degrades to keyword-based templates if LLM is unavailable.
     try:
-        from app.ai_agents.llm_service import get_llm_service
+        from app.shared.settings import get_settings
 
-        llm = await get_llm_service()
-        if llm.is_healthy():  # type: ignore[attr-defined]
-            llm_response = await llm.chat(  # type: ignore[attr-defined]
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are PaySentinelIQ's AI Assistant, an expert in "
-                            "payroll fraud detection, "
-                            "risk intelligence, and Brazilian labor compliance "
-                            "(CLT, LGPD). "
-                            "Provide concise, data-driven answers. Reference "
-                            "specific metrics and alert IDs when relevant. "
-                            "Always prioritize accuracy and cite data sources."
-                        ),
-                    },
-                    {"role": "user", "content": body.message},
-                ],
-                temperature=0.2,
-                max_tokens=1024,
-            )
-            response_text = llm_response.get("content", response_text)
-            logger.info("AI chat used LLM provider for response")
+        if get_settings().ENABLE_AI_AGENTS:
+            from app.ai_agents.llm_service import get_llm_service
+
+            llm = await get_llm_service()
+            if llm.is_healthy:
+                llm_response = await llm.chat(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are PaySentinelIQ's AI Assistant, an expert in "
+                                "payroll fraud detection, "
+                                "risk intelligence, and Brazilian labor compliance "
+                                "(CLT, LGPD). "
+                                "Provide concise, data-driven answers in Portuguese. "
+                                "Reference specific metrics and alert IDs when relevant. "
+                                "Always prioritize accuracy and cite data sources."
+                            ),
+                        },
+                        {"role": "user", "content": body.message},
+                    ],
+                    temperature=0.2,
+                    max_tokens=1024,
+                )
+                response_text = llm_response.get("content", response_text)
+                logger.info(
+                    "AI chat used LLM provider: %s",
+                    llm_response.get("provider", "unknown"),
+                )
     except Exception as exc:
-        logger.debug("LLM chat fallback to templates: %s", exc)
+        logger.info("LLM chat fallback to templates: %s", exc)
 
     return ChatResponse(
         message=response_text,

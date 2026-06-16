@@ -168,6 +168,21 @@ class AIAgentCrew:
     _llm_available: bool = field(default=False, init=False)
 
     def __post_init__(self) -> None:
+        from app.shared.settings import get_settings
+
+        settings = get_settings()
+
+        # Respect the ENABLE_AI_AGENTS feature flag
+        if not settings.ENABLE_AI_AGENTS:
+            logger.info(
+                "AI Agents feature flag is OFF (ENABLE_AI_AGENTS=false) "
+                "— running in deterministic-only mode"
+            )
+            self._llm = None
+            self._llm_available = False
+            self._tools = _load_tools()
+            return
+
         # Attempt to initialize the CrewAI-compatible LLM from the configured provider
         self._llm = None
         self._llm_available = False

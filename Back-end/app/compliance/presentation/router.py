@@ -256,6 +256,14 @@ async def trigger_compliance_check(
     Trigger a compliance check for an entity.
     Emits ComplianceCheckTriggeredEvent.
     """
+    from app.shared.settings import get_settings
+
+    if not get_settings().ENABLE_COMPLIANCE_CHECKS:
+        return {
+            "status": "skipped",
+            "message": "Compliance checks are disabled (ENABLE_COMPLIANCE_CHECKS=false).",
+        }
+
     from app.tasks import run_compliance_check
 
     task = run_compliance_check.delay(entity_id, tenant_id, entity_type)

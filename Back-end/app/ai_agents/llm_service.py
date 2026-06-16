@@ -172,6 +172,11 @@ class LLMService:
                 f"LLM provider '{self.provider.get_info().provider_name}' is unhealthy."
             )
 
+    @property
+    def is_healthy(self) -> bool:
+        """Public property: check if the LLM provider is currently healthy."""
+        return self._health_status
+
     def get_chat_model(self) -> Any:
         """
         Return the LangChain-compatible chat model for CrewAI/LangChain usage.
@@ -189,6 +194,92 @@ class LLMService:
             self._health_status = True
 
         return self.provider.get_chat_model()
+
+    async def chat(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """
+        Public chat method for AI assistant and other consumer endpoints.
+
+        Args:
+            messages: List of message dicts with 'role' and 'content' keys
+                      (e.g., [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}]).
+            temperature: Optional override for model temperature.
+            max_tokens: Optional override for max output tokens.
+            timeout: Optional override for request timeout.
+
+        Returns:
+            Dict with 'content' (str), 'model' (str), and 'provider' (str) keys.
+
+        Raises:
+            ProviderUnavailableError: If the LLM provider is not healthy.
+            LLMTimeoutError: If the call exceeds the timeout.
+            LLMServiceError: For any other failure.
+        """
+        await self.ensure_healthy()
+
+        chat_model = self.get_chat_model()
+
+        # Convert messages to LangChain format
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        lc_messages = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                lc_messages.append(SystemMessage(content=content))
+            else:
+                lc_messages.append(HumanMessage(content=content))
+
+        # Build invocation kwargs
+        invoke_kwargs: dict[str, Any] = {}
+        if temperature is not None:
+            invoke_kwargs["temperature"] = temperature
+        if max_tokens is not None:
+            invoke_kwargs["max_output_tokens"] = max_tokens
+
+        effective_timeout = timeout or self.provider.config.timeout
+
+        async def _invoke() -> dict[str, Any]:
+            loop = asyncio.get_running_loop()
+            try:
+                result = await asyncio.wait_for(
+                    loop.run_in_executor(None, lambda: chat_model.invoke(lc_messages, **invoke_kwargs)),
+                    timeout=effective_timeout,
+                )
+            except TimeoutError:
+                raise LLMTimeoutError(
+                    f"LLM chat timed out after {effective_timeout:.0f}s"
+                ) from None
+
+            # Extract text content from LangChain response
+            content = ""
+            if hasattr(result, "content"):
+                content = result.content
+            elif isinstance(result, str):
+                content = result
+            else:
+                content = str(result)
+
+            provider_info = self.provider.get_info()
+            return {
+                "content": content,
+                "model": provider_info.model_name,
+                "provider": provider_info.provider_name,
+            }
+
+        try:
+            return await _invoke()
+        except LLMTimeoutError:
+            raise
+        except Exception as exc:
+            logger.error("LLM chat invocation failed: %s", exc)
+            raise LLMServiceError(f"LLM chat failed: {exc}") from exc
 
     async def invoke_with_retry(
         self,
