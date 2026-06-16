@@ -1187,5 +1187,134 @@
       "placeholderSuspiciousBankSlip": "مثال: يبدو الباركود معدّلاً، اسم المُصدر لا يتطابق مع السجلات...",
       "placeholderNotes": "أي معلومات أخرى ذات صلة بتحليل الذكاء الاصطناعي..."
     }
+  },
+  "landing": {
+    "hero": {
+      "badge": "AI-Powered Fraud Intelligence",
+      "title": "AI-Powered Fraud Intelligence for Payments and Documents",
+      "subtitle": "Detect fraud in payrolls, invoices and payment documents with real-time artificial intelligence.",
+      "cta": "Get Started",
+      "demo": "Watch Demo",
+      "goToDashboard": "Go to Dashboard",
+      "trust": {
+        "ai": "AI Detection",
+        "realtime": "Real-time Analysis",
+        "security": "Enterprise Security",
+        "compliance": "Compliance Ready"
+      },
+      "card1": {
+        "title": "Payroll Analysis",
+        "risk": "Risk: 2%"
+      },
+      "card2": {
+        "title": "Invoice Verification",
+        "authenticity": "Authenticity: 98%"
+      },
+      "card3": {
+        "title": "Fraud Detection",
+        "confidence": "AI Confidence: 96%"
+      }
+    },
+    "nav": {
+      "features": "Features",
+      "howItWorks": "How It Works",
+      "preview": "Preview",
+      "stats": "Stats",
+      "getStarted": "Get Started",
+      "dashboard": "Dashboard"
+    },
+    "preview": {
+      "title": "See PaySentinelIQ in Action",
+      "subtitle": "A glimpse of the powerful intelligence dashboard",
+      "statPayrolls": "Total Payrolls",
+      "statFraud": "Fraud Alerts",
+      "statConfidence": "AI Confidence",
+      "colDocument": "Document",
+      "colType": "Type",
+      "colRisk": "Risk Score",
+      "colStatus": "Status",
+      "statusVerified": "Verified",
+      "statusFlagged": "Flagged",
+      "statusProcessing": "Processing"
+    },
+    "features": {
+      "title": "Everything you need to protect financial operations",
+      "subtitle": "Enterprise-grade AI tools for complete fraud prevention",
+      "fraud": {
+        "title": "AI Fraud Detection",
+        "desc": "Real-time fraud detection powered by multi-agent AI analysis across payroll and payment documents."
+      },
+      "payroll": {
+        "title": "Payroll Intelligence",
+        "desc": "Automated payroll verification with salary anomaly detection and ghost employee identification."
+      },
+      "invoice": {
+        "title": "Invoice Verification",
+        "desc": "Smart invoice validation with barcode analysis, duplicate detection, and PIX fraud screening."
+      },
+      "insights": {
+        "title": "Actionable Insights",
+        "desc": "AI-generated intelligence briefs with recommended actions and risk mitigation strategies."
+      },
+      "compliance": {
+        "title": "Compliance Ready",
+        "desc": "Built-in SOC 2 compliance tracking with automated audit trail generation and reporting."
+      },
+      "audit": {
+        "title": "Immutable Audit Trail",
+        "desc": "Complete chronological log of all AI decisions and analyst actions for regulatory compliance."
+      }
+    },
+    "trust": {
+      "title": "Trusted for intelligent fraud prevention",
+      "ai": "AI Detection",
+      "security": "Enterprise Security",
+      "analytics": "Analytics",
+      "payments": "Payments",
+      "compliance": "Compliance",
+      "verification": "Verification"
+    },
+    "how": {
+      "title": "How PaySentinelIQ Works",
+      "subtitle": "Four simple steps to intelligent fraud prevention",
+      "step1": { "title": "Upload Document", "desc": "Upload payrolls, invoices or bank slips for AI analysis." },
+      "step2": { "title": "AI Processes Information", "desc": "Our AI engine analyzes patterns, cross-references data and detects anomalies." },
+      "step3": { "title": "Fraud Intelligence Generated", "desc": "Receive detailed risk scores, flagged items and confidence ratings." },
+      "step4": { "title": "Receive Decision & Insights", "desc": "Get actionable intelligence reports and compliance documentation." }
+    },
+    "stats": {
+      "title": "Proven Results at Scale",
+      "subtitle": "Enterprise-grade accuracy and performance",
+      "accuracy": "98%",
+      "accuracyLabel": "Detection Accuracy",
+      "rules": "50+",
+      "rulesLabel": "AI Verification Rules",
+      "monitoring": "24/7",
+      "monitoringLabel": "Continuous Monitoring",
+      "realtime": "Real-time",
+      "realtimeLabel": "Analysis Engine"
+    },
+    "cta": {
+      "title": "Protect your financial ecosystem with AI",
+      "subtitle": "Join enterprises already using PaySentinelIQ for intelligent fraud prevention.",
+      "startFree": "Start Free",
+      "login": "Login",
+      "goToDashboard": "Go to Dashboard"
+    },
+    "footer": {
+      "tagline": "AI-Powered Fraud Intelligence",
+      "product": "Product",
+      "features": "Features",
+      "pricing": "Pricing",
+      "security": "Security",
+      "company": "Company",
+      "about": "About",
+      "docs": "Documentation",
+      "support": "Support",
+      "legal": "Legal",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "copyright": "© 2026 PaySentinelIQ. All rights reserved."
+    }
   }
 }

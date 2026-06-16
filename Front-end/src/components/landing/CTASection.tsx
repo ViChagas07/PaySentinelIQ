@@ -1,6 +1,7 @@
 // ============================================================
 // PaySentinelIQ — CTA Section
 // Immersive call-to-action with glowing gradient orb
+// Adapts buttons based on authentication state
 // ============================================================
 
 "use client";
@@ -10,10 +11,12 @@ import { Link } from "@/i18n/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
-import { ArrowRight, LogIn } from "lucide-react";
+import { ArrowRight, LogIn, LayoutDashboard } from "lucide-react";
+import { useAuthStore } from "@/stores";
 
 export function CTASection() {
   const t = useTranslations("landing");
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
     <section
@@ -51,35 +54,55 @@ export function CTASection() {
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button
-              asChild
-              size="lg"
-              className={cn(
-                "gap-2 rounded-xl bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] px-8 py-3",
-                "text-white shadow-lg shadow-[#1E6FFF]/20",
-                "hover:from-[#1E6FFF]/90 hover:to-[#6A4DFF]/90"
-              )}
-            >
-              <Link href="/auth/login">
-                {t("cta.startFree")}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button
+                asChild
+                size="lg"
+                className={cn(
+                  "gap-2 rounded-xl bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] px-8 py-3",
+                  "text-white shadow-lg shadow-[#1E6FFF]/20",
+                  "hover:from-[#1E6FFF]/90 hover:to-[#6A4DFF]/90"
+                )}
+              >
+                <Link href="/dashboard">
+                  <LayoutDashboard className="h-4 w-4" />
+                  {t("cta.goToDashboard")}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  asChild
+                  size="lg"
+                  className={cn(
+                    "gap-2 rounded-xl bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] px-8 py-3",
+                    "text-white shadow-lg shadow-[#1E6FFF]/20",
+                    "hover:from-[#1E6FFF]/90 hover:to-[#6A4DFF]/90"
+                  )}
+                >
+                  <Link href="/auth/login">
+                    {t("cta.startFree")}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
 
-            <Button
-              variant="outline"
-              asChild
-              size="lg"
-              className={cn(
-                "gap-2 rounded-xl border-white/20 px-8 py-3",
-                "text-white/70 hover:bg-white/[0.05] hover:text-white"
-              )}
-            >
-              <Link href="/auth/login">
-                <LogIn className="h-4 w-4" />
-                {t("cta.login")}
-              </Link>
-            </Button>
+                <Button
+                  variant="outline"
+                  asChild
+                  size="lg"
+                  className={cn(
+                    "gap-2 rounded-xl border-white/20 px-8 py-3",
+                    "text-white/70 hover:bg-white/[0.05] hover:text-white"
+                  )}
+                >
+                  <Link href="/auth/login">
+                    <LogIn className="h-4 w-4" />
+                    {t("cta.login")}
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
         </motion.div>
       </div>

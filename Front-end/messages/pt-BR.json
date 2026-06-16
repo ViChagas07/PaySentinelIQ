@@ -1301,5 +1301,134 @@
       "placeholderSuspiciousBankSlip": "ex: Código de barras parece adulterado, nome do emissor não confere...",
       "placeholderNotes": "Qualquer outra informação relevante para a análise da IA..."
     }
+  },
+  "landing": {
+    "hero": {
+      "badge": "Inteligência Antifraude com IA",
+      "title": "Inteligência Antifraude com IA para Pagamentos e Documentos",
+      "subtitle": "Detecte fraudes em folhas de pagamento, faturas e documentos de pagamento com inteligência artificial em tempo real.",
+      "cta": "Começar Agora",
+      "demo": "Ver Demonstração",
+      "goToDashboard": "Ir ao Painel",
+      "trust": {
+        "ai": "Detecção por IA",
+        "realtime": "Análise em Tempo Real",
+        "security": "Segurança Enterprise",
+        "compliance": "Pronto para Compliance"
+      },
+      "card1": {
+        "title": "Análise de Pagamentos",
+        "risk": "Risco: 2%"
+      },
+      "card2": {
+        "title": "Verificação de Faturas",
+        "authenticity": "Autenticidade: 98%"
+      },
+      "card3": {
+        "title": "Detecção de Fraudes",
+        "confidence": "Confiança da IA: 96%"
+      }
+    },
+    "nav": {
+      "features": "Recursos",
+      "howItWorks": "Como Funciona",
+      "preview": "Pré-visualização",
+      "stats": "Estatísticas",
+      "getStarted": "Começar Agora",
+      "dashboard": "Painel"
+    },
+    "preview": {
+      "title": "Veja o PaySentinelIQ em Ação",
+      "subtitle": "Uma amostra do poderoso painel de inteligência",
+      "statPayrolls": "Total de Pagamentos",
+      "statFraud": "Alertas de Fraude",
+      "statConfidence": "Confiança da IA",
+      "colDocument": "Documento",
+      "colType": "Tipo",
+      "colRisk": "Nível de Risco",
+      "colStatus": "Status",
+      "statusVerified": "Verificado",
+      "statusFlagged": "Sinalizado",
+      "statusProcessing": "Processando"
+    },
+    "features": {
+      "title": "Tudo que você precisa para proteger operações financeiras",
+      "subtitle": "Ferramentas de IA de nível enterprise para prevenção completa de fraudes",
+      "fraud": {
+        "title": "Detecção de Fraudes com IA",
+        "desc": "Detecção de fraudes em tempo real com análise multi-agente de IA em documentos de pagamento."
+      },
+      "payroll": {
+        "title": "Inteligência de Pagamentos",
+        "desc": "Verificação automatizada de folhas de pagamento com detecção de anomalias salariais e funcionários fantasmas."
+      },
+      "invoice": {
+        "title": "Verificação de Faturas",
+        "desc": "Validação inteligente de faturas com análise de código de barras, detecção de duplicatas e triagem de fraudes PIX."
+      },
+      "insights": {
+        "title": "Insights Acionáveis",
+        "desc": "Relatórios de inteligência gerados por IA com ações recomendadas e estratégias de mitigação de riscos."
+      },
+      "compliance": {
+        "title": "Pronto para Compliance",
+        "desc": "Monitoramento de conformidade SOC 2 integrado com geração automatizada de trilhas de auditoria."
+      },
+      "audit": {
+        "title": "Trilha de Auditoria Imutável",
+        "desc": "Registro cronológico completo de todas as decisões da IA e ações dos analistas para conformidade regulatória."
+      }
+    },
+    "trust": {
+      "title": "Confiável para prevenção inteligente de fraudes",
+      "ai": "Detecção IA",
+      "security": "Segurança Enterprise",
+      "analytics": "Analytics",
+      "payments": "Pagamentos",
+      "compliance": "Compliance",
+      "verification": "Verificação"
+    },
+    "how": {
+      "title": "Como o PaySentinelIQ Funciona",
+      "subtitle": "Quatro passos simples para prevenção inteligente de fraudes",
+      "step1": { "title": "Envie o Documento", "desc": "Envie folhas de pagamento, faturas ou boletos para análise da IA." },
+      "step2": { "title": "IA Processa as Informações", "desc": "Nosso motor de IA analisa padrões, cruza dados e detecta anomalias." },
+      "step3": { "title": "Inteligência de Fraude Gerada", "desc": "Receba pontuações de risco detalhadas, itens sinalizados e índices de confiança." },
+      "step4": { "title": "Receba Decisão e Insights", "desc": "Obtenha relatórios de inteligência acionáveis e documentação de conformidade." }
+    },
+    "stats": {
+      "title": "Resultados Comprovados em Escala",
+      "subtitle": "Precisão e desempenho de nível enterprise",
+      "accuracy": "98%",
+      "accuracyLabel": "Precisão de Detecção",
+      "rules": "50+",
+      "rulesLabel": "Regras de Verificação IA",
+      "monitoring": "24/7",
+      "monitoringLabel": "Monitoramento Contínuo",
+      "realtime": "Tempo Real",
+      "realtimeLabel": "Motor de Análise"
+    },
+    "cta": {
+      "title": "Proteja seu ecossistema financeiro com IA",
+      "subtitle": "Junte-se às empresas que já usam o PaySentinelIQ para prevenção inteligente de fraudes.",
+      "startFree": "Começar Grátis",
+      "login": "Entrar",
+      "goToDashboard": "Ir ao Painel"
+    },
+    "footer": {
+      "tagline": "Inteligência Antifraude com IA",
+      "product": "Produto",
+      "features": "Recursos",
+      "pricing": "Preços",
+      "security": "Segurança",
+      "company": "Empresa",
+      "about": "Sobre",
+      "docs": "Documentação",
+      "support": "Suporte",
+      "legal": "Legal",
+      "privacy": "Privacidade",
+      "terms": "Termos",
+      "copyright": "© 2026 PaySentinelIQ. Todos os direitos reservados."
+    }
   }
 }

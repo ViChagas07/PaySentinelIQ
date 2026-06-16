@@ -370,12 +370,18 @@ export function Navbar() {
               >
                 {isAuthenticated ? (
                   <>
+                    {/* User identity header */}
                     <div className="px-4 py-3 border-b border-border">
                       <p className="text-sm font-semibold text-psi-text-primary">
                         {user?.full_name}
                       </p>
-                      <p className="text-xs text-psi-text-secondary">{user?.email}</p>
+                      <p className="text-[11px] text-psi-text-secondary mt-0.5">{user?.email}</p>
+                      <span className="inline-block mt-1.5 rounded-full bg-psi-electric/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-psi-electric">
+                        {user?.role?.replace("_", " ") || ta("guest")}
+                      </span>
                     </div>
+
+                    {/* Account navigation */}
                     <div className="py-1">
                       <IntlLink
                         href="/profile"
@@ -383,7 +389,14 @@ export function Navbar() {
                         onClick={() => setShowUserMenu(false)}
                       >
                         <User className="h-4 w-4" />
-                        {t("profile")}
+                        <div className="flex flex-col text-left leading-tight">
+                          <span className="text-sm font-medium text-psi-text-primary">
+                            {t("myAccount")}
+                          </span>
+                          <span className="text-[10px] text-psi-text-secondary">
+                            {t("myAccountDesc")}
+                          </span>
+                        </div>
                       </IntlLink>
                       <IntlLink
                         href="/settings"
@@ -391,16 +404,18 @@ export function Navbar() {
                         onClick={() => setShowUserMenu(false)}
                       >
                         <Settings className="h-4 w-4" />
-                        {t("settings")}
+                        <span>{t("settings")}</span>
                       </IntlLink>
                     </div>
+
+                    {/* Sign out — visually separated */}
                     <div className="border-t border-border py-1">
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
                           logout();
                         }}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-psi-fraud hover:bg-psi-fraud/10 transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-psi-text-secondary hover:bg-psi-fraud/10 hover:text-psi-fraud transition-colors"
                       >
                         <LogOut className="h-4 w-4" />
                         {ta("signOutLabel")}

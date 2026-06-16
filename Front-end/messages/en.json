@@ -157,6 +157,8 @@
     },
     "new": "New",
     "profile": "Profile",
+    "myAccount": "My Account",
+    "myAccountDesc": "Profile, security, preferences",
     "help": "Help",
     "goToDashboard": "Go to dashboard",
     "openMenu": "Open menu",
@@ -1309,6 +1311,7 @@
       "subtitle": "Detect fraud in payrolls, invoices and payment documents with real-time artificial intelligence.",
       "cta": "Get Started",
       "demo": "Watch Demo",
+      "goToDashboard": "Go to Dashboard",
       "trust": {
         "ai": "AI Detection",
         "realtime": "Real-time Analysis",
@@ -1411,7 +1414,8 @@
       "title": "Protect your financial ecosystem with AI",
       "subtitle": "Join enterprises already using PaySentinelIQ for intelligent fraud prevention.",
       "startFree": "Start Free",
-      "login": "Login"
+      "login": "Login",
+      "goToDashboard": "Go to Dashboard"
     },
     "footer": {
       "tagline": "AI-Powered Fraud Intelligence",

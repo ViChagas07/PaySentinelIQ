@@ -10,6 +10,7 @@ import { Link } from "@/i18n/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { useAuthStore } from "@/stores";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -18,6 +19,7 @@ import {
   Sparkles,
   FileCheck,
   Brain,
+  LayoutDashboard,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -211,6 +213,7 @@ function TrustIndicator({ textKey, index }: { textKey: string; index: number }) 
 
 export function LandingHero() {
   const t = useTranslations("landing");
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#050816] pt-28 lg:pt-44">
@@ -279,8 +282,17 @@ export function LandingHero() {
                 size="lg"
                 className="gap-2 rounded-xl bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] px-6 py-3 text-white shadow-lg shadow-[#1E6FFF]/20 hover:from-[#1E6FFF]/90 hover:to-[#6A4DFF]/90"
               >
-                <Link href="/auth/login">
-                  {t("hero.cta")}
+                <Link href={isAuthenticated ? "/dashboard" : "/auth/login"}>
+                  {isAuthenticated ? (
+                    <>
+                      <LayoutDashboard className="h-4 w-4" />
+                      {t("hero.goToDashboard")}
+                    </>
+                  ) : (
+                    <>
+                      {t("hero.cta")}
+                    </>
+                  )}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
