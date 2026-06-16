@@ -145,19 +145,19 @@ export function TrustBar() {
         >
           <div className="relative mb-4">
             {/* Glow behind logo */}
-            <div className="absolute inset-0 rounded-full bg-[#1E6FFF]/20 blur-2xl scale-150" />
+            <div className="absolute inset-0 rounded-full bg-[#1E6FFF]/20 blur-3xl scale-150" />
             <Image
               src="/PSI_Logo2.png"
               alt="PaySentinelIQ"
-              width={64}
-              height={64}
-              className="relative h-16 w-auto object-contain"
+              width={120}
+              height={120}
+              className="relative h-28 w-auto object-contain"
               priority
             />
           </div>
           <AppName
             as="span"
-            className="text-lg font-bold tracking-tight text-white"
+            className="text-2xl md:text-3xl font-bold tracking-tight text-white"
           />
         </motion.div>
 
