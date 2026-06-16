@@ -131,7 +131,9 @@
     "signUpFailed": "Registrierung fehlgeschlagen."
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "signIn": "Sign In",
+      "dashboard": "Dashboard",
+      "unknownUser": "User",
     "payroll": "Lohnzentrum",
     "verification": "Prüfzentrum",
     "fraudIntelligence": "Betrugserkennung",
@@ -1221,7 +1223,9 @@
       "preview": "Preview",
       "stats": "Stats",
       "getStarted": "Get Started",
-      "dashboard": "Dashboard"
+      "signIn": "Sign In",
+      "dashboard": "Dashboard",
+      "unknownUser": "User"
     },
     "preview": {
       "title": "See PaySentinelIQ in Action",

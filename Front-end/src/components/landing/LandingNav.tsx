@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,10 +34,27 @@ export function LandingNav() {
   const locale = useLocale();
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+
+  // ── User avatar helpers ──
+  const userInitials = useMemo(
+    () =>
+      user?.full_name
+        ?.split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase() || "?",
+    [user?.full_name]
+  );
+
+  const highResAvatarUrl = useMemo(
+    () => user?.avatar_url?.replace(/=s96-c$/, "=s256-c"),
+    [user?.avatar_url]
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -151,17 +168,36 @@ export function LandingNav() {
             </AnimatePresence>
           </div>
 
-          {/* CTA or Dashboard button */}
+          {/* CTA or Dashboard + Avatar */}
           {isAuthenticated ? (
-            <Button
-              onClick={() => router.push("/dashboard")}
-              variant="ghost"
-              size="sm"
-              className="hidden sm:inline-flex gap-2 text-white/70 hover:text-white"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden md:inline">{t("nav.dashboard")}</span>
-            </Button>
+            <div className="hidden sm:flex items-center gap-2">
+              {/* Avatar circle */}
+              <div className="relative h-8 w-8 shrink-0 rounded-full border-2 border-[#1E6FFF]/40 overflow-hidden bg-[#1E6FFF]/15">
+                {highResAvatarUrl ? (
+                  <Image
+                    src={highResAvatarUrl}
+                    alt={user?.full_name || ""}
+                    width={32}
+                    height={32}
+                    className="h-full w-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-xs font-bold text-[#1E6FFF]">
+                    {userInitials}
+                  </span>
+                )}
+              </div>
+              <Button
+                onClick={() => router.push("/dashboard")}
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-white/70 hover:text-white"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="hidden md:inline">{t("nav.dashboard")}</span>
+              </Button>
+            </div>
           ) : (
             <Button
               onClick={() => router.push("/auth/login")}
@@ -169,7 +205,7 @@ export function LandingNav() {
               className="gap-2 bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] hover:from-[#1E6FFF]/90 hover:to-[#6A4DFF]/90 text-white shadow-lg shadow-[#1E6FFF]/20"
             >
               <LogIn className="h-4 w-4" />
-              <span>{t("nav.getStarted")}</span>
+              <span>{t("nav.signIn")}</span>
             </Button>
           )}
 
@@ -225,16 +261,45 @@ export function LandingNav() {
               </a>
               <div className="pt-2 border-t border-white/[0.06]">
                 {isAuthenticated ? (
-                  <button
-                    onClick={() => {
-                      setMobileOpen(false);
-                      router.push("/dashboard");
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-[#1E6FFF] hover:bg-[#1E6FFF]/5 rounded-lg transition-colors"
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    {t("nav.dashboard")}
-                  </button>
+                  <div className="space-y-2">
+                    {/* User identity row */}
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <div className="relative h-9 w-9 shrink-0 rounded-full border-2 border-[#1E6FFF]/40 overflow-hidden bg-[#1E6FFF]/15">
+                        {highResAvatarUrl ? (
+                          <Image
+                            src={highResAvatarUrl}
+                            alt={user?.full_name || ""}
+                            width={36}
+                            height={36}
+                            className="h-full w-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center text-xs font-bold text-[#1E6FFF]">
+                            {userInitials}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-medium text-white truncate">
+                          {user?.full_name || t("nav.unknownUser")}
+                        </span>
+                        <span className="text-[10px] text-white/40">
+                          {user?.email || ""}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setMobileOpen(false);
+                        router.push("/dashboard");
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-[#1E6FFF] hover:bg-[#1E6FFF]/5 rounded-lg transition-colors"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      {t("nav.dashboard")}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     onClick={() => {
@@ -244,7 +309,7 @@ export function LandingNav() {
                     className="flex w-full items-center gap-2 px-3 py-2.5 text-sm font-medium bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] text-white rounded-lg"
                   >
                     <LogIn className="h-4 w-4" />
-                    {t("nav.getStarted")}
+                    {t("nav.signIn")}
                   </button>
                 )}
               </div>

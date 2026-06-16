@@ -1335,7 +1335,9 @@
       "preview": "Pré-visualização",
       "stats": "Estatísticas",
       "getStarted": "Começar Agora",
-      "dashboard": "Painel"
+      "signIn": "Entrar",
+      "dashboard": "Painel",
+      "unknownUser": "Usuário"
     },
     "preview": {
       "title": "Veja o PaySentinelIQ em Ação",

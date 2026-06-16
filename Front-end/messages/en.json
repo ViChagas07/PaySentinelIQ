@@ -1337,7 +1337,9 @@
       "preview": "Preview",
       "stats": "Stats",
       "getStarted": "Get Started",
-      "dashboard": "Dashboard"
+      "signIn": "Sign In",
+      "dashboard": "Dashboard",
+      "unknownUser": "User"
     },
     "preview": {
       "title": "See PaySentinelIQ in Action",
