@@ -70,7 +70,7 @@ export function LandingFooter() {
             custom={0}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
+            viewport={{ margin: "-40px" }}
             variants={footerVariants}
           >
             <Link href="/" className="inline-flex items-center gap-2">
@@ -117,7 +117,7 @@ export function LandingFooter() {
             custom={1}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
+            viewport={{ margin: "-40px" }}
             variants={footerVariants}
           >
             <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white/50">
@@ -142,7 +142,7 @@ export function LandingFooter() {
             custom={2}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
+            viewport={{ margin: "-40px" }}
             variants={footerVariants}
           >
             <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white/50">
@@ -167,7 +167,7 @@ export function LandingFooter() {
             custom={3}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
+            viewport={{ margin: "-40px" }}
             variants={footerVariants}
           >
             <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white/50">

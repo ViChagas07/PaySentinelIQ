@@ -167,7 +167,7 @@ function StatCard({
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ margin: "-60px" }}
       transition={{ duration: 0.5, delay: index * 0.12, ease: "easeOut" }}
       className={cn(
         "group relative rounded-2xl p-6",
@@ -271,7 +271,7 @@ export function StatsSection() {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
+          viewport={{ margin: "-80px" }}
           transition={{ duration: 0.5 }}
           className="mb-14 text-center lg:mb-16"
         >

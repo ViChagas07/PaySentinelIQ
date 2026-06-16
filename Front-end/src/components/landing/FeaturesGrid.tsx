@@ -105,7 +105,7 @@ export function FeaturesGrid() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-60px" }}
+          viewport={{ margin: "-60px" }}
         >
           {FEATURE_CARDS.map((card, idx) => {
             const Icon = card.icon;

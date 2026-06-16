@@ -120,7 +120,7 @@ function FloatingAnalysisCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ margin: "-80px" }}
       transition={{ delay: floatDelay + 0.3, duration: 0.5 }}
       className={cn(
         "relative w-full max-w-xs",
@@ -180,7 +180,7 @@ function FloatingAnalysisCard({
           className={cn("h-full rounded-full", iconColor.replace("text-", "bg-"))}
           initial={{ width: "0%" }}
           whileInView={{ width: "85%" }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ delay: floatDelay + 0.6, duration: 0.8, ease: "easeOut" }}
         />
       </div>
@@ -197,7 +197,7 @@ function TrustIndicator({ textKey, index }: { textKey: string; index: number }) 
       custom={index}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-40px" }}
+      viewport={{ margin: "-40px" }}
       variants={fadeUpStagger}
       className="flex items-center gap-2"
     >
@@ -244,7 +244,7 @@ export function LandingHero() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ margin: "-100px" }}
             variants={containerStagger}
             className="flex flex-col items-start text-left"
           >

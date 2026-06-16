@@ -203,7 +203,7 @@ function FakeSidebar() {
 function StatCards() {
   const t = useTranslations("landing");
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { margin: "-60px" });
 
   return (
     <div ref={ref} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -263,7 +263,7 @@ function StatCards() {
 
 function FakeChart() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { margin: "-60px" });
 
   return (
     <div
@@ -299,7 +299,7 @@ function FakeChart() {
 function FakeTable() {
   const t = useTranslations("landing");
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const inView = useInView(ref, { margin: "-40px" });
 
   return (
     <div
@@ -368,7 +368,7 @@ function FakeTable() {
 export function ProductPreview() {
   const t = useTranslations("landing");
   const sectionRef = useRef(null);
-  const inView = useInView(sectionRef, { once: true, margin: "-120px" });
+  const inView = useInView(sectionRef, { margin: "-120px" });
 
   return (
     <section

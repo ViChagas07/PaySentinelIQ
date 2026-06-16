@@ -140,7 +140,7 @@ export function TrustBar() {
           className="flex flex-col items-center justify-center mb-10"
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
+          viewport={{ margin: "-60px" }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <div className="relative mb-4">
@@ -166,7 +166,7 @@ export function TrustBar() {
           className="text-center text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-12"
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
+          viewport={{ margin: "-60px" }}
           transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
         >
           {t("trust.title")}
@@ -178,7 +178,7 @@ export function TrustBar() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
+          viewport={{ margin: "-80px" }}
         >
           {TRUST_ITEMS.map((item, idx) => (
             <TrustCard key={idx} item={item} />
