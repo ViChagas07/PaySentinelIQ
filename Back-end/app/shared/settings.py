@@ -116,6 +116,12 @@ class Settings(BaseSettings):
     ENABLE_OCR: bool = True
     ENABLE_COMPLIANCE_CHECKS: bool = True
 
+    # ── OCR ──
+    OCR_PROVIDER: str = "tesseract"  # "tesseract" (today) or "textract" (future)
+    OCR_LANGUAGE: str = "por+eng"    # Tesseract language codes
+    OCR_PREPROCESS: bool = True      # Enable image preprocessing
+    OCR_DPI: int = 300               # DPI for PDF-to-image conversion
+
     # ── Business ──
     MAX_UPLOAD_SIZE_MB: int = 50
     RISK_SCORE_THRESHOLD_HIGH: int = 70
