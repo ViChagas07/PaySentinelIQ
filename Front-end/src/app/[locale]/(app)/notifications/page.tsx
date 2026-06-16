@@ -3,7 +3,8 @@
 import { useState, useMemo, useCallback, useEffect, useSyncExternalStore, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Settings2, CheckCheck, XCircle, Loader2, WifiOff, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Bell, Settings2, CheckCheck, XCircle, Loader2, WifiOff, Clock, Trash2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { NotificationFilterPanel } from "@/components/notifications/NotificationFilterPanel";
@@ -17,6 +18,7 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
   useDismissNotification,
+  useDeleteNotificationsByAge,
   useNotificationSettings,
   useUpdateNotificationSettings,
 } from "@/hooks/useApi";
@@ -144,7 +146,11 @@ export default function NotificationsPage() {
   const markReadMutation = useMarkNotificationRead();
   const markAllReadMutation = useMarkAllNotificationsRead();
   const dismissMutation = useDismissNotification();
+  const deleteByAgeMutation = useDeleteNotificationsByAge();
   const updateSettingsMutation = useUpdateNotificationSettings();
+
+  // ── Delete dropdown state ──
+  const [deleteMenuOpen, setDeleteMenuOpen] = useState(false);
 
   // ── Realtime WebSocket (ALWAYS active — even during empty/error states) ──
   useRealtimeNotifications(true);
@@ -239,6 +245,26 @@ export default function NotificationsPage() {
   const handleMarkAllRead = useCallback(() => {
     markAllReadMutation.mutate();
   }, [markAllReadMutation]);
+
+  // ── Delete options ──
+  const DELETE_OPTIONS = useMemo(
+    () => [
+      { key: "1d", labelKey: "header.deleteYesterday" as const, olderThan: "1d" },
+      { key: "3d", labelKey: "header.delete3Days" as const, olderThan: "3d" },
+      { key: "7d", labelKey: "header.delete7Days" as const, olderThan: "7d" },
+      { key: "30d", labelKey: "header.delete30Days" as const, olderThan: "30d" },
+      { key: "all", labelKey: "header.deleteAll" as const, olderThan: "0d" },
+    ],
+    [],
+  );
+
+  const handleDeleteByAge = useCallback(
+    (olderThan: string) => {
+      setDeleteMenuOpen(false);
+      deleteByAgeMutation.mutate(olderThan);
+    },
+    [deleteByAgeMutation],
+  );
 
   const handleViewNotification = useCallback(
     (id: string, url: string) => {
@@ -485,6 +511,58 @@ export default function NotificationsPage() {
                 )}{" "}
                 {t("header.markAllRead")}
               </Button>
+            </motion.div>
+
+            {/* Delete (Trash) with time dropdown */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.45 }}
+              className="relative"
+            >
+              <Button
+                onClick={() => setDeleteMenuOpen(!deleteMenuOpen)}
+                variant="secondary"
+                size="sm"
+                disabled={allNotifications.length === 0 || deleteByAgeMutation.isPending}
+                aria-label={t("header.delete")}
+              >
+                {deleteByAgeMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}{" "}
+                {t("header.delete")}
+                <ChevronDown className={cn("h-3 w-3 ml-1 transition-transform", deleteMenuOpen && "rotate-180")} />
+              </Button>
+
+              <AnimatePresence>
+                {deleteMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.96 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-44 rounded-xl border border-border bg-card shadow-2xl shadow-black/30 overflow-hidden z-50"
+                  >
+                    <div className="px-3 py-2 border-b border-border">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-psi-text-secondary/60">
+                        {t("header.deleteOlderThan")}
+                      </p>
+                    </div>
+                    {DELETE_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.key}
+                        onClick={() => handleDeleteByAge(opt.olderThan)}
+                        className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-psi-text-secondary hover:bg-psi-fraud/10 hover:text-psi-fraud transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        {t(opt.labelKey)}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Settings */}

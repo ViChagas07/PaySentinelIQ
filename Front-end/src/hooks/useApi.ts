@@ -288,6 +288,18 @@ export function useDismissNotification() {
   });
 }
 
+export function useDeleteNotificationsByAge() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (olderThan: string) =>
+      api.delete<{ deleted: number }>(`/notifications/bulk?older_than=${olderThan}`),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    },
+  });
+}
+
 export function useUpdateNotificationSettings() {
   const queryClient = useQueryClient();
 

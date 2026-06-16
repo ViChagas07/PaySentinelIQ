@@ -994,6 +994,13 @@
       "subtitle": "Track critical events, payments, suspicious activities, and AI-generated alerts in real time.",
       "unreadLabel": "unread",
       "markAllRead": "Mark All",
+      "delete": "Delete",
+      "deleteOlderThan": "Delete older than",
+      "deleteYesterday": "Yesterday",
+      "delete3Days": "3 days",
+      "delete7Days": "7 days",
+      "delete30Days": "1 month",
+      "deleteAll": "All time",
       "settings": "Settings"
     },
     "filters": {

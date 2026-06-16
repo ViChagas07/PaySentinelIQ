@@ -992,6 +992,13 @@
       "subtitle": "Acompanhe eventos críticos, pagamentos, atividades suspeitas e alertas gerados por IA em tempo real.",
       "unreadLabel": "não lidas",
       "markAllRead": "Marcar tudo",
+      "delete": "Excluir",
+      "deleteOlderThan": "Excluir mais antigas que",
+      "deleteYesterday": "Ontem",
+      "delete3Days": "3 dias",
+      "delete7Days": "7 dias",
+      "delete30Days": "1 mês",
+      "deleteAll": "Sempre",
       "settings": "Configurações"
     },
     "filters": {
