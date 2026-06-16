@@ -23,6 +23,7 @@ import {
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useOsNotifications } from "@/hooks/useOsNotifications";
 import { useAlertStore } from "@/stores";
+import { ApiClientError } from "@/lib/api";
 
 // ── Browser online/offline subscription ──
 function subscribeToOnlineStatus(callback: () => void) {
@@ -66,15 +67,30 @@ function derivePageState(
   // Error occurred
   if (isError) {
     const msg = error?.message?.toLowerCase() ?? "";
+
+    // Timeout / abort — network hiccup, not a server crash
     if (msg.includes("timeout") || msg.includes("abort")) {
-      // If we have cached data (even empty), show ready with warning — not timeout page
+      // If we have cached data, show ready with warning
       if (hasCachedData) return "ready";
-      return "timeout";
+      // No cached data: treat as empty — the user likely has no notifications.
+      // A timeout means the server may be slow, not down.
+      return "empty";
     }
-    // If we have cached data (even empty), treat as ready with stale data + warning banner
+
+    // If we have cached data, treat as ready with stale data + warning banner
     if (hasCachedData) return "ready";
-    // No cached data at all — genuine error
-    return "error";
+
+    // No cached data — check if this is a genuine server crash (5xx)
+    // or a benign error (404 not found, network issue, etc.)
+    if (error instanceof ApiClientError && error.status >= 500) {
+      // Genuine server error — show error state
+      return "error";
+    }
+
+    // Non-critical error (404, network, etc.) — treat as empty.
+    // The user likely has no notifications; showing "Server unavailable"
+    // is scarier and less accurate than showing "No notifications yet."
+    return "empty";
   }
 
   // Success but no notifications
