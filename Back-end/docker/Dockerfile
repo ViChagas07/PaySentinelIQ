@@ -32,6 +32,10 @@ RUN groupadd -r psi && useradd -r -g psi psi
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     curl \
+    tesseract-ocr \
+    tesseract-ocr-por \
+    tesseract-ocr-eng \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy ONLY the project's virtualenv site-packages (not Poetry's own deps).
