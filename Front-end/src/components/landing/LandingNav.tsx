@@ -173,17 +173,15 @@ export function LandingNav() {
             <div className="hidden sm:flex items-center gap-2">
               {/* Avatar circle */}
               <div className="relative h-8 w-8 shrink-0 rounded-full border-2 border-[#1E6FFF]/40 overflow-hidden bg-[#1E6FFF]/15">
-                {highResAvatarUrl ? (
-                  <Image
-                    src={highResAvatarUrl}
+                {user?.avatar_url ? (
+                  <img
+                    src={highResAvatarUrl ?? user.avatar_url}
                     alt={user?.full_name || ""}
-                    width={32}
-                    height={32}
-                    className="h-full w-full object-cover"
+                    className="absolute inset-0 h-full w-full object-cover"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <span className="flex h-full w-full items-center justify-center text-xs font-bold text-[#1E6FFF]">
+                  <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#1E6FFF]">
                     {userInitials}
                   </span>
                 )}
@@ -265,17 +263,15 @@ export function LandingNav() {
                     {/* User identity row */}
                     <div className="flex items-center gap-3 px-3 py-2">
                       <div className="relative h-9 w-9 shrink-0 rounded-full border-2 border-[#1E6FFF]/40 overflow-hidden bg-[#1E6FFF]/15">
-                        {highResAvatarUrl ? (
-                          <Image
-                            src={highResAvatarUrl}
+                        {user?.avatar_url ? (
+                          <img
+                            src={highResAvatarUrl ?? user.avatar_url}
                             alt={user?.full_name || ""}
-                            width={36}
-                            height={36}
-                            className="h-full w-full object-cover"
+                            className="absolute inset-0 h-full w-full object-cover"
                             referrerPolicy="no-referrer"
                           />
                         ) : (
-                          <span className="flex h-full w-full items-center justify-center text-xs font-bold text-[#1E6FFF]">
+                          <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#1E6FFF]">
                             {userInitials}
                           </span>
                         )}
