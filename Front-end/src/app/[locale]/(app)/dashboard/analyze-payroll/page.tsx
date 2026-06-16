@@ -16,37 +16,8 @@ import {
   FileText, Upload, Brain, ShieldAlert, Sparkles, Zap,
   ArrowRight, History, FileCheck,
 } from "lucide-react";
-import { generateId } from "@/stores/analysis-store";
-
-function generateMockPayrollResult(fileName: string, locale: string): AnalysisResult {
-  const riskScore = Math.floor(Math.random() * 100);
-  return {
-    id: generateId(),
-    fileName, documentType: "payroll", riskScore,
-    fraudProbability: Math.floor(Math.random() * 90) + 5,
-    confidenceScore: Math.floor(Math.random() * 15) + 82,
-    aiSummary: riskScore > 60
-      ? "Multiple anomalies detected in this payroll document. Salary discrepancy of 32% above expected range. Tax withholding mismatch of $4,230. Potential ghost employee pattern identified — duplicate banking details across 3 records."
-      : "Payroll document verified with high confidence. Minor discrepancies in overtime calculation (±2.1%). All tax deductions align with expected brackets. No fraud indicators detected.",
-    ocrData: { "Employee Name": "James R. Mitchell", "Employee ID": "EMP-2841", "Gross Salary": "$8,450.00", "Net Pay": "$6,287.35", "Tax Withheld": "$2,162.65", "Department": "Engineering", "Pay Period": "May 1–15, 2026" },
-    metadata: { "File Type": fileName.endsWith(".pdf") ? "PDF 1.7" : "PNG Image", "Created": "2026-05-10 14:23:45", "Modified": "2026-05-10 14:23:45", "Author": "HR Department", "Pages": "1", "Software": fileName.endsWith(".pdf") ? "Adobe Acrobat 2024" : "N/A" },
-    financialInconsistencies: riskScore > 40 ? ["Salary 32% above department median ($6,400)", "Tax withholding $4,230 below expected bracket", "Overtime hours exceed legal limit by 14h"] : [],
-    manipulationIndicators: riskScore > 60 ? ["PDF creation date predates hire date by 3 months", "Font inconsistencies in salary field", "Metadata shows editing after signature date"] : [],
-    recommendedActions: riskScore > 60 ? ["Flag for manual review by senior analyst", "Cross-reference with HR employment records", "Request original signed document", "Initiate salary audit for Engineering department"] : ["Routine verification complete — no action required"],
-    analysisTimeline: [
-      { stage: "OCR Extraction", duration: 1.2, status: "pass" }, { stage: "Metadata Integrity", duration: 0.8, status: riskScore > 60 ? "fail" : "pass" },
-      { stage: "Fraud Pattern Scan", duration: 2.1, status: riskScore > 40 ? "warn" : "pass" }, { stage: "Salary Benchmarking", duration: 1.5, status: riskScore > 30 ? "warn" : "pass" },
-      { stage: "Tax Compliance Check", duration: 1.0, status: riskScore > 50 ? "fail" : "pass" }, { stage: "Risk Scoring", duration: 0.6, status: riskScore > 60 ? "fail" : "pass" },
-    ],
-    statusIndicators: [
-      { label: "Signature Valid", value: riskScore < 70, severity: "high" }, { label: "Tax ID Match", value: riskScore < 50, severity: "high" },
-      { label: "Salary in Range", value: riskScore < 40, severity: "medium" }, { label: "Duplicate Check", value: riskScore < 80, severity: "critical" },
-      { label: "Metadata Consistent", value: riskScore < 60, severity: "medium" }, { label: "Bank Account Valid", value: riskScore < 70, severity: "high" },
-    ],
-    createdAt: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-    processingDuration: +(Math.random() * 8 + 3).toFixed(1),
-  };
-}
+import { useAnalyzeDocument } from "@/hooks/useApi";
+import { mapPSIReportToAnalysisResult } from "@/lib/analysis-mapper";
 
 export default function AnalyzePayrollPage() {
   const t = useTranslations("analysis");
@@ -62,16 +33,77 @@ export default function AnalyzePayrollPage() {
   const isProcessing = useAnalysisStore((s) => s.isProcessing);
   const currentStage = useAnalysisStore((s) => s.currentStage);
   const resetAll = useAnalysisStore((s) => s.resetAll);
+  const extraInfo = useAnalysisStore((s) => s.extraInfo);
   const { start: startPipeline } = useSimulatePipeline();
 
-  const handleAnalyze = useCallback(() => {
+  const analyzeMutation = useAnalyzeDocument();
+
+  const handleAnalyze = useCallback(async () => {
     if (files.length === 0 || isProcessing) return;
-    clearResults(); startPipeline();
-    setTimeout(() => {
-      const newResults = files.filter((f) => f.status === "done").map((f) => generateMockPayrollResult(f.name, locale));
-      newResults.forEach((r) => { addResult(r); addHistoryEntry({ id: r.id, fileName: r.fileName, documentType: "payroll", uploadDate: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" }), status: r.riskScore >= 70 ? "flagged" : "completed", riskScore: r.riskScore, processingDuration: r.processingDuration, aiSummary: r.aiSummary, resultId: r.id }); });
-    }, 12000);
-  }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry, locale]);
+    clearResults();
+    startPipeline();
+
+    const doneFiles = files.filter((f) => f.status === "done");
+    const newResults: AnalysisResult[] = [];
+
+    for (const file of doneFiles) {
+      try {
+        const payload: any = {
+          document_type: "contracheque",
+        };
+
+        // Map extraInfo fields to backend payload
+        if (extraInfo.expectedSalary) {
+          const sal = parseFloat(extraInfo.expectedSalary);
+          if (!isNaN(sal)) payload.salario_bruto = sal;
+        }
+        if (extraInfo.employeeName) payload.nome_funcionario = extraInfo.employeeName;
+        if (extraInfo.companyName) payload.razao_social = extraInfo.companyName;
+        if (extraInfo.jobPosition) payload.cargo = extraInfo.jobPosition;
+        if (extraInfo.payrollPeriod) payload.periodo = extraInfo.payrollPeriod;
+
+        const report = await analyzeMutation.mutateAsync(payload);
+        const result = mapPSIReportToAnalysisResult(report, file.name, "payroll", locale);
+        newResults.push(result);
+      } catch (err) {
+        console.error("Analysis failed for", file.name, err);
+        // Fallback: show a basic error result
+        newResults.push({
+          id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          fileName: file.name,
+          documentType: "payroll",
+          riskScore: 0,
+          fraudProbability: 0,
+          confidenceScore: 0,
+          aiSummary: `Analysis failed: ${err instanceof Error ? err.message : "Unknown error"}. Please try again.`,
+          ocrData: {},
+          metadata: {},
+          financialInconsistencies: [],
+          manipulationIndicators: [],
+          recommendedActions: ["Retry analysis or contact support"],
+          analysisTimeline: [],
+          statusIndicators: [],
+          createdAt: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+          processingDuration: 0,
+        });
+      }
+    }
+
+    newResults.forEach((r) => {
+      addResult(r);
+      addHistoryEntry({
+        id: r.id,
+        fileName: r.fileName,
+        documentType: "payroll",
+        uploadDate: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" }),
+        status: r.riskScore >= 70 ? "flagged" : "completed",
+        riskScore: r.riskScore,
+        processingDuration: r.processingDuration,
+        aiSummary: r.aiSummary,
+        resultId: r.id,
+      });
+    });
+  }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry, locale, extraInfo, analyzeMutation]);
 
   const showResults = results.length > 0 && !isProcessing && currentStage === "complete";
   const canAnalyze = files.filter((f) => f.status === "done").length > 0 && !isProcessing;

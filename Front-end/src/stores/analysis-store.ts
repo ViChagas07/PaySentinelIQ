@@ -64,6 +64,8 @@ export interface ExtraInfo {
   employeeName?: string;
   companyName?: string;
   expectedSalary?: string;
+  expectedAmount?: string;
+  recipientName?: string;
   jobPosition?: string;
   employmentType?: string;
   notes?: string;

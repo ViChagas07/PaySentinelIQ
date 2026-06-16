@@ -538,3 +538,29 @@ export function useUpdateReminderPreferences() {
     },
   });
 }
+
+// ============================================================
+// Document Analysis Hook
+// ============================================================
+
+export function useAnalyzeDocument() {
+  return useMutation({
+    mutationFn: (payload: {
+      document_type: string;
+      salario_bruto?: number;
+      inss?: number;
+      irrf?: number;
+      fgts?: number;
+      liquido?: number;
+      cargo?: string;
+      cbo?: string;
+      cnpj?: string;
+      razao_social?: string;
+      cnae?: string;
+      linha_digitavel?: string;
+      qr_code_payload?: string;
+      nome_funcionario?: string;
+      periodo?: string;
+    }) => api.post<any>("/fraud-alerts/analyze", payload),
+  });
+}

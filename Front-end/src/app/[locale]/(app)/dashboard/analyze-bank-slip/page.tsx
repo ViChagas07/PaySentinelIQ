@@ -16,37 +16,8 @@ import {
   FileText, Upload, Brain, ShieldAlert, Sparkles, Zap,
   ArrowRight, History, FileCheck, Barcode, CreditCard,
 } from "lucide-react";
-import { generateId } from "@/stores/analysis-store";
-
-function generateMockBankSlipResult(fileName: string, locale: string): AnalysisResult {
-  const riskScore = Math.floor(Math.random() * 100);
-  return {
-    id: generateId(),
-    fileName, documentType: "bank-slip", riskScore,
-    fraudProbability: Math.floor(Math.random() * 85) + 10,
-    confidenceScore: Math.floor(Math.random() * 15) + 80,
-    aiSummary: riskScore > 60
-      ? "High-risk boleto detected. Barcode checksum validation failed. Issuer CNPJ does not match registered financial institution. Payment destination account flagged for PIX fraud in 3 previous incidents. Expiration date inconsistent with issuance date."
-      : "Bank slip validated successfully. Barcode structure conforms to FEBRABAN standards. Issuer verified against Central Bank registry. Payment amount matches nominal value. No PIX fraud indicators found.",
-    ocrData: { "Beneficiary": "TechServ Soluções Ltda", "CNPJ/CPF": "12.345.678/0001-99", "Amount": "R$ 1,847.50", "Due Date": "2026-06-15", "Barcode": "34191.79001 01043.510047 91020.150004 1 91230000184750", "Document Number": "BLT-2026-00482" },
-    metadata: { "File Type": fileName.endsWith(".pdf") ? "PDF 1.7" : "PNG Image", "Created": "2026-05-08 09:15:22", "Modified": "2026-05-08 09:15:22", "Author": "Financeiro TechServ", "Pages": "1", "Barcode Format": "FEBRABAN Standard V5" },
-    financialInconsistencies: riskScore > 30 ? ["Barcode nominal value differs from displayed amount by R$ 23.50", "Due date falls on a national holiday", "Collection agency not registered with BACEN"] : [],
-    manipulationIndicators: riskScore > 50 ? ["Barcode digits 17-20 altered (visible Photoshop artifacts)", "Issuer logo low resolution — likely copied from web", "Watermark missing under UV light simulation", "MICR line font mismatch in payment slip"] : [],
-    recommendedActions: riskScore > 60 ? ["Block payment immediately", "Report to BACEN fraud department", "Contact issuing bank for verification", "Cross-reference CNPJ with Receita Federal database"] : ["Payment approved — standard routing"],
-    analysisTimeline: [
-      { stage: "Barcode Decoding", duration: 0.9, status: "pass" }, { stage: "Checksum Validation", duration: 0.6, status: riskScore > 60 ? "fail" : "pass" },
-      { stage: "Issuer Verification", duration: 1.4, status: riskScore > 40 ? "warn" : "pass" }, { stage: "PIX Fraud Scan", duration: 1.8, status: riskScore > 50 ? "fail" : "pass" },
-      { stage: "Amount Consistency", duration: 0.7, status: riskScore > 30 ? "warn" : "pass" }, { stage: "Forgery Detection", duration: 2.2, status: riskScore > 60 ? "fail" : "pass" },
-    ],
-    statusIndicators: [
-      { label: "Barcode Valid", value: riskScore < 70, severity: "critical" }, { label: "Issuer Registered", value: riskScore < 50, severity: "high" },
-      { label: "Amount Match", value: riskScore < 40, severity: "high" }, { label: "PIX Destination Safe", value: riskScore < 80, severity: "critical" },
-      { label: "Date Consistent", value: riskScore < 45, severity: "medium" }, { label: "Anti-Forgery Pass", value: riskScore < 60, severity: "high" },
-    ],
-    createdAt: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-    processingDuration: +(Math.random() * 7 + 2.5).toFixed(1),
-  };
-}
+import { useAnalyzeDocument } from "@/hooks/useApi";
+import { mapPSIReportToAnalysisResult } from "@/lib/analysis-mapper";
 
 export default function AnalyzeBankSlipPage() {
   const t = useTranslations("analysis");
@@ -62,16 +33,74 @@ export default function AnalyzeBankSlipPage() {
   const isProcessing = useAnalysisStore((s) => s.isProcessing);
   const currentStage = useAnalysisStore((s) => s.currentStage);
   const resetAll = useAnalysisStore((s) => s.resetAll);
+  const extraInfo = useAnalysisStore((s) => s.extraInfo);
   const { start: startPipeline } = useSimulatePipeline();
 
-  const handleAnalyze = useCallback(() => {
+  const analyzeMutation = useAnalyzeDocument();
+
+  const handleAnalyze = useCallback(async () => {
     if (files.length === 0 || isProcessing) return;
-    clearResults(); startPipeline();
-    setTimeout(() => {
-      const newResults = files.filter((f) => f.status === "done").map((f) => generateMockBankSlipResult(f.name, locale));
-      newResults.forEach((r) => { addResult(r); addHistoryEntry({ id: r.id, fileName: r.fileName, documentType: "bank-slip", uploadDate: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" }), status: r.riskScore >= 70 ? "flagged" : "completed", riskScore: r.riskScore, processingDuration: r.processingDuration, aiSummary: r.aiSummary, resultId: r.id }); });
-    }, 12000);
-  }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry, locale]);
+    clearResults();
+    startPipeline();
+
+    const doneFiles = files.filter((f) => f.status === "done");
+    const newResults: AnalysisResult[] = [];
+
+    for (const file of doneFiles) {
+      try {
+        const payload: any = {
+          document_type: "boleto",
+        };
+
+        if (extraInfo.companyName) payload.razao_social = extraInfo.companyName;
+        if (extraInfo.expectedAmount) {
+          const amt = parseFloat(extraInfo.expectedAmount);
+          if (!isNaN(amt)) payload.valor_nominal = amt;
+        }
+        if (extraInfo.recipientName) payload.beneficiario = extraInfo.recipientName;
+        if (extraInfo.suspiciousObservations) payload.linha_digitavel = extraInfo.suspiciousObservations;
+
+        const report = await analyzeMutation.mutateAsync(payload);
+        const result = mapPSIReportToAnalysisResult(report, file.name, "bank-slip", locale);
+        newResults.push(result);
+      } catch (err) {
+        console.error("Analysis failed for", file.name, err);
+        newResults.push({
+          id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          fileName: file.name,
+          documentType: "bank-slip",
+          riskScore: 0,
+          fraudProbability: 0,
+          confidenceScore: 0,
+          aiSummary: `Analysis failed: ${err instanceof Error ? err.message : "Unknown error"}. Please try again.`,
+          ocrData: {},
+          metadata: {},
+          financialInconsistencies: [],
+          manipulationIndicators: [],
+          recommendedActions: ["Retry analysis or contact support"],
+          analysisTimeline: [],
+          statusIndicators: [],
+          createdAt: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+          processingDuration: 0,
+        });
+      }
+    }
+
+    newResults.forEach((r) => {
+      addResult(r);
+      addHistoryEntry({
+        id: r.id,
+        fileName: r.fileName,
+        documentType: "bank-slip",
+        uploadDate: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" }),
+        status: r.riskScore >= 70 ? "flagged" : "completed",
+        riskScore: r.riskScore,
+        processingDuration: r.processingDuration,
+        aiSummary: r.aiSummary,
+        resultId: r.id,
+      });
+    });
+  }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry, locale, extraInfo, analyzeMutation]);
 
   const showResults = results.length > 0 && !isProcessing && currentStage === "complete";
   const canAnalyze = files.filter((f) => f.status === "done").length > 0 && !isProcessing;
