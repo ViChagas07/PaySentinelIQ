@@ -168,7 +168,7 @@ export function LandingNav() {
             </AnimatePresence>
           </div>
 
-          {/* CTA or Dashboard + Avatar */}
+          {/* CTA or Dashboard + Avatar (desktop) */}
           {isAuthenticated ? (
             <div className="hidden sm:flex items-center gap-2">
               {/* Avatar circle */}
@@ -200,21 +200,33 @@ export function LandingNav() {
             <Button
               onClick={() => router.push("/auth/login")}
               size="sm"
-              className="gap-2 bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] hover:from-[#1E6FFF]/90 hover:to-[#6A4DFF]/90 text-white shadow-lg shadow-[#1E6FFF]/20"
+              className="hidden sm:inline-flex gap-2 bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] hover:from-[#1E6FFF]/90 hover:to-[#6A4DFF]/90 text-white shadow-lg shadow-[#1E6FFF]/20"
             >
               <LogIn className="h-4 w-4" />
               <span>{t("nav.signIn")}</span>
             </Button>
           )}
 
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden rounded-lg p-2 text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer"
-            aria-label={mobileOpen ? tc("close") : tc("openMenu")}
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {/* Guest "Entrar" button + hamburger (mobile only) */}
+          <div className="flex sm:hidden items-center gap-2">
+            {!isAuthenticated && (
+              <Button
+                onClick={() => router.push("/auth/login")}
+                size="sm"
+                className="gap-1.5 bg-gradient-to-r from-[#1E6FFF] to-[#6A4DFF] hover:from-[#1E6FFF]/90 hover:to-[#6A4DFF]/90 text-white text-xs shadow-lg shadow-[#1E6FFF]/20 px-3 py-1.5"
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                {t("nav.signIn")}
+              </Button>
+            )}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="rounded-lg p-2 text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer"
+              aria-label={mobileOpen ? tc("close") : tc("openMenu")}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
