@@ -128,7 +128,14 @@
     "mustAgreeToTerms": "You must agree to the Terms of Service.",
     "signUpFailed": "Sign-up failed.",
     "networkError": "Network error. Please check your connection.",
-    "redirectingToDashboard": "Redirecting to dashboard..."
+    "redirectingToDashboard": "Redirecting to dashboard...",
+    "roleAdmin": "Admin",
+    "roleFraudAnalyst": "Fraud Analyst",
+    "roleComplianceOfficer": "Compliance Officer",
+    "roleHrManager": "HR Manager",
+    "rolePayrollSpecialist": "Payroll Specialist",
+    "roleAuditor": "Auditor",
+    "roleViewer": "Viewer"
   },
   "nav": {
     "dashboard": "Dashboard",

@@ -158,6 +158,15 @@ export function Navbar() {
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [globeHovered, setGlobeHovered] = useState(false);
 
+  // ── Role to translation key helper ──
+  // "fraud_analyst" → "roleFraudAnalyst", "admin" → "roleAdmin"
+  const roleKey = user?.role
+    ? `role${user.role
+        .split("_")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join("")}`
+    : null;
+
   const userInitials = user?.full_name
     ?.split(" ")
     .map((n) => n[0])
@@ -377,7 +386,7 @@ export function Navbar() {
                       </p>
                       <p className="text-[11px] text-psi-text-secondary mt-0.5">{user?.email}</p>
                       <span className="inline-block mt-1.5 rounded-full bg-psi-electric/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-psi-electric">
-                        {user?.role?.replace("_", " ") || ta("guest")}
+                        {roleKey ? ta(roleKey as any) : ta("guest")}
                       </span>
                     </div>
 

@@ -128,7 +128,14 @@
     "mustAgreeToTerms": "Você precisa concordar com os Termos de Serviço.",
     "signUpFailed": "Falha no cadastro.",
     "networkError": "Erro de rede. Verifique sua conexão.",
-    "redirectingToDashboard": "Redirecionando para o painel..."
+    "redirectingToDashboard": "Redirecionando para o painel...",
+    "roleAdmin": "Administrador",
+    "roleFraudAnalyst": "Analista de Fraudes",
+    "roleComplianceOfficer": "Oficial de Compliance",
+    "roleHrManager": "Gerente de RH",
+    "rolePayrollSpecialist": "Especialista em Pagamentos",
+    "roleAuditor": "Auditor",
+    "roleViewer": "Visualizador"
   },
   "nav": {
     "dashboard": "Painel Principal",
