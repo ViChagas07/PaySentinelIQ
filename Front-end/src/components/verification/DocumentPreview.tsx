@@ -268,6 +268,7 @@ function EmptyState({
 }) {
   const t = useTranslations("verification");
   const ta = useTranslations("analysis");
+  const tc = useTranslations("common");
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
@@ -305,6 +306,9 @@ function EmptyState({
 
         {/* Google Drive — single direct button */}
         {isGoogleConfigured && (
+          <>
+            <span className="text-xs text-psi-text-secondary/50">{tc("or")}</span>
+
           <button
             onClick={onDriveUpload}
             disabled={googleLoading}
@@ -317,6 +321,7 @@ function EmptyState({
             )}
             {ta("source.openDrive")}
           </button>
+          </>
         )}
       </div>
 
