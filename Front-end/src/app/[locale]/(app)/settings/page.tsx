@@ -13,7 +13,7 @@ import {
   Wrench, Moon, Sun, Monitor, Check, ChevronDown, Save, RotateCcw,
   Type, Maximize, Minimize, Languages, Eye, Keyboard, Volume2,
   Smartphone, Mail, Clock, AlertTriangle, Key, Trash2,
-  LogIn, UserPlus,
+  LogIn, UserPlus, FileText, Gavel, Download, Database, Fingerprint,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/Switch";
@@ -174,6 +174,240 @@ function BackgroundColorPicker({
 }
 
 /* ═══════════════════════════════════════════════════
+   Privacy & Data Section
+   ═══════════════════════════════════════════════════ */
+
+function PrivacySection({
+  t, tc,
+}: {
+  t: (key: string) => string;
+  tc: (key: string) => string;
+}) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState("");
+  const [showDeletionModal, setShowDeletionModal] = useState(false);
+  const [deletionConfirm, setDeletionConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deletionMsg, setDeletionMsg] = useState("");
+
+  // ── Data Export ──
+  const handleExport = async () => {
+    setExporting(true);
+    setExportMsg("");
+    try {
+      const res = await fetch("/api/account/export/download", {
+        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` },
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `paysentinel_data_export_${Date.now()}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setExportMsg(t("privacy.exportSuccess"));
+    } catch {
+      setExportMsg(t("privacy.exportError"));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // ── Account Deletion ──
+  const handleDeletion = async () => {
+    if (!deletionConfirm) return;
+    setDeleting(true);
+    setDeletionMsg("");
+    try {
+      const res = await fetch("/api/account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${useAuthStore.getState().token}`,
+        },
+        body: JSON.stringify({ confirm: true }),
+      });
+      if (!res.ok) throw new Error("Deletion failed");
+      setDeletionMsg(t("privacy.deletionRequested"));
+      setShowDeletionModal(false);
+    } catch {
+      setDeletionMsg("Failed. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Mock consent records (in production, fetched from GET /api/consent)
+  const consentRecords = [
+    { type: "terms_of_service", terms_version: "1.0.0", privacy_version: "1.0.0", accepted_at: "2026-06-18T12:00:00Z", ip_address: "192.168.1.1", method: "checkbox" },
+  ];
+
+  const formatDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="space-y-8">
+      {/* ── Policy Documents ── */}
+      <section>
+        <h3 className="text-sm font-semibold text-psi-text-primary mb-1">{t("privacy.policyDocuments")}</h3>
+        <p className="text-xs text-psi-text-secondary mb-4">{t("privacy.policyDocumentsDescription")}</p>
+        <div className="flex flex-wrap gap-3">
+          <a
+            href="/en/privacy-policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-psi-border bg-white/[0.02] text-sm text-psi-text-secondary hover:text-white hover:border-white/[0.15] hover:bg-white/[0.04] transition-all"
+          >
+            <FileText className="h-4 w-4 text-psi-electric/70" />
+            {t("privacy.viewPrivacyPolicy")}
+          </a>
+          <a
+            href="/en/privacy-policy#terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-psi-border bg-white/[0.02] text-sm text-psi-text-secondary hover:text-white hover:border-white/[0.15] hover:bg-white/[0.04] transition-all"
+          >
+            <Gavel className="h-4 w-4 text-psi-electric/70" />
+            {t("privacy.viewTermsOfService")}
+          </a>
+        </div>
+      </section>
+
+      {/* ── Consent History ── */}
+      <section>
+        <h3 className="text-sm font-semibold text-psi-text-primary mb-1">{t("privacy.consentHistory")}</h3>
+        <p className="text-xs text-psi-text-secondary mb-4">{t("privacy.consentHistoryDescription")}</p>
+        {consentRecords.length === 0 ? (
+          <p className="text-xs text-psi-text-secondary/60 italic">{t("privacy.noConsentRecords")}</p>
+        ) : (
+          <div className="rounded-xl border border-white/[0.06] overflow-hidden">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-white/[0.06] bg-white/[0.01]">
+                  <th className="text-left px-4 py-2.5 font-medium text-white/50">{t("privacy.consentType")}</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-white/50">{t("privacy.consentVersion")}</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-white/50 hidden sm:table-cell">{t("privacy.consentDate")}</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-white/50 hidden md:table-cell">{t("privacy.consentMethod")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {consentRecords.map((r, i) => (
+                  <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-2.5 text-white/80">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-psi-electric/10 text-psi-electric text-[10px] font-medium">
+                        <Shield className="h-2.5 w-2.5" />
+                        Terms + Privacy
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-white/60 font-mono text-[11px]">
+                      T {r.terms_version} / P {r.privacy_version}
+                    </td>
+                    <td className="px-4 py-2.5 text-white/50 hidden sm:table-cell">{formatDate(r.accepted_at)}</td>
+                    <td className="px-4 py-2.5 text-white/50 hidden md:table-cell">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.04] text-[10px]">
+                        <Check className="h-2.5 w-2.5 text-psi-emerald/70" />
+                        Checkbox
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* ── Data Export ── */}
+      <section>
+        <h3 className="text-sm font-semibold text-psi-text-primary mb-1">{t("privacy.dataExport")}</h3>
+        <p className="text-xs text-psi-text-secondary mb-4">{t("privacy.dataExportDescription")}</p>
+        <button
+          onClick={handleExport}
+          disabled={exporting || !isAuthenticated}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-psi-electric text-white text-sm font-medium hover:bg-psi-electric/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          {exporting ? (
+            <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          {exporting ? t("privacy.exporting") : t("privacy.exportDataButton")}
+        </button>
+        {exportMsg && (
+          <p className={cn("mt-3 text-xs", exportMsg.includes("failed") || exportMsg.includes("Failed") ? "text-psi-fraud" : "text-psi-emerald")}>
+            {exportMsg}
+          </p>
+        )}
+      </section>
+
+      {/* ── Account Deletion ── */}
+      <section>
+        <h3 className="text-sm font-semibold text-psi-text-primary mb-1">{t("privacy.accountDeletion")}</h3>
+        <p className="text-xs text-psi-text-secondary mb-4">{t("privacy.accountDeletionDescription")}</p>
+        <button
+          onClick={() => { setShowDeletionModal(true); setDeletionConfirm(false); setDeletionMsg(""); }}
+          disabled={!isAuthenticated}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-psi-fraud/40 bg-psi-fraud/[0.04] text-sm font-medium text-psi-fraud hover:bg-psi-fraud/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          <Trash2 className="h-4 w-4" />
+          {t("privacy.requestDeletionButton")}
+        </button>
+        {deletionMsg && (
+          <p className="mt-3 text-xs text-psi-emerald">{deletionMsg}</p>
+        )}
+      </section>
+
+      {/* ── Deletion Confirmation Modal ── */}
+      {showDeletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeletionModal(false)}>
+          <div
+            className="w-full max-w-md rounded-2xl border border-psi-border bg-psi-graphite p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-psi-fraud/10">
+                <AlertTriangle className="h-5 w-5 text-psi-fraud" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">{t("privacy.deletionConfirmTitle")}</h3>
+            </div>
+            <p className="text-sm text-psi-text-secondary leading-relaxed mb-5">{t("privacy.deletionConfirmMessage")}</p>
+            <label className="flex items-start gap-3 mb-5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={deletionConfirm}
+                onChange={(e) => setDeletionConfirm(e.target.checked)}
+                className="mt-0.5 rounded border-psi-border bg-psi-navy/50 accent-psi-fraud h-4 w-4"
+              />
+              <span className="text-xs text-psi-text-secondary">{t("privacy.deletionConfirmCheckbox")}</span>
+            </label>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeletionModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-psi-border text-sm text-psi-text-secondary hover:bg-white/5 transition-colors"
+              >
+                {tc("cancel")}
+              </button>
+              <button
+                onClick={handleDeletion}
+                disabled={!deletionConfirm || deleting}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-psi-fraud text-white text-sm font-medium hover:bg-psi-fraud/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                {deleting ? (
+                  <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto block" />
+                ) : (
+                  t("privacy.requestDeletionButton")
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
    Settings Page
    ═══════════════════════════════════════════════════ */
 
@@ -184,6 +418,7 @@ const SECTIONS = [
   { id: "notifications", icon: Bell },
   { id: "account", icon: User },
   { id: "security", icon: Shield },
+  { id: "privacy", icon: Fingerprint },
   { id: "advanced", icon: Wrench },
 ] as const;
 
@@ -769,6 +1004,11 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* ═══════════ PRIVACY & DATA ═══════════ */}
+            {activeSection === "privacy" && (
+              <PrivacySection t={t} tc={tc} />
             )}
 
             {/* ═══════════ ADVANCED ═══════════ */}

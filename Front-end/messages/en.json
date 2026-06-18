@@ -270,6 +270,7 @@
       "notifications": "Notifications",
       "account": "Account",
       "security": "Security",
+      "privacy": "Privacy & Data",
       "api": "API & Integrations",
       "display": "Display",
       "advanced": "Advanced"
@@ -391,6 +392,39 @@
       "newPassword": "New Password",
       "confirmPassword": "Confirm New Password",
       "updatePassword": "Update Password"
+    },
+    "privacy": {
+      "title": "Privacy & Data",
+      "description": "Manage your privacy preferences, data, and LGPD rights",
+      "policyDocuments": "Policy Documents",
+      "policyDocumentsDescription": "Review our Terms of Service and Privacy Policy",
+      "viewPrivacyPolicy": "View Privacy Policy",
+      "viewTermsOfService": "View Terms of Service",
+      "consentHistory": "Consent History",
+      "consentHistoryDescription": "Record of Terms of Service and Privacy Policy versions you have accepted",
+      "consentType": "Type",
+      "consentVersion": "Version",
+      "consentDate": "Accepted At",
+      "consentMethod": "Method",
+      "consentIP": "IP Address",
+      "noConsentRecords": "No consent records found. Consent is recorded when you accept the terms during sign-in.",
+      "dataExport": "Data Export (Portability)",
+      "dataExportDescription": "Download all your personal data in a portable format, as guaranteed by LGPD Article 18, Section V",
+      "exportDataButton": "Export My Data",
+      "exporting": "Exporting...",
+      "exportSuccess": "Export completed! Your download will begin shortly.",
+      "exportError": "Export failed. Please try again.",
+      "accountDeletion": "Account Deletion",
+      "accountDeletionDescription": "Permanently delete your account and all associated data. This action follows LGPD Article 18, Section VI with a 30-day grace period.",
+      "requestDeletionButton": "Request Account Deletion",
+      "deletionConfirmTitle": "Confirm Account Deletion",
+      "deletionConfirmMessage": "Are you sure you want to request deletion of your account? This action will deactivate your account, anonymize your personal data, and schedule your documents for permanent removal. You will have 30 days to reverse this request.",
+      "deletionConfirmCheckbox": "I understand that my data will be permanently deleted after the grace period",
+      "deletionRequested": "Deletion request submitted. Your data will be permanently removed after the 30-day grace period.",
+      "consentBadgeOAuth": "OAuth",
+      "consentBadgeCheckbox": "Checkbox",
+      "consentBadgeAPI": "API",
+      "consentBadgeAdmin": "Admin"
     },
     "account": {
       "title": "Account",
@@ -1643,6 +1677,10 @@
     "termsLiability2": "To the maximum extent permitted by law, PaySentinelIQ shall not be liable for indirect, incidental, special, consequential, or punitive damages arising from the use or inability to use the platform, including but not limited to financial losses, regulatory penalties, or reputational harm.",
     "termsLiability3": "Our total liability for any claim arising from the use of the platform is limited to the fees paid by you in the 12 months preceding the claim, or the minimum amount permitted by applicable law.",
     "backToHome": "Back to Home",
-    "backToDashboard": "Back to Dashboard"
+    "backToDashboard": "Back to Dashboard",
+    "privacyPolicyLink": "Privacy",
+    "termsLink": "Terms",
+    "securityLink": "Security",
+    "contactLink": "Contact"
   }
 }

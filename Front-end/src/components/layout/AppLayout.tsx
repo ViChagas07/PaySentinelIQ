@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useTranslations } from "next-intl";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Navbar } from "@/components/layout/Navbar";
+import { AppFooter } from "@/components/layout/AppFooter";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { AIAssistantPanel } from "@/components/dashboard/AIAssistantPanel";
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
@@ -47,6 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <AIAssistantPanel />
           <NotificationPanel />
         </div>
+        <AppFooter />
       </div>
     </div>
   );

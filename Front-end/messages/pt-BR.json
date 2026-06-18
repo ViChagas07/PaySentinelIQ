@@ -267,6 +267,7 @@
       "notifications": "Notificações",
       "account": "Conta",
       "security": "Segurança",
+      "privacy": "Privacidade e Dados",
       "api": "API e Integrações",
       "display": "Exibição",
       "advanced": "Avançado"
@@ -388,6 +389,39 @@
       "newPassword": "Nova Senha",
       "confirmPassword": "Confirmar Nova Senha",
       "updatePassword": "Atualizar Senha"
+    },
+    "privacy": {
+      "title": "Privacidade e Dados",
+      "description": "Gerencie suas preferências de privacidade, dados e direitos LGPD",
+      "policyDocuments": "Documentos de Política",
+      "policyDocumentsDescription": "Consulte nossos Termos de Uso e Política de Privacidade",
+      "viewPrivacyPolicy": "Ver Política de Privacidade",
+      "viewTermsOfService": "Ver Termos de Uso",
+      "consentHistory": "Histórico de Consentimento",
+      "consentHistoryDescription": "Registro das versões dos Termos de Uso e Política de Privacidade que você aceitou",
+      "consentType": "Tipo",
+      "consentVersion": "Versão",
+      "consentDate": "Aceito em",
+      "consentMethod": "Método",
+      "consentIP": "Endereço IP",
+      "noConsentRecords": "Nenhum registro de consentimento encontrado. O consentimento é registrado quando você aceita os termos durante o login.",
+      "dataExport": "Exportação de Dados (Portabilidade)",
+      "dataExportDescription": "Baixe todos os seus dados pessoais em formato portátil, conforme garantido pelo Art. 18, V da LGPD",
+      "exportDataButton": "Exportar Meus Dados",
+      "exporting": "Exportando...",
+      "exportSuccess": "Exportação concluída! Seu download começará em breve.",
+      "exportError": "Falha na exportação. Tente novamente.",
+      "accountDeletion": "Exclusão de Conta",
+      "accountDeletionDescription": "Exclua permanentemente sua conta e todos os dados associados. Esta ação segue o Art. 18, VI da LGPD com um período de carência de 30 dias.",
+      "requestDeletionButton": "Solicitar Exclusão de Conta",
+      "deletionConfirmTitle": "Confirmar Exclusão de Conta",
+      "deletionConfirmMessage": "Tem certeza que deseja solicitar a exclusão da sua conta? Esta ação desativará sua conta, anonimizará seus dados pessoais e agendará a remoção permanente de seus documentos. Você terá 30 dias para reverter esta solicitação.",
+      "deletionConfirmCheckbox": "Entendo que meus dados serão permanentemente excluídos após o período de carência",
+      "deletionRequested": "Solicitação de exclusão enviada. Seus dados serão removidos permanentemente após o período de carência de 30 dias.",
+      "consentBadgeOAuth": "OAuth",
+      "consentBadgeCheckbox": "Checkbox",
+      "consentBadgeAPI": "API",
+      "consentBadgeAdmin": "Admin"
     },
     "account": {
       "title": "Conta",
@@ -1640,6 +1674,10 @@
     "termsLiability2": "Na extensão máxima permitida por lei, o PaySentinelIQ não será responsável por danos indiretos, incidentais, especiais, consequenciais ou punitivos decorrentes do uso ou da incapacidade de usar a plataforma, incluindo, mas não se limitando, a perdas financeiras, penalidades regulatórias ou danos à reputação.",
     "termsLiability3": "Nossa responsabilidade total por qualquer reclamação decorrente do uso da plataforma está limitada aos valores pagos por você nos 12 meses anteriores à reclamação, ou ao valor mínimo permitido pela legislação aplicável.",
     "backToHome": "Voltar ao Início",
-    "backToDashboard": "Voltar ao Painel"
+    "backToDashboard": "Voltar ao Painel",
+    "privacyPolicyLink": "Privacidade",
+    "termsLink": "Termos",
+    "securityLink": "Segurança",
+    "contactLink": "Contato"
   }
 }
