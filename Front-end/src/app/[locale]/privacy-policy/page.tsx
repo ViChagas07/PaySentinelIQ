@@ -46,7 +46,7 @@ function Section({
       transition={{ duration: 0.5, delay, ease: "easeOut" }}
       className="scroll-mt-28"
     >
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-psi-electric/10">
           <Icon className="h-4.5 w-4.5 text-psi-electric" />
         </div>
@@ -59,11 +59,36 @@ function Section({
         prose-strong:text-white/90 prose-strong:font-semibold
         prose-a:text-psi-electric prose-a:no-underline hover:prose-a:underline
         prose-code:bg-white/[0.06] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-white/80 prose-code:text-xs
+        [&_h3]:mt-8 [&_h3]:mb-4
         space-y-4
       ">
         {children}
       </div>
     </motion.section>
+  );
+}
+
+// ── Callout card wrapper ── //
+
+function Callout({
+  variant = "info",
+  children,
+}: {
+  variant?: "info" | "success" | "warning";
+  children: React.ReactNode;
+}) {
+  const styles = {
+    info: "border-psi-electric/15 bg-psi-electric/[0.02]",
+    success: "border-psi-emerald/20 bg-psi-emerald/[0.03]",
+    warning: "border-psi-warning/20 bg-psi-warning/[0.03]",
+  };
+  return (
+    <div className={cn(
+      "rounded-xl border p-5 my-8",
+      styles[variant],
+    )}>
+      {children}
+    </div>
   );
 }
 
@@ -211,221 +236,200 @@ export default function PrivacyPolicyPage() {
           </div>
         </motion.nav>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 1 — INTRODUCTION */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="introduction" icon={FileText} title={t("sectionIntroduction")} delay={0.05}>
-          <p>{t("introParagraph1")}</p>
-          <p>{t("introParagraph2")}</p>
-          <p>{t("introParagraph3")}</p>
-          <div className="rounded-xl border border-psi-emerald/20 bg-psi-emerald/[0.03] p-5">
-            <p className="text-sm text-white/70">
-              <strong className="text-psi-emerald">{t("lgpdNotice")}</strong>{" "}
-              {t("lgpdNoticeText")}
-            </p>
-          </div>
-        </Section>
+        {/* ═══════════════ PRIVACY POLICY SECTIONS ═══════════════ */}
+        <div className="space-y-12">
+          {/* SECTION 1 — INTRODUCTION */}
+          <Section id="introduction" icon={FileText} title={t("sectionIntroduction")} delay={0.05}>
+            <p>{t("introParagraph1")}</p>
+            <p>{t("introParagraph2")}</p>
+            <p>{t("introParagraph3")}</p>
+            <Callout variant="success">
+              <p className="text-sm text-white/70">
+                <strong className="text-psi-emerald">{t("lgpdNotice")}</strong>{" "}
+                {t("lgpdNoticeText")}
+              </p>
+            </Callout>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 2 — DATA COLLECTED */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="data-collected" icon={Database} title={t("sectionDataCollected")} delay={0.1}>
-          <h3 className="text-base font-semibold text-white mt-6 mb-3">{t("authData")}</h3>
-          <p>{t("authDataDesc")}</p>
-          <ul>
-            <li>{t("authDataName")}</li>
-            <li>{t("authDataEmail")}</li>
-            <li>{t("authDataAvatar")}</li>
-          </ul>
+          {/* SECTION 2 — DATA COLLECTED */}
+          <Section id="data-collected" icon={Database} title={t("sectionDataCollected")} delay={0.1}>
+            <h3>{t("authData")}</h3>
+            <p>{t("authDataDesc")}</p>
+            <ul>
+              <li>{t("authDataName")}</li>
+              <li>{t("authDataEmail")}</li>
+              <li>{t("authDataAvatar")}</li>
+            </ul>
 
-          <h3 className="text-base font-semibold text-white mt-6 mb-3">{t("uploadedData")}</h3>
-          <p>{t("uploadedDataDesc")}</p>
-          <ul>
-            <li>{t("uploadedPdfs")}</li>
-            <li>{t("uploadedImages")}</li>
-            <li>{t("uploadedReceipts")}</li>
-            <li>{t("uploadedPayslips")}</li>
-            <li>{t("uploadedReports")}</li>
-          </ul>
+            <h3>{t("uploadedData")}</h3>
+            <p>{t("uploadedDataDesc")}</p>
+            <ul>
+              <li>{t("uploadedPdfs")}</li>
+              <li>{t("uploadedImages")}</li>
+              <li>{t("uploadedReceipts")}</li>
+              <li>{t("uploadedPayslips")}</li>
+              <li>{t("uploadedReports")}</li>
+            </ul>
 
-          <h3 className="text-base font-semibold text-white mt-6 mb-3">{t("ocrData")}</h3>
-          <p>{t("ocrDataDesc")}</p>
-          <ul>
-            <li>{t("ocrText")}</li>
-            <li>{t("ocrMetadata")}</li>
-            <li>{t("ocrFinancial")}</li>
-          </ul>
+            <h3>{t("ocrData")}</h3>
+            <p>{t("ocrDataDesc")}</p>
+            <ul>
+              <li>{t("ocrText")}</li>
+              <li>{t("ocrMetadata")}</li>
+              <li>{t("ocrFinancial")}</li>
+            </ul>
 
-          <h3 className="text-base font-semibold text-white mt-6 mb-3">{t("logData")}</h3>
-          <p>{t("logDataDesc")}</p>
-          <ul>
-            <li>{t("logAccess")}</li>
-            <li>{t("logActions")}</li>
-            <li>{t("logSecurity")}</li>
-          </ul>
-        </Section>
+            <h3>{t("logData")}</h3>
+            <p>{t("logDataDesc")}</p>
+            <ul>
+              <li>{t("logAccess")}</li>
+              <li>{t("logActions")}</li>
+              <li>{t("logSecurity")}</li>
+            </ul>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 3 — PURPOSE */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="purpose" icon={ScanEye} title={t("sectionPurpose")} delay={0.15}>
-          <p>{t("purposeIntro")}</p>
-          <ul>
-            <li><strong>{t("purposeAuth")}:</strong> {t("purposeAuthDesc")}</li>
-            <li><strong>{t("purposeFraud")}:</strong> {t("purposeFraudDesc")}</li>
-            <li><strong>{t("purposeAnalysis")}:</strong> {t("purposeAnalysisDesc")}</li>
-            <li><strong>{t("purposeReports")}:</strong> {t("purposeReportsDesc")}</li>
-            <li><strong>{t("purposeImprovement")}:</strong> {t("purposeImprovementDesc")}</li>
-          </ul>
-          <div className="rounded-xl border border-psi-electric/15 bg-psi-electric/[0.02] p-5">
-            <p className="text-sm text-white/70">
-              <strong className="text-psi-electric">{t("legalBasis")}:</strong>{" "}
-              {t("legalBasisText")}
-            </p>
-          </div>
-        </Section>
+          {/* SECTION 3 — PURPOSE */}
+          <Section id="purpose" icon={ScanEye} title={t("sectionPurpose")} delay={0.15}>
+            <p>{t("purposeIntro")}</p>
+            <ul>
+              <li><strong>{t("purposeAuth")}:</strong> {t("purposeAuthDesc")}</li>
+              <li><strong>{t("purposeFraud")}:</strong> {t("purposeFraudDesc")}</li>
+              <li><strong>{t("purposeAnalysis")}:</strong> {t("purposeAnalysisDesc")}</li>
+              <li><strong>{t("purposeReports")}:</strong> {t("purposeReportsDesc")}</li>
+              <li><strong>{t("purposeImprovement")}:</strong> {t("purposeImprovementDesc")}</li>
+            </ul>
+            <Callout variant="info">
+              <p className="text-sm text-white/70">
+                <strong className="text-psi-electric">{t("legalBasis")}:</strong>{" "}
+                {t("legalBasisText")}
+              </p>
+            </Callout>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 4 — SHARING */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="sharing" icon={Server} title={t("sectionSharing")} delay={0.2}>
-          <p>{t("sharingIntro")}</p>
-          <ul>
-            <li>
-              <strong>{t("sharingAWS")}:</strong> {t("sharingAWSDesc")}
-            </li>
-            <li>
-              <strong>{t("sharingGoogle")}:</strong> {t("sharingGoogleDesc")}
-            </li>
-            <li>
-              <strong>{t("sharingOCR")}:</strong> {t("sharingOCRDesc")}
-            </li>
-            <li>
-              <strong>{t("sharingMonitoring")}:</strong> {t("sharingMonitoringDesc")}
-            </li>
-          </ul>
-          <p className="text-sm italic text-white/40">{t("sharingNoSell")}</p>
-        </Section>
+          {/* SECTION 4 — SHARING */}
+          <Section id="sharing" icon={Server} title={t("sectionSharing")} delay={0.2}>
+            <p>{t("sharingIntro")}</p>
+            <ul>
+              <li>
+                <strong>{t("sharingAWS")}:</strong> {t("sharingAWSDesc")}
+              </li>
+              <li>
+                <strong>{t("sharingGoogle")}:</strong> {t("sharingGoogleDesc")}
+              </li>
+              <li>
+                <strong>{t("sharingOCR")}:</strong> {t("sharingOCRDesc")}
+              </li>
+              <li>
+                <strong>{t("sharingMonitoring")}:</strong> {t("sharingMonitoringDesc")}
+              </li>
+            </ul>
+            <p className="text-sm italic text-white/40">{t("sharingNoSell")}</p>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 5 — SECURITY */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="security" icon={Shield} title={t("sectionSecurity")} delay={0.25}>
-          <p>{t("securityIntro")}</p>
-          <ul>
-            <li><strong>{t("securityEncryption")}:</strong> {t("securityEncryptionDesc")}</li>
-            <li><strong>{t("securityHTTPS")}:</strong> {t("securityHTTPSDesc")}</li>
-            <li><strong>{t("securityAuth")}:</strong> {t("securityAuthDesc")}</li>
-            <li><strong>{t("securityAccess")}:</strong> {t("securityAccessDesc")}</li>
-            <li><strong>{t("securityAudit")}:</strong> {t("securityAuditDesc")}</li>
-            <li><strong>{t("securityMFA")}:</strong> {t("securityMFADesc")}</li>
-          </ul>
-        </Section>
+          {/* SECTION 5 — SECURITY */}
+          <Section id="security" icon={Shield} title={t("sectionSecurity")} delay={0.25}>
+            <p>{t("securityIntro")}</p>
+            <ul>
+              <li><strong>{t("securityEncryption")}:</strong> {t("securityEncryptionDesc")}</li>
+              <li><strong>{t("securityHTTPS")}:</strong> {t("securityHTTPSDesc")}</li>
+              <li><strong>{t("securityAuth")}:</strong> {t("securityAuthDesc")}</li>
+              <li><strong>{t("securityAccess")}:</strong> {t("securityAccessDesc")}</li>
+              <li><strong>{t("securityAudit")}:</strong> {t("securityAuditDesc")}</li>
+              <li><strong>{t("securityMFA")}:</strong> {t("securityMFADesc")}</li>
+            </ul>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 6 — RETENTION */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="retention" icon={Clock} title={t("sectionRetention")} delay={0.3}>
-          <p>{t("retentionIntro")}</p>
-          <ul>
-            <li><strong>{t("retentionDocuments")}:</strong> {t("retentionDocumentsDesc")}</li>
-            <li><strong>{t("retentionOCR")}:</strong> {t("retentionOCRDesc")}</li>
-            <li><strong>{t("retentionLogs")}:</strong> {t("retentionLogsDesc")}</li>
-            <li><strong>{t("retentionAccount")}:</strong> {t("retentionAccountDesc")}</li>
-          </ul>
-        </Section>
+          {/* SECTION 6 — RETENTION */}
+          <Section id="retention" icon={Clock} title={t("sectionRetention")} delay={0.3}>
+            <p>{t("retentionIntro")}</p>
+            <ul>
+              <li><strong>{t("retentionDocuments")}:</strong> {t("retentionDocumentsDesc")}</li>
+              <li><strong>{t("retentionOCR")}:</strong> {t("retentionOCRDesc")}</li>
+              <li><strong>{t("retentionLogs")}:</strong> {t("retentionLogsDesc")}</li>
+              <li><strong>{t("retentionAccount")}:</strong> {t("retentionAccountDesc")}</li>
+            </ul>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 7 — LGPD RIGHTS */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="rights" icon={UserCheck} title={t("sectionRights")} delay={0.35}>
-          <p>{t("rightsIntro")}</p>
-          <ul>
-            <li>
-              <strong>{t("rightAccess")}:</strong> {t("rightAccessDesc")}
-            </li>
-            <li>
-              <strong>{t("rightCorrection")}:</strong> {t("rightCorrectionDesc")}
-            </li>
-            <li>
-              <strong>{t("rightAnonymization")}:</strong> {t("rightAnonymizationDesc")}
-            </li>
-            <li>
-              <strong>{t("rightPortability")}:</strong> {t("rightPortabilityDesc")}
-            </li>
-            <li>
-              <strong>{t("rightDeletion")}:</strong> {t("rightDeletionDesc")}
-            </li>
-            <li>
-              <strong>{t("rightRevocation")}:</strong> {t("rightRevocationDesc")}
-            </li>
-          </ul>
-        </Section>
+          {/* SECTION 7 — LGPD RIGHTS */}
+          <Section id="rights" icon={UserCheck} title={t("sectionRights")} delay={0.35}>
+            <p>{t("rightsIntro")}</p>
+            <ul>
+              <li>
+                <strong>{t("rightAccess")}:</strong> {t("rightAccessDesc")}
+              </li>
+              <li>
+                <strong>{t("rightCorrection")}:</strong> {t("rightCorrectionDesc")}
+              </li>
+              <li>
+                <strong>{t("rightAnonymization")}:</strong> {t("rightAnonymizationDesc")}
+              </li>
+              <li>
+                <strong>{t("rightPortability")}:</strong> {t("rightPortabilityDesc")}
+              </li>
+              <li>
+                <strong>{t("rightDeletion")}:</strong> {t("rightDeletionDesc")}
+              </li>
+              <li>
+                <strong>{t("rightRevocation")}:</strong> {t("rightRevocationDesc")}
+              </li>
+            </ul>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 8 — DATA DELETION */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="deletion" icon={Trash2} title={t("sectionDeletion")} delay={0.4}>
-          <p>{t("deletionIntro")}</p>
-          <ol className="list-decimal pl-5 space-y-1.5">
-            <li>{t("deletionStep1")}</li>
-            <li>{t("deletionStep2")}</li>
-            <li>{t("deletionStep3")}</li>
-            <li>{t("deletionStep4")}</li>
-            <li>{t("deletionStep5")}</li>
-          </ol>
-        </Section>
+          {/* SECTION 8 — DATA DELETION */}
+          <Section id="deletion" icon={Trash2} title={t("sectionDeletion")} delay={0.4}>
+            <p>{t("deletionIntro")}</p>
+            <ol className="list-decimal pl-5 space-y-1.5">
+              <li>{t("deletionStep1")}</li>
+              <li>{t("deletionStep2")}</li>
+              <li>{t("deletionStep3")}</li>
+              <li>{t("deletionStep4")}</li>
+              <li>{t("deletionStep5")}</li>
+            </ol>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 9 — DATA EXPORT */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="export" icon={Download} title={t("sectionExport")} delay={0.45}>
-          <p>{t("exportIntro")}</p>
-          <p>{t("exportFormat")}</p>
-          <ul>
-            <li>{t("exportProfile")}</li>
-            <li>{t("exportConsent")}</li>
-            <li>{t("exportDocuments")}</li>
-            <li>{t("exportReports")}</li>
-            <li>{t("exportActivity")}</li>
-          </ul>
-        </Section>
+          {/* SECTION 9 — DATA EXPORT */}
+          <Section id="export" icon={Download} title={t("sectionExport")} delay={0.45}>
+            <p>{t("exportIntro")}</p>
+            <p>{t("exportFormat")}</p>
+            <ul>
+              <li>{t("exportProfile")}</li>
+              <li>{t("exportConsent")}</li>
+              <li>{t("exportDocuments")}</li>
+              <li>{t("exportReports")}</li>
+              <li>{t("exportActivity")}</li>
+            </ul>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 10 — CONSENT */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="consent" icon={FileCheck} title={t("sectionConsent")} delay={0.5}>
-          <p>{t("consentIntro")}</p>
-          <p>{t("consentRecord")}</p>
-          <ul>
-            <li>{t("consentVersion")}</li>
-            <li>{t("consentTimestamp")}</li>
-            <li>{t("consentIP")}</li>
-            <li>{t("consentMethod")}</li>
-          </ul>
-          <p>{t("consentWithdraw")}</p>
-        </Section>
+          {/* SECTION 10 — CONSENT */}
+          <Section id="consent" icon={FileCheck} title={t("sectionConsent")} delay={0.5}>
+            <p>{t("consentIntro")}</p>
+            <p>{t("consentRecord")}</p>
+            <ul>
+              <li>{t("consentVersion")}</li>
+              <li>{t("consentTimestamp")}</li>
+              <li>{t("consentIP")}</li>
+              <li>{t("consentMethod")}</li>
+            </ul>
+            <p>{t("consentWithdraw")}</p>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 11 — COOKIES */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="cookies" icon={Cookie} title={t("sectionCookies")} delay={0.55}>
-          <p>{t("cookiesIntro")}</p>
-          <ul>
-            <li><strong>{t("cookiesEssential")}:</strong> {t("cookiesEssentialDesc")}</li>
-            <li><strong>{t("cookiesPreferences")}:</strong> {t("cookiesPreferencesDesc")}</li>
-            <li><strong>{t("cookiesAnalytics")}:</strong> {t("cookiesAnalyticsDesc")}</li>
-          </ul>
-          <p>{t("cookiesNoTracking")}</p>
-        </Section>
+          {/* SECTION 11 — COOKIES */}
+          <Section id="cookies" icon={Cookie} title={t("sectionCookies")} delay={0.55}>
+            <p>{t("cookiesIntro")}</p>
+            <ul>
+              <li><strong>{t("cookiesEssential")}:</strong> {t("cookiesEssentialDesc")}</li>
+              <li><strong>{t("cookiesPreferences")}:</strong> {t("cookiesPreferencesDesc")}</li>
+              <li><strong>{t("cookiesAnalytics")}:</strong> {t("cookiesAnalyticsDesc")}</li>
+            </ul>
+            <p>{t("cookiesNoTracking")}</p>
+          </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 12 — MINORS */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="minors" icon={AlertTriangle} title={t("sectionMinors")} delay={0.6}>
-          <p>{t("minorsIntro")}</p>
-          <p>{t("minorsAction")}</p>
-        </Section>
+          {/* SECTION 12 — MINORS */}
+          <Section id="minors" icon={AlertTriangle} title={t("sectionMinors")} delay={0.6}>
+            <p>{t("minorsIntro")}</p>
+            <p>{t("minorsAction")}</p>
+          </Section>
+        </div>
 
         {/* ═══════════════════════════════════════ */}
         {/* ═══ TERMS OF USE ═══ */}
@@ -449,86 +453,88 @@ export default function PrivacyPolicyPage() {
           <p className="mt-3 text-sm text-white/40">{t("termsSubtitle")}</p>
         </motion.div>
 
-        {/* TERMS: Permitted Use */}
-        <Section id="terms" icon={Gavel} title={t("termsSectionUse")} delay={0.1}>
-          <p>{t("termsUseIntro")}</p>
-          <ul>
-            <li>{t("termsUse1")}</li>
-            <li>{t("termsUse2")}</li>
-            <li>{t("termsUse3")}</li>
-            <li>{t("termsUse4")}</li>
-          </ul>
-        </Section>
+        <div className="space-y-12">
+          {/* TERMS: Permitted Use */}
+          <Section id="terms" icon={Gavel} title={t("termsSectionUse")} delay={0.1}>
+            <p>{t("termsUseIntro")}</p>
+            <ul>
+              <li>{t("termsUse1")}</li>
+              <li>{t("termsUse2")}</li>
+              <li>{t("termsUse3")}</li>
+              <li>{t("termsUse4")}</li>
+            </ul>
+          </Section>
 
-        {/* TERMS: Responsibilities */}
-        <Section id="terms-responsibilities" icon={ClipboardList} title={t("termsSectionResponsibilities")} delay={0.15}>
-          <p>{t("termsRespIntro")}</p>
-          <ul>
-            <li>{t("termsResp1")}</li>
-            <li>{t("termsResp2")}</li>
-            <li>{t("termsResp3")}</li>
-          </ul>
-        </Section>
+          {/* TERMS: Responsibilities */}
+          <Section id="terms-responsibilities" icon={ClipboardList} title={t("termsSectionResponsibilities")} delay={0.15}>
+            <p>{t("termsRespIntro")}</p>
+            <ul>
+              <li>{t("termsResp1")}</li>
+              <li>{t("termsResp2")}</li>
+              <li>{t("termsResp3")}</li>
+            </ul>
+          </Section>
 
-        {/* TERMS: Prohibitions */}
-        <Section id="terms-prohibitions" icon={AlertTriangle} title={t("termsSectionProhibitions")} delay={0.2}>
-          <p>{t("termsProhibIntro")}</p>
-          <ul>
-            <li><strong>{t("termsProhibFraud")}</strong> — {t("termsProhibFraudDesc")}</li>
-            <li><strong>{t("termsProhibFake")}</strong> — {t("termsProhibFakeDesc")}</li>
-            <li><strong>{t("termsProhibAbuse")}</strong> — {t("termsProhibAbuseDesc")}</li>
-            <li><strong>{t("termsProhibReverse")}</strong> — {t("termsProhibReverseDesc")}</li>
-            <li><strong>{t("termsProhibUnauthorized")}</strong> — {t("termsProhibUnauthorizedDesc")}</li>
-          </ul>
-        </Section>
+          {/* TERMS: Prohibitions */}
+          <Section id="terms-prohibitions" icon={AlertTriangle} title={t("termsSectionProhibitions")} delay={0.2}>
+            <p>{t("termsProhibIntro")}</p>
+            <ul>
+              <li><strong>{t("termsProhibFraud")}</strong> — {t("termsProhibFraudDesc")}</li>
+              <li><strong>{t("termsProhibFake")}</strong> — {t("termsProhibFakeDesc")}</li>
+              <li><strong>{t("termsProhibAbuse")}</strong> — {t("termsProhibAbuseDesc")}</li>
+              <li><strong>{t("termsProhibReverse")}</strong> — {t("termsProhibReverseDesc")}</li>
+              <li><strong>{t("termsProhibUnauthorized")}</strong> — {t("termsProhibUnauthorizedDesc")}</li>
+            </ul>
+          </Section>
 
-        {/* TERMS: Limitation of Liability */}
-        <Section id="terms-liability" icon={AlertTriangle} title={t("termsSectionLiability")} delay={0.25}>
-          <p>{t("termsLiability1")}</p>
-          <p>{t("termsLiability2")}</p>
-          <p>{t("termsLiability3")}</p>
-        </Section>
+          {/* TERMS: Limitation of Liability */}
+          <Section id="terms-liability" icon={AlertTriangle} title={t("termsSectionLiability")} delay={0.25}>
+            <p>{t("termsLiability1")}</p>
+            <p>{t("termsLiability2")}</p>
+            <p>{t("termsLiability3")}</p>
+          </Section>
+        </div>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 13 — CHANGES */}
-        {/* ═══════════════════════════════════════ */}
+        {/* ═══ CHANGES + CONTACT ═══ */}
         <div className="my-16 border-t border-white/[0.06]" />
-        <Section id="changes" icon={Bell} title={t("sectionChanges")} delay={0.3}>
-          <p>{t("changesIntro")}</p>
-          <p>{t("changesNotice")}</p>
-        </Section>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 14 — CONTACT */}
-        {/* ═══════════════════════════════════════ */}
-        <Section id="contact" icon={Mail} title={t("sectionContact")} delay={0.35}>
-          <p>{t("contactIntro")}</p>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-3">
-            <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-psi-electric" />
-              <div>
-                <p className="text-sm font-semibold text-white">{t("contactEmail")}</p>
-                <a href="mailto:privacy@paysentineliq.com" className="text-sm text-psi-electric hover:underline">
-                  privacy@paysentineliq.com
-                </a>
+        <div className="space-y-12">
+          {/* SECTION 13 — CHANGES */}
+          <Section id="changes" icon={Bell} title={t("sectionChanges")} delay={0.3}>
+            <p>{t("changesIntro")}</p>
+            <p>{t("changesNotice")}</p>
+          </Section>
+
+          {/* SECTION 14 — CONTACT */}
+          <Section id="contact" icon={Mail} title={t("sectionContact")} delay={0.35}>
+            <p>{t("contactIntro")}</p>
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <Mail className="h-5 w-5 text-psi-electric" />
+                <div>
+                  <p className="text-sm font-semibold text-white">{t("contactEmail")}</p>
+                  <a href="mailto:privacy@paysentineliq.com" className="text-sm text-psi-electric hover:underline">
+                    privacy@paysentineliq.com
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-psi-electric" />
+                <div>
+                  <p className="text-sm font-semibold text-white">{t("contactResponse")}</p>
+                  <p className="text-sm text-white/50">{t("contactResponseTime")}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Globe className="h-5 w-5 text-psi-electric" />
+                <div>
+                  <p className="text-sm font-semibold text-white">{t("contactDPO")}</p>
+                  <p className="text-sm text-white/50">{t("contactDPOName")}</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-psi-electric" />
-              <div>
-                <p className="text-sm font-semibold text-white">{t("contactResponse")}</p>
-                <p className="text-sm text-white/50">{t("contactResponseTime")}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Globe className="h-5 w-5 text-psi-electric" />
-              <div>
-                <p className="text-sm font-semibold text-white">{t("contactDPO")}</p>
-                <p className="text-sm text-white/50">{t("contactDPOName")}</p>
-              </div>
-            </div>
-          </div>
-        </Section>
+          </Section>
+        </div>
 
         {/* ── Back to home or dashboard ── */}
         <motion.div
