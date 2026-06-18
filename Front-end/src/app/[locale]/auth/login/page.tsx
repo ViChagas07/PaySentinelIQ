@@ -89,6 +89,7 @@ export default function AuthPage() {
   const [signUpError, setSignUpError] = useState("");
   const [signUpSuccess, setSignUpSuccess] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [agreeToTermsSignIn, setAgreeToTermsSignIn] = useState(false);
 
   // ── Google OIDC / GIS Popup OAuth ── //
 
@@ -116,6 +117,12 @@ export default function AuthPage() {
   const loginStore = useAuthStore((s) => s.login);
 
   const triggerGoogleSignIn = useCallback(() => {
+    // ── LGPD Consent Check ──
+    if (!agreeToTermsSignIn) {
+      setSignInError(t("mustAgreeToTermsSignIn"));
+      return;
+    }
+
     const google = (window as any).google;
     if (!google?.accounts?.oauth2) {
       console.warn("GIS library not loaded yet");
@@ -134,7 +141,12 @@ export default function AuthPage() {
             const res = await fetch("/api/auth/google", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ access_token: response.access_token }),
+              body: JSON.stringify({
+                access_token: response.access_token,
+                consent_given: true,
+                terms_version: "1.0.0",
+                privacy_version: "1.0.0",
+              }),
             });
 
             const data = await res.json();
@@ -176,6 +188,12 @@ export default function AuthPage() {
 
     if (!signInEmail || !signInPassword) {
       setSignInError(t("validationRequired"));
+      return;
+    }
+
+    // ── LGPD Consent Check ──
+    if (!agreeToTermsSignIn) {
+      setSignInError(t("mustAgreeToTermsSignIn"));
       return;
     }
 
@@ -434,6 +452,36 @@ export default function AuthPage() {
                       toggleAriaLabel={showSignInPassword ? t("hidePassword") : t("showPassword")}
                     />
 
+                    {/* Terms — LGPD Consent (Sign In) */}
+                    <label className="flex items-start gap-2 text-xs text-psi-text-secondary cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={agreeToTermsSignIn}
+                        onChange={(e) => setAgreeToTermsSignIn(e.target.checked)}
+                        className="mt-0.5 rounded border-psi-border bg-psi-navy/50 accent-psi-electric h-3.5 w-3.5"
+                      />
+                      <span>
+                        {t("agreeToTerms")}{" "}
+                        <a
+                          href={`/${locale}/privacy-policy`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-psi-electric hover:underline"
+                        >
+                          {t("termsOfService")}
+                        </a>{" "}
+                        {tc("and")}{" "}
+                        <a
+                          href={`/${locale}/privacy-policy`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-psi-electric hover:underline"
+                        >
+                          {t("privacyPolicy")}
+                        </a>
+                      </span>
+                    </label>
+
                     {/* Remember + Forgot */}
                     <div className="flex items-center justify-between">
                       <label className="flex items-center gap-2 text-xs text-psi-text-secondary cursor-pointer select-none">
@@ -601,9 +649,23 @@ export default function AuthPage() {
                         />
                         <span>
                           {t("agreeToTerms")}{" "}
-                          <a href="#" className="text-psi-electric hover:underline">{t("termsOfService")}</a>{" "}
+                          <a
+                            href={`/${locale}/privacy-policy`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-psi-electric hover:underline"
+                          >
+                            {t("termsOfService")}
+                          </a>{" "}
                           {tc("and")}{" "}
-                          <a href="#" className="text-psi-electric hover:underline">{t("privacyPolicy")}</a>
+                          <a
+                            href={`/${locale}/privacy-policy`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-psi-electric hover:underline"
+                          >
+                            {t("privacyPolicy")}
+                          </a>
                         </span>
                       </label>
 

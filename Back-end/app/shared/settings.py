@@ -128,6 +128,18 @@ class Settings(BaseSettings):
     RISK_SCORE_THRESHOLD_CRITICAL: int = 85
     DOCUMENT_RETENTION_DAYS: int = 2555  # 7 years for payroll records
 
+    # ── LGPD / Privacy Compliance ──
+    TERMS_VERSION: str = "1.0.0"
+    PRIVACY_VERSION: str = "1.0.0"
+    DATA_RETENTION_DAYS: int = 2555  # Default: 7 years (Brazilian labor law)
+    OCR_TEMP_FILE_RETENTION_HOURS: int = 24  # Temp OCR files expire after 24h
+    ACCOUNT_DELETION_GRACE_PERIOD_DAYS: int = 30  # Soft-delete grace period
+    CONSENT_REQUIRED_FOR_LOGIN: bool = True
+    PRESIGNED_URL_EXPIRY_SECONDS: int = 3600  # 1 hour
+    AUDIT_RETENTION_DAYS: int = 1825  # 5 years for audit logs
+    ANONYMIZE_ON_DELETION: bool = True
+    MAX_EXPORT_SIZE_MB: int = 500
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -32,8 +32,8 @@ const COMPANY_LINKS = [
 ];
 
 const LEGAL_LINKS = [
-  { href: "#", key: "footer.privacy" },
-  { href: "#", key: "footer.terms" },
+  { href: "/privacy-policy", key: "footer.privacy" },
+  { href: "/privacy-policy", key: "footer.terms" },
 ];
 
 const LOCALES = [
@@ -176,12 +176,12 @@ export function LandingFooter() {
             <ul className="space-y-2.5">
               {LEGAL_LINKS.map((link) => (
                 <li key={link.key}>
-                  <a
+                  <Link
                     href={link.href}
                     className="text-sm text-white/40 transition-colors hover:text-white"
                   >
                     {t(link.key)}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

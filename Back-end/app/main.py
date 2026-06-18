@@ -263,6 +263,7 @@ def _register_routers(app: FastAPI) -> None:
     _safe_include(app, "app.ai_assistant.presentation.router", "/api/ai-assistant", "AI Assistant")
     _safe_include(app, "app.settings_module.presentation.router", "/api/settings", "Settings")
     _safe_include(app, "app.analytics.application.router", "/api", "Analytics")
+    _safe_include(app, "app.account.presentation.router", "/api", "Account")
     _safe_include(app, "app.websocket.router", "/ws", "WebSocket")
 
     if settings.ENVIRONMENT != "production":

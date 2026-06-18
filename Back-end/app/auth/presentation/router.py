@@ -1,15 +1,18 @@
 # ============================================================
 # PaySentinelIQ — Auth Router (FastAPI)
 # Login, register, MFA, token refresh, logout, Google OIDC
+# LGPD-compliant: consent required for all authentication methods
 # ============================================================
 
 import uuid
+from datetime import datetime, timezone as dt_timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from sqlalchemy import select as sa_select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_token_payload
@@ -17,6 +20,7 @@ from app.auth.repository import UserRepository
 from app.auth.services import AuthService
 from app.shared.database import get_db
 from app.shared.exceptions import AuthenticationError, InvalidCredentialsError, TokenExpiredError
+from app.shared.orm_models import ConsentRecordModel
 from app.shared.settings import get_settings
 
 settings = get_settings()
@@ -30,6 +34,9 @@ class LoginRequest(BaseModel):
     model_config = ConfigDict(strict=True)
     email: EmailStr
     password: str = Field(min_length=8)
+    terms_version: str | None = Field(default=None, min_length=1, max_length=20)
+    privacy_version: str | None = Field(default=None, min_length=1, max_length=20)
+    consent_given: bool = Field(default=False)
 
 
 class MFAVerifyRequest(BaseModel):
@@ -67,6 +74,9 @@ class UserResponse(BaseModel):
 class GoogleLoginRequest(BaseModel):
     model_config = ConfigDict(strict=True)
     credential: str
+    terms_version: str | None = Field(default=None, min_length=1, max_length=20)
+    privacy_version: str | None = Field(default=None, min_length=1, max_length=20)
+    consent_given: bool = Field(default=False)
 
 
 # ── Endpoints ──
@@ -75,6 +85,7 @@ class GoogleLoginRequest(BaseModel):
 @router.post("/google")
 async def google_login(
     body: GoogleLoginRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """
@@ -83,8 +94,18 @@ async def google_login(
     Receives a Google ID token credential from the front-end GIS flow,
     verifies it, finds-or-creates the user, and returns a PaySentinelIQ
     JWT access token.
+
+    Requires explicit consent to Terms of Service and Privacy Policy
+    (LGPD Article 7 compliance).
     """
     credential = body.credential
+
+    # ── LGPD Consent Check ──
+    if not body.consent_given:
+        raise AuthenticationError(
+            "Consent to Terms of Service and Privacy Policy is required (LGPD Article 7). "
+            "Please accept the terms before signing in."
+        )
 
     # 1. Verify the Google ID token
     try:
@@ -116,7 +137,39 @@ async def google_login(
             user.google_id = google_sub
             await repo.update(user)
 
-    # 3. Issue PaySentinelIQ JWT
+    # 3. Record consent (LGPD compliance)
+    tv = body.terms_version if body.terms_version else settings.TERMS_VERSION
+    pv = body.privacy_version if body.privacy_version else settings.PRIVACY_VERSION
+
+    # Check if identical consent already exists (idempotent)
+    existing_consent = await db.execute(
+        sa_select(ConsentRecordModel).where(
+            ConsentRecordModel.user_id == user.id,
+            ConsentRecordModel.consent_type == "terms_of_service",
+            ConsentRecordModel.terms_version == tv,
+            ConsentRecordModel.privacy_version == pv,
+        )
+    )
+    if not existing_consent.scalar_one_or_none():
+        ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or (
+            request.client.host if request.client else None
+        )
+        ua = request.headers.get("User-Agent", "")[:500]
+        consent_record = ConsentRecordModel(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            tenant_id=user.tenant_id,
+            consent_type="terms_of_service",
+            terms_version=tv,
+            privacy_version=pv,
+            accepted_at=datetime.now(dt_timezone.utc),
+            ip_address=ip,
+            user_agent=ua,
+            method="oauth",
+        )
+        db.add(consent_record)
+
+    # 4. Issue PaySentinelIQ JWT
     access_token = AuthService.create_access_token(
         user_id=str(user.id),
         tenant_id=str(user.tenant_id),
@@ -139,7 +192,16 @@ async def login(request: Request, body: LoginRequest) -> TokenResponse:
     """
     Authenticate user. If MFA is enabled, returns a temporary session token
     instead of full access/refresh tokens.
+
+    LGPD: Requires explicit consent to Terms of Service and Privacy Policy.
     """
+    # ── LGPD Consent Check ──
+    if not body.consent_given:
+        raise HTTPException(
+            status_code=403,
+            detail="Consent to Terms of Service and Privacy Policy is required (LGPD Article 7).",
+        )
+
     # In production, fetch user from repository
     # For demonstration, return mock tokens
     # Actual implementation would:

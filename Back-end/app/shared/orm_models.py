@@ -17,6 +17,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -427,6 +428,63 @@ class UserSettingsModel(Base):
     __table_args__ = (
         CheckConstraint(
             "alert_threshold >= 0 AND alert_threshold <= 100", name="chk_alert_threshold"
+        ),
+    )
+
+
+# ============================================================
+# Consent Record (LGPD/GDPR Compliance)
+# ============================================================
+
+
+class ConsentRecordModel(Base):
+    """Immutable consent record for LGPD/GDPR compliance.
+    
+    Stores proof of user consent for terms of service and privacy policy.
+    Each record captures the version accepted, timestamp, and context (IP, user agent).
+    This is legal evidence of informed consent.
+    """
+    __tablename__ = "consent_records"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+    )
+    consent_type: Mapped[str] = mapped_column(
+        String(50), nullable=False, index=True,
+        comment="Type: terms_of_service, privacy_policy, data_processing, marketing"
+    )
+    terms_version: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="Semver of accepted terms (e.g. 1.0.0)"
+    )
+    privacy_version: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="Semver of accepted privacy policy (e.g. 1.0.0)"
+    )
+    accepted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+        server_default=func.now(), comment="When consent was given"
+    )
+    ip_address: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, comment="IP address at consent time"
+    )
+    user_agent: Mapped[str | None] = mapped_column(
+        String(500), nullable=True, comment="Browser/client user agent at consent time"
+    )
+    method: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="checkbox",
+        comment="How consent was captured: checkbox, oauth, api, admin"
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "consent_type IN ('terms_of_service','privacy_policy','data_processing','marketing')",
+            name="chk_consent_type",
+        ),
+        UniqueConstraint(
+            "user_id", "consent_type", "terms_version", "privacy_version",
+            name="uq_user_consent_version",
         ),
     )
 
