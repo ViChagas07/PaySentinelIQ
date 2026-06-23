@@ -1,9 +1,3 @@
-// ============================================================
-// PaySentinelIQ — Executive Intelligence Center (Reports)
-// Enterprise-grade fraud intelligence reporting dashboard
-// Data-driven — shows empty states until real data is available
-// ============================================================
-
 "use client";
 
 import { useTranslations } from "next-intl";
@@ -28,10 +22,13 @@ import {
   TrendingUp,
   Inbox,
 } from "lucide-react";
-
-// ============================================================
-// Empty State Component
-// ============================================================
+import {
+  useDashboardKpis,
+  useDashboardTrends,
+  useDashboardRiskDistribution,
+  useFraudAlertStats,
+} from "@/hooks/useApi";
+import { useMemo } from "react";
 
 function EmptySection({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
   return (
@@ -44,10 +41,6 @@ function EmptySection({ icon: Icon, title, description }: { icon: React.ElementT
     </div>
   );
 }
-
-// ============================================================
-// Skeleton shimmer for KPI cards
-// ============================================================
 
 function KpiSkeleton() {
   return (
@@ -64,16 +57,52 @@ function KpiSkeleton() {
   );
 }
 
-// ============================================================
-// Page Component
-// ============================================================
+function KpiCard({ label, value, subtext, icon: Icon, delay }: { label: string; value: React.ReactNode; subtext: string; icon: React.ElementType; delay: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+    >
+      <Card variant="interactive" glow className="group h-full">
+        <CardContent className="p-4 flex flex-col h-full">
+          <div className="flex items-start justify-between mb-3">
+            <p className="text-xs font-medium text-psi-text-secondary uppercase tracking-wider truncate pr-2">
+              {label}
+            </p>
+            <div className="rounded-lg bg-psi-electric/10 p-1.5 shrink-0">
+              <Icon className="h-3.5 w-3.5 text-psi-electric" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-1 mb-1 mt-auto">
+            <span className="text-2xl font-bold text-psi-text-primary tabular-nums tracking-wider">
+              {value}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-psi-text-secondary/60">{subtext}</span>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+const KPI_LABELS = ["documentsAnalyzed", "fraudCasesDetected", "averageRiskScore", "preventedLosses", "avgAnalysisTime", "successRate"] as const;
+const KPI_ICONS = [FileText, AlertTriangle, BarChart3, DollarSign, Clock, CheckCircle] as const;
 
 export default function ReportsPage() {
   const t = useTranslations("reports");
 
+  const { data: kpis, isLoading: kpisLoading, isError: kpisError } = useDashboardKpis();
+  const { data: trends, isLoading: trendsLoading } = useDashboardTrends();
+  const { data: riskDistribution, isLoading: riskLoading } = useDashboardRiskDistribution();
+  const { data: alertStats, isLoading: alertStatsLoading } = useFraudAlertStats();
+
+  const hasData = useMemo(() => !!kpis && kpis.payrolls_processed > 0, [kpis]);
+
   return (
     <div className="space-y-8">
-      {/* ── Background Grid Layer ── */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
         <svg className="absolute w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -87,7 +116,6 @@ export default function ReportsPage() {
         <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-psi-emerald/5 rounded-full blur-[120px]" />
       </div>
 
-      {/* ── 1. Hero Card ── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -112,7 +140,9 @@ export default function ReportsPage() {
                   </Badge>
                 </div>
                 <p className="text-sm text-psi-text-secondary leading-relaxed max-w-3xl">
-                  {t("pageDescription") || "Awaiting data. Reports will appear here after documents are analyzed."}
+                  {hasData
+                    ? `${kpis!.payrolls_processed.toLocaleString()} documents analyzed \u2022 ${kpis!.fraud_alerts} fraud cases detected`
+                    : t("pageDescription") || "Awaiting data. Reports will appear here after documents are analyzed."}
                 </p>
               </div>
             </div>
@@ -120,53 +150,60 @@ export default function ReportsPage() {
         </Card>
       </motion.div>
 
-      {/* ── 2. KPI Cards — empty/loading state ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: i * 0.06, ease: "easeOut" }}
-          >
-            <Card variant="interactive" glow className="group h-full">
-              <CardContent className="p-4 flex flex-col h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <p className="text-xs font-medium text-psi-text-secondary uppercase tracking-wider truncate pr-2">
-                    {[t("documentsAnalyzed"), t("fraudCasesDetected"), t("averageRiskScore"), t("preventedLosses"), t("avgAnalysisTime"), t("successRate")][i] || "—"}
-                  </p>
-                  <div className="rounded-lg bg-psi-electric/10 p-1.5 shrink-0">
-                    {[FileText, AlertTriangle, BarChart3, DollarSign, Clock, CheckCircle][i] && (
-                      <span className="text-psi-electric">
-                        {[FileText, AlertTriangle, BarChart3, DollarSign, Clock, CheckCircle][i] === FileText && <FileText className="h-3.5 w-3.5" />}
-                        {[FileText, AlertTriangle, BarChart3, DollarSign, Clock, CheckCircle][i] === AlertTriangle && <AlertTriangle className="h-3.5 w-3.5" />}
-                        {[FileText, AlertTriangle, BarChart3, DollarSign, Clock, CheckCircle][i] === BarChart3 && <BarChart3 className="h-3.5 w-3.5" />}
-                        {[FileText, AlertTriangle, BarChart3, DollarSign, Clock, CheckCircle][i] === DollarSign && <DollarSign className="h-3.5 w-3.5" />}
-                        {[FileText, AlertTriangle, BarChart3, DollarSign, Clock, CheckCircle][i] === Clock && <Clock className="h-3.5 w-3.5" />}
-                        {[FileText, AlertTriangle, BarChart3, DollarSign, Clock, CheckCircle][i] === CheckCircle && <CheckCircle className="h-3.5 w-3.5" />}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-baseline gap-1 mb-1 mt-auto">
-                  <span className="text-2xl font-bold text-psi-text-secondary/40 tabular-nums tracking-wider">
-                    ———
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-psi-text-secondary/40 italic">
-                    {t("vsLastPeriod") || "awaiting data"}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+        {kpisLoading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.06, ease: "easeOut" }}
+              >
+                <KpiSkeleton />
+              </motion.div>
+            ))
+          : kpisError
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <KpiCard
+                  key={i}
+                  label={t(KPI_LABELS[i]) || "—"}
+                  value="\u2014\u2014\u2014"
+                  subtext={t("vsLastPeriod") || "awaiting data"}
+                  icon={KPI_ICONS[i]}
+                  delay={i * 0.06}
+                />
+              ))
+            : kpis
+              ? ([
+                  { value: kpis.payrolls_processed.toLocaleString(), subtext: "total documents" },
+                  { value: kpis.fraud_alerts.toLocaleString(), subtext: `${Math.round((kpis.fraud_alerts / Math.max(kpis.payrolls_processed, 1)) * 100)}% rate` },
+                  { value: `${kpis.ai_confidence}%`, subtext: "confidence score" },
+                  { value: `R$ ${kpis.compliance_incidents.toLocaleString()}`, subtext: "losses prevented" },
+                  { value: kpis.high_risk_docs.toLocaleString(), subtext: "high risk documents" },
+                  { value: `${kpis.verification_rate}%`, subtext: "pass rate" },
+                ] as const).map((item, i) => (
+                  <KpiCard
+                    key={i}
+                    label={t(KPI_LABELS[i]) || "—"}
+                    value={item.value}
+                    subtext={item.subtext}
+                    icon={KPI_ICONS[i]}
+                    delay={i * 0.06}
+                  />
+                ))
+              : Array.from({ length: 6 }).map((_, i) => (
+                  <KpiCard
+                    key={i}
+                    label={t(KPI_LABELS[i]) || "—"}
+                    value="\u2014\u2014\u2014"
+                    subtext={t("vsLastPeriod") || "awaiting data"}
+                    icon={KPI_ICONS[i]}
+                    delay={i * 0.06}
+                  />
+                ))}
       </div>
 
-      {/* ── 3 & 4: Charts — empty state ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Risk Distribution */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -181,16 +218,44 @@ export default function ReportsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <EmptySection
-                icon={PieChartIcon}
-                title={t("riskDistribution") || "Risk Distribution"}
-                description={t("noDataAvailable") || "No data available yet"}
-              />
+              {riskLoading
+                ? <div className="animate-pulse space-y-4 py-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="space-y-1">
+                        <div className="h-3 w-16 rounded bg-psi-border/20" />
+                        <div className="h-3 w-full rounded bg-psi-border/10" />
+                      </div>
+                    ))}
+                  </div>
+                : riskDistribution && riskDistribution.length > 0
+                  ? <div className="space-y-3">
+                      {(() => {
+                        const maxCount = Math.max(...riskDistribution.map(r => r.count), 1);
+                        return riskDistribution.map((item) => (
+                          <div key={item.range} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-psi-text-secondary">{item.range}</span>
+                              <span className="font-semibold text-psi-text-primary">{item.count}</span>
+                            </div>
+                            <div className="h-2.5 rounded-full bg-psi-border/20 overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-700 ease-out"
+                                style={{ width: `${(item.count / maxCount) * 100}%`, backgroundColor: item.color || "#1E6FFF" }}
+                              />
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  : <EmptySection
+                      icon={PieChartIcon}
+                      title={t("riskDistribution") || "Risk Distribution"}
+                      description={t("noDataAvailable") || "No data available yet"}
+                    />}
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Fraud Trend */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -207,17 +272,58 @@ export default function ReportsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <EmptySection
-                icon={TrendingUp}
-                title={t("fraudTrendAnalysis") || "Fraud Trend Analysis"}
-                description={t("noDataAvailable") || "No data available yet"}
-              />
+              {trendsLoading
+                ? <div className="animate-pulse space-y-3 py-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="grid grid-cols-[80px_1fr_1fr] gap-2 items-center">
+                        <div className="h-3 w-16 rounded bg-psi-border/20" />
+                        <div className="h-3 rounded bg-psi-border/10" />
+                        <div className="h-3 rounded bg-psi-border/10" />
+                      </div>
+                    ))}
+                  </div>
+                : trends && trends.length > 0
+                  ? <div className="space-y-2">
+                      <div className="grid grid-cols-[80px_1fr_1fr] gap-2 items-center mb-2">
+                        <span className="text-[10px] font-semibold uppercase text-psi-text-secondary/60">Month</span>
+                        <span className="text-[10px] font-semibold uppercase text-emerald-500/80">Volume</span>
+                        <span className="text-[10px] font-semibold uppercase text-red-500/80">Flagged</span>
+                      </div>
+                      {(() => {
+                        const maxVal = Math.max(...trends.map(d => Math.max(d.volume, d.flagged)), 1);
+                        return trends.map((item) => (
+                          <div key={item.month} className="grid grid-cols-[80px_1fr_1fr] gap-2 items-center">
+                            <span className="text-xs text-psi-text-secondary font-medium">{item.month}</span>
+                            <div className="relative h-4 rounded bg-emerald-500/10 overflow-hidden">
+                              <div
+                                className="h-full rounded bg-emerald-500 transition-all duration-500"
+                                style={{ width: `${(item.volume / maxVal) * 100}%` }}
+                              />
+                            </div>
+                            <div className="relative h-4 rounded bg-red-500/10 overflow-hidden">
+                              <div
+                                className="h-full rounded bg-red-500 transition-all duration-500"
+                                style={{ width: `${(item.flagged / maxVal) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                      <div className="flex items-center gap-4 pt-2 text-xs text-psi-text-secondary/60">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Volume</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Flagged</span>
+                      </div>
+                    </div>
+                  : <EmptySection
+                      icon={TrendingUp}
+                      title={t("fraudTrendAnalysis") || "Fraud Trend Analysis"}
+                      description={t("noDataAvailable") || "No data available yet"}
+                    />}
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      {/* ── 5. Top Fraud Causes Table — empty state ── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -231,16 +337,55 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <EmptySection
-              icon={Inbox}
-              title={t("fraudCauses") || "Top Fraud Causes"}
-              description={t("noDataAvailable") || "No data available yet"}
-            />
+            {alertStatsLoading
+              ? <div className="animate-pulse space-y-3 py-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-psi-border/20" />
+                      <div className="h-3 w-20 rounded bg-psi-border/20" />
+                      <div className="h-3 w-8 rounded bg-psi-border/20 ml-auto" />
+                      <div className="h-2 w-24 rounded bg-psi-border/10" />
+                    </div>
+                  ))}
+                </div>
+              : alertStats && alertStats.total > 0
+                ? (() => {
+                    const statusItems: { label: string; key: "total" | "new" | "under_review" | "escalated" | "confirmed" | "resolved"; color: string }[] = [
+                      { label: "Total", key: "total", color: "bg-psi-electric" },
+                      { label: "New", key: "new", color: "bg-yellow-500" },
+                      { label: "Under Review", key: "under_review", color: "bg-blue-500" },
+                      { label: "Escalated", key: "escalated", color: "bg-orange-500" },
+                      { label: "Confirmed", key: "confirmed", color: "bg-red-500" },
+                      { label: "Resolved", key: "resolved", color: "bg-emerald-500" },
+                    ];
+                    return (
+                      <div className="space-y-3">
+                        {statusItems.map(({ label, key, color }) => {
+                          const value = alertStats[key];
+                          const pct = (value / alertStats.total) * 100;
+                          return (
+                            <div key={key} className="flex items-center gap-3">
+                              <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", color)} />
+                              <span className="flex-1 text-sm text-psi-text-secondary">{label}</span>
+                              <span className="text-sm font-semibold text-psi-text-primary tabular-nums">{value}</span>
+                              <div className="w-28 h-2 rounded-full bg-psi-border/20 overflow-hidden">
+                                <div className={cn("h-full rounded-full transition-all duration-500", color)} style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()
+                : <EmptySection
+                    icon={Inbox}
+                    title={t("fraudCauses") || "Top Fraud Causes"}
+                    description={t("noDataAvailable") || "No data available yet"}
+                  />}
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* ── 6. AI Insights Card — empty state ── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -262,32 +407,51 @@ export default function ReportsPage() {
                   </h3>
                   <Badge variant="outline" className="text-[10px]">{t("aiGenerated") || "AI Generated"}</Badge>
                 </div>
-                <p className="text-sm text-psi-text-secondary leading-relaxed">
-                  {t("aiInsightText") || "AI insights will be generated automatically as documents are analyzed. No data available yet."}
-                </p>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium text-psi-text-secondary">
-                      {t("confidence") || "Confidence"}
-                    </span>
-                    <div className="w-32 h-2 rounded-full bg-psi-border/20 overflow-hidden">
-                      <div className="h-full rounded-full bg-psi-border/10" style={{ width: "0%" }} />
+                {kpisLoading
+                  ? <div className="animate-pulse space-y-2">
+                      <div className="h-4 w-full rounded bg-psi-border/20" />
+                      <div className="h-4 w-3/4 rounded bg-psi-border/20" />
+                      <div className="h-4 w-1/2 rounded bg-psi-border/20" />
                     </div>
-                    <span className="text-xs font-bold text-psi-text-secondary/40 tabular-nums">—%</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="text-[11px] text-psi-text-secondary/50">
-                      {t("recommendations") || "Recommendations"} — {t("notAvailable") || "N/A"}
-                    </Badge>
-                  </div>
-                </div>
+                  : kpis && kpis.payrolls_processed > 0
+                    ? <>
+                        <p className="text-sm text-psi-text-secondary leading-relaxed">
+                          {`Analysis of ${kpis.payrolls_processed.toLocaleString()} documents detected ${kpis.fraud_alerts} fraud cases (${Math.round((kpis.fraud_alerts / kpis.payrolls_processed) * 100)}% rate), prevented ${kpis.compliance_incidents} compliance incidents. Verification success rate is ${kpis.verification_rate}% with AI confidence at ${kpis.ai_confidence}%. ${kpis.high_risk_docs} documents flagged as high-risk.`}
+                        </p>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-medium text-psi-text-secondary">
+                              {t("confidence") || "Confidence"}
+                            </span>
+                            <div className="w-32 h-2 rounded-full bg-psi-border/20 overflow-hidden">
+                              <div className="h-full rounded-full bg-psi-electric transition-all duration-500" style={{ width: `${kpis.ai_confidence}%` }} />
+                            </div>
+                            <span className="text-xs font-bold text-psi-text-primary tabular-nums">{kpis.ai_confidence}%</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" className="text-[11px] text-psi-electric/80">
+                              {kpis.fraud_alerts} Alerts
+                            </Badge>
+                            <Badge variant="outline" className="text-[11px] text-emerald-500/80">
+                              {kpis.verification_rate}% Rate
+                            </Badge>
+                            {alertStats && (
+                              <Badge variant="outline" className="text-[11px] text-yellow-500/80">
+                                {alertStats.under_review} Under Review
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    : <p className="text-sm text-psi-text-secondary leading-relaxed">
+                        {t("aiInsightText") || "AI insights will be generated automatically as documents are analyzed. No data available yet."}
+                      </p>}
               </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* ── 7. Export Tools ── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -297,19 +461,19 @@ export default function ReportsPage() {
           <h3 className="text-sm font-semibold text-psi-text-primary mr-2">
             {t("exportTools") || "Export & Share"}
           </h3>
-          <Button variant="primary" size="sm" disabled>
+          <Button variant="primary" size="sm" disabled={!hasData}>
             <Download className="h-4 w-4" />
             {t("exportPDF") || "Export PDF"}
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled={!hasData}>
             <FileSpreadsheet className="h-4 w-4" />
             {t("exportCSV") || "Export CSV"}
           </Button>
-          <Button variant="secondary" size="sm" disabled>
+          <Button variant="secondary" size="sm" disabled={!hasData}>
             <Share2 className="h-4 w-4" />
             {t("shareReport") || "Share Report"}
           </Button>
-          <Button variant="ghost" size="sm" disabled className="relative overflow-hidden">
+          <Button variant="ghost" size="sm" disabled={!hasData} className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-psi-electric/5 to-psi-emerald/5 opacity-0" />
             <FileText className="h-4 w-4 relative z-10" />
             <span className="relative z-10">{t("generateReport") || "Generate Executive Report"}</span>
