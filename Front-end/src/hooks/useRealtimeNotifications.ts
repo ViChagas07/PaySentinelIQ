@@ -9,14 +9,25 @@
 //   accepting the connection.
 // - Falls back to polling when the WebSocket is unavailable.
 // - Exponential backoff reconnection (max 30s).
+//
+// Toast Integration (Sonner):
+// - Every realtime notification fires a premium Sonner toast.
+// - Anti-spam prevents toast flooding (burst grouping, throttle).
+// - Deep linking navigates to the relevant section on click.
 // ============================================================
 
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAlertStore, useAuthStore } from "@/stores";
 import { queryKeys } from "@/hooks/useApi";
+import {
+  evaluateNotificationForToast,
+  resetAntiSpamState,
+} from "@/lib/notification-anti-spam";
+import { buildNotificationToastContent } from "@/components/notifications/RealtimeNotificationToast";
 import type { Notification } from "@/types";
 
 const WS_BASE_URL =
@@ -32,9 +43,54 @@ interface WsNotificationMessage {
 }
 
 /**
+ * Map notification type to Sonner toast type for rich colour styling.
+ */
+function getSonnerType(notification: Notification): "success" | "error" | "warning" | "info" {
+  const typeMap: Record<string, "success" | "error" | "warning" | "info"> = {
+    payment: "success",
+    fraud_alert: "error",
+    verification_complete: "success",
+    compliance_alert: "warning",
+    document_event: "info",
+    system: "info",
+    ai_insight: "info",
+    critical: "error",
+  };
+  return typeMap[notification.type] || "info";
+}
+
+/**
+ * Show a Sonner toast for a given notification.
+ */
+function showNotificationToast(notification: Notification) {
+  const sonnerType = getSonnerType(notification);
+
+  // Use custom toast rendering for rich UI
+  const toastId = `psi-toast-${notification.id}`;
+
+  toast.custom(
+    (t) =>
+      buildNotificationToastContent(notification, () => {
+        toast.dismiss(t);
+      }),
+    {
+      id: toastId,
+      duration: 5_000,
+      // Use rich-color data attribute so Sonner applies the correct
+      // background / border from our CSS variables
+      style: {
+        backgroundColor: "transparent",
+        border: "none",
+        boxShadow: "none",
+      },
+    },
+  );
+}
+
+/**
  * Hook that establishes an authenticated WebSocket connection to the
- * notifications channel and integrates with the Zustand alert store
- * and TanStack Query caches.
+ * notifications channel and integrates with the Zustand alert store,
+ * TanStack Query caches, and Sonner toasts.
  *
  * @param enabled - Whether the WS connection should be active.
  */
@@ -46,18 +102,6 @@ export function useRealtimeNotifications(enabled = true) {
   const addNotification = useAlertStore((s) => s.addNotification);
   const markNotificationRead = useAlertStore((s) => s.markNotificationRead);
   const token = useAuthStore((s) => s.token);
-
-  const buildUrl = useCallback(() => {
-    // Append JWT token as query param for server-side authentication
-    const url = new URL(WS_BASE_URL, window.location.origin);
-    if (token) {
-      url.searchParams.set("token", token);
-    }
-    // Use ws:// for http:// pages, wss:// for https:// pages
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    url.protocol = protocol;
-    return url.toString();
-  }, [token]);
 
   const connect = useCallback(() => {
     if (!enabled || typeof window === "undefined") return;
@@ -80,6 +124,7 @@ export function useRealtimeNotifications(enabled = true) {
 
       ws.onopen = () => {
         reconnectAttemptsRef.current = 0;
+        resetAntiSpamState();
         // Heartbeat ping — server replies with {"type":"pong"}
         ws.send("ping");
       };
@@ -91,10 +136,17 @@ export function useRealtimeNotifications(enabled = true) {
           switch (msg.type) {
             case "new_notification": {
               if (msg.data) {
+                // 1. Update Zustand store
                 addNotification(msg.data);
+                // 2. Invalidate TanStack Query cache
                 queryClient.invalidateQueries({
                   queryKey: queryKeys.notifications.all,
                 });
+                // 3. Evaluate & show toast (anti-spam aware)
+                const action = evaluateNotificationForToast(msg.data);
+                if (action === "show") {
+                  showNotificationToast(msg.data);
+                }
               }
               break;
             }
@@ -175,6 +227,7 @@ export function useRealtimeNotifications(enabled = true) {
         wsRef.current.close(1000, "Component unmounted");
         wsRef.current = null;
       }
+      resetAntiSpamState();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connect, token]);

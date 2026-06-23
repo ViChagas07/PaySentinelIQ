@@ -325,6 +325,143 @@
 }
 
 /* ═══════════════════════════════════════════════════
+   SONNER TOAST OVERRIDES
+   ═══════════════════════════════════════════════════ */
+
+/* Dark theme (default) */
+[data-sonner-toaster] {
+  --normal-bg: var(--color-psi-graphite);
+  --normal-border: var(--color-psi-border);
+  --normal-text: var(--color-psi-text-primary);
+  --success-bg: #0d3b2e;
+  --success-border: var(--color-psi-emerald);
+  --success-text: #d1fae5;
+  --error-bg: #3b1a1a;
+  --error-border: var(--color-psi-fraud);
+  --error-text: #fecaca;
+  --warning-bg: #3b2d0a;
+  --warning-border: var(--color-psi-warning);
+  --warning-text: #fef3c7;
+  --info-bg: #0a1e3b;
+  --info-border: var(--color-psi-electric);
+  --info-text: #bfdbfe;
+}
+
+[data-sonner-toaster] [data-rich-color="success"] {
+  background: var(--success-bg) !important;
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
+}
+
+[data-sonner-toaster] [data-rich-color="error"] {
+  background: var(--error-bg) !important;
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
+}
+
+[data-sonner-toaster] [data-rich-color="warning"] {
+  background: var(--warning-bg) !important;
+  border: 1px solid var(--warning-border);
+  color: var(--warning-text);
+}
+
+[data-sonner-toaster] [data-rich-color="info"] {
+  background: var(--info-bg) !important;
+  border: 1px solid var(--info-border);
+  color: var(--info-text);
+}
+
+/* Light theme override */
+.light [data-sonner-toaster] {
+  --normal-bg: #ffffff;
+  --normal-border: #e2e8f0;
+  --normal-text: #0f172a;
+  --success-bg: #ecfdf5;
+  --success-border: var(--color-psi-emerald);
+  --success-text: #065f46;
+  --error-bg: #fef2f2;
+  --error-border: var(--color-psi-fraud);
+  --error-text: #991b1b;
+  --warning-bg: #fffbeb;
+  --warning-border: var(--color-psi-warning);
+  --warning-text: #92400e;
+  --info-bg: #eff6ff;
+  --info-border: var(--color-psi-electric);
+  --info-text: #1e40af;
+}
+
+.light [data-sonner-toaster] [data-rich-color="success"] {
+  background: var(--success-bg) !important;
+  color: var(--success-text);
+}
+
+.light [data-sonner-toaster] [data-rich-color="error"] {
+  background: var(--error-bg) !important;
+  color: var(--error-text);
+}
+
+.light [data-sonner-toaster] [data-rich-color="warning"] {
+  background: var(--warning-bg) !important;
+  color: var(--warning-text);
+}
+
+.light [data-sonner-toaster] [data-rich-color="info"] {
+  background: var(--info-bg) !important;
+  color: var(--info-text);
+}
+
+/* Sonner toast custom styling for PaySentinelIQ brand */
+[data-sonner-toast] {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  font-family: var(--font-sans) !important;
+  padding: 16px !important;
+  gap: 12px !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+[data-sonner-toast] [data-description] {
+  font-size: 0.8125rem !important;
+  line-height: 1.25rem !important;
+  opacity: 0.85 !important;
+}
+
+[data-sonner-toast] [data-close-button] {
+  background: transparent !important;
+  border: none !important;
+  color: currentColor !important;
+  opacity: 0.5 !important;
+  transition: opacity 0.2s !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  opacity: 1 !important;
+}
+
+/* Cancel button (dismisses on click) */
+[data-sonner-toast] [data-cancel] {
+  border-radius: var(--radius-md) !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  padding: 4px 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
    GLOBAL RESETS
    ═══════════════════════════════════════════════════ */
 
