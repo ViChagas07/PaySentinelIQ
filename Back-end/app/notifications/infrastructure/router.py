@@ -154,6 +154,33 @@ async def mark_as_read(
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
+@router.patch("/{notification_id}/unread")
+async def mark_as_unread(
+    notification_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Mark a single notification as unread."""
+    try:
+        service = NotificationService(db)
+        notification = await service.mark_notification_as_unread(
+            notification_id=uuid.UUID(notification_id),
+            user_id=uuid.UUID(user_id),
+        )
+        await db.commit()
+        return {
+            "status": "unread",
+            "notification_id": str(notification.id),
+            "notification": _notification_to_response(notification),
+        }
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+
 @router.post("/read-all")
 async def mark_all_read(
     user_id: str = Depends(get_current_user_id),

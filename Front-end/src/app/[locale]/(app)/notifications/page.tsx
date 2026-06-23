@@ -16,6 +16,7 @@ import {
   useNotifications,
   useUnreadNotificationCount,
   useMarkNotificationRead,
+  useMarkNotificationUnread,
   useMarkAllNotificationsRead,
   useDismissNotification,
   useDeleteNotificationsByAge,
@@ -144,6 +145,7 @@ export default function NotificationsPage() {
 
   // ── Mutations ──
   const markReadMutation = useMarkNotificationRead();
+  const markUnreadMutation = useMarkNotificationUnread();
   const markAllReadMutation = useMarkAllNotificationsRead();
   const dismissMutation = useDismissNotification();
   const deleteByAgeMutation = useDeleteNotificationsByAge();
@@ -229,10 +231,14 @@ export default function NotificationsPage() {
 
   // ── Handlers ──
   const handleMarkAsRead = useCallback(
-    (id: string, isRead: boolean) => {
-      if (isRead) markReadMutation.mutate(id);
+    (id: string, targetIsRead: boolean) => {
+      if (targetIsRead) {
+        markReadMutation.mutate(id);
+      } else {
+        markUnreadMutation.mutate(id);
+      }
     },
-    [markReadMutation],
+    [markReadMutation, markUnreadMutation],
   );
 
   const handleDismissNotification = useCallback(

@@ -106,6 +106,19 @@ class NotificationService:
         await self.session.flush()
         return notification
 
+    async def mark_notification_as_unread(self, notification_id: uuid.UUID, user_id: uuid.UUID) -> NotificationModel:
+        """
+        Marks a single notification as unread.
+        """
+        notification = await self.repository.get(notification_id)
+        if not notification or notification.user_id != user_id:
+            raise NotFoundError("Notification", str(notification_id))
+        
+        notification.is_read = False
+        self.session.add(notification)
+        await self.session.flush()
+        return notification
+
     async def mark_all_notifications_as_read(self, user_id: uuid.UUID) -> int:
         """
         Marks all unread notifications for a user as read.
