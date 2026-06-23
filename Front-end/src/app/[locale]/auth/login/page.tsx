@@ -199,16 +199,55 @@ export default function AuthPage() {
 
     setSignInLoading(true);
 
-    // Simulate auth — TODO: connect to real API
-    setTimeout(() => {
-      setSignInLoading(false);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
-      // Persist auth state so the dashboard knows the user is logged in
+    try {
+      const res = await fetch(`${apiUrl}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: signInEmail,
+          password: signInPassword,
+          consent_given: true,
+          terms_version: "1.0.0",
+          privacy_version: "1.0.0",
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        loginStore(
+          {
+            id: data.user?.id || crypto.randomUUID(),
+            email: data.user?.email || signInEmail,
+            full_name: data.user?.name || signInEmail.split("@")[0] || "User",
+            avatar_url: data.user?.avatar_url || null,
+            role: data.user?.role || "viewer",
+            tenant_id: data.user?.tenant_id || "demo",
+            mfa_enabled: false,
+            last_login: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+          },
+          data.access_token || "demo-jwt-token"
+        );
+        setSignInLoading(false);
+        router.push(`/${locale}/dashboard`);
+        return;
+      }
+
+      // Backend returned an error — show it
+      const errData = await res.json().catch(() => ({}));
+      setSignInLoading(false);
+      setSignInError(errData.message || errData.detail || t("signInFailed"));
+      return;
+    } catch {
+      // Backend unreachable — enter demo mode so the recruiter can still
+      // explore the full UI. This fallback is intentional for demo purposes.
       loginStore(
         {
           id: crypto.randomUUID(),
           email: signInEmail,
-          full_name: signInEmail.split("@")[0] || "Usuário",
+          full_name: signInEmail.split("@")[0] || "User",
           avatar_url: null,
           role: "viewer",
           tenant_id: "demo",
@@ -218,9 +257,9 @@ export default function AuthPage() {
         },
         "demo-jwt-token"
       );
-
+      setSignInLoading(false);
       router.push(`/${locale}/dashboard`);
-    }, 1500);
+    }
   };
 
   // ── Sign Up handler ── //
@@ -273,31 +312,14 @@ export default function AuthPage() {
       setSignUpSuccess(true);
       setSignUpLoading(false);
 
-      // Persist auth state if the API returns user + token
       if (data.user && data.token) {
         loginStore(data.user, data.token);
-      } else {
-        // Fallback: set a minimal demo user so the dashboard unlocks
-        loginStore(
-          {
-            id: crypto.randomUUID(),
-            email: signUpEmail,
-            full_name: signUpName,
-            avatar_url: null,
-            role: "viewer",
-            tenant_id: "demo",
-            mfa_enabled: false,
-            last_login: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-          },
-          "demo-jwt-token"
-        );
-      }
 
-      // Auto-redirect after showing success
-      setTimeout(() => {
-        router.push(`/${locale}/dashboard`);
-      }, 3000);
+        // Auto-redirect after showing success
+        setTimeout(() => {
+          router.push(`/${locale}/dashboard`);
+        }, 3000);
+      }
     } catch {
       setSignUpError(t("networkError"));
       setSignUpLoading(false);
