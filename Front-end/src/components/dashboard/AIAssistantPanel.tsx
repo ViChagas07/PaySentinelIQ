@@ -1,6 +1,7 @@
 // ============================================================
 // PaySentinelIQ — AI Assistant Slide-Out Panel
 // Chat-like interface for AI-powered payroll & fraud Q&A
+// Connected to real backend /api/ai-assistant/chat endpoint
 // ============================================================
 
 "use client";
@@ -10,27 +11,29 @@ import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores";
-import { Bot, X, Send, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { Bot, X, Send, Sparkles, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import { useAIChat, useAIChatSuggestions, type AIChatResponse } from "@/hooks/useApi";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  isError?: boolean;
 }
 
-// ── Placeholder response (to be replaced by real /api/ai-assistant endpoint) ── //
-// The AI assistant will process queries against the user's actual data.
-function getPlaceholderResponse(): string {
-  return "I'm ready to help you analyze payroll data and fraud intelligence. In production, I'll connect to the AI assistant API to provide insights based on your actual data.";
-}
-
-const suggestions = [
+const LOCAL_SUGGESTION_KEYS = [
   "suggestFraudSummary",
   "suggestRiskTrends",
   "suggestComplianceCheck",
   "suggestUnusualActivity",
 ] as const;
+
+/** Fallback message when the backend is unreachable */
+const FALLBACK_RESPONSE =
+  "Desculpe, não consegui me conectar ao servidor agora. " +
+  "Por favor, tente novamente em alguns instantes. " +
+  "Se o problema persistir, verifique sua conexão ou contate o suporte.";
 
 export function AIAssistantPanel() {
   const t = useTranslations("assistant");
@@ -39,15 +42,22 @@ export function AIAssistantPanel() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // ── API mutation ── //
+  const chatMutation = useAIChat();
+
+  // ── Fetch suggestions from backend ── //
+  const { data: suggestionsData } = useAIChatSuggestions();
+  const backendSuggestions = suggestionsData?.suggestions ?? [];
+
   // ── Auto-scroll to bottom ── //
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [messages, chatMutation.isPending]);
 
   // ── Focus input when panel opens ── //
   useEffect(() => {
@@ -89,10 +99,10 @@ export function AIAssistantPanel() {
     [toggleAiPanel]
   );
 
-  // ── Send message ── //
+  // ── Send message via API ── //
   const sendMessage = useCallback(
     (text: string) => {
-      if (!text.trim()) return;
+      if (!text.trim() || chatMutation.isPending) return;
       const trimmed = text.trim();
 
       const userMsg: Message = {
@@ -104,21 +114,34 @@ export function AIAssistantPanel() {
 
       setMessages((prev) => [...prev, userMsg]);
       setInput("");
-      setIsTyping(true);
 
-      // Simulate AI response delay
-      setTimeout(() => {
-        const aiMsg: Message = {
-          id: `ai-${Date.now()}`,
-          role: "assistant",
-          content: getPlaceholderResponse(),
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, aiMsg]);
-        setIsTyping(false);
-      }, 1200 + Math.random() * 800);
+      chatMutation.mutate(
+        { message: trimmed, conversation_id: conversationId ?? undefined },
+        {
+          onSuccess: (data: AIChatResponse) => {
+            setConversationId(data.conversation_id);
+            const aiMsg: Message = {
+              id: `ai-${Date.now()}`,
+              role: "assistant",
+              content: data.message,
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, aiMsg]);
+          },
+          onError: () => {
+            const errorMsg: Message = {
+              id: `ai-${Date.now()}-error`,
+              role: "assistant",
+              content: FALLBACK_RESPONSE,
+              timestamp: new Date(),
+              isError: true,
+            };
+            setMessages((prev) => [...prev, errorMsg]);
+          },
+        }
+      );
     },
-    []
+    [chatMutation, conversationId]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -126,10 +149,12 @@ export function AIAssistantPanel() {
     sendMessage(input);
   };
 
-  const handleSuggestionClick = (key: (typeof suggestions)[number]) => {
+  const handleSuggestionClick = (key: string) => {
     const label = t(key);
     sendMessage(label);
   };
+
+  const isWaiting = chatMutation.isPending;
 
   return (
     <AnimatePresence>
@@ -203,12 +228,18 @@ export function AIAssistantPanel() {
                     className={cn(
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
                       msg.role === "assistant"
-                        ? "bg-psi-electric/15"
+                        ? msg.isError
+                          ? "bg-red-500/15"
+                          : "bg-psi-electric/15"
                         : "bg-psi-border/50"
                     )}
                   >
                     {msg.role === "assistant" ? (
-                      <Sparkles className="h-3.5 w-3.5 text-psi-electric" />
+                      msg.isError ? (
+                        <AlertCircle className="h-3.5 w-3.5 text-red-400" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5 text-psi-electric" />
+                      )
                     ) : (
                       <span className="text-[10px] font-bold text-psi-text-secondary">
                         {t("userLabel")}
@@ -221,7 +252,9 @@ export function AIAssistantPanel() {
                     className={cn(
                       "max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
                       msg.role === "assistant"
-                        ? "bg-psi-navy/80 border border-psi-border/60 text-psi-text-primary"
+                        ? msg.isError
+                          ? "bg-red-950/30 border border-red-500/30 text-red-200"
+                          : "bg-psi-navy/80 border border-psi-border/60 text-psi-text-primary"
                         : "bg-psi-electric/15 text-psi-text-primary"
                     )}
                   >
@@ -237,7 +270,7 @@ export function AIAssistantPanel() {
               ))}
 
               {/* Typing indicator */}
-              {isTyping && (
+              {isWaiting && (
                 <div className="flex gap-3">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-psi-electric/15">
                     <Sparkles className="h-3.5 w-3.5 text-psi-electric" />
@@ -260,14 +293,18 @@ export function AIAssistantPanel() {
             {messages.length <= 1 && (
               <div className="px-4 pb-2 shrink-0">
                 <div className="flex flex-wrap gap-2">
-                  {suggestions.map((key) => (
+                  {(backendSuggestions.length > 0
+                    ? backendSuggestions
+                    : LOCAL_SUGGESTION_KEYS.map((k) => ({ key: k, label: t(k) }))
+                  ).map((suggestion) => (
                     <button
-                      key={key}
-                      onClick={() => handleSuggestionClick(key)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-psi-border bg-psi-navy/60 px-3 py-1.5 text-xs text-psi-text-secondary hover:text-psi-text-primary hover:border-psi-electric/40 hover:bg-psi-electric/5 transition-all"
+                      key={suggestion.key}
+                      onClick={() => handleSuggestionClick(suggestion.key)}
+                      disabled={isWaiting}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-psi-border bg-psi-navy/60 px-3 py-1.5 text-xs text-psi-text-secondary hover:text-psi-text-primary hover:border-psi-electric/40 hover:bg-psi-electric/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <ArrowRight className="h-3 w-3 text-psi-electric" />
-                      {t(key)}
+                      {suggestion.label}
                     </button>
                   ))}
                 </div>
@@ -286,12 +323,13 @@ export function AIAssistantPanel() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={t("inputPlaceholder")}
-                  className="flex-1 rounded-lg border border-psi-border bg-psi-navy/80 px-3.5 py-2.5 text-sm text-psi-text-primary placeholder:text-psi-text-secondary/50 outline-none focus:border-psi-electric focus:ring-1 focus:ring-psi-electric/30 transition-all"
+                  disabled={isWaiting}
+                  className="flex-1 rounded-lg border border-psi-border bg-psi-navy/80 px-3.5 py-2.5 text-sm text-psi-text-primary placeholder:text-psi-text-secondary/50 outline-none focus:border-psi-electric focus:ring-1 focus:ring-psi-electric/30 transition-all disabled:opacity-50"
                   aria-label={t("inputPlaceholder")}
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim() || isTyping}
+                  disabled={!input.trim() || isWaiting}
                   className="flex h-10 w-10 items-center justify-center rounded-lg bg-psi-electric text-white hover:bg-psi-electric/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   aria-label={t("send")}
                 >

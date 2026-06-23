@@ -564,3 +564,35 @@ export function useAnalyzeDocument() {
     }) => api.post<any>("/fraud-alerts/analyze", payload),
   });
 }
+
+// ============================================================
+// AI Assistant Chat Hook
+// ============================================================
+
+export interface AIChatRequest {
+  message: string;
+  conversation_id?: string;
+}
+
+export interface AIChatResponse {
+  message: string;
+  conversation_id: string;
+  sources: string[];
+  related_alerts: string[];
+}
+
+export function useAIChat() {
+  return useMutation({
+    mutationFn: (payload: AIChatRequest) =>
+      api.post<AIChatResponse>("/ai-assistant/chat", payload),
+  });
+}
+
+export function useAIChatSuggestions() {
+  return useQuery({
+    queryKey: ["ai-assistant", "suggestions"] as const,
+    queryFn: () =>
+      api.get<{ suggestions: { key: string; label: string }[] }>("/ai-assistant/suggestions"),
+    staleTime: 1000 * 60 * 30, // 30 min — suggestions rarely change
+  });
+}
