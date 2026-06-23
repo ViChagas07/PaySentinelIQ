@@ -86,15 +86,59 @@ async def _background_init_llm() -> None:
         logger.warning("LLM service initialization deferred (non-fatal): %s", exc)
 
 
+# ── WebSocket Redis listener handle (for shutdown) ──
+_ws_redis_task: asyncio.Task[None] | None = None
+_domain_event_redis_task: asyncio.Task[None] | None = None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Yields immediately — healthcheck responds in <1 second."""
     print("[psi] Lifespan started — scheduling background inits...", flush=True)
+
+    global _ws_redis_task, _domain_event_redis_task
+
     asyncio.create_task(_background_init_redis())
     asyncio.create_task(_background_init_llm())
+
+    # ── Start WebSocket Redis listener (Celery → WS bridge) ──
+    try:
+        from app.websocket.router import start_ws_redis_listener, stop_ws_redis_listener
+        _ws_redis_task = asyncio.create_task(start_ws_redis_listener())
+        print("[psi] WebSocket Redis listener started", flush=True)
+    except Exception as exc:
+        print(f"[psi] WebSocket Redis listener init skipped (non-fatal): {exc}", flush=True)
+
+    # ── Start Domain Event Redis listener ──
+    try:
+        from app.events.event_bus import start_redis_event_listener
+        _domain_event_redis_task = asyncio.create_task(start_redis_event_listener())
+        print("[psi] Domain event Redis listener started", flush=True)
+    except Exception as exc:
+        print(f"[psi] Domain event Redis listener init skipped (non-fatal): {exc}", flush=True)
+
     print("[psi] Lifespan yielding — app is ready for /health", flush=True)
     yield
-    # Shutdown
+
+    # ── Shutdown ──
+    # Cancel WebSocket Redis listener
+    if _ws_redis_task is not None:
+        _ws_redis_task.cancel()
+        try:
+            await _ws_redis_task
+        except asyncio.CancelledError:
+            pass
+        print("[psi] WebSocket Redis listener stopped", flush=True)
+
+    # Cancel domain event Redis listener
+    if _domain_event_redis_task is not None:
+        _domain_event_redis_task.cancel()
+        try:
+            await _domain_event_redis_task
+        except asyncio.CancelledError:
+            pass
+        print("[psi] Domain event Redis listener stopped", flush=True)
+
     try:
         await close_redis()
     except Exception as exc:

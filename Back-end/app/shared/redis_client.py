@@ -128,6 +128,11 @@ class RedisPubSub:
     CHANNEL_PREFIX = "psi:events"
 
     @staticmethod
+    async def _get_client() -> Redis:
+        """Return the shared Redis client (used by the event listener)."""
+        return await get_redis()
+
+    @staticmethod
     async def publish(
         channel: str,
         message: dict[str, Any],

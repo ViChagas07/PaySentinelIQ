@@ -26,9 +26,11 @@ _HEALTH_PATHS = re.compile(
     r"^/(health|metrics|robots\.txt|sitemap\.xml|/?)$",
 )
 _API_PATHS = re.compile(r"^/api/")
+_WS_PATHS = re.compile(r"^/ws/")
 
 # Endpoints that MUST always bypass rate limiting (e.g. health checks
-# used by the platform orchestrator).
+# used by the platform orchestrator, and WebSocket endpoints that
+# would break with BaseHTTPMiddleware interception).
 _BYPASS_PATHS = _HEALTH_PATHS
 
 
@@ -74,6 +76,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # ── 1. Bypass paths ────────────────────────────────────
         if _BYPASS_PATHS.match(path):
+            return await call_next(request)
+
+        # WebSocket paths MUST bypass BaseHTTPMiddleware entirely
+        # because BaseHTTPMiddleware intercepts the ASGI scope and
+        # breaks the WebSocket Upgrade handshake.  Without this bypass
+        # every WS connection would fail with a 1006 Abnormal Closure.
+        if _WS_PATHS.match(path):
             return await call_next(request)
 
         # ── 2. Classify route group & pick identifier ──────────

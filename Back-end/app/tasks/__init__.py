@@ -143,9 +143,10 @@ def _emit_analyst_alert(
     risk_classification: str,
     anomaly_count: int,
 ) -> None:
-    """Emit real-time alert to analyst dashboard via WebSocket."""
+    """Emit real-time alert to analyst dashboard via WebSocket (Redis Pub/Sub)."""
     try:
         import json
+        import asyncio
 
         alert_data = {
             "document_id": document_id,
@@ -159,8 +160,29 @@ def _emit_analyst_alert(
                 f"(score: {risk_score:.1f}/100, {anomaly_count} anomalias)"
             ),
         }
-        # In production, this would use the actual WebSocket broadcast
+
         logger.info("ANALYST ALERT: %s", json.dumps(alert_data, indent=2))
+
+        # Publish to Redis so the FastAPI WebSocket listener can relay it
+        from app.shared.redis_client import RedisPubSub
+
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(
+                RedisPubSub.publish(
+                    "ws:notifications",
+                    {
+                        "type": "fraud_alert",
+                        "data": alert_data,
+                        "target": {
+                            "tenant_id": tenant_id,
+                            "user_id": None,  # broadcast to all users in tenant
+                        },
+                    },
+                )
+            )
+        finally:
+            loop.close()
     except Exception as e:
         logger.warning("Could not emit alert: %s", e)
 

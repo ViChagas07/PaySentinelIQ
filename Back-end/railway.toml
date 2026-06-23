@@ -21,7 +21,7 @@
 [deploy]
 # Comando de start customizado para o padrão factory do FastAPI
 # Usa python -m uvicorn (garante PATH) em vez de uvicorn direto
-startCommand = "python -m uvicorn app.main:create_app --factory --host 0.0.0.0 --port ${PORT:-8000}"
+startCommand = "python -m uvicorn app.main:create_app --factory --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --ws-ping-interval 30 --ws-ping-timeout 10 --ws-max-size 1048576"
 
 # Health check — Railway usa para verificar se o app subiu
 healthcheckPath = "/health"

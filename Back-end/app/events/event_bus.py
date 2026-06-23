@@ -80,9 +80,10 @@ def event_handler(event_type: str) -> Callable[[EventHandler], EventHandler]:
 
 async def start_redis_event_listener() -> None:
     """
-    Background task that listens for events from Redis pub/sub
-    and dispatches them to local handlers. Used by Celery workers
-    and other processes that need to react to events.
+    Background task that listens for domain events from Redis pub/sub
+    and dispatches them to local in-process handlers.
+
+    Subscribes to ALL known domain event channels — not just the first one.
     """
     channels = [
         "psi:events:document:uploaded",
@@ -93,13 +94,56 @@ async def start_redis_event_listener() -> None:
         "psi:events:analyst:alert_sent",
     ]
 
-    pubsub = await RedisPubSub.subscribe(channels[0])
-    async for message in RedisPubSub.listen(pubsub):
-        try:
-            event_type = message.get("event_type")
-            if event_type and event_type in EventBus._handlers:
-                # Reconstruct event and dispatch to local handlers
-                # Note: In production, use a factory to reconstruct the correct event type
-                logger.debug("Received Redis event: %s", event_type)
-        except Exception as e:
-            logger.error("Error processing Redis event: %s", e)
+    if not channels:
+        logger.warning("No domain event channels configured — Redis listener not started")
+        return
+
+    logger.info("Starting domain event Redis listener on %d channels", len(channels))
+
+    try:
+        client = await RedisPubSub._get_client()
+        pubsub = client.pubsub()
+        await pubsub.subscribe(*channels)
+        logger.info("Subscribed to channels: %s", channels)
+    except Exception as exc:
+        logger.error("Failed to subscribe to Redis channels: %s", exc)
+        return
+
+    try:
+        async for raw_msg in pubsub.listen():
+            msg_type = raw_msg.get("type")
+            if msg_type != "message":
+                continue
+
+            data = raw_msg.get("data")
+            if data is None:
+                continue
+
+            try:
+                import json
+                message = json.loads(data) if isinstance(data, str) else data
+            except (json.JSONDecodeError, TypeError):
+                continue
+
+            try:
+                event_type = message.get("event_type")
+                if event_type and event_type in EventBus._handlers:
+                    logger.debug("Dispatching Redis event: %s", event_type)
+                    # Dispatch to all local handlers for this event type
+                    from app.events import DomainEvent
+                    event = DomainEvent(
+                        event_type=event_type,
+                        data=message.get("data", {}),
+                    )
+                    await asyncio.gather(
+                        *(handler(event) for handler in EventBus._handlers[event_type]),
+                        return_exceptions=True,
+                    )
+            except Exception as e:
+                logger.error("Error dispatching Redis event: %s", e)
+    except asyncio.CancelledError:
+        logger.info("Domain event Redis listener cancelled (shutting down)")
+    except Exception as exc:
+        logger.error("Domain event Redis listener error: %s", exc)
+    finally:
+        logger.info("Domain event Redis listener stopped")

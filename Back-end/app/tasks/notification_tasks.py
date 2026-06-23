@@ -280,43 +280,55 @@ def send_in_app_notification(
     notification_data: dict[str, Any],
 ) -> dict[str, Any]:
     """
-    Push real-time notification to connected WebSocket clients.
+    Push real-time notification to connected WebSocket clients via Redis Pub/Sub.
 
-    Bridges the Celery task layer with the WebSocket connection manager
-    to deliver instant in-app notifications without polling.
+    This task publishes the notification to a Redis Pub/Sub channel.
+    The FastAPI process (which holds the actual WebSocket connections)
+    subscribes to this channel and relays the message to the correct
+    WebSocket client(s).
+
+    This architecture works correctly even when Celery workers and
+    FastAPI run in **separate containers** (as in Railway/docker-compose
+    deployments), because Redis acts as the cross-process message broker.
     """
     notification_id = notification_data.get("id", "unknown")
-    logger.info("Pushing in-app notification %s via WebSocket", notification_id)
+    tenant_id = notification_data.get("tenant_id")
+    user_id = notification_data.get("user_id")
+    logger.info(
+        "Publishing in-app notification %s via Redis Pub/Sub (tenant=%s user=%s)",
+        notification_id, tenant_id, user_id,
+    )
 
     try:
-        from app.websocket.router import push_notification
-
-        # The push_notification helper is an async function.
-        # Celery tasks are synchronous by default, so we schedule
-        # the async broadcast in the event loop.
+        from app.shared.redis_client import RedisPubSub
         import asyncio
 
         loop = asyncio.new_event_loop()
         try:
             loop.run_until_complete(
-                push_notification(
+                RedisPubSub.publish(
+                    "ws:notifications",
                     {
                         "type": "new_notification",
                         "data": notification_data,
-                    }
+                        "target": {
+                            "tenant_id": tenant_id,
+                            "user_id": user_id,
+                        },
+                    },
                 )
             )
         finally:
             loop.close()
 
         return {
-            "status": "pushed",
+            "status": "published",
             "channel": "in_app",
             "notification_id": notification_id,
         }
 
     except Exception as exc:
-        logger.error("Failed to push in-app notification: %s", exc)
+        logger.error("Failed to publish in-app notification: %s", exc)
         raise self.retry(exc=exc) from exc
 
 

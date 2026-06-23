@@ -52,5 +52,27 @@ USER psi
 
 EXPOSE 8000
 
-# Run with 4 workers
-CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# ── Single-worker uvicorn ──────────────────────────────────────
+# IMPORTANTE (WebSocket):
+#   Usamos 1 worker porque o ConnectionManager do WebSocket é
+#   in-memory (dict Python). Múltiplos workers criam processos
+#   isolados, cada um com seu próprio ConnectionManager, fazendo
+#   com que broadcasts nunca cheguem aos clientes conectados em
+#   outro worker.
+#
+#   Quando o Redis Pub/Sub estiver integrado ao ConnectionManager
+#   (para cross-worker broadcast), podemos voltar a usar vários
+#   workers.
+#
+#   Flags WebSocket:
+#   - ws-ping-interval: 30s (alinhado com heartbeat do frontend)
+#   - ws-ping-timeout:  10s (se não receber pong, fecha conexão)
+#   - ws-max-size:      1MB (proteção contra payloads gigantes)
+CMD [
+    "uvicorn", "app.main:create_app", "--factory",
+    "--host", "0.0.0.0", "--port", "8000",
+    "--workers", "1",
+    "--ws-ping-interval", "30",
+    "--ws-ping-timeout", "10",
+    "--ws-max-size", "1048576"
+]
