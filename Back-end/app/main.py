@@ -21,6 +21,7 @@ from starlette.responses import Response
 print("[psi] Importing app.shared modules...", flush=True)
 
 from app.shared.exceptions import PSIDomainError
+from app.shared.middleware import RateLimitMiddleware
 from app.shared.settings import get_settings
 
 settings = get_settings()
@@ -128,6 +129,12 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # ── Rate Limiting middleware ──
+    # Enforces Redis-based sliding window limits per route group.
+    # Must come after CORS so we see the real client IP (via X-Forwarded-For)
+    # but before route handlers so we can reject early.
+    app.add_middleware(RateLimitMiddleware)
 
     # ── Security Headers middleware ──
     @app.middleware("http")
@@ -264,6 +271,7 @@ def _register_routers(app: FastAPI) -> None:
     _safe_include(app, "app.settings_module.presentation.router", "/api/settings", "Settings")
     _safe_include(app, "app.analytics.application.router", "/api", "Analytics")
     _safe_include(app, "app.account.presentation.router", "/api", "Account")
+    _safe_include(app, "app.breach_notification.infrastructure.router", "/api", "Breach Notifications")
     _safe_include(app, "app.websocket.router", "/ws", "WebSocket")
 
     if settings.ENVIRONMENT != "production":

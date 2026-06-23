@@ -73,7 +73,8 @@ class UserResponse(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     model_config = ConfigDict(strict=True)
-    credential: str
+    credential: str | None = Field(default=None, min_length=1)
+    access_token: str | None = Field(default=None, min_length=1)
     terms_version: str | None = Field(default=None, min_length=1, max_length=20)
     privacy_version: str | None = Field(default=None, min_length=1, max_length=20)
     consent_given: bool = Field(default=False)
@@ -91,15 +92,16 @@ async def google_login(
     """
     Google OIDC (Sign In With Google) login.
 
-    Receives a Google ID token credential from the front-end GIS flow,
-    verifies it, finds-or-creates the user, and returns a PaySentinelIQ
-    JWT access token.
+    Accepts either:
+      - ``credential`` — a Google ID token JWT (legacy One Tap flow), OR
+      - ``access_token`` — a Google OAuth 2.0 access token (GIS popup flow).
+
+    Verifies the token, finds-or-creates the user, records LGPD consent,
+    and returns a PaySentinelIQ JWT access token.
 
     Requires explicit consent to Terms of Service and Privacy Policy
     (LGPD Article 7 compliance).
     """
-    credential = body.credential
-
     # ── LGPD Consent Check ──
     if not body.consent_given:
         raise AuthenticationError(
@@ -107,15 +109,35 @@ async def google_login(
             "Please accept the terms before signing in."
         )
 
-    # 1. Verify the Google ID token
-    try:
-        google_user = id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
-            credential,
-            google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
+    # ── 1. Verify the Google token ──────────────────────────────
+    if body.credential:
+        # ID token (JWT) path — used by the legacy One Tap flow
+        try:
+            google_user = id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
+                body.credential,
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
+            )
+        except ValueError as exc:
+            raise AuthenticationError(f"Invalid Google credential: {exc}") from exc
+    elif body.access_token:
+        # Access token path — used by the modern GIS popup flow
+        import httpx
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    "https://www.googleapis.com/oauth2/v3/userinfo",
+                    headers={"Authorization": f"Bearer {body.access_token}"},
+                )
+            if resp.status_code != 200:
+                raise AuthenticationError("Invalid Google access token")
+            google_user = resp.json()
+        except httpx.RequestError as exc:
+            raise AuthenticationError(f"Google userinfo request failed: {exc}") from exc
+    else:
+        raise AuthenticationError(
+            "Either 'credential' or 'access_token' is required."
         )
-    except ValueError as exc:
-        raise AuthenticationError(f"Invalid Google credential: {exc}") from exc
 
     email: str = google_user["email"]
     name: str = google_user.get("name", email.split("@")[0])

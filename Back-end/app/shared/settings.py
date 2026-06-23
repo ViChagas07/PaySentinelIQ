@@ -140,6 +140,13 @@ class Settings(BaseSettings):
     ANONYMIZE_ON_DELETION: bool = True
     MAX_EXPORT_SIZE_MB: int = 500
 
+    # ── Data Breach / ANPD (LGPD Art. 48) ──
+    ANPD_NOTIFICATION_EMAIL: str = "anpd@example.gov.br"  # Replace with real ANPD contact
+    ANPD_NOTIFICATION_NAME: str = "ANPD — Autoridade Nacional de Proteção de Dados"
+    BREACH_DEADLINE_HOURS: int = 72  # LGPD Art. 48 — 72-hour notification window
+    BREACH_AFFECTED_THRESHOLD: int = 50  # Notify all subjects if affected > this number
+    BREACH_AUTO_NOTIFY_ANPD: bool = True  # Auto-trigger notification task on registration
+
 
 @lru_cache
 def get_settings() -> Settings:

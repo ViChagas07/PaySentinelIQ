@@ -84,6 +84,31 @@ class AccountDeletionResponse(BaseModel):
     grace_period_days: int
 
 
+class ProfileRectificationRequest(BaseModel):
+    """
+    Request to rectify personal data (LGPD Article 18, Section III).
+
+    Only the fields that need correction should be sent.
+    Email rectification is allowed but will require re-verification
+    in a production environment.
+    """
+    model_config = ConfigDict(strict=True)
+    full_name: str | None = Field(default=None, min_length=2, max_length=200)
+    email: str | None = Field(default=None, min_length=5, max_length=255)
+    avatar_url: str | None = Field(default=None, max_length=500)
+
+
+class ProfileResponse(BaseModel):
+    """Updated user profile returned after rectification."""
+    model_config = ConfigDict(strict=True)
+    id: str
+    email: str
+    full_name: str
+    role: str
+    avatar_url: str | None = None
+    updated_at: str
+
+
 # ──────────────────────── Helpers ────────────────────────
 
 
@@ -244,6 +269,76 @@ async def list_consent(
         )
         for r in records
     ]
+
+
+@router.patch("/account/profile", response_model=ProfileResponse)
+async def rectify_profile(
+    body: ProfileRectificationRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    payload: dict[str, Any] = Depends(get_token_payload),
+) -> ProfileResponse:
+    """
+    Rectify personal data (LGPD Article 18, Section III — right to rectification).
+
+    Allows the data subject to request the correction of inaccurate,
+    incomplete, or outdated personal data.  All changes are recorded
+    in the immutable audit log for LGPD compliance.
+
+    Only the fields that need correction should be included in the
+    request body — omitted fields are left unchanged.
+    """
+    user_id = uuid.UUID(payload["sub"])
+    tenant_id = uuid.UUID(payload["tenant_id"])
+    user = await _get_user(db, str(user_id))
+    ip = await _get_client_ip(request)
+    ua = request.headers.get("User-Agent", "")[:500]
+
+    changes: dict[str, Any] = {}
+
+    # ── Apply rectifications ──────────────────────────────
+    if body.full_name is not None and body.full_name != user.full_name:
+        changes["full_name"] = {"old": user.full_name, "new": body.full_name}
+        user.full_name = body.full_name
+
+    if body.email is not None and body.email != user.email:
+        # In production: send verification email before allowing email change
+        changes["email"] = {"old": user.email, "new": body.email}
+        user.email = body.email
+
+    if body.avatar_url is not None and body.avatar_url != user.avatar_url:
+        changes["avatar_url"] = {"old": user.avatar_url, "new": body.avatar_url}
+        user.avatar_url = body.avatar_url
+
+    if not changes:
+        raise HTTPException(
+            status_code=400,
+            detail="No changes detected. Send at least one field with a different value.",
+        )
+
+    user.updated_at = datetime.now(timezone.utc)
+    db.add(user)
+    await db.flush()
+
+    # ── Immutable audit log (LGPD Art. 37) ────────────────
+    await _create_audit_log(
+        db, tenant_id, user_id, user.full_name,
+        "data_rectified", "user", str(user_id),
+        {
+            "changes": changes,
+            "rectification_count": len(changes),
+        },
+        ip, ua,
+    )
+
+    return ProfileResponse(
+        id=str(user.id),
+        email=user.email,
+        full_name=user.full_name,
+        role=user.role,
+        avatar_url=user.avatar_url,
+        updated_at=user.updated_at.isoformat(),
+    )
 
 
 @router.delete("/account", response_model=AccountDeletionResponse)

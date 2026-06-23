@@ -518,3 +518,123 @@ class PaymentScheduleModel(Base):
             name="chk_payment_status",
         ),
     )
+
+
+# ============================================================
+# Data Breach / Security Incidents (LGPD Art. 48)
+# ============================================================
+
+
+class DataBreachModel(Base):
+    """
+    LGPD Article 48 — Security incident / data breach record.
+
+    Every personal data breach must be documented, with a clear
+    timeline of discovery, containment, notification to ANPD, and
+    communication to affected data subjects (all within 72 hours
+    unless an exemption applies).
+    """
+
+    __tablename__ = "data_breaches"
+
+    ANPD_STATUS_CHOICES = (
+        "not_notified",          # Within investigation window
+        "within_deadline",       # ANPD notified within 72h
+        "notified",              # Confirmed notification sent
+        "exempt",                # Exempt from notification (Art. 48 §2)
+        "missed_deadline",       # Failed to notify within 72h
+    )
+    RESOLUTION_CHOICES = (
+        "open", "contained", "investigating", "resolved", "closed",
+    )
+    RISK_LEVEL_CHOICES = ("low", "medium", "high", "critical")
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
+    )
+    reported_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False,
+    )
+
+    # ── Timeline ───────────────────────────────────────────
+    discovered_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True,
+        comment="When the breach was first detected",
+    )
+    occurred_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+        comment="When the breach actually occurred (may differ from discovery)",
+    )
+    contained_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+
+    # ── Description ────────────────────────────────────────
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    root_cause: Mapped[str | None] = mapped_column(Text, nullable=True)
+    containment_actions: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB, nullable=True,
+    )
+
+    # ── Impact ─────────────────────────────────────────────
+    affected_data_categories: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, default=list,
+        comment="e.g. ['name','email','cpf','address','financial']",
+    )
+    number_affected_subjects: Mapped[int | None] = mapped_column(
+        Integer, nullable=True,
+    )
+    risk_level: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="medium",
+    )
+
+    # ── ANPD Notification ──────────────────────────────────
+    anpd_notification_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="not_notified",
+    )
+    anpd_notification_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    anpd_protocol_number: Mapped[str | None] = mapped_column(
+        String(100), nullable=True,
+    )
+    anpd_justification: Mapped[str | None] = mapped_column(
+        Text, nullable=True,
+        comment="Justification if not reported to ANPD (e.g. Art. 48 §2 exemption)",
+    )
+
+    # ── Communication to data subjects ─────────────────────
+    subjects_communicated: Mapped[bool] = mapped_column(
+        Boolean, default=False,
+    )
+    subject_communication_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+
+    # ── Resolution ─────────────────────────────────────────
+    resolution_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="open",
+    )
+    resolution_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    lessons_learned: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # ── Relationships ──────────────────────────────────────
+    reporter: Mapped["UserModel"] = relationship(foreign_keys=[reported_by])
+
+    __table_args__ = (
+        CheckConstraint(
+            f"anpd_notification_status IN {ANPD_STATUS_CHOICES}",
+            name="chk_breach_anpd_status",
+        ),
+        CheckConstraint(
+            f"resolution_status IN {RESOLUTION_CHOICES}",
+            name="chk_breach_resolution",
+        ),
+        CheckConstraint(
+            f"risk_level IN {RISK_LEVEL_CHOICES}",
+            name="chk_breach_risk_level",
+        ),
+    )

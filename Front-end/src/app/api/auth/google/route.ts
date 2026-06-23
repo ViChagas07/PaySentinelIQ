@@ -1,34 +1,49 @@
 // ============================================================
-// PaySentinelIQ — Google OIDC Token Verification
-// Verifies Google OAuth access token via userinfo endpoint
-// and creates/returns user session
+// PaySentinelIQ — Google OAuth Consent & Auth Proxy
+//
+// 1. Accepts Google access_token + LGPD consent from the client
+// 2. Proxies to the FastAPI backend for user creation & JWT
+// 3. Sends a welcome email via Resend for new users
+// 4. Returns the backend's user + JWT to the client
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { access_token } = body;
+    const { access_token, consent_given, terms_version, privacy_version } = body;
 
+    // ── Validate required fields ────────────────────────────
     if (!access_token) {
       return NextResponse.json(
         { error: "Google access token is required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // ── Verify access token with Google's userinfo endpoint ──
+    // ── Validate LGPD consent ───────────────────────────────
+    if (!consent_given) {
+      return NextResponse.json(
+        {
+          error:
+            "Consent to Terms of Service and Privacy Policy is required (LGPD Article 7). "
+            + "Please accept the terms before signing in.",
+        },
+        { status: 403 },
+      );
+    }
+
+    // ── Verify the access_token with Google's userinfo API ──
     const googleResponse = await fetch(
       "https://www.googleapis.com/oauth2/v3/userinfo",
       {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
-      }
+        headers: { Authorization: `Bearer ${access_token}` },
+      },
     );
 
     if (!googleResponse.ok) {
@@ -36,28 +51,87 @@ export async function POST(request: NextRequest) {
       console.error("Google userinfo error:", googleResponse.status, errorText);
       return NextResponse.json(
         { error: "Invalid Google access token." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     const googleUser = await googleResponse.json();
+    const { email, name, picture, sub: googleId } = googleUser;
 
-    // The userinfo endpoint response includes: sub, name, given_name, family_name,
-    // picture, email, email_verified. The token was issued by Google for our
-    // client_id, so it is inherently scoped to our application.
-    const { email, name, picture, sub: googleId, email_verified } = googleUser;
+    // ── Call the FastAPI backend to create/authenticate user ──
+    // The backend handles user creation, consent recording, and JWT issuance.
+    let backendUser: Record<string, unknown> | null = null;
+    let backendToken: string | null = null;
+    let isNewUser = false;
 
-    // ── TODO: Create or find user in DB ──
-    const userId = `google_${googleId}`;
-    const isNewUser = true; // TODO: Check if user exists
+    try {
+      const backendRes = await fetch(`${BACKEND_URL}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          access_token,
+          consent_given: true,
+          terms_version: terms_version || "1.0.0",
+          privacy_version: privacy_version || "1.0.0",
+        }),
+      });
+
+      if (backendRes.ok) {
+        const backendData = await backendRes.json();
+        backendUser = {
+          id: backendData.user?.id || `google_${googleId}`,
+          email: backendData.user?.email || email,
+          full_name: backendData.user?.name || name || email?.split("@")[0] || "User",
+          avatar_url: picture || null,
+          role: backendData.user?.role || "admin",
+          tenant_id: backendData.user?.tenant_id || "tenant_default",
+          mfa_enabled: false,
+          last_login: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        };
+        backendToken = backendData.access_token || access_token;
+      } else {
+        // Backend returned an error — log it but fall back to local user creation
+        const errData = await backendRes.json().catch(() => ({}));
+        console.warn(
+          "Backend auth failed (falling back to local user):",
+          backendRes.status,
+          errData,
+        );
+      }
+    } catch (proxyErr) {
+      // Backend unreachable — fall back to local user creation
+      console.warn(
+        "Backend unreachable for Google auth (falling back to local user):",
+        proxyErr,
+      );
+    }
+
+    // ── Fallback: create user locally if backend was unavailable ──
+    if (!backendUser || !backendToken) {
+      const userId = `google_${googleId}`;
+      isNewUser = true;
+
+      backendUser = {
+        id: userId,
+        email,
+        full_name: name || email?.split("@")[0] || "User",
+        avatar_url: picture || null,
+        role: "admin" as const,
+        tenant_id: "tenant_default",
+        mfa_enabled: false,
+        last_login: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      };
+      backendToken = access_token;
+    }
 
     // ── Send welcome email for new users via Resend ──
     let emailSent = false;
     if (isNewUser) {
       try {
         const displayName = name || email?.split("@")[0] || "there";
-
-        const { data, error } = await resend.emails.send({
+        const { error } = await resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL || "onboarding@paysentineliq.com",
           to: [email],
           subject: "Welcome to PaySentinelIQ — Signed in with Google",
@@ -126,24 +200,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Build user object matching the User interface ──
-    const user = {
-      id: userId,
-      email,
-      full_name: name || email?.split("@")[0] || "User",
-      avatar_url: picture || null,
-      role: "admin" as const,
-      tenant_id: "tenant_default",
-      mfa_enabled: false,
-      last_login: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-    };
-
+    // ── Return response ─────────────────────────────────────
     return NextResponse.json({
       success: true,
-      user,
-      token: access_token,
-      userId,
+      user: backendUser,
+      token: backendToken,
+      userId: backendUser?.id,
       email,
       name,
       picture,
@@ -154,7 +216,7 @@ export async function POST(request: NextRequest) {
     console.error("Google auth error:", err);
     return NextResponse.json(
       { error: "Internal server error." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
