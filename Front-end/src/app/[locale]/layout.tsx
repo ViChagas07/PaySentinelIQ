@@ -119,9 +119,13 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* DNS Prefetch + Preconnect for API */}
-        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"} />
-        <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"} crossOrigin="anonymous" />
+        {/* DNS Prefetch + Preconnect for API — only if env var is set */}
+        {process.env.NEXT_PUBLIC_API_URL && (
+          <>
+            <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_API_URL} />
+            <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL} crossOrigin="anonymous" />
+          </>
+        )}
         {/* Preconnect to CDN for font assets (self-hosted by Next.js, but icon fonts if any) */}
         <link rel="preload" href="/favicon.png" as="image" type="image/png" />
         <link rel="icon" href="/favicon.png" sizes="96x96" type="image/png" />

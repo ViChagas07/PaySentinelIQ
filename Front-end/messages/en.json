@@ -836,6 +836,7 @@
     "aiFlagged": "AI Flagged",
     "emptyTimelineDescription": "No events have been recorded yet. Timeline will populate as activities occur.",
     "activityHeatmapEmpty": "Activity data will appear here over time.",
+    "suspicious": "Suspicious",
     "noPatterns": "No suspicious patterns detected",
     "emptyPatternsDescription": "No suspicious patterns detected yet. Patterns will appear as the system processes data."
   },

@@ -11,7 +11,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+if (!BACKEND_URL) {
+  console.error(
+    "[PaySentinelIQ] NEXT_PUBLIC_API_URL is not defined. Google auth proxy cannot reach the backend."
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,6 +70,8 @@ export async function POST(request: NextRequest) {
     let isNewUser = false;
 
     try {
+      if (!BACKEND_URL) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+
       const backendRes = await fetch(`${BACKEND_URL}/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

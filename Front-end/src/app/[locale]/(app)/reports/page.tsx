@@ -163,16 +163,17 @@ export default function ReportsPage() {
               </motion.div>
             ))
           : kpisError
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <KpiCard
-                  key={i}
-                  label={t(KPI_LABELS[i]) || "—"}
-                  value="\u2014\u2014\u2014"
-                  subtext={t("vsLastPeriod") || "awaiting data"}
-                  icon={KPI_ICONS[i]}
-                  delay={i * 0.06}
-                />
-              ))
+            ? <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                <div className="mb-3 rounded-2xl bg-psi-fraud/10 p-4 ring-1 ring-psi-fraud/20">
+                  <AlertTriangle className="h-8 w-8 text-psi-fraud/60" />
+                </div>
+                <h3 className="text-base font-semibold text-psi-text-primary mb-1">
+                  {t("errorLoadingKpis") || "Unable to load KPIs"}
+                </h3>
+                <p className="text-sm text-psi-text-secondary max-w-md">
+                  {t("errorLoadingDescription") || "There was a problem fetching your dashboard data. Please try again later."}
+                </p>
+              </div>
             : kpis
               ? ([
                   { value: kpis.payrolls_processed.toLocaleString(), subtext: "total documents" },
@@ -191,16 +192,17 @@ export default function ReportsPage() {
                     delay={i * 0.06}
                   />
                 ))
-              : Array.from({ length: 6 }).map((_, i) => (
-                  <KpiCard
-                    key={i}
-                    label={t(KPI_LABELS[i]) || "—"}
-                    value="\u2014\u2014\u2014"
-                    subtext={t("vsLastPeriod") || "awaiting data"}
-                    icon={KPI_ICONS[i]}
-                    delay={i * 0.06}
-                  />
-                ))}
+              : <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                  <div className="mb-3 rounded-2xl bg-psi-electric/5 p-4 ring-1 ring-psi-electric/10">
+                    <Inbox className="h-8 w-8 text-psi-electric/40" />
+                  </div>
+                  <h3 className="text-base font-semibold text-psi-text-primary mb-1">
+                    {t("noKpisAvailable") || "No KPIs available"}
+                  </h3>
+                  <p className="text-sm text-psi-text-secondary max-w-md">
+                    {t("noKpisDescription") || "Dashboard data will appear after documents are analyzed and processed."}
+                  </p>
+                </div>}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

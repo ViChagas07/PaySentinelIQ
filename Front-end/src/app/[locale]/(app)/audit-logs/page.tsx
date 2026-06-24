@@ -399,7 +399,7 @@ function ActivityHeatmap({ entries }: { entries: AuditLogEntry[] }) {
         ))}
       </div>
       <div className="flex items-center justify-end gap-1 text-[10px] text-psi-text-secondary">
-        <span>Less</span>
+        <span>{t("less")}</span>
         {[0, 0.25, 0.5, 0.75, 1].map((l) => (
           <div
             key={l}
@@ -413,7 +413,7 @@ function ActivityHeatmap({ entries }: { entries: AuditLogEntry[] }) {
             )}
           />
         ))}
-        <span>More</span>
+        <span>{t("more")}</span>
       </div>
     </div>
   );
@@ -464,7 +464,7 @@ function SuspiciousPatternsList({ entries }: { entries: AuditLogEntry[] }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-medium text-psi-text-primary truncate">{entry.action}</p>
-                <Badge variant="destructive" className="shrink-0 text-[10px]">Suspicious</Badge>
+                <Badge variant="destructive" className="shrink-0 text-[10px]">{t("suspicious")}</Badge>
               </div>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                 <span className="text-xs text-psi-text-secondary">{entry.user_name}</span>

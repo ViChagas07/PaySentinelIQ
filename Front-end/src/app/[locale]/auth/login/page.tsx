@@ -199,7 +199,12 @@ export default function AuthPage() {
 
     setSignInLoading(true);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      setSignInError("API configuration error. Please contact support.");
+      setSignInLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`${apiUrl}/auth/login`, {

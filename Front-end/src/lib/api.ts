@@ -6,7 +6,17 @@
 import { useAuthStore } from "@/stores";
 import type { APIError } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+// Em produção, NEXT_PUBLIC_API_URL é definido pela Vercel.
+// Em desenvolvimento, o desenvolvedor deve criar .env.local com:
+//   NEXT_PUBLIC_API_URL=https://api.paysentineliq.com/api
+// Se não houver env var, não é seguro assumir localhost — falhamos cedo.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+if (!API_BASE_URL && typeof window !== "undefined") {
+  console.error(
+    "[PaySentinelIQ] NEXT_PUBLIC_API_URL is not defined. " +
+    "Please set it in your .env.local or Vercel environment variables."
+  );
+}
 
 interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
@@ -29,7 +39,14 @@ export class ApiClientError extends Error {
  * Builds a URL with query parameters, filtering out undefined values.
  */
 function buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
-  const url = new URL(`${API_BASE_URL}${path}`);
+  const base = API_BASE_URL;
+  if (!base) {
+    throw new Error(
+      "[PaySentinelIQ] NEXT_PUBLIC_API_URL is not configured. " +
+      "Cannot make API requests."
+    );
+  }
+  const url = new URL(`${base}${path}`);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {

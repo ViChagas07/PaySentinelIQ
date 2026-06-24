@@ -184,6 +184,7 @@ function PrivacySection({
   tc: (key: string) => string;
 }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState("");
   const [showDeletionModal, setShowDeletionModal] = useState(false);
@@ -191,22 +192,106 @@ function PrivacySection({
   const [deleting, setDeleting] = useState(false);
   const [deletionMsg, setDeletionMsg] = useState("");
 
-  // ── Data Export ──
+  // ── Client-side PDF Export (jsPDF) ──
   const handleExport = async () => {
     setExporting(true);
     setExportMsg("");
     try {
-      const res = await fetch("/api/account/export/download", {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` },
+      const { default: jsPDF } = await import("jspdf");
+
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
       });
-      if (!res.ok) throw new Error("Export failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `paysentinel_data_export_${Date.now()}.zip`;
-      a.click();
-      URL.revokeObjectURL(url);
+
+      // Colors — PaySentinelIQ brand
+      const navy = "#0A1628";
+      const electric = "#1E6FFF";
+      const textPrimary = "#F8FAFC";
+      const textSecondary = "#94A3B8";
+
+      // ── Brand header ──
+      doc.setFillColor(navy);
+      doc.rect(0, 0, 210, 36, "F");
+      doc.setTextColor(electric);
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.text("PaySentinelIQ", 14, 18);
+      doc.setFontSize(9);
+      doc.setTextColor(textSecondary);
+      doc.text("Data Export Report", 14, 28);
+
+      // ── Export metadata ──
+      const exportDate = new Date().toISOString();
+      doc.setFontSize(8);
+      doc.setTextColor(textSecondary);
+      doc.text(`Generated: ${new Date(exportDate).toLocaleString()}`, 14, 44);
+      doc.text(`User ID: ${user?.id || "N/A"}`, 14, 50);
+      doc.text(`Email: ${user?.email || "N/A"}`, 14, 56);
+
+      // ── Separator ──
+      doc.setDrawColor(electric);
+      doc.setLineWidth(0.3);
+      doc.line(14, 62, 196, 62);
+
+      // ── Section 1: Account Info ──
+      doc.setFontSize(11);
+      doc.setTextColor(electric);
+      doc.setFont("helvetica", "bold");
+      doc.text("Account Information", 14, 72);
+
+      doc.setFontSize(9);
+      doc.setTextColor(textPrimary);
+      doc.setFont("helvetica", "normal");
+      const details = [
+        `Name: ${user?.full_name || "N/A"}`,
+        `Email: ${user?.email || "N/A"}`,
+        `Role: ${user?.role?.replace(/_/g, " ") || "N/A"}`,
+        `Tenant ID: ${user?.tenant_id || "N/A"}`,
+        `Account Created: ${user?.created_at ? new Date(user.created_at).toLocaleString() : "N/A"}`,
+        `Last Login: ${user?.last_login ? new Date(user.last_login).toLocaleString() : "N/A"}`,
+        `MFA Enabled: ${user?.mfa_enabled ? "Yes" : "No"}`,
+      ];
+      let y = 80;
+      details.forEach((line) => {
+        doc.text(line, 14, y);
+        y += 6;
+      });
+
+      // ── Section 2: Summary ──
+      y += 4;
+      doc.setFontSize(11);
+      doc.setTextColor(electric);
+      doc.setFont("helvetica", "bold");
+      doc.text("Platform Summary", 14, y);
+      y += 8;
+
+      doc.setFontSize(9);
+      doc.setTextColor(textPrimary);
+      doc.setFont("helvetica", "normal");
+      doc.text("This document contains a summary of data associated with your PaySentinelIQ account.", 14, y);
+      y += 5;
+      doc.text("For a complete data export including all documents and verification records,", 14, y);
+      y += 5;
+      doc.text("please contact our support team at support@paysentineliq.com.", 14, y);
+
+      // ── Section 3: Export timestamp ──
+      y += 8;
+      doc.setFontSize(9);
+      doc.setTextColor(textSecondary);
+      doc.text(`Export completed at: ${new Date().toISOString()}`, 14, y);
+
+      // ── Footer ──
+      doc.setFontSize(7);
+      doc.setTextColor(textSecondary);
+      doc.text("© 2026 PaySentinelIQ. All rights reserved.", 14, 292);
+      doc.text("This document was generated automatically. If you believe there is an error,", 14, 297);
+      doc.text("please contact support@paysentineliq.com.", 14, 302);
+
+      // ── Download ──
+      const filename = `paysentineliq-export-${user?.id || "user"}-${Date.now()}.pdf`;
+      doc.save(filename);
       setExportMsg(t("privacy.exportSuccess"));
     } catch {
       setExportMsg(t("privacy.exportError"));
@@ -221,7 +306,10 @@ function PrivacySection({
     setDeleting(true);
     setDeletionMsg("");
     try {
-      const res = await fetch("/api/account", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) throw new Error("API URL not configured");
+
+      const res = await fetch(`${apiUrl}/account`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -238,11 +326,6 @@ function PrivacySection({
       setDeleting(false);
     }
   };
-
-  // Mock consent records (in production, fetched from GET /api/consent)
-  const consentRecords = [
-    { type: "terms_of_service", terms_version: "1.0.0", privacy_version: "1.0.0", accepted_at: "2026-06-18T12:00:00Z", ip_address: "192.168.1.1", method: "checkbox" },
-  ];
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
@@ -278,44 +361,9 @@ function PrivacySection({
       <section>
         <h3 className="text-sm font-semibold text-psi-text-primary mb-1">{t("privacy.consentHistory")}</h3>
         <p className="text-xs text-psi-text-secondary mb-4">{t("privacy.consentHistoryDescription")}</p>
-        {consentRecords.length === 0 ? (
-          <p className="text-xs text-psi-text-secondary/60 italic">{t("privacy.noConsentRecords")}</p>
-        ) : (
-          <div className="rounded-xl border border-white/[0.06] overflow-hidden">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-white/[0.06] bg-white/[0.01]">
-                  <th className="text-left px-4 py-2.5 font-medium text-white/50">{t("privacy.consentType")}</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-white/50">{t("privacy.consentVersion")}</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-white/50 hidden sm:table-cell">{t("privacy.consentDate")}</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-white/50 hidden md:table-cell">{t("privacy.consentMethod")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.04]">
-                {consentRecords.map((r, i) => (
-                  <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-2.5 text-white/80">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-psi-electric/10 text-psi-electric text-[10px] font-medium">
-                        <Shield className="h-2.5 w-2.5" />
-                        Terms + Privacy
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5 text-white/60 font-mono text-[11px]">
-                      T {r.terms_version} / P {r.privacy_version}
-                    </td>
-                    <td className="px-4 py-2.5 text-white/50 hidden sm:table-cell">{formatDate(r.accepted_at)}</td>
-                    <td className="px-4 py-2.5 text-white/50 hidden md:table-cell">
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.04] text-[10px]">
-                        <Check className="h-2.5 w-2.5 text-psi-emerald/70" />
-                        Checkbox
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <p className="text-xs text-psi-text-secondary/60 italic">
+          {t("privacy.loadingConsentRecords") || "Loading consent records..."}
+        </p>
       </section>
 
       {/* ── Data Export ── */}
