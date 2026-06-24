@@ -141,7 +141,7 @@ export default function ReportsPage() {
                 </div>
                 <p className="text-sm text-psi-text-secondary leading-relaxed max-w-3xl">
                   {hasData
-                    ? `${kpis!.payrolls_processed.toLocaleString()} documents analyzed \u2022 ${kpis!.fraud_alerts} fraud cases detected`
+                    ? t("pageDescriptionWithData", { documents: kpis!.payrolls_processed.toLocaleString(), fraudCases: kpis!.fraud_alerts }) || `${kpis!.payrolls_processed.toLocaleString()} documents analyzed \u2022 ${kpis!.fraud_alerts} fraud cases detected`
                     : t("pageDescription") || "Awaiting data. Reports will appear here after documents are analyzed."}
                 </p>
               </div>
@@ -176,12 +176,12 @@ export default function ReportsPage() {
               </div>
             : kpis
               ? ([
-                  { value: kpis.payrolls_processed.toLocaleString(), subtext: "total documents" },
-                  { value: kpis.fraud_alerts.toLocaleString(), subtext: `${Math.round((kpis.fraud_alerts / Math.max(kpis.payrolls_processed, 1)) * 100)}% rate` },
-                  { value: `${kpis.ai_confidence}%`, subtext: "confidence score" },
-                  { value: `R$ ${kpis.compliance_incidents.toLocaleString()}`, subtext: "losses prevented" },
-                  { value: kpis.high_risk_docs.toLocaleString(), subtext: "high risk documents" },
-                  { value: `${kpis.verification_rate}%`, subtext: "pass rate" },
+                  { value: kpis.payrolls_processed.toLocaleString(), subtext: t("totalDocuments") || "total documents" },
+                  { value: kpis.fraud_alerts.toLocaleString(), subtext: `${Math.round((kpis.fraud_alerts / Math.max(kpis.payrolls_processed, 1)) * 100)}% ${t("rate") || "rate"}` },
+                  { value: `${kpis.ai_confidence}%`, subtext: t("confidenceScore") || "confidence score" },
+                  { value: `R$ ${kpis.compliance_incidents.toLocaleString()}`, subtext: t("lossesPrevented") || "losses prevented" },
+                  { value: kpis.high_risk_docs.toLocaleString(), subtext: t("highRiskDocuments") || "high risk documents" },
+                  { value: `${kpis.verification_rate}%`, subtext: t("passRate") || "pass rate" },
                 ] as const).map((item, i) => (
                   <KpiCard
                     key={i}
@@ -287,9 +287,9 @@ export default function ReportsPage() {
                 : trends && trends.length > 0
                   ? <div className="space-y-2">
                       <div className="grid grid-cols-[80px_1fr_1fr] gap-2 items-center mb-2">
-                        <span className="text-[10px] font-semibold uppercase text-psi-text-secondary/60">Month</span>
-                        <span className="text-[10px] font-semibold uppercase text-emerald-500/80">Volume</span>
-                        <span className="text-[10px] font-semibold uppercase text-red-500/80">Flagged</span>
+                        <span className="text-[10px] font-semibold uppercase text-psi-text-secondary/60">{t("trendMonth") || "Month"}</span>
+                        <span className="text-[10px] font-semibold uppercase text-emerald-500/80">{t("trendVolume") || "Volume"}</span>
+                        <span className="text-[10px] font-semibold uppercase text-red-500/80">{t("trendFlagged") || "Flagged"}</span>
                       </div>
                       {(() => {
                         const maxVal = Math.max(...trends.map(d => Math.max(d.volume, d.flagged)), 1);
@@ -312,8 +312,8 @@ export default function ReportsPage() {
                         ));
                       })()}
                       <div className="flex items-center gap-4 pt-2 text-xs text-psi-text-secondary/60">
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Volume</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Flagged</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> {t("trendVolume") || "Volume"}</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> {t("trendFlagged") || "Flagged"}</span>
                       </div>
                     </div>
                   : <EmptySection
@@ -352,23 +352,23 @@ export default function ReportsPage() {
                 </div>
               : alertStats && alertStats.total > 0
                 ? (() => {
-                    const statusItems: { label: string; key: "total" | "new" | "under_review" | "escalated" | "confirmed" | "resolved"; color: string }[] = [
-                      { label: "Total", key: "total", color: "bg-psi-electric" },
-                      { label: "New", key: "new", color: "bg-yellow-500" },
-                      { label: "Under Review", key: "under_review", color: "bg-blue-500" },
-                      { label: "Escalated", key: "escalated", color: "bg-orange-500" },
-                      { label: "Confirmed", key: "confirmed", color: "bg-red-500" },
-                      { label: "Resolved", key: "resolved", color: "bg-emerald-500" },
+                    const statusItems: { labelKey: string; key: "total" | "new" | "under_review" | "escalated" | "confirmed" | "resolved"; color: string }[] = [
+                      { labelKey: "statusTotal", key: "total", color: "bg-psi-electric" },
+                      { labelKey: "statusNew", key: "new", color: "bg-yellow-500" },
+                      { labelKey: "statusUnderReview", key: "under_review", color: "bg-blue-500" },
+                      { labelKey: "statusEscalated", key: "escalated", color: "bg-orange-500" },
+                      { labelKey: "statusConfirmed", key: "confirmed", color: "bg-red-500" },
+                      { labelKey: "statusResolved", key: "resolved", color: "bg-emerald-500" },
                     ];
                     return (
                       <div className="space-y-3">
-                        {statusItems.map(({ label, key, color }) => {
+                        {statusItems.map(({ labelKey, key, color }) => {
                           const value = alertStats[key];
                           const pct = (value / alertStats.total) * 100;
                           return (
                             <div key={key} className="flex items-center gap-3">
                               <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", color)} />
-                              <span className="flex-1 text-sm text-psi-text-secondary">{label}</span>
+                              <span className="flex-1 text-sm text-psi-text-secondary">{t(labelKey) || labelKey}</span>
                               <span className="text-sm font-semibold text-psi-text-primary tabular-nums">{value}</span>
                               <div className="w-28 h-2 rounded-full bg-psi-border/20 overflow-hidden">
                                 <div className={cn("h-full rounded-full transition-all duration-500", color)} style={{ width: `${pct}%` }} />
@@ -418,7 +418,15 @@ export default function ReportsPage() {
                   : kpis && kpis.payrolls_processed > 0
                     ? <>
                         <p className="text-sm text-psi-text-secondary leading-relaxed">
-                          {`Analysis of ${kpis.payrolls_processed.toLocaleString()} documents detected ${kpis.fraud_alerts} fraud cases (${Math.round((kpis.fraud_alerts / kpis.payrolls_processed) * 100)}% rate), prevented ${kpis.compliance_incidents} compliance incidents. Verification success rate is ${kpis.verification_rate}% with AI confidence at ${kpis.ai_confidence}%. ${kpis.high_risk_docs} documents flagged as high-risk.`}
+                          {t.rich("aiInsightTextWithData", {
+                            documents: kpis.payrolls_processed.toLocaleString(),
+                            fraudCases: kpis.fraud_alerts,
+                            fraudRate: Math.round((kpis.fraud_alerts / kpis.payrolls_processed) * 100),
+                            preventedIncidents: kpis.compliance_incidents,
+                            verificationRate: kpis.verification_rate,
+                            aiConfidence: kpis.ai_confidence,
+                            highRiskDocs: kpis.high_risk_docs,
+                          }) || `Analysis of ${kpis.payrolls_processed.toLocaleString()} documents detected ${kpis.fraud_alerts} fraud cases (${Math.round((kpis.fraud_alerts / kpis.payrolls_processed) * 100)}% rate), prevented ${kpis.compliance_incidents} compliance incidents. Verification success rate is ${kpis.verification_rate}% with AI confidence at ${kpis.ai_confidence}%. ${kpis.high_risk_docs} documents flagged as high-risk.`}
                         </p>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                           <div className="flex items-center gap-3">
@@ -432,14 +440,14 @@ export default function ReportsPage() {
                           </div>
                           <div className="flex flex-wrap gap-2">
                             <Badge variant="outline" className="text-[11px] text-psi-electric/80">
-                              {kpis.fraud_alerts} Alerts
+                              {kpis.fraud_alerts} {t("alerts") || "Alerts"}
                             </Badge>
                             <Badge variant="outline" className="text-[11px] text-emerald-500/80">
-                              {kpis.verification_rate}% Rate
+                              {kpis.verification_rate}% {t("rate") || "Rate"}
                             </Badge>
                             {alertStats && (
                               <Badge variant="outline" className="text-[11px] text-yellow-500/80">
-                                {alertStats.under_review} Under Review
+                                {alertStats.under_review} {t("underReview") || "Under Review"}
                               </Badge>
                             )}
                           </div>

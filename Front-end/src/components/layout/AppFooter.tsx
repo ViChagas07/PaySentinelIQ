@@ -22,7 +22,7 @@ export function AppFooter() {
         </p>
 
         {/* Legal links */}
-        <nav className="flex items-center gap-4 order-1 sm:order-2" aria-label="Legal links">
+        <nav className="flex items-center gap-4 order-1 sm:order-2" aria-label={tc("legalLinks")}>
           <Link
             href="/privacy-policy"
             target="_blank"

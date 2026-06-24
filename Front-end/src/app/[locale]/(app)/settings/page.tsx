@@ -615,7 +615,7 @@ export default function SettingsPage() {
       {/* Layout: Sidebar nav + Content */}
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
         {/* Section Navigation — Horizontal scroll on mobile */}
-        <nav className="lg:w-56 shrink-0" aria-label="Settings sections">
+        <nav className="lg:w-56 shrink-0" aria-label={tc("settingsSections") || "Settings sections"}>
           <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 -mx-1 px-1">
             {SECTIONS.map(({ id, icon }) => (
               <SectionButton

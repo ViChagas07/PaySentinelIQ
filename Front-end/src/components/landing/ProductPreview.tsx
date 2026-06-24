@@ -262,6 +262,7 @@ function StatCards() {
 }
 
 function FakeChart() {
+  const t = useTranslations("landing");
   const ref = useRef(null);
   const inView = useInView(ref, { margin: "-60px" });
 
@@ -271,8 +272,8 @@ function FakeChart() {
       className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 backdrop-blur-sm"
     >
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs font-medium text-white/50">Monthly Analysis Volume</span>
-        <span className="text-[10px] text-white/25">Last 8 months</span>
+        <span className="text-xs font-medium text-white/50">{t("preview.chartTitle") || "Monthly Analysis Volume"}</span>
+        <span className="text-[10px] text-white/25">{t("preview.chartSubtitle") || "Last 8 months"}</span>
       </div>
       <div className="flex items-end justify-between gap-1" style={{ height: 140 }}>
         {CHART_BARS.map((bar, idx) => (

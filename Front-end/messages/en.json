@@ -72,7 +72,21 @@
     "entries": "{count} entries",
     "of_lowercase": "of",
     "emailPlaceholder": "analyst@company.com",
-    "phonePlaceholder": "+1 (555) 000-0000"
+    "phonePlaceholder": "+1 (555) 000-0000",
+    "legalLinks": "Legal links",
+    "settingsSections": "Settings sections",
+    "privacyBadge": {
+      "lgpd": "LGPD Compliant",
+      "lgpdTooltip": "This product complies with the requirements of the General Data Protection Law (LGPD).",
+      "encrypted": "Encrypted",
+      "encryptedTooltip": "Data protected with end-to-end encryption. Security at all levels.",
+      "consent": "Consent Managed",
+      "consentTooltip": "Data collection and processing only with the explicit consent of the data subject.",
+      "audit": "Audit Trail",
+      "auditTooltip": "Complete audit trail. All operations are recorded and traceable.",
+      "noTracking": "No Tracking",
+      "noTrackingTooltip": "No third-party trackers or cookies. Total user privacy."
+    }
   },
   "auth": {
     "signInLabel": "Sign In",
@@ -869,7 +883,26 @@
     "shareReport": "Share Report",
     "generateReport": "Generate Executive Report",
     "noDataAvailable": "No data available yet. Reports will populate as documents are analyzed.",
-    "notAvailable": "N/A"
+    "notAvailable": "N/A",
+    "totalDocuments": "total documents",
+    "confidenceScore": "confidence score",
+    "lossesPrevented": "losses prevented",
+    "highRiskDocuments": "high risk documents",
+    "passRate": "pass rate",
+    "rate": "rate",
+    "trendMonth": "Month",
+    "trendVolume": "Volume",
+    "trendFlagged": "Flagged",
+    "statusTotal": "Total",
+    "statusNew": "New",
+    "statusUnderReview": "Under Review",
+    "statusEscalated": "Escalated",
+    "statusConfirmed": "Confirmed",
+    "statusResolved": "Resolved",
+    "alerts": "Alerts",
+    "underReview": "Under Review",
+    "pageDescriptionWithData": "{documents} documents analyzed · {fraudCases} fraud cases detected",
+    "aiInsightTextWithData": "Analysis of {documents} documents detected {fraudCases} fraud cases ({fraudRate}% rate), prevented {preventedIncidents} compliance incidents. Verification success rate is {verificationRate}% with AI confidence at {aiConfidence}%. {highRiskDocs} documents flagged as high-risk."
   },
   "profile": {
     "pageTitle": "Identity & Command Center",
@@ -1397,6 +1430,8 @@
     "preview": {
       "title": "See PaySentinelIQ in Action",
       "subtitle": "A glimpse of the powerful intelligence dashboard",
+      "chartTitle": "Monthly Analysis Volume",
+      "chartSubtitle": "Last 8 months",
       "statPayrolls": "Total Payrolls",
       "statFraud": "Fraud Alerts",
       "statConfidence": "AI Confidence",

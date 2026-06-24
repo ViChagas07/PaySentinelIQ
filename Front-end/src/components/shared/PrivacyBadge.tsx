@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import {
@@ -13,33 +14,28 @@ import {
 const variantConfig = {
   lgpd: {
     icon: Shield,
-    label: "LGPD Compliant",
-    tooltip:
-      "Este produto cumpre os requisitos da Lei Geral de Proteção de Dados (LGPD).",
+    labelKey: "privacyBadge.lgpd",
+    tooltipKey: "privacyBadge.lgpdTooltip",
   },
   encrypted: {
     icon: Lock,
-    label: "Encrypted",
-    tooltip:
-      "Dados protegidos com criptografia ponta a ponta. Segurança em todos os níveis.",
+    labelKey: "privacyBadge.encrypted",
+    tooltipKey: "privacyBadge.encryptedTooltip",
   },
   consent: {
     icon: FileCheck,
-    label: "Consent Managed",
-    tooltip:
-      "Coleta e tratamento de dados somente mediante consentimento explícito do titular.",
+    labelKey: "privacyBadge.consent",
+    tooltipKey: "privacyBadge.consentTooltip",
   },
   audit: {
     icon: ClipboardList,
-    label: "Audit Trail",
-    tooltip:
-      "Trilha de auditoria completa. Todas as operações são registradas e rastreáveis.",
+    labelKey: "privacyBadge.audit",
+    tooltipKey: "privacyBadge.auditTooltip",
   },
   "no-tracking": {
     icon: EyeOff,
-    label: "No Tracking",
-    tooltip:
-      "Nenhum rastreador ou cookie de terceiros. Privacidade total do usuário.",
+    labelKey: "privacyBadge.noTracking",
+    tooltipKey: "privacyBadge.noTrackingTooltip",
   },
 } as const;
 
@@ -80,18 +76,21 @@ export function PrivacyBadge({
   size = "sm",
   className,
 }: PrivacyBadgeProps) {
+  const t = useTranslations("common");
   const config = variantConfig[variant ?? "lgpd"];
   const Icon = config.icon;
+  const label = t(config.labelKey);
+  const tooltip = t(config.tooltipKey);
 
   return (
     <span
-      title={config.tooltip}
-      aria-label={config.tooltip}
+      title={tooltip}
+      aria-label={tooltip}
       className={cn(badgeVariants({ variant, size }), className)}
     >
       <Icon className="h-3 w-3 shrink-0" strokeWidth={2.5} />
       <span className="font-semibold uppercase tracking-wider">
-        {config.label}
+        {label}
       </span>
     </span>
   );
