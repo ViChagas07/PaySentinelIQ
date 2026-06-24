@@ -156,9 +156,9 @@ export default function AuthPage() {
               return;
             }
 
-            // Update auth store with user + token from the backend
+            // Update auth store with user + token + refresh token from the backend
             if (data.user && data.token) {
-              loginStore(data.user, data.token);
+              loginStore(data.user, data.token, data.refreshToken);
             }
 
             // Success — redirect to dashboard
@@ -233,7 +233,8 @@ export default function AuthPage() {
             last_login: new Date().toISOString(),
             created_at: new Date().toISOString(),
           },
-          data.access_token || "demo-jwt-token"
+          data.access_token || "demo-jwt-token",
+          data.refresh_token
         );
         setSignInLoading(false);
         router.push(`/${locale}/dashboard`);

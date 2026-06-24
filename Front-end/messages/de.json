@@ -73,7 +73,13 @@
         "entries": "{count} Einträge",
         "of_lowercase": "von",
         "phonePlaceholder": "+49 170 000 0000",
-        "legalLinks": "Rechtliche Hinweise"
+        "legalLinks": "Rechtliche Hinweise",
+        "errors": {
+            "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+            "invalidToken": "Authentifizierungsfehler. Bitte melden Sie sich erneut an.",
+            "unauthorized": "Sie haben keine Berechtigung, auf diese Ressource zuzugreifen."
+        },
+        "openMenu": "Menü öffnen"
     },
     "auth": {
         "signInLabel": "Anmelden",

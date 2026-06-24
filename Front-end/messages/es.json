@@ -73,7 +73,13 @@
         "entries": "{count} entradas",
         "of_lowercase": "de",
         "phonePlaceholder": "+34 600 000 000",
-        "legalLinks": "Enlaces legales"
+        "legalLinks": "Enlaces legales",
+        "errors": {
+            "sessionExpired": "Su sesión ha expirado. Por favor, inicie sesión de nuevo.",
+            "invalidToken": "Error de autenticación. Por favor, inicie sesión de nuevo.",
+            "unauthorized": "No tiene permiso para acceder a este recurso."
+        },
+        "openMenu": "Abrir menú"
     },
     "auth": {
         "signInLabel": "Iniciar Sesión",

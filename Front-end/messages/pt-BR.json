@@ -1,7 +1,12 @@
 {
     "common": {
         "appName": "SentinelaPay",
-        "tagline": "Verificação de Folha de Pagamento & Inteligência Antifraude com IA",
+        "tagline": "Verifica��o de Folha de Pagamento & Intelig�ncia Antifraude com IA",
+        "errors": {
+            "sessionExpired": "Sua sessão expirou. Por favor, faça login novamente.",
+            "invalidToken": "Erro de autenticação. Por favor, faça login novamente.",
+            "unauthorized": "Você não tem permissão para acessar este recurso."
+        },
         "save": "Salvar",
         "cancel": "Cancelar",
         "close": "Fechar",
@@ -73,7 +78,8 @@
         "of_lowercase": "de",
         "emailPlaceholder": "analista@empresa.com.br",
         "phonePlaceholder": "+55 (11) 99999-9999",
-        "legalLinks": "Links legais"
+        "legalLinks": "Links legais",
+        "openMenu": "Abrir menu"
     },
     "auth": {
         "signInLabel": "Entrar",

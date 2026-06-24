@@ -73,7 +73,13 @@
         "entries": "{count}条记录",
         "of_lowercase": "之",
         "phonePlaceholder": "+86 138 0000 0000",
-        "legalLinks": "法律链接"
+        "legalLinks": "法律链接",
+        "errors": {
+            "sessionExpired": "您的会话已过期。请重新登录。",
+            "invalidToken": "身份验证错误。请重新登录。",
+            "unauthorized": "您没有权限访问此资源。"
+        },
+        "openMenu": "打开菜单"
     },
     "auth": {
         "signInLabel": "登录",

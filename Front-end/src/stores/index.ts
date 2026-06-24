@@ -14,11 +14,13 @@ import type { User, Tenant, FraudAlert, Notification } from "@/types";
 interface AuthStore {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
-  login: (user: User, token: string) => void;
+  setRefreshToken: (refreshToken: string | null) => void;
+  login: (user: User, token: string, refreshToken?: string) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -28,16 +30,19 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: true, // true until rehydrated from localStorage
       setUser: (user) => set({ user }),
       setToken: (token) => set({ token }),
-      login: (user, token) =>
-        set({ user, token, isAuthenticated: true, isLoading: false }),
+      setRefreshToken: (refreshToken) => set({ refreshToken }),
+      login: (user, token, refreshToken) =>
+        set({ user, token, refreshToken: refreshToken ?? null, isAuthenticated: true, isLoading: false }),
       logout: () =>
         set({
           user: null,
           token: null,
+          refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
         }),
@@ -50,6 +55,7 @@ export const useAuthStore = create<AuthStore>()(
       partialize: (state) => ({
         user: state.user,
         token: state.token,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
       // After rehydration from localStorage, mark loading as done

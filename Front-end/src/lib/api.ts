@@ -68,54 +68,115 @@ function buildUrl(path: string, params?: Record<string, string | number | boolea
 }
 
 /**
+ * Attempt to refresh the access token using the stored refresh token.
+ * Returns the new access token, or null if refresh failed.
+ */
+async function tryRefreshToken(): Promise<string | null> {
+  const { refreshToken, logout, setToken, setRefreshToken } = useAuthStore.getState();
+  if (!refreshToken) return null;
+
+  try {
+    const base = API_BASE_URL;
+    if (!base) return null;
+
+    const res = await fetch(`${base}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!res.ok) {
+      logout();
+      return null;
+    }
+
+    const data = await res.json();
+    // The backend returns TokenResponse with access_token and refresh_token
+    if (data.access_token) {
+      setToken(data.access_token);
+      if (data.refresh_token) {
+        setRefreshToken(data.refresh_token);
+      }
+      return data.access_token;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Core fetch wrapper. Gets auth token from Zustand store.
  * Throws ApiClientError on non-2xx responses.
+ * Automatically retries once with a refreshed token on 401.
  */
 async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { params, body, headers: extraHeaders, ...rest } = options;
-  const token = useAuthStore.getState().token;
 
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...extraHeaders,
+  const execute = async (tokenOverride?: string): Promise<T> => {
+    const token = tokenOverride ?? useAuthStore.getState().token;
+
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...extraHeaders,
+    };
+
+    const timeoutSignal = AbortSignal.timeout(8_000);
+    const combinedSignal = rest.signal
+      ? AbortSignal.any([rest.signal, timeoutSignal])
+      : timeoutSignal;
+
+    return fetch(buildUrl(path, params), {
+      ...rest,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: "include",
+      signal: combinedSignal,
+    }).then(async (response) => {
+      if (!response.ok) {
+        let errorBody: APIError | undefined;
+        try {
+          errorBody = await response.json();
+        } catch {
+          // Response is not JSON
+        }
+
+        throw new ApiClientError(
+          response.status,
+          errorBody?.code || "UNKNOWN_ERROR",
+          errorBody?.message || `Request failed with status ${response.status}`,
+          errorBody?.details
+        );
+      }
+
+      // Handle 204 No Content
+      if (response.status === 204) {
+        return undefined as T;
+      }
+
+      return response.json() as Promise<T>;
+    });
   };
 
-  const timeoutSignal = AbortSignal.timeout(8_000);
-  const combinedSignal = rest.signal
-    ? AbortSignal.any([rest.signal, timeoutSignal])
-    : timeoutSignal;
-
-  const response = await fetch(buildUrl(path, params), {
-    ...rest,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-    credentials: "include",
-    signal: combinedSignal,
-  });
-
-  if (!response.ok) {
-    let errorBody: APIError | undefined;
-    try {
-      errorBody = await response.json();
-    } catch {
-      // Response is not JSON
+  try {
+    return await execute();
+  } catch (error) {
+    // If the error is a 401, try refreshing the token
+    if (error instanceof ApiClientError && error.status === 401) {
+      const newToken = await tryRefreshToken();
+      if (newToken) {
+        // Retry once with the new token
+        return execute(newToken);
+      }
+      // Refresh failed — session expired, redirect to login preserving locale
+      if (typeof window !== "undefined") {
+        const locale = window.location.pathname.match(/^\/([a-z]{2}(?:-[A-Z]{2})?)/)?.[1] || "en";
+        window.location.href = `/${locale}/auth/login`;
+      }
     }
-
-    throw new ApiClientError(
-      response.status,
-      errorBody?.code || "UNKNOWN_ERROR",
-      errorBody?.message || `Request failed with status ${response.status}`,
-      errorBody?.details
-    );
+    throw error;
   }
-
-  // Handle 204 No Content
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
 }
 
 // ── Typed API Methods ── //

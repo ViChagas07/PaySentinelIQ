@@ -191,16 +191,19 @@ async def google_login(
         )
         db.add(consent_record)
 
-    # 4. Issue PaySentinelIQ JWT
+    # 4. Issue PaySentinelIQ JWT + refresh token
     access_token = AuthService.create_access_token(
         user_id=str(user.id),
         tenant_id=str(user.tenant_id),
         role=user.role,
     )
+    refresh_token_raw, _ = AuthService.create_refresh_token(str(user.id))
 
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token_raw,
         "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "user": {
             "id": str(user.id),
             "email": user.email,

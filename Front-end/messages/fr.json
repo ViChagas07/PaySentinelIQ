@@ -73,7 +73,13 @@
         "entries": "{count} entrées",
         "of_lowercase": "de",
         "phonePlaceholder": "+33 6 00 00 00 00",
-        "legalLinks": "Liens juridiques"
+        "legalLinks": "Liens juridiques",
+        "errors": {
+            "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+            "invalidToken": "Erreur d'authentification. Veuillez vous reconnecter.",
+            "unauthorized": "Vous n'avez pas la permission d'accéder à cette ressource."
+        },
+        "openMenu": "Ouvrir le menu"
     },
     "auth": {
         "signInLabel": "Connexion",

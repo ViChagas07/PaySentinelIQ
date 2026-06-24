@@ -2,6 +2,11 @@
   "common": {
     "appName": "PaySentinelIQ",
     "tagline": "AI-Powered Payroll Verification & Fraud Intelligence",
+    "errors": {
+      "sessionExpired": "Your session has expired. Please log in again.",
+      "invalidToken": "Authentication error. Please log in again.",
+      "unauthorized": "You do not have permission to access this resource."
+    },
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close",
@@ -86,7 +91,8 @@
       "auditTooltip": "Complete audit trail. All operations are recorded and traceable.",
       "noTracking": "No Tracking",
       "noTrackingTooltip": "No third-party trackers or cookies. Total user privacy."
-    }
+    },
+    "openMenu": "Open menu"
   },
   "auth": {
     "signInLabel": "Sign In",

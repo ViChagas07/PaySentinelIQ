@@ -73,7 +73,13 @@
         "entries": "{count}件",
         "of_lowercase": "/",
         "phonePlaceholder": "+81 90-0000-0000",
-        "legalLinks": "法的リンク"
+        "legalLinks": "法的リンク",
+        "errors": {
+            "sessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。",
+            "invalidToken": "認証エラー。もう一度ログインしてください。",
+            "unauthorized": "このリソースにアクセスする権限がありません。"
+        },
+        "openMenu": "メニューを開く"
     },
     "auth": {
         "signInLabel": "ログイン",

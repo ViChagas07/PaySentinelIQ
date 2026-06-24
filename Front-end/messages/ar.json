@@ -73,7 +73,13 @@
         "entries": "{count} إدخال",
         "of_lowercase": "من",
         "phonePlaceholder": "+966 5 0000 0000",
-        "legalLinks": "روابط قانونية"
+        "legalLinks": "روابط قانونية",
+        "errors": {
+            "sessionExpired": "انتهت جلستك. الرجاء تسجيل الدخول مرة أخرى.",
+            "invalidToken": "خطأ في المصادقة. الرجاء تسجيل الدخول مرة أخرى.",
+            "unauthorized": "ليس لديك إذن للوصول إلى هذا المورد."
+        },
+        "openMenu": "فتح القائمة"
     },
     "auth": {
         "signInLabel": "تسجيل الدخول",

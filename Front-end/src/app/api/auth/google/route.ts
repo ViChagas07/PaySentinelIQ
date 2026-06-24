@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
     // The backend handles user creation, consent recording, and JWT issuance.
     let backendUser: Record<string, unknown> | null = null;
     let backendToken: string | null = null;
+    let backendRefreshToken: string | undefined;
     let isNewUser = false;
 
     try {
@@ -97,6 +98,7 @@ export async function POST(request: NextRequest) {
           created_at: new Date().toISOString(),
         };
         backendToken = backendData.access_token || access_token;
+        backendRefreshToken = backendData.refresh_token;
       } else {
         // Backend returned an error — log it but fall back to local user creation
         const errData = await backendRes.json().catch(() => ({}));
@@ -208,7 +210,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Return response ─────────────────────────────────────
-    return NextResponse.json({
+    const responseData: Record<string, unknown> = {
       success: true,
       user: backendUser,
       token: backendToken,
@@ -218,7 +220,13 @@ export async function POST(request: NextRequest) {
       picture,
       emailSent,
       isNewUser,
-    });
+    };
+
+    if (backendRefreshToken) {
+      responseData.refreshToken = backendRefreshToken;
+    }
+
+    return NextResponse.json(responseData);
   } catch (err) {
     console.error("Google auth error:", err);
     return NextResponse.json(
