@@ -103,7 +103,7 @@ export function FraudHeatmap() {
           <div className="h-8 w-8 rounded-full border-2 border-psi-electric/30 border-t-psi-electric animate-spin" />
         </div>
       ) : (
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={256}>
         <ScatterChart margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
           <CartesianGrid
             strokeDasharray="3 3"

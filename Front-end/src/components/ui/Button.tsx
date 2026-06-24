@@ -60,7 +60,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         {...props}
       >
-        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {!asChild && loading && <Loader2 className="h-4 w-4 animate-spin" />}
         {children}
       </Comp>
     );

@@ -8,15 +8,25 @@ import type { APIError } from "@/types";
 
 // Em produção, NEXT_PUBLIC_API_URL é definido pela Vercel.
 // Em desenvolvimento, o desenvolvedor deve criar .env.local com:
-//   NEXT_PUBLIC_API_URL=https://api.paysentineliq.com/api
+//   NEXT_PUBLIC_API_URL=https://api.paysentineliq.com
 // Se não houver env var, não é seguro assumir localhost — falhamos cedo.
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-if (!API_BASE_URL && typeof window !== "undefined") {
+const RAW_API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+if (!RAW_API_BASE_URL && typeof window !== "undefined") {
   console.error(
     "[PaySentinelIQ] NEXT_PUBLIC_API_URL is not defined. " +
     "Please set it in your .env.local or Vercel environment variables."
   );
 }
+
+/**
+ * Normalized base URL — always ends with /api.
+ * If the user-provided URL already includes /api, it is kept as-is;
+ * otherwise /api is appended so that all path references can omit
+ * the /api prefix (e.g. "/payrolls/..." instead of "/api/payrolls/...").
+ */
+const API_BASE_URL = RAW_API_BASE_URL
+  ? RAW_API_BASE_URL.replace(/\/+$/, "") + (RAW_API_BASE_URL.includes("/api") ? "" : "/api")
+  : undefined;
 
 interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;

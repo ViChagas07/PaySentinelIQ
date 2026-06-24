@@ -25,7 +25,9 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/:path*",
+        // Security headers for PAGES only; static assets (_next/static, .css, .js)
+        // are excluded so their original Content-Type is never overridden.
+        source: "/:path((?!_next/static|.*\\.(?:css|js|woff2?|avif|webp|png|jpg|svg|ico)).*)",
         headers: [
           { key: "X-DNS-Prefetch-Control", value: "on" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },

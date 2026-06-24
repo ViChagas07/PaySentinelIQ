@@ -95,7 +95,7 @@ export function RiskDistributionChart() {
       transition={{ duration: 0.5, delay: 0.4 }}
       className="h-64 w-full"
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={256}>
         <BarChart
           data={displayBuckets}
           margin={{ top: 10, right: 10, left: -10, bottom: 0 }}

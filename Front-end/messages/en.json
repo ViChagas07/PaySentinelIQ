@@ -194,7 +194,6 @@
     "switchCompany": "Switch Company",
     "userMenu": "User menu",
     "unknownUser": "User",
-    "sidebarLabel": "Main navigation",
     "badgeAI": "AI",
     "notificationsAria": "Notifications{count, select, 0 {} other { ({count} unread)}}",
     "adminOnly": "Admin Only",
@@ -616,8 +615,8 @@
     "noDocumentTitle": "No document to preview",
     "noDocumentDescription": "Upload a document or select one from verification history to start",
     "uploadDocument": "Upload Document",
-      "uploadedDocuments": "{count} document(s) uploaded",
-      "documentReady": "Document ready for verification",
+    "uploadedDocuments": "{count} document(s) uploaded",
+    "documentReady": "Document ready for verification",
     "flagsCount": "{count} flags",
     "tableDept": "Department",
     "tableEmployees": "Employees",
@@ -902,7 +901,9 @@
     "alerts": "Alerts",
     "underReview": "Under Review",
     "pageDescriptionWithData": "{documents} documents analyzed · {fraudCases} fraud cases detected",
-    "aiInsightTextWithData": "Analysis of {documents} documents detected {fraudCases} fraud cases ({fraudRate}% rate), prevented {preventedIncidents} compliance incidents. Verification success rate is {verificationRate}% with AI confidence at {aiConfidence}%. {highRiskDocs} documents flagged as high-risk."
+    "aiInsightTextWithData": "Analysis of {documents} documents detected {fraudCases} fraud cases ({fraudRate}% rate), prevented {preventedIncidents} compliance incidents. Verification success rate is {verificationRate}% with AI confidence at {aiConfidence}%. {highRiskDocs} documents flagged as high-risk.",
+    "errorLoadingKpis": "Error loading KPIs",
+    "errorLoadingDescription": "Could not load report data. Please try again."
   },
   "profile": {
     "pageTitle": "Identity & Command Center",
@@ -1483,10 +1484,22 @@
     "how": {
       "title": "How PaySentinelIQ Works",
       "subtitle": "Four simple steps to intelligent fraud prevention",
-      "step1": { "title": "Upload Document", "desc": "Upload payrolls, invoices or bank slips for AI analysis." },
-      "step2": { "title": "AI Processes Information", "desc": "Our AI engine analyzes patterns, cross-references data and detects anomalies." },
-      "step3": { "title": "Fraud Intelligence Generated", "desc": "Receive detailed risk scores, flagged items and confidence ratings." },
-      "step4": { "title": "Receive Decision & Insights", "desc": "Get actionable intelligence reports and compliance documentation." }
+      "step1": {
+        "title": "Upload Document",
+        "desc": "Upload payrolls, invoices or bank slips for AI analysis."
+      },
+      "step2": {
+        "title": "AI Processes Information",
+        "desc": "Our AI engine analyzes patterns, cross-references data and detects anomalies."
+      },
+      "step3": {
+        "title": "Fraud Intelligence Generated",
+        "desc": "Receive detailed risk scores, flagged items and confidence ratings."
+      },
+      "step4": {
+        "title": "Receive Decision & Insights",
+        "desc": "Get actionable intelligence reports and compliance documentation."
+      }
     },
     "stats": {
       "title": "Proven Results at Scale",
