@@ -1,20 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+// Mesma normalização do api.ts: garante que a URL termine com /api
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL
   ?? process.env.API_URL
-  ?? 'https://paysentineliq-production.up.railway.app/api'
+  ?? 'https://paysentineliq-production.up.railway.app'
+
+const API_URL = RAW_API_URL.replace(/\/+$/, '') + (RAW_API_URL.includes('/api') ? '' : '/api')
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
+    const url = `${API_URL}/auth/google`
+    console.log('[PSI Proxy] Chamando FastAPI em:', url)
     console.log('[PSI Proxy] /api/auth/google → FastAPI body:', {
       hasAccessToken: !!body.access_token,
       consentGiven: body.consent_given,
       termsVersion: body.terms_version,
     })
 
-    const fastapiRes = await fetch(`${API_URL}/auth/google`, {
+    const fastapiRes = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
