@@ -151,6 +151,9 @@ export default function AuthPage() {
 
             const data = await res.json();
 
+            console.log('[PSI Auth DEBUG] Resposta /auth/google:', data);
+            console.log('[PSI Auth DEBUG] access_token salvo:', data.token);
+
             if (!res.ok) {
               setSignInError(data.error || t("googleSignInFailed"));
               return;

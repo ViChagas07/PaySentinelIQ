@@ -11,7 +11,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// Normalize BACKEND_URL the same way api.ts does:
+// append /api if the env var doesn't already include it.
+const RAW_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+const BACKEND_URL = RAW_BACKEND_URL
+  ? RAW_BACKEND_URL.replace(/\/+$/, "") + (RAW_BACKEND_URL.includes("/api") ? "" : "/api")
+  : undefined;
 if (!BACKEND_URL) {
   console.error(
     "[PaySentinelIQ] NEXT_PUBLIC_API_URL is not defined. Google auth proxy cannot reach the backend."
@@ -73,6 +79,7 @@ export async function POST(request: NextRequest) {
     try {
       if (!BACKEND_URL) throw new Error("NEXT_PUBLIC_API_URL is not configured");
 
+      console.log("[PSI Auth DEBUG] Proxy → backend URL:", `${BACKEND_URL}/auth/google`);
       const backendRes = await fetch(`${BACKEND_URL}/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
