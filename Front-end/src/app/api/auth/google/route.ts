@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
 
       if (backendRes.ok) {
         const backendData = await backendRes.json();
+        console.log("[PSI Auth DEBUG] FastAPI /auth/google respondeu:", backendData);
         backendUser = {
           id: backendData.user?.id || `google_${googleId}`,
           email: backendData.user?.email || email,
@@ -104,8 +105,10 @@ export async function POST(request: NextRequest) {
           last_login: new Date().toISOString(),
           created_at: new Date().toISOString(),
         };
-        backendToken = backendData.access_token || access_token;
+        // Tenta access_token (backend novo) ou token (backend antigo), nunca o Google token
+        backendToken = backendData.access_token ?? backendData.token ?? null;
         backendRefreshToken = backendData.refresh_token;
+        console.log("[PSI Auth DEBUG] Proxy usou access_token=", !!backendData.access_token, "token=", !!backendData.token, "→ backendToken prefix:", backendToken ? backendToken.substring(0, 20) + "..." : "null");
       } else {
         // Backend returned an error — log it but fall back to local user creation
         const errData = await backendRes.json().catch(() => ({}));
@@ -221,6 +224,7 @@ export async function POST(request: NextRequest) {
       success: true,
       user: backendUser,
       token: backendToken,
+      access_token: backendToken,  // ← mesmo valor do token, para compatibilidade
       userId: backendUser?.id,
       email,
       name,

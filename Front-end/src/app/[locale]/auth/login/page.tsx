@@ -152,16 +152,31 @@ export default function AuthPage() {
             const data = await res.json();
 
             console.log('[PSI Auth DEBUG] Resposta /auth/google:', data);
-            console.log('[PSI Auth DEBUG] access_token salvo:', data.token);
+            console.log('[PSI Auth DEBUG] data.token:', data.token);
+            console.log('[PSI Auth DEBUG] data.access_token:', data.access_token);
+            console.log('[PSI Auth DEBUG] data.refreshToken:', data.refreshToken);
+            // Detecta se é JWT (ey...) ou Google token (ya29...)
+            if (data.token) {
+              const isJwt = data.token.startsWith("ey");
+              const isGoogleToken = data.token.startsWith("ya29");
+              console.log('[PSI Auth DEBUG] token type:', isJwt ? 'JWT (ey)' : isGoogleToken ? 'GOOGLE (ya29)' : 'OUTRO');
+            }
 
             if (!res.ok) {
               setSignInError(data.error || t("googleSignInFailed"));
               return;
             }
 
+            // Tenta token principal ou access_token (alguns endpoints retornam access_token)
+            const effectiveToken = data.token ?? data.access_token;
+            const effectiveRefreshToken = data.refreshToken ?? data.refresh_token;
+
             // Update auth store with user + token + refresh token from the backend
-            if (data.user && data.token) {
-              loginStore(data.user, data.token, data.refreshToken);
+            if (data.user && effectiveToken) {
+              loginStore(data.user, effectiveToken, effectiveRefreshToken);
+              console.log('[PSI Auth DEBUG] loginStore chamado com token prefix:', effectiveToken.substring(0, 20) + '...');
+            } else {
+              console.warn('[PSI Auth DEBUG] loginStore NÃO chamado — faltando user ou token', { user: !!data.user, token: !!effectiveToken });
             }
 
             // Success — redirect to dashboard

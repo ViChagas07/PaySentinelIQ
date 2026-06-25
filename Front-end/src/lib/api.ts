@@ -73,34 +73,45 @@ function buildUrl(path: string, params?: Record<string, string | number | boolea
  */
 async function tryRefreshToken(): Promise<string | null> {
   const { refreshToken, logout, setToken, setRefreshToken } = useAuthStore.getState();
+  console.log('[PSI Auth DEBUG] tryRefreshToken — refreshToken existe?', !!refreshToken, 'prefix:', refreshToken ? refreshToken.substring(0, 15) + '...' : 'null');
   if (!refreshToken) return null;
 
   try {
     const base = API_BASE_URL;
+    console.log('[PSI Auth DEBUG] tryRefreshToken — base:', base);
     if (!base) return null;
 
+    console.log('[PSI Auth DEBUG] tryRefreshToken — enviando POST para', `${base}/auth/refresh`);
     const res = await fetch(`${base}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
 
+    console.log('[PSI Auth DEBUG] tryRefreshToken — status:', res.status);
+
     if (!res.ok) {
+      const errBody = await res.text().catch(() => 'N/A');
+      console.warn('[PSI Auth DEBUG] tryRefreshToken — FAILED, status:', res.status, 'body:', errBody);
       logout();
       return null;
     }
 
     const data = await res.json();
+    console.log('[PSI Auth DEBUG] tryRefreshToken — resposta:', data);
     // The backend returns TokenResponse with access_token and refresh_token
     if (data.access_token) {
       setToken(data.access_token);
       if (data.refresh_token) {
         setRefreshToken(data.refresh_token);
       }
+      console.log('[PSI Auth DEBUG] tryRefreshToken — SUCESSO, novo access_token prefix:', data.access_token.substring(0, 20) + '...');
       return data.access_token;
     }
+    console.warn('[PSI Auth DEBUG] tryRefreshToken — resposta sem access_token');
     return null;
-  } catch {
+  } catch (refreshErr) {
+    console.warn('[PSI Auth DEBUG] tryRefreshToken — EXCEÇÃO:', refreshErr);
     return null;
   }
 }
