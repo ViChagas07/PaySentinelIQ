@@ -169,15 +169,15 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
         // Retry once with the new token
         return execute(newToken);
       }
-      // Refresh failed — clear auth state and redirect to login preserving locale
+      // Refresh failed — clear auth state.
+      // The ApiClientError propagates to React Query, which shows
+      // a degraded UI (no data / zeros) instead of redirecting the user.
       const { logout } = useAuthStore.getState();
       logout();
       if (typeof window !== "undefined") {
         console.error(
-          "[PSI Auth] Refresh falhou — sessão limpa, redirecionando para login."
+          "[PSI Auth] Refresh falhou — sessão limpa. Página irá mostrar estado degradado."
         );
-        const locale = window.location.pathname.match(/^\/([a-z]{2}(?:-[A-Z]{2})?)/)?.[1] || "en";
-        window.location.href = `/${locale}/auth/login`;
       }
     }
     throw error;
