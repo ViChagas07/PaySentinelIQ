@@ -171,6 +171,14 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
       }
       // Refresh failed — session expired, redirect to login preserving locale
       if (typeof window !== "undefined") {
+        const store = useAuthStore.getState();
+        console.error(
+          "[PSI Auth] Refresh falhou, redirecionando para login.",
+          "Token:", store.token ? "presente" : "ausente",
+          "RefreshToken:", store.refreshToken ? "presente" : "ausente",
+          "isAuthenticated:", store.isAuthenticated,
+          "isLoading:", store.isLoading
+        );
         const locale = window.location.pathname.match(/^\/([a-z]{2}(?:-[A-Z]{2})?)/)?.[1] || "en";
         window.location.href = `/${locale}/auth/login`;
       }

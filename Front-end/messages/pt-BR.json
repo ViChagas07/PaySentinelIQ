@@ -97,6 +97,7 @@
         "sessionExpired": "Sessão expirada",
         "unauthorized": "Não autorizado",
         "validationRequired": "Preencha todos os campos.",
+        "mustAgreeToTermsSignIn": "Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.",
         "emailPlaceholder": "voce@exemplo.com.br",
         "passwordPlaceholder": "Digite sua senha",
         "hidePassword": "Ocultar",

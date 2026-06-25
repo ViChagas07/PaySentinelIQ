@@ -743,7 +743,13 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={triggerGoogleSignIn}
-                className="mt-4 flex w-full items-center justify-center gap-3 rounded-lg border border-psi-border/60 bg-white/[0.03] hover:bg-white/[0.06] px-4 py-2.5 text-sm font-medium text-psi-text-primary transition-all hover:border-psi-border"
+                disabled={!agreeToTermsSignIn}
+                className={cn(
+                  "mt-4 flex w-full items-center justify-center gap-3 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all",
+                  agreeToTermsSignIn
+                    ? "border-psi-border/60 bg-white/[0.03] text-psi-text-primary hover:bg-white/[0.06] hover:border-psi-border cursor-pointer"
+                    : "border-psi-border/20 bg-white/[0.01] text-psi-text-secondary/40 cursor-not-allowed"
+                )}
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path

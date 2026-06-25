@@ -50,6 +50,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: "psi-auth", // localStorage key
+      version: 1,       // bump when shape changes to auto-migrate
       storage: createJSONStorage(() => localStorage),
       // Only persist data fields — functions are re-created by Zustand
       partialize: (state) => ({
@@ -58,6 +59,14 @@ export const useAuthStore = create<AuthStore>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      // Migrate from older store shapes (e.g. before refreshToken was added)
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          // Version 0 didn't have refreshToken — discard stale state
+          return { user: null, token: null, refreshToken: null, isAuthenticated: false };
+        }
+        return persistedState as AuthStore;
+      },
       // After rehydration from localStorage, mark loading as done
       onRehydrateStorage: () => (state) => {
         if (state) {
