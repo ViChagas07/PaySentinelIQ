@@ -169,14 +169,13 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
         // Retry once with the new token
         return execute(newToken);
       }
-      // Refresh failed — clear auth state.
-      // The ApiClientError propagates to React Query, which shows
-      // a degraded UI (no data / zeros) instead of redirecting the user.
-      const { logout } = useAuthStore.getState();
-      logout();
+      // Refresh failed — the ApiClientError propagates to React Query.
+      // The UI (dashboard) falls back to zeros instead of showing a
+      // visitor/guest state. The user remains authenticated.
       if (typeof window !== "undefined") {
         console.error(
-          "[PSI Auth] Refresh falhou — sessão limpa. Página irá mostrar estado degradado."
+          "[PSI Auth] Refresh falhou — token inválido ou backend offline. " +
+          "Página usará fallback (zeros)."
         );
       }
     }
