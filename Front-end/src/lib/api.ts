@@ -169,15 +169,12 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
         // Retry once with the new token
         return execute(newToken);
       }
-      // Refresh failed — session expired, redirect to login preserving locale
+      // Refresh failed — clear auth state and redirect to login preserving locale
+      const { logout } = useAuthStore.getState();
+      logout();
       if (typeof window !== "undefined") {
-        const store = useAuthStore.getState();
         console.error(
-          "[PSI Auth] Refresh falhou, redirecionando para login.",
-          "Token:", store.token ? "presente" : "ausente",
-          "RefreshToken:", store.refreshToken ? "presente" : "ausente",
-          "isAuthenticated:", store.isAuthenticated,
-          "isLoading:", store.isLoading
+          "[PSI Auth] Refresh falhou — sessão limpa, redirecionando para login."
         );
         const locale = window.location.pathname.match(/^\/([a-z]{2}(?:-[A-Z]{2})?)/)?.[1] || "en";
         window.location.href = `/${locale}/auth/login`;

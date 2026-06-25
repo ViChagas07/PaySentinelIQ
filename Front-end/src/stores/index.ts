@@ -62,8 +62,13 @@ export const useAuthStore = create<AuthStore>()(
       // Migrate from older store shapes (e.g. before refreshToken was added)
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
-          // Version 0 didn't have refreshToken — discard stale state
-          return { user: null, token: null, refreshToken: null, isAuthenticated: false };
+          // Version 0 didn't have refreshToken — add it but KEEP user/token/isAuthenticated
+          return {
+            user: persistedState.user ?? null,
+            token: persistedState.token ?? null,
+            refreshToken: persistedState.refreshToken ?? null,
+            isAuthenticated: persistedState.isAuthenticated ?? false,
+          };
         }
         return persistedState as AuthStore;
       },
