@@ -208,6 +208,9 @@ async def google_login(
             "id": str(user.id),
             "email": user.email,
             "name": user.full_name,
+            "role": user.role,
+            "avatar_url": user.avatar_url,
+            "tenant_id": str(user.tenant_id),
         },
     }
 
