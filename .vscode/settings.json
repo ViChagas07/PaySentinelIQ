@@ -1,5 +1,8 @@
 {
     "python.defaultInterpreterPath": "C:\\Users\\Alisson Davi\\AppData\\Local\\pypoetry\\Cache\\virtualenvs\\pay-sentinel-iq-CGpKFEXM-py3.11\\Scripts\\python.exe",
     "python.terminal.activateEnvironment": true,
-    "python-envs.defaultEnvManager": "ms-python.python:poetry"
+    "python-envs.defaultEnvManager": "ms-python.python:poetry",
+    "python.venvFolders": [
+        "C:\\Users\\Alisson Davi\\AppData\\Local\\pypoetry\\Cache\\virtualenvs"
+    ]
 }
