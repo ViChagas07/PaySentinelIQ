@@ -179,7 +179,7 @@ export default function AuthPage() {
 
     // Request access token — this opens a proper popup window
     client.requestAccessToken();
-  }, [locale, router, t, loginStore]);
+  }, [agreeToTermsSignIn, locale, router, t, loginStore]);
 
   // ── Sign In handler ── //
   const handleSignIn = async (e: React.FormEvent) => {
