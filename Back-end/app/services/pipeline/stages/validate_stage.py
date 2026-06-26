@@ -53,20 +53,26 @@ class ValidateStage(BaseStage):
         self._validate_amounts(context, fields)
 
     def _looks_like_boleto(self, text: str, fields: dict) -> bool:
+        # Always check structured fields first (they work even without OCR text)
+        if fields.get("linha_digitavel") or fields.get("codigo_barras"):
+            return True
         if not text:
             return False
-        keywords = ["boleto", "linha digitável", "código de barras",
+        keywords = ["boleto", "linha digitavel", "codigo de barras",
                      "vencimento", "cedente", "sacado", "banco"]
         return any(kw in text.lower() for kw in keywords)
 
     def _validate_boleto(self, ctx: PipelineContext, text: str, fields: dict) -> None:
-        """Boleto FEBRABAN validations."""
+        """Boleto FEBRABAN validations. Uses text when available, structured fields as fallback."""
         try:
             from app.services.ai.boleto_analyzer import (
                 _stage1_structural_validation,
                 _stage3_linha_digitavel_validation,
+                BANCOS_VALIDOS,
             )
-            # Run deterministic boleto checks on raw text
+            import re
+
+            # ── Raw text path (most complete) ──
             if text and len(text) > 50:
                 structural_flags, _ = _stage1_structural_validation(text)
                 linha_flags, _ = _stage3_linha_digitavel_validation(text)
@@ -94,8 +100,78 @@ class ValidateStage(BaseStage):
                         source=EvidenceSource.DETERMINISTIC,
                         confidence=1.0,
                         category="structural",
-                        rule_reference="FEBRABAN Módulo 10/11",
+                        rule_reference="FEBRABAN Modulo 10/11",
                     ))
+
+            # ── Structured fields fallback (no raw text available) ──
+            else:
+                # Bank code from structured fields
+                linha = fields.get("linha_digitavel", "")
+                if linha:
+                    digits = re.sub(r"\D", "", linha)
+                    if len(digits) >= 3:
+                        bank_code = digits[:3]
+                        if bank_code not in BANCOS_VALIDOS:
+                            ctx.add_evidence(Evidence(
+                                code="BANCO_INVALIDO",
+                                description=f"Codigo de banco {bank_code} nao existe no BACEN ISPB",
+                                severity=Severity.CRITICAL,
+                                source=EvidenceSource.DETERMINISTIC,
+                                confidence=1.0,
+                                category="structural",
+                                rule_reference="BACEN ISPB Registry",
+                            ))
+                    # Check linha digitavel format
+                    if not re.search(r"\d{5}\.\d{5}\s\d{6}\.\d{6}\s\d{6}\.\d{6}\s\d\s\d{14}", linha):
+                        ctx.add_evidence(Evidence(
+                            code="LINHA_DIGITAVEL_FORMATO_INCORRETO",
+                            description="Linha digitavel em formato nao padrao FEBRABAN",
+                            severity=Severity.CRITICAL,
+                            source=EvidenceSource.DETERMINISTIC,
+                            confidence=1.0,
+                            category="structural",
+                            rule_reference="FEBRABAN Linha Digitavel",
+                        ))
+
+                # CNPJ from structured fields
+                cnpj = fields.get("cnpj", "")
+                if cnpj:
+                    digits = re.sub(r"\D", "", cnpj)
+                    known_invalid = {
+                        "00000000000000", "11111111111111", "22222222222222",
+                        "33333333333333", "44444444444444", "55555555555555",
+                        "66666666666666", "77777777777777", "88888888888888",
+                        "99999999999999", "00000010000199", "00000000000199",
+                    }
+                    if digits in known_invalid:
+                        ctx.add_evidence(Evidence(
+                            code="CNPJ_INVALIDO",
+                            description=f"CNPJ {cnpj} possui padrao invalido (todos digitos iguais ou sequencia falsa conhecida)",
+                            severity=Severity.CRITICAL,
+                            source=EvidenceSource.DETERMINISTIC,
+                            confidence=1.0,
+                            category="entity",
+                            rule_reference="Modulo 11 CNPJ",
+                        ))
+
+                # Beneficiary name
+                beneficiario = fields.get("beneficiario", fields.get("beneficiary_name", ""))
+                if beneficiario:
+                    generic_terms = ["solucoes", "servicos", "digital", "tecnologia",
+                                     "consultoria", "comercio", "global", "brasil"]
+                    name_lower = beneficiario.lower()
+                    generic_count = sum(1 for t in generic_terms if t in name_lower)
+                    if generic_count >= 2 and len(beneficiario) < 30:
+                        ctx.add_evidence(Evidence(
+                            code="BENEFICIARIO_GENERICO",
+                            description=f"Razao social generica: {beneficiario} — possivel empresa fantasma",
+                            severity=Severity.MEDIUM,
+                            source=EvidenceSource.HEURISTIC,
+                            confidence=0.6,
+                            category="entity",
+                            rule_reference="Heuristica de fraude em boleto",
+                        ))
+
         except Exception as e:
             ctx.add_warning(f"Boleto validation failed: {e}")
 

@@ -171,7 +171,8 @@ async def analyze_document(
     settings = get_settings()
 
     # ── Fase 5: CanonicalPipeline migration ──
-    if getattr(settings, "USE_CANONICAL_PIPELINE", False) and body.ocr_text:
+    # Runs even without ocr_text — ValidateStage uses structured fields for detection
+    if getattr(settings, "USE_CANONICAL_PIPELINE", False):
         return await _run_canonical_from_analyze(body, tenant_id)
 
     from app.fraud_detection.domain.pipeline import get_fraud_pipeline
