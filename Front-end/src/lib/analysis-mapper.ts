@@ -29,6 +29,14 @@ interface PSIReport {
   };
   AI_REASONING_SUMMARY?: string;
   ANALYST_NOTES?: string;
+  // New pipeline format fields (backward compat)
+  risk_score?: number;
+  riskScore?: number;
+  score?: number;
+  risk_level?: string;
+  riskLevel?: string;
+  anomaly_list?: Record<string, any>[];
+  anomalies?: Record<string, any>[];
 }
 
 export function mapPSIReportToAnalysisResult(
