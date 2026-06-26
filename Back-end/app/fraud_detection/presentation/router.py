@@ -159,15 +159,20 @@ async def analyze_document(
     tenant_id: str = Depends(get_current_tenant_id),
 ) -> dict[str, Any]:
     """
-    Submit a document for real-time 7-stage fraud analysis.
-    Returns the complete PSI Fraud Analysis Report.
+    Submit a document for real-time fraud analysis.
 
-    For boleto-type documents with raw text, runs the 4-stage
-    boleto deep analysis pipeline. The deterministic pipeline
-    score is the FLOOR — it can only be increased.
+    Fase 5: Migrated to CanonicalPipeline when USE_CANONICAL_PIPELINE=true.
+    Falls back to legacy FraudDetectionPipeline when flag is disabled.
     """
     import logging
     logger = logging.getLogger(__name__)
+
+    from app.shared.settings import get_settings
+    settings = get_settings()
+
+    # ── Fase 5: CanonicalPipeline migration ──
+    if getattr(settings, "USE_CANONICAL_PIPELINE", False) and body.ocr_text:
+        return await _run_canonical_from_analyze(body, tenant_id)
 
     from app.fraud_detection.domain.pipeline import get_fraud_pipeline
 
@@ -337,3 +342,41 @@ async def resolve_fraud_alert(
         "resolution": body.resolution,
         "resolved_at": alert.resolved_at.isoformat(),
     }
+
+
+# ═══════════════════════════════════════════════════════
+# Fase 5: CanonicalPipeline migration helper
+# ═══════════════════════════════════════════════════════
+
+async def _run_canonical_from_analyze(
+    body: DocumentAnalyzeRequest,
+    tenant_id: str,
+) -> dict[str, Any]:
+    """Run CanonicalPipeline for the /analyze endpoint."""
+    import time
+    from app.core.contracts.pipeline_context import PipelineContext
+    from app.services.pipeline.canonical_pipeline import CanonicalPipeline
+
+    raw_text = body.ocr_text or body.raw_text or ""
+
+    ctx = PipelineContext(
+        document_id=body.document_id,
+        tenant_id=tenant_id,
+        document_type=body.document_type or "unknown",
+        extracted_text=raw_text,
+    )
+    # Populate extracted fields from request body
+    for field in ["cnpj", "razao_social", "cnae", "linha_digitavel",
+                   "valor_nominal", "beneficiario"]:
+        value = getattr(body, field, None)
+        if value is not None:
+            ctx.extracted_fields[field] = value
+
+    t0 = time.monotonic()
+    pipeline = CanonicalPipeline()
+    result = pipeline.execute(ctx)
+    elapsed = time.monotonic() - t0
+
+    response = result.to_dict()
+    response["processing_time_seconds"] = round(elapsed, 2)
+    return response

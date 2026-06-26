@@ -80,15 +80,15 @@ class TestFusionEngineSmoke:
         assert result["final_level"] == "HIGH"
 
     def test_fusion_crewai_evidence_gets_lower_weight(self):
-        """AI-generated evidence should get lower source multiplier."""
+        """AI-generated evidence should get lower source multiplier (tested with HIGH to avoid critical floor)."""
         fusion = FusionEngine()
         ev_det = Evidence(
             code="DET", description="Deterministic",
-            severity=Severity.CRITICAL, source=EvidenceSource.DETERMINISTIC, confidence=1.0,
+            severity=Severity.HIGH, source=EvidenceSource.DETERMINISTIC, confidence=1.0,
         )
         ev_ai = Evidence(
             code="AI", description="AI found",
-            severity=Severity.CRITICAL, source=EvidenceSource.CREWAI, confidence=1.0,
+            severity=Severity.HIGH, source=EvidenceSource.CREWAI, confidence=1.0,
         )
         result_det = fusion.fuse([ev_det])
         result_ai = fusion.fuse([ev_ai])

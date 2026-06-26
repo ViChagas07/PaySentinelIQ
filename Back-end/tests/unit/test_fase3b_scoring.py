@@ -53,14 +53,15 @@ class TestFusionEngineWithThresholds:
         assert fusion._thresholds.classify(80) == RiskLevel.HIGH
 
     def test_critical_evidence_scores_high(self):
+        """Single CRITICAL evidence must trigger the critical floor (>= 70)."""
         fusion = FusionEngine()
         evs = [
             Evidence(code="BANCO_INVALIDO", description="Banco invalido",
                      severity=Severity.CRITICAL, source=EvidenceSource.DETERMINISTIC, confidence=1.0),
         ]
         result = fusion.fuse(evs)
-        # 35 * 1.5 * 1.0 = 52.5 — close to HIGH threshold
-        assert result["final_score"] >= 50
+        assert result["final_score"] >= 70, f"Critical floor rule: expected >=70, got {result['final_score']}"
+        assert result["final_level"] == "HIGH"
 
     def test_two_criticals_compound(self):
         fusion = FusionEngine()
@@ -76,9 +77,10 @@ class TestFusionEngineWithThresholds:
         assert result["final_level"] == "HIGH"
 
     def test_deterministic_beats_ai(self):
+        """Deterministic evidence carries more weight than AI evidence (tested with HIGH severity to avoid critical floor)."""
         fusion = FusionEngine()
-        det = Evidence(code="DET", description="Det", severity=Severity.CRITICAL, source=EvidenceSource.DETERMINISTIC, confidence=1.0)
-        ai = Evidence(code="AI", description="AI", severity=Severity.CRITICAL, source=EvidenceSource.CREWAI, confidence=1.0)
+        det = Evidence(code="DET", description="Det", severity=Severity.HIGH, source=EvidenceSource.DETERMINISTIC, confidence=1.0)
+        ai = Evidence(code="AI", description="AI", severity=Severity.HIGH, source=EvidenceSource.CREWAI, confidence=1.0)
         assert fusion.fuse([det])["final_score"] > fusion.fuse([ai])["final_score"]
 
 

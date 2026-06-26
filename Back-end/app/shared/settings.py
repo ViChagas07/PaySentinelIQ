@@ -117,7 +117,7 @@ class Settings(BaseSettings):
     ENABLE_COMPLIANCE_CHECKS: bool = True
 
     # ── Fase 3A Feature Flags ──
-    USE_CANONICAL_PIPELINE: bool = False
+    USE_CANONICAL_PIPELINE: bool = True     # Fase 5: CanonicalPipeline is now the default
     ENABLE_SHADOW_PIPELINE: bool = False
     ENABLE_PIPELINE_EVENTS: bool = True
     ENABLE_EXPLAINABILITY_PREVIEW: bool = False

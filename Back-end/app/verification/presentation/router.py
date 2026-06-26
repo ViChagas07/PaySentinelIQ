@@ -10,6 +10,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 
 from app.auth.dependencies import get_current_tenant_id, get_current_user_id, require_fraud_analyst
@@ -107,12 +108,22 @@ async def upload_document(
             else f"Pipeline {status}: {result.get('error', 'Unknown error')}"
         )
 
-        return UploadResponse(
+        response = UploadResponse(
             document_id=document_id,
             status=status,
             message=message,
             s3_key=result.get("stages", {}).get("upload", {}).get("s3_key"),
             presigned_url=result.get("stages", {}).get("upload", {}).get("presigned_url"),
+        )
+        # Fase 5: Deprecation — use POST /api/documents/analyze instead
+        return JSONResponse(
+            content=response.model_dump(),
+            headers={
+                "Deprecation": "true",
+                "Sunset": "Sat, 01 Jan 2027 00:00:00 GMT",
+                "Link": '</api/documents/analyze>; rel="successor-version"',
+                "Warning": '299 - "This endpoint is deprecated. Use POST /api/documents/analyze"',
+            },
         )
 
     except (InvalidFileTypeError, FileTooLargeError) as e:

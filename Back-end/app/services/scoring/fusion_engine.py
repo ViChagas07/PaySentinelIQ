@@ -72,9 +72,10 @@ class FusionEngine:
         contributions = self._calculate_contributions(evidences)
         raw_score = sum(c.contribution for c in contributions)
 
-        # ── Normalize ──
-        # Cap at 100, but also apply a compound multiplier for multiple criticals
+        # ── Critical floor rule (IRON RULE: 1 CRITICAL → HIGH >= 70) ──
         critical_count = sum(1 for e in evidences if e.severity == Severity.CRITICAL)
+        if critical_count >= 1:
+            raw_score = max(raw_score, 70.0)  # Minimum score with any CRITICAL
         if critical_count >= 2:
             raw_score = min(raw_score * 1.2, 100.0)  # Multiple criticals compound
 

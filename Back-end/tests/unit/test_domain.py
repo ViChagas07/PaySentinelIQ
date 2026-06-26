@@ -60,8 +60,9 @@ class TestRiskScore:
         assert score.level == RiskLevel.HIGH
 
     def test_risk_score_critical(self):
+        """Fase 3B: CRITICAL merged into HIGH. 90 == HIGH."""
         score = RiskScore(value=90.0, confidence=0.88)
-        assert score.level == RiskLevel.CRITICAL
+        assert score.level == RiskLevel.HIGH
 
     def test_risk_score_invalid_range(self):
         with pytest.raises(ValueError):
