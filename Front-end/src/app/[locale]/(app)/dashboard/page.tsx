@@ -226,7 +226,7 @@ export default function DashboardPage() {
   const { data: kpis, isLoading: kpisLoading, isError: kpisError, isSuccess: kpisSuccess } = useDashboardKpis(
     isAuthenticated
   );
-  const { data: analysisStats, isLoading: analysisLoading } = useAnalysisStats();
+  const { data: analysisStats, isLoading: analysisLoading } = useAnalysisStats(isAuthenticated);
 
   const isAnyLoading = kpisLoading || analysisLoading;
 

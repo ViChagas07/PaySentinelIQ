@@ -65,9 +65,11 @@ export function CTASection() {
                 )}
               >
                 <Link href="/dashboard">
-                  <LayoutDashboard className="h-4 w-4" />
-                  {t("cta.goToDashboard")}
-                  <ArrowRight className="h-4 w-4" />
+                  <span className="inline-flex items-center gap-2">
+                    <LayoutDashboard className="h-4 w-4" />
+                    {t("cta.goToDashboard")}
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
                 </Link>
               </Button>
             ) : (
@@ -82,8 +84,10 @@ export function CTASection() {
                   )}
                 >
                   <Link href="/auth/login">
-                    {t("cta.startFree")}
-                    <ArrowRight className="h-4 w-4" />
+                    <span className="inline-flex items-center gap-2">
+                      {t("cta.startFree")}
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
                   </Link>
                 </Button>
 
@@ -97,8 +101,10 @@ export function CTASection() {
                   )}
                 >
                   <Link href="/auth/login">
-                    <LogIn className="h-4 w-4" />
-                    {t("cta.login")}
+                    <span className="inline-flex items-center gap-2">
+                      <LogIn className="h-4 w-4" />
+                      {t("cta.login")}
+                    </span>
                   </Link>
                 </Button>
               </>

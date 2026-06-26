@@ -678,8 +678,9 @@ export function useSaveAnalysis() {
       api.post<AnalysisRecord>("/analysis/save", payload),
     onSuccess: () => {
       // Invalidate all analysis-related caches so dashboard/history refresh
-      queryClient.invalidateQueries({ queryKey: ["analysis"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "kpis"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.analysis.stats });
+      queryClient.invalidateQueries({ queryKey: queryKeys.analysis.history() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.kpis });
     },
   });
 }
@@ -703,12 +704,13 @@ export function useAnalysisHistory(params?: {
   });
 }
 
-export function useAnalysisStats() {
+export function useAnalysisStats(enabled = true) {
   return useQuery({
     queryKey: queryKeys.analysis.stats,
     queryFn: () => api.get<AnalysisDashboardStats>("/analysis/stats"),
     staleTime: 10_000,
     refetchInterval: 30_000,
     placeholderData: (prev) => prev,
+    enabled,
   });
 }

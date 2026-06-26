@@ -74,14 +74,16 @@ export function LandingFooter() {
             variants={footerVariants}
           >
             <Link href="/" className="inline-flex items-center gap-2">
-              <Image
-                src="/PSI_Logo2.png"
-                alt={tc("appName")}
-                width={32}
-                height={32}
-                className="h-8 w-auto object-contain"
-              />
-              <AppName as="span" className="text-sm text-white/60" />
+              <span className="inline-flex items-center gap-2">
+                <Image
+                  src="/PSI_Logo2.png"
+                  alt={tc("appName")}
+                  width={32}
+                  height={32}
+                  className="h-8 w-auto object-contain"
+                />
+                <AppName as="span" className="text-sm text-white/60" />
+              </span>
             </Link>
 
             <p className="mt-3 text-sm leading-relaxed text-white/40">

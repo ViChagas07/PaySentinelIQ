@@ -205,7 +205,12 @@ async def google_login(
         )
         db.add(consent_record)
 
-    # 4. Issue PaySentinelIQ JWT + refresh token
+    # 4. Update last_login BEFORE issuing tokens
+    user.last_login = datetime.now(dt_timezone.utc)
+    await db.commit()
+    await db.refresh(user)
+
+    # 5. Issue PaySentinelIQ JWT + refresh token
     access_token = AuthService.create_access_token(
         user_id=str(user.id),
         tenant_id=str(user.tenant_id),
@@ -219,12 +224,15 @@ async def google_login(
         "token_type": "bearer",
         "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "user": {
-            "id": str(user.id),
+            "id": str(user.id),                    # UUID real do banco
             "email": user.email,
             "full_name": user.full_name,
             "role": user.role,
-            "avatar_url": user.avatar_url,
             "tenant_id": str(user.tenant_id),
+            "avatar_url": user.avatar_url,
+            "mfa_enabled": user.mfa_enabled,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
         },
     }
 
