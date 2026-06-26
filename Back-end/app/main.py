@@ -308,6 +308,7 @@ def _register_routers(app: FastAPI) -> None:
     _safe_include(app, "app.employees.presentation.router", "/api/employees", "Employees")
     _safe_include(app, "app.verification.presentation.router", "/api/verifications", "Verification")
     _safe_include(app, "app.fraud_detection.presentation.router", "/api/fraud-alerts", "Fraud Detection")
+    _safe_include(app, "app.api.documents.router", "/api/documents", "Documents")  # Fase 3A — canonical
     _safe_include(app, "app.compliance.presentation.router", "/api/compliance", "Compliance")
     _safe_include(app, "app.audit.infrastructure.router", "/api/audit-logs", "Audit Logs")
     _safe_include(app, "app.notifications.infrastructure.router", "/api/notifications", "Notifications")

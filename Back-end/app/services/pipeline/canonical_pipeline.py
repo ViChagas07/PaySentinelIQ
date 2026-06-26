@@ -26,6 +26,9 @@ from app.services.pipeline.stages.validate_stage import ValidateStage
 from app.services.pipeline.stages.enrich_stage import EnrichStage
 from app.services.pipeline.stages.risk_stage import RiskStage
 from app.services.pipeline.stages.crewai_stage import CrewAIStage
+from app.services.pipeline.event_bus import (
+    PipelineEvent, PipelineEventType, PipelineEventBus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +45,7 @@ class CanonicalPipeline:
         6. CrewAI — 5 AI agents (A-E), parallel A,B,C (if LLM available)
 
     ZERO business logic. Dependency injection for all stages.
+    Integrated with PipelineEventBus for observability.
     """
 
     def __init__(
@@ -52,6 +56,7 @@ class CanonicalPipeline:
         enrich: EnrichStage | None = None,
         risk: RiskStage | None = None,
         crewai: CrewAIStage | None = None,
+        event_bus: PipelineEventBus | None = None,
     ):
         self._stages: list[Any] = [
             ingest or IngestStage(),
@@ -61,35 +66,85 @@ class CanonicalPipeline:
             risk or RiskStage(),
             crewai or CrewAIStage(),
         ]
+        self._event_bus = event_bus or PipelineEventBus()
+        self._setup_default_subscribers()
+
+    def _setup_default_subscribers(self) -> None:
+        """Register built-in event subscribers (logging + optional metrics)."""
+        from app.services.pipeline.event_bus import create_logging_subscriber
+        self._event_bus.subscribe(create_logging_subscriber())
+
+    @property
+    def event_bus(self) -> PipelineEventBus:
+        return self._event_bus
 
     def execute(self, context: PipelineContext) -> PipelineResult:
-        """Execute ALL stages sequentially on the given context.
-
-        Stages cannot be skipped. If a stage fails, the pipeline
-        continues with remaining stages (graceful degradation).
-        Only OCR failure is fatal (no text = no analysis).
-
-        Args:
-            context: Initial PipelineContext with at least file_bytes set.
-
-        Returns:
-            PipelineResult with backward-compatible serialization.
-        """
+        """Execute ALL stages sequentially on the given context."""
         start = time.monotonic()
+        doc_id = context.document_id[:8]
+
+        # ── Pipeline started ──
+        self._event_bus.publish(PipelineEvent(
+            PipelineEventType.PIPELINE_STARTED,
+            document_id=context.document_id,
+            correlation_id=context.correlation_id,
+        ))
 
         for stage in self._stages:
             logger.debug("Executing stage: %s", stage.name)
+
+            # ── Stage started ──
+            self._event_bus.publish(PipelineEvent(
+                PipelineEventType.STAGE_STARTED,
+                document_id=context.document_id,
+                correlation_id=context.correlation_id,
+                stage_name=stage.name,
+            ))
+
             try:
                 context = stage.execute(context)
+
+                # ── Stage finished ──
+                self._event_bus.publish(PipelineEvent(
+                    PipelineEventType.STAGE_FINISHED,
+                    document_id=context.document_id,
+                    stage_name=stage.name,
+                    data={"duration": context.processing_times.get(stage.name, 0)},
+                ))
             except Exception as e:
                 logger.error("Stage %s crashed: %s", stage.name, e)
                 context.add_error(f"Stage {stage.name}: {e}")
                 context.pipeline_status = PipelineStatus.PARTIAL
 
+                self._event_bus.publish(PipelineEvent(
+                    PipelineEventType.STAGE_FAILED,
+                    document_id=context.document_id,
+                    stage_name=stage.name,
+                    data={"error": str(e)},
+                ))
+
         context.mark_completed()
         elapsed = time.monotonic() - start
 
-        return self._build_result(context, elapsed)
+        result = self._build_result(context, elapsed)
+
+        # ── Pipeline finished ──
+        final_event_type = (
+            PipelineEventType.PIPELINE_FAILED if context.pipeline_status == PipelineStatus.FAILED
+            else PipelineEventType.PIPELINE_PARTIAL if context.pipeline_status == PipelineStatus.PARTIAL
+            else PipelineEventType.PIPELINE_FINISHED
+        )
+        self._event_bus.publish(PipelineEvent(
+            final_event_type,
+            document_id=context.document_id,
+            correlation_id=context.correlation_id,
+            data={"score": result.risk_score, "level": result.risk_level,
+                  "time": result.processing_time_seconds},
+        ))
+
+        logger.info("Pipeline %s: score=%.1f level=%s time=%.1fs",
+                     doc_id, result.risk_score, result.risk_level, elapsed)
+        return result
 
     def _build_result(self, ctx: PipelineContext, elapsed: float) -> PipelineResult:
         """Build PipelineResult from PipelineContext.

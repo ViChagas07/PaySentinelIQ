@@ -116,6 +116,12 @@ class Settings(BaseSettings):
     ENABLE_OCR: bool = True
     ENABLE_COMPLIANCE_CHECKS: bool = True
 
+    # ── Fase 3A Feature Flags ──
+    USE_CANONICAL_PIPELINE: bool = False        # Use CanonicalPipeline as entry point
+    ENABLE_SHADOW_PIPELINE: bool = False         # Run legacy + canonical side-by-side
+    ENABLE_PIPELINE_EVENTS: bool = True          # Publish pipeline lifecycle events
+    ENABLE_EXPLAINABILITY_PREVIEW: bool = False  # Include explainability in response (preview)
+
     # ── OCR ──
     OCR_PROVIDER: str = "tesseract"  # "tesseract" (today) or "textract" (future)
     OCR_LANGUAGE: str = "por+eng"    # Tesseract language codes
