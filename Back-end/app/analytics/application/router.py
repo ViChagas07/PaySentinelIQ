@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.dependencies import get_current_tenant_id
 from app.shared.database import get_db
 from app.shared.orm_models import (
+    AnalysisRecordModel,
     ComplianceReportModel,
     EmployeeModel,
     FraudAlertModel,
@@ -96,12 +97,49 @@ async def get_dashboard_kpis(
     )
     compliance_incidents = compliance_result.scalar_one()
 
+    # 7) Analysis records — document analyses (boleto + contracheque)
+    analysis_total_result = await db.execute(
+        select(func.count(AnalysisRecordModel.id)).where(
+            AnalysisRecordModel.tenant_id == tid,
+        )
+    )
+    analysis_total = analysis_total_result.scalar_one()
+
+    analysis_fraud_result = await db.execute(
+        select(func.count(AnalysisRecordModel.id)).where(
+            AnalysisRecordModel.tenant_id == tid,
+            AnalysisRecordModel.is_fraudulent.is_(True),
+        )
+    )
+    analysis_fraud_count = analysis_fraud_result.scalar_one()
+
+    analysis_high_risk_result = await db.execute(
+        select(func.count(AnalysisRecordModel.id)).where(
+            AnalysisRecordModel.tenant_id == tid,
+            AnalysisRecordModel.risk_level.in_(["HIGH", "CRITICAL"]),
+        )
+    )
+    analysis_high_risk = analysis_high_risk_result.scalar_one()
+
+    analysis_pass_rate_result = await db.execute(
+        select(func.avg(AnalysisRecordModel.confidence_score)).where(
+            AnalysisRecordModel.tenant_id == tid,
+            AnalysisRecordModel.confidence_score.isnot(None),
+        )
+    )
+    analysis_avg_conf = analysis_pass_rate_result.scalar_one() or 0.0
+
+    # Calculate blended pass rate from analysis records
+    analysis_pass_rate = round(
+        ((analysis_total - analysis_fraud_count) / analysis_total * 100) if analysis_total > 0 else 0, 1
+    )
+
     return {
-        "payrolls_processed": payrolls_processed,
-        "verification_rate": verification_rate,
-        "fraud_alerts": fraud_alerts,
-        "ai_confidence": ai_confidence,
-        "high_risk_docs": high_risk_docs,
+        "payrolls_processed": payrolls_processed + analysis_total,
+        "verification_rate": verification_rate if verification_rate > 0 else analysis_pass_rate,
+        "fraud_alerts": fraud_alerts + analysis_fraud_count,
+        "ai_confidence": ai_confidence if ai_confidence > 0 else round(float(analysis_avg_conf) * 100, 1),
+        "high_risk_docs": high_risk_docs + analysis_high_risk,
         "compliance_incidents": compliance_incidents,
     }
 

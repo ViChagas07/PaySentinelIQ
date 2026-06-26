@@ -1218,6 +1218,7 @@ class FraudDetectionPipeline:
         Args:
             document_data: Dict containing all extracted document data:
                 - document_type: str
+                - ocr_text: str (raw extracted text — used by boleto pipeline)
                 - pdf_metadata: dict (creator, producer, creation_date, etc.)
                 - ocr_data: dict (confidence, extracted_fields, barcodes, qr_codes)
                 - pdf_forensics: dict (content_stream_count, font_inventory, etc.)
@@ -1237,6 +1238,8 @@ class FraudDetectionPipeline:
         logger.info("[Stage 1/7] Ingestion & Classification")
         s1 = self.stage1_ingestion(document_data)
 
+        doc_class = s1.extracted_data.get("document_class", "unknown")
+
         # ── STAGE 2: OCR & Structured Extraction ──
         logger.info("[Stage 2/7] OCR & Structured Extraction")
         s2 = self.stage2_ocr_extraction(document_data, s1)
@@ -1248,6 +1251,67 @@ class FraudDetectionPipeline:
         # ── STAGE 4: Structural Validation ──
         logger.info("[Stage 4/7] Structural Validation")
         s4 = self.stage4_structural_validation(document_data, s1)
+
+        # ── STAGE 4B: Boleto Deep Analysis (if applicable) ──
+        # M0 INTEGRATION: Runs the 4-stage boleto pipeline's deterministic checks
+        # on raw OCR text for boleto-type documents. This catches fraud indicators
+        # that structured field analysis alone misses.
+        boleto_anomalies: list[Anomaly] = []
+        boleto_pipeline_score = 0.0
+        raw_text = document_data.get("ocr_text", document_data.get("raw_text", ""))
+        is_boleto_doc = (
+            doc_class == DocumentClass.BOLETO.value
+            or document_data.get("document_type", "") in ("boleto", "bank-slip")
+            or bool(document_data.get("linha_digitavel"))
+        )
+        if is_boleto_doc and raw_text and len(raw_text) > 50:
+            try:
+                logger.info("[Stage 4B/7] Boleto Deep Analysis (deterministic)")
+                from app.services.ai.boleto_analyzer import (
+                    _stage1_structural_validation,
+                    _stage3_linha_digitavel_validation,
+                )
+                # Run deterministic checks (no LLM needed)
+                boleto_flags, boleto_score = _stage1_structural_validation(raw_text)
+                linha_flags, linha_score = _stage3_linha_digitavel_validation(raw_text)
+
+                # Convert boleto flags to anomalies
+                for flag_text in boleto_flags:
+                    severity = Severity.CRITICAL if any(
+                        kw in flag_text.upper() for kw in [
+                            "BANCO_INVALIDO", "CNPJ_INVALIDO", "MULTA_ILEGAL",
+                            "JUROS_ABUSIVOS", "VENCIDO.*892", "VENCIDO.*365"
+                        ]
+                    ) else Severity.HIGH
+                    boleto_anomalies.append(Anomaly(
+                        severity=severity,
+                        category="structural",
+                        description=flag_text,
+                        evidence=f"Boleto deep analysis (deterministic): {flag_text}",
+                        confidence=100,
+                        stage_detected="Stage 4B",
+                        tool_used="boleto_structural_validator",
+                    ))
+                for flag_text in linha_flags:
+                    boleto_anomalies.append(Anomaly(
+                        severity=Severity.CRITICAL,
+                        category="structural",
+                        description=flag_text,
+                        evidence=f"FEBRABAN modulo 10 validation: {flag_text}",
+                        confidence=100,
+                        stage_detected="Stage 4B",
+                        tool_used="boleto_linha_digitavel_validator",
+                    ))
+
+                # Weighted boleto pipeline score (50% structural + 15% linha)
+                boleto_pipeline_score = min(boleto_score * 0.50 + linha_score * 0.15, 100.0)
+                logger.info(
+                    "Boleto deep analysis: flags=%d score=%.1f",
+                    len(boleto_flags) + len(linha_flags),
+                    boleto_pipeline_score,
+                )
+            except Exception as e:
+                logger.warning("Boleto deep analysis skipped: %s", e)
 
         # ── STAGE 5: Entity Validation ──
         logger.info("[Stage 5/7] Entity Validation")
@@ -1263,10 +1327,30 @@ class FraudDetectionPipeline:
         logger.info("[Stage 7/7] Risk Scoring & Report Generation")
         score, classification, confidence, action, reasoning = self.stage7_risk_scoring(all_stages)
 
+        # ── MERGE: Boleto pipeline score as FLOOR ──
+        # The boleto deep analysis score is the MINIMUM risk score.
+        # The 7-stage pipeline score can only INCREASE it, never decrease.
+        if boleto_pipeline_score > 0:
+            score = max(score, boleto_pipeline_score)
+            if score >= 70:
+                classification = RiskLevel.HIGH
+                action = "REJECT"
+            elif score >= 40:
+                classification = RiskLevel.MEDIUM
+                action = "MANUAL_REVIEW"
+            logger.info(
+                "Boleto score merged: pipeline=%.1f boleto=%.1f final=%.1f class=%s",
+                score if boleto_pipeline_score <= score else (score if score > boleto_pipeline_score else boleto_pipeline_score),
+                boleto_pipeline_score,
+                score,
+                classification.value,
+            )
+
         # Build result
         total_anomalies: list[Anomaly] = []
         for stage in all_stages:
             total_anomalies.extend(stage.anomalies)
+        total_anomalies.extend(boleto_anomalies)
 
         result = PipelineResult(
             document_id=document_id,

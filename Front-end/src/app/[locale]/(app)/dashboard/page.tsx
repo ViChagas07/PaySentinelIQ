@@ -21,7 +21,7 @@ import {
   WifiOff, LogIn, Sparkles, Lock,
   type LucideIcon,
 } from "lucide-react";
-import { useDashboardKpis } from "@/hooks/useApi";
+import { useDashboardKpis, useAnalysisStats } from "@/hooks/useApi";
 import { useAuthStore } from "@/stores";
 import { Link } from "@/i18n/navigation";
 
@@ -226,6 +226,9 @@ export default function DashboardPage() {
   const { data: kpis, isLoading: kpisLoading, isError: kpisError, isSuccess: kpisSuccess } = useDashboardKpis(
     isAuthenticated
   );
+  const { data: analysisStats, isLoading: analysisLoading } = useAnalysisStats();
+
+  const isAnyLoading = kpisLoading || analysisLoading;
 
   const periodLabels: Record<Period, string> = {
     lastWeek: t("lastWeek"),
@@ -287,10 +290,18 @@ export default function DashboardPage() {
       high_risk_docs: 0,
     };
 
+    // Blend analysis stats with dashboard KPIs
+    const totalDocs = (d.payrolls_processed || 0) + (analysisStats?.total_documents || 0);
+    const totalFraud = (d.fraud_alerts || 0) + (analysisStats?.fraudulent_count || 0);
+    const avgConfidence = analysisStats?.avg_confidence_score
+      ? Math.round(analysisStats.avg_confidence_score * 100)
+      : d.ai_confidence;
+    const highRiskTotal = (d.high_risk_docs || 0) + (analysisStats?.high_risk_count || 0);
+
     return [
       {
         label: t("payrollsProcessed"),
-        value: d.payrolls_processed,
+        value: totalDocs,
         change: 0,
         changeType: "increase",
         changeContext: "good",
@@ -301,7 +312,7 @@ export default function DashboardPage() {
       },
       {
         label: t("verificationRate"),
-        value: d.verification_rate,
+        value: analysisStats?.pass_rate ?? d.verification_rate,
         suffix: "%",
         change: 0,
         changeType: "increase",
@@ -313,7 +324,7 @@ export default function DashboardPage() {
       },
       {
         label: t("fraudAlerts"),
-        value: d.fraud_alerts,
+        value: totalFraud,
         change: 0,
         changeType: "increase",
         changeContext: "bad",
@@ -324,7 +335,7 @@ export default function DashboardPage() {
       },
       {
         label: t("aiConfidence"),
-        value: d.ai_confidence,
+        value: avgConfidence,
         suffix: "%",
         change: 0,
         changeType: "increase",
@@ -336,7 +347,7 @@ export default function DashboardPage() {
       },
       {
         label: t("highRiskDocs"),
-        value: d.high_risk_docs,
+        value: highRiskTotal,
         change: 0,
         changeType: "increase",
         changeContext: "bad",
@@ -346,7 +357,7 @@ export default function DashboardPage() {
         changeLabel: vsLabel,
       },
     ];
-  }, [kpis, t, vsLabel, isGuarded]);
+  }, [kpis, analysisStats, t, vsLabel, isGuarded]);
 
   // ── Derive summary stats — "---" when guarded ──
   const summaryStats = useMemo(() => {
@@ -358,12 +369,14 @@ export default function DashboardPage() {
       };
     }
     const d = kpis || { payrolls_processed: 0, verification_rate: 0 };
+    const totalDocs = (d.payrolls_processed || 0) + (analysisStats?.total_documents || 0);
+    const passRate = analysisStats?.pass_rate ?? d.verification_rate;
     return {
-      totalProcessed: d.payrolls_processed.toLocaleString(),
-      passRate: `${d.verification_rate}%`,
+      totalProcessed: totalDocs.toLocaleString(),
+      passRate: `${passRate}%`,
       avgVerification: "\u2014",
     };
-  }, [kpis, isGuarded]);
+  }, [kpis, analysisStats, isGuarded]);
 
   return (
     <div className="space-y-8">
@@ -436,7 +449,7 @@ export default function DashboardPage() {
           kpiData.map((kpi, i) => (
             <KpiCard key={kpi.label} kpi={kpi} index={i} isGuarded />
           ))
-        ) : kpisLoading ? (
+        ) : isAnyLoading ? (
           // ── Loading skeleton ──
           Array.from({ length: 5 }).map((_, i) => (
             <Card key={i}>
