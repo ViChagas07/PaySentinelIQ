@@ -20,7 +20,7 @@ from app.auth.repository import UserRepository
 from app.auth.services import AuthService
 from app.shared.database import get_db
 from app.shared.exceptions import AuthenticationError, InvalidCredentialsError, TokenExpiredError
-from app.shared.orm_models import ConsentRecordModel
+from app.shared.orm_models import ConsentRecordModel, TenantModel
 from app.shared.settings import get_settings
 
 settings = get_settings()
@@ -148,10 +148,19 @@ async def google_login(
     user = await repo.get_by_email(email)
 
     if user is None:
+        # Busca o tenant padrão pelo slug
+        tenant_result = await db.execute(
+            sa_select(TenantModel).where(TenantModel.slug == "default")
+        )
+        tenant = tenant_result.scalar_one_or_none()
+        if not tenant:
+            raise HTTPException(status_code=500, detail="Default tenant not found")
+
         user = await repo.create(
             email=email,
             full_name=name,
             google_id=google_sub,
+            tenant_id=tenant.id,
         )
     else:
         # Update google_id if user already exists but didn't have one
