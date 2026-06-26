@@ -577,6 +577,8 @@ export function useAnalyzeDocument() {
       qr_code_payload?: string;
       valor_nominal?: number;
       beneficiario?: string;
+      ocr_text?: string;     // Raw extracted text for boleto deep analysis
+      raw_text?: string;     // Alternative field name
     }) => api.post<any>("/fraud-alerts/analyze", payload),
   });
 }

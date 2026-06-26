@@ -64,20 +64,68 @@ Treat ANY of the following as HIGH-SUSPICION (critical severity):
 
 # ── Document-type-specific extensions ──
 
-BOLETO_EXTENSION = """
+# ═══════════════════════════════════════════════════════════════
+# FEBRABAN POLICY REFERENCE (shared knowledge for all boleto agents)
+# ═══════════════════════════════════════════════════════════════
+FEBRABAN_POLICY_REFERENCE = """
 
-## BOLETO-SPECIFIC FRAUD INDICATORS (cumulative with universal)
-- Bank code not in BACEN registry → CRITICAL (score +35)
-- Linha digitavel checksum failure (modulo 10/11) → CRITICAL (score +30)
+## FEBRABAN BOLETO POLICY REFERENCE (authoritative — cite these in your analysis)
+
+### Boleto Structure (FEBRABAN Standard):
+- **Linha Digitável**: 47-48 characters with 5 fields separated by spaces/dots
+  - Campo 1 (5+5 digits): Bank code (3) + currency (1) + position 1-5 of campo livre + DV
+  - Campo 2 (6+6 digits): Position 6-11 + DV + position 12-17 + DV  
+  - Campo 3 (6+6 digits): Position 18-23 + DV + position 24-29 + DV
+  - Campo 4 (1 digit): Global DV (módulo 11)
+  - Campo 5 (14 digits): Fator de vencimento (4) + valor nominal (10)
+- **Barcode**: 44 digits, ITF (Interleaved 2 of 5) encoding
+- **Base Date for due date calculation**: 1997-10-07 (FEBRABAN reference)
+- **Currency codes**: 6 (BRL — standard), 7 (TR — registry), 8 (DAC — other currencies), 9 (real)
+- **Checksums**: Campos 1-3 use Módulo 10; Campo 4 (global DV) and barcode use Módulo 11
+
+### FEBRABAN Validation Rules (infallible fraud signals):
+1. Bank code (first 3 digits of linha digitável) MUST exist in BACEN ISPB registry
+2. Linha digitável checksums (Módulo 10) MUST validate for campos 1, 2, 3
+3. Barcode MUST decode to same value as linha digitável fields
+4. Due date (fator de vencimento) must be >= 1000 for valid dates
+5. Document value (valor nominal) must be > 0
+
+### BACEN Regulatory Limits (Law 10.406/2002, Art. 406; BACEN Resolution 4.557):
+- **Late fee (multa moratória)**: Maximum 2% of total document value
+- **Interest (juros de mora)**: Maximum 1% per month (pro-rata per day)
+- **Fees above legal limits → CRIMINAL FRAUD (Art. 171, Código Penal)**
+
+### Common Boleto Fraud Patterns (detected by PaySentinelIQ):
+1. **Ghost Bank**: Bank code not in BACEN ISPB → 100% fraud
+2. **CNPJ Shell**: All digits equal or known fake pattern → shell company
+3. **Overdue Trap**: Boleto > 365 days past due → likely recycled fraud
+4. **Illegal Fees**: Multa > 2% or Juros > 1%/mês → extortion scheme
+5. **Troca-Boleto**: Visual layout shows one beneficiary, QR Code Pix shows another
+6. **Fake Utility (concessionária)**: 48-digit barcode with invalid concessionária segment
+7. **Pressure Language**: Text using threats ("protesto", "negativação imediata") → social engineering
+
+### FEBRABAN Official Resources:
+- BACEN ISPB Registry: https://www.bcb.gov.br/estabilidadefinanceira/ispb
+- FEBRABAN Boleto Spec: https://portal.febraban.org.br/pagina/3166/21/pt-br/layout-cobranca
+"""
+
+BOLETO_EXTENSION = (
+    FEBRABAN_POLICY_REFERENCE
+    + """
+
+## BOLETO-SPECIFIC FRAUD INDICATORS (cumulative with universal + FEBRABAN)
+- Bank code not in BACEN registry → CRITICAL (score +35) — cite FEBRABAN rule #1
+- Linha digitavel checksum failure (modulo 10/11) → CRITICAL (score +30) — cite FEBRABAN rule #2
 - Due date > 30 days past → HIGH (score +20), > 365 days → CRITICAL (score +30)
-- Late fee > 2% total or interest > 1%/month → HIGH (score +25)
-- Beneficiary CNPJ with invalid pattern (all zeros, sequential) → CRITICAL (score +30)
+- Late fee > 2% total or interest > 1%/month → CRIMINAL FRAUD (score +25) — cite Art. 171 Código Penal
+- Beneficiary CNPJ with invalid pattern (all zeros, sequential) → CRITICAL (score +30) — cite FEBRABAN rule #1
 - Very round amount (multiple of 100) without service description → MEDIUM (score +10)
 - Suspicious instruction text (pressure tactics, threats, unusual payment methods) → HIGH
-- Barcode/linha digitavel mismatch → CRITICAL
+- Barcode/linha digitavel mismatch → CRITICAL — cite FEBRABAN rule #3
 - Missing cedente information (address, phone, official contact) → MEDIUM
-- QR Code Pix with different beneficiary than visual layout → CRITICAL (troca-boleto attack)
+- QR Code Pix with different beneficiary than visual layout → CRITICAL (troca-boleto attack) — cite FEBRABAN fraud pattern #5
 """
+)
 
 CONTRACHEQUE_EXTENSION = """
 

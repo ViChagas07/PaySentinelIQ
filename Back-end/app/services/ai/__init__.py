@@ -9,6 +9,7 @@ from app.services.ai.risk_analyzer import RiskAnalyzer, RiskFlag, RiskAssessment
 from app.services.ai.report_generator import ReportGenerator, InvestigationReport
 from app.services.ai.prompts import (
     UNIVERSAL_FRAUD_SYSTEM_PROMPT,
+    FEBRABAN_POLICY_REFERENCE,
     COPILOT_SYSTEM_PROMPT,
     REPORT_SYSTEM_PROMPT,
     EXPLAIN_SYSTEM_PROMPT,
@@ -31,6 +32,7 @@ __all__ = [
     "ReportGenerator",
     "InvestigationReport",
     "UNIVERSAL_FRAUD_SYSTEM_PROMPT",
+    "FEBRABAN_POLICY_REFERENCE",
     "COPILOT_SYSTEM_PROMPT",
     "REPORT_SYSTEM_PROMPT",
     "EXPLAIN_SYSTEM_PROMPT",

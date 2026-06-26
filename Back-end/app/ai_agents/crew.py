@@ -494,22 +494,34 @@ class AIAgentCrew:
 
         fraud_task = Task(
             description=(
-                f"Review and enhance the fraud analysis for this document. "
+                f"Review and enhance the fraud analysis for this document.\n\n"
                 f"Deterministic pipeline found {det_anomalies} anomalies "
                 f"with risk score {det_score}/100 ({det_class}).\n\n"
+                f"📋 FEBRABAN COMPLIANCE CHECKLIST (verify ALL of these):\n"
+                f"  1. Bank code exists in BACEN ISPB registry? (first 3 digits of barcode)\n"
+                f"  2. Linha digitável checksums valid? (Módulo 10 for campos 1-3, Módulo 11 for campo 4)\n"
+                f"  3. Due date valid? (fator de vencimento >= 1000, not > 365 days past)\n"
+                f"  4. Late fee ≤ 2% total? Interest ≤ 1%/month? (BACEN Resolution 4.557)\n"
+                f"  5. CNPJ passes Módulo 11 checksum AND not in known-fake list?\n"
+                f"  6. QR Code Pix beneficiary matches visual layout? (anti troca-boleto)\n"
+                f"  7. Barcode decodes to same value as linha digitável?\n\n"
                 f"Document data: {document_data}\n\n"
-                f"Pipeline findings:\n{anomaly_text}\n"
-                f"Provide additional investigative insights and fraud pattern analysis. "
-                f"Identify any fraud indicators the pipeline may have missed."
+                f"Pipeline findings:\n{anomaly_text}\n\n"
+                f"For each item on the FEBRABAN checklist that FAILS, "
+                f"add a CRITICAL fraud indicator. Cite the specific FEBRABAN rule violated. "
+                f"Any boleto failing 2+ FEBRABAN checks IS fraudulent."
                 f"{IRON_RULE}"
             ),
             expected_output=(
-                "JSON with enhanced fraud analysis:\n"
-                '{"additional_indicators": [...], "fraud_patterns": [...], '
+                "JSON with FEBRABAN-validated fraud analysis:\n"
+                '{"febraban_compliance": {"bank_valid": bool, "checksum_valid": bool, '
+                '"due_date_valid": bool, "fees_legal": bool, "cnpj_valid": bool, '
+                '"pix_match": bool, "barcode_match": bool}, '
+                '"additional_indicators": [...], "fraud_patterns": [...], '
                 '"investigative_insights": "...", "enhanced_score": <number>, '
+                '"febraban_violations": ["rule X violated: ..."], '
                 '"confidence": <0-1>}\n\n'
-                "enhanced_score MUST be >= deterministic score ({det_score}). "
-                "Use Portuguese for insights."
+                f"enhanced_score MUST be >= {det_score}. Cite FEBRABAN rules. Portuguese."
             ),
             agent=fraud_agent,
         )
@@ -532,17 +544,31 @@ class AIAgentCrew:
 
         compliance_task = Task(
             description=(
-                f"Review entity validation and flag additional compliance risks. "
-                f"Entity data: {report.get('ENTITY_VALIDATION', {})}. "
-                f"Structural data: {report.get('STRUCTURAL_VALIDATION', {})}. "
-                f"Suggest additional regulatory checks and compliance verification steps."
+                f"Validate entity data against official Brazilian government registries "
+                f"and FEBRABAN/BACEN regulations.\n\n"
+                f"Entity data: {report.get('ENTITY_VALIDATION', {})}\n"
+                f"Structural data: {report.get('STRUCTURAL_VALIDATION', {})}\n\n"
+                f"📋 COMPLIANCE VERIFICATION:\n"
+                f"  - CNPJ valid on Receita Federal? (https://solucoes.receita.fazenda.gov.br)\n"
+                f"  - Bank code in BACEN ISPB registry? (https://www.bcb.gov.br/estabilidadefinanceira/ispb)\n"
+                f"  - CNAE compatible with declared job function (CBO)?\n"
+                f"  - Late fee ≤ 2% and interest ≤ 1%/month? (BACEN Resolution 4.557, Art. 406 CC)\n"
+                f"  - Beneficiary name matches CNPJ registration? (anti-shell-company)\n"
+                f"  - If boleto: does QR Code Pix recipient match visual cedente?\n\n"
+                f"Flag ANY violation as CRITICAL. Cite the specific regulation violated.\n"
+                f"BACEN ISPB: bancos não registrados → fraude confirmada.\n"
                 f"{IRON_RULE}"
             ),
             expected_output=(
-                "JSON with compliance enhancement:\n"
-                '{"compliance_flags": [...], "regulatory_risks": [...], '
-                '"verification_steps": [...], "compliance_score": <number>}\n\n'
-                "Invalid CNPJ, invalid bank code → CRITICAL. No exceptions."
+                "JSON with FEBRABAN/BACEN compliance validation:\n"
+                '{"compliance_flags": [{"rule_violated": "...", "regulation": "...", '
+                '"severity": "critical", "evidence": "..."}], '
+                '"regulatory_risks": [...], '
+                '"verification_steps": ["Step 1: Check BACEN ISPB for bank code", ...], '
+                '"compliance_score": <number>, '
+                '"references": ["BACEN Resolution 4.557", "Art. 406 CC/2002", '
+                '"Art. 171 Código Penal"]}\n\n'
+                "ALL compliance violations → CRITICAL. Cite regulations."
             ),
             agent=compliance_agent,
         )

@@ -61,6 +61,9 @@ class DocumentAnalyzeRequest(BaseModel):
     qr_code_payload: str | None = None
     valor_nominal: float | None = None
     beneficiario: str | None = None
+    # CRITICAL: Raw OCR text enables deep boleto analysis (Stage 4B)
+    ocr_text: str | None = None
+    raw_text: str | None = None
 
 
 async def _alerts_query(
@@ -158,9 +161,14 @@ async def analyze_document(
     """
     Submit a document for real-time 7-stage fraud analysis.
     Returns the complete PSI Fraud Analysis Report.
-    This endpoint invokes the full deterministic pipeline immediately.
-    LLM enhancement via CrewAI agents runs if ENABLE_AI_AGENTS=true.
+
+    For boleto-type documents with raw text, runs the 4-stage
+    boleto deep analysis pipeline. The deterministic pipeline
+    score is the FLOOR — it can only be increased.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+
     from app.fraud_detection.domain.pipeline import get_fraud_pipeline
 
     pipeline = get_fraud_pipeline()
@@ -171,27 +179,69 @@ async def analyze_document(
     }
 
     for field in [
-        "salario_bruto",
-        "inss",
-        "irrf",
-        "fgts",
-        "liquido",
-        "cargo",
-        "cbo",
-        "cnpj",
-        "razao_social",
-        "cnae",
-        "linha_digitavel",
-        "qr_code_payload",
-        "valor_nominal",
+        "salario_bruto", "inss", "irrf", "fgts", "liquido",
+        "cargo", "cbo", "cnpj", "razao_social", "cnae",
+        "linha_digitavel", "qr_code_payload", "valor_nominal",
         "beneficiario",
     ]:
         value = getattr(body, field, None)
         if value is not None:
             document_data[field] = value
 
+    # Pass raw text to enable Stage 4B boleto deep analysis
+    raw_text = body.ocr_text or body.raw_text or ""
+    if raw_text:
+        document_data["ocr_text"] = raw_text
+        document_data["raw_text"] = raw_text
+
+    # ── Run 7-stage deterministic pipeline ──
     result = pipeline.run_full_pipeline(document_data)
+
+    # ── Boleto: also run the 4-stage boleto pipeline on raw text ──
+    boleto_score = 0.0
+    is_boleto = (
+        body.document_type == "boleto"
+        or bool(body.linha_digitavel)
+        or (raw_text and any(
+            term in raw_text.lower()
+            for term in ["boleto", "linha digitável", "código de barras",
+                         "vencimento", "cedente", "sacado"]
+        ))
+    )
+    if is_boleto and raw_text and len(raw_text) > 50:
+        try:
+            from app.services.ai.boleto_analyzer import analyze_boleto_pipeline
+            boleto_analysis = await analyze_boleto_pipeline(raw_text, llm_generate_fn=None)
+            boleto_score = boleto_analysis["risk_score"]
+            logger.info(
+                "Boleto pipeline via API: score=%d level=%s indicators=%d",
+                boleto_score,
+                boleto_analysis["risk_level"],
+                boleto_analysis["total_indicators"],
+            )
+        except Exception as e:
+            logger.warning("Boleto pipeline via API failed: %s", e)
+
+    # ── Generate report ──
     report = pipeline.generate_psi_report(result, document_data)
+
+    # ── Enforce boleto score as FLOOR ──
+    if boleto_score > 0:
+        current_score = report.get("RISK_ASSESSMENT", {}).get("fraud_risk_score", 0)
+        final_score = max(current_score, boleto_score)
+        if final_score > current_score:
+            report["RISK_ASSESSMENT"]["fraud_risk_score"] = final_score
+            if final_score >= 70:
+                report["RISK_ASSESSMENT"]["risk_classification"] = "HIGH"
+                report["RISK_ASSESSMENT"]["recommended_action"] = "REJECT"
+            elif final_score >= 40:
+                report["RISK_ASSESSMENT"]["risk_classification"] = "MEDIUM"
+                report["RISK_ASSESSMENT"]["recommended_action"] = "MANUAL_REVIEW"
+            logger.info(
+                "Boleto score override: pipeline=%.0f boleto=%.0f final=%.0f",
+                current_score, boleto_score, final_score,
+            )
+
     return report
 
 
