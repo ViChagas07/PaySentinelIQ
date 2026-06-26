@@ -1224,6 +1224,8 @@
     "historyTitle": "Processing History",
     "noHistory": "No analysis history yet",
     "newAnalysis": "Analyze New Documents",
+    "errorTitle": "Analysis Failed",
+    "errorHint": "Please check the document and try again. If the issue persists, contact support.",
     "payroll": {
       "title": "Payroll",
       "description": "AI-powered payroll fraud detection and verification",

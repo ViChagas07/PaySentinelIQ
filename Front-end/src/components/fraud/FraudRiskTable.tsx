@@ -206,7 +206,7 @@ export function FraudRiskTable() {
       <>
       <p className="text-xs text-psi-text-secondary mb-3">
         {t.rich("showingRecords", {
-          count: filteredRecords.length,
+          shown: filteredRecords.length,
           total: apiRecords.length,
           strong: (chunks) => <span className="font-semibold text-psi-text-primary">{chunks}</span>,
         })}

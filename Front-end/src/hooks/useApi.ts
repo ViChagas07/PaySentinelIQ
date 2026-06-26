@@ -557,6 +557,7 @@ export function useUpdateReminderPreferences() {
 export function useAnalyzeDocument() {
   return useMutation({
     mutationFn: (payload: {
+      document_id?: string;
       document_type: string;
       salario_bruto?: number;
       inss?: number;
@@ -570,8 +571,8 @@ export function useAnalyzeDocument() {
       cnae?: string;
       linha_digitavel?: string;
       qr_code_payload?: string;
-      nome_funcionario?: string;
-      periodo?: string;
+      valor_nominal?: number;
+      beneficiario?: string;
     }) => api.post<any>("/fraud-alerts/analyze", payload),
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,28 @@ import {
 } from "lucide-react";
 import { useAnalyzeDocument } from "@/hooks/useApi";
 import { mapPSIReportToAnalysisResult } from "@/lib/analysis-mapper";
+
+function getReadableError(error: unknown): string {
+  if (error instanceof Error) {
+    if (error.message.includes("422")) {
+      return "O documento enviado não pôde ser processado. Verifique se é um PDF válido de contracheque e tente novamente.";
+    }
+    if (error.message.includes("413")) {
+      return "O arquivo é muito grande. O tamanho máximo permitido é 10MB.";
+    }
+    if (error.message.includes("401") || error.message.includes("403")) {
+      return "Sua sessão expirou. Faça login novamente para continuar.";
+    }
+    if (error.message.includes("500") || error.message.includes("502")) {
+      return "Erro interno do servidor. Tente novamente em alguns minutos.";
+    }
+    if (error.message.includes("network") || error.message.includes("fetch")) {
+      return "Erro de conexão. Verifique sua internet e tente novamente.";
+    }
+    return error.message;
+  }
+  return "Ocorreu um erro inesperado. Tente novamente.";
+}
 
 export default function AnalyzePayrollPage() {
   const t = useTranslations("analysis");
@@ -37,10 +59,12 @@ export default function AnalyzePayrollPage() {
   const { start: startPipeline } = useSimulatePipeline();
 
   const analyzeMutation = useAnalyzeDocument();
+  const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = useCallback(async () => {
     if (files.length === 0 || isProcessing) return;
     clearResults();
+    setError(null);
     startPipeline();
 
     const doneFiles = files.filter((f) => f.status === "done");
@@ -49,6 +73,7 @@ export default function AnalyzePayrollPage() {
     for (const file of doneFiles) {
       try {
         const payload: any = {
+          document_id: file.id,
           document_type: "contracheque",
         };
 
@@ -57,16 +82,15 @@ export default function AnalyzePayrollPage() {
           const sal = parseFloat(extraInfo.expectedSalary);
           if (!isNaN(sal)) payload.salario_bruto = sal;
         }
-        if (extraInfo.employeeName) payload.nome_funcionario = extraInfo.employeeName;
         if (extraInfo.companyName) payload.razao_social = extraInfo.companyName;
         if (extraInfo.jobPosition) payload.cargo = extraInfo.jobPosition;
-        if (extraInfo.payrollPeriod) payload.periodo = extraInfo.payrollPeriod;
 
         const report = await analyzeMutation.mutateAsync(payload);
         const result = mapPSIReportToAnalysisResult(report, file.name, "payroll", locale);
         newResults.push(result);
       } catch (err) {
         console.error("Analysis failed for", file.name, err);
+        setError(getReadableError(err));
         // Fallback: show a basic error result
         newResults.push({
           id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -176,6 +200,49 @@ export default function AnalyzePayrollPage() {
         <GlowCard glowColor="psi-electric" glowIntensity="high">
           <AIProcessingPipeline />
         </GlowCard>
+      )}
+
+      {/* ═══════════ ERROR BLOCK ═══════════ */}
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-500/50 bg-red-950/30 p-4 backdrop-blur-sm">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-red-400">
+                {t("errorTitle") || "Falha na Análise"}
+              </p>
+              <p className="mt-1 text-sm text-red-300/80">
+                {error}
+              </p>
+              <p className="mt-2 text-xs text-red-400/60">
+                {t("errorHint") || "Verifique o documento e tente novamente. Se o problema persistir, entre em contato com o suporte."}
+              </p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="flex-shrink-0 text-red-400/60 hover:text-red-400 transition-colors"
+              aria-label="Fechar erro"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ═══════════ SECTION 5 — ANALYSIS RESULTS ═══════════ */}

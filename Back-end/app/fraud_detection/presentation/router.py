@@ -44,7 +44,7 @@ class FraudAlertResolveRequest(BaseModel):
 
 class DocumentAnalyzeRequest(BaseModel):
     model_config = ConfigDict(strict=True)
-    document_id: str
+    document_id: str = ""  # optional; auto-generated if not provided
     document_type: str | None = None  # boleto, contracheque, holerite
     # Optional fields for direct analysis without OCR
     salario_bruto: float | None = None
@@ -59,6 +59,8 @@ class DocumentAnalyzeRequest(BaseModel):
     cnae: str | None = None
     linha_digitavel: str | None = None
     qr_code_payload: str | None = None
+    valor_nominal: float | None = None
+    beneficiario: str | None = None
 
 
 async def _alerts_query(
@@ -181,6 +183,8 @@ async def analyze_document(
         "cnae",
         "linha_digitavel",
         "qr_code_payload",
+        "valor_nominal",
+        "beneficiario",
     ]:
         value = getattr(body, field, None)
         if value is not None:
