@@ -130,8 +130,10 @@ class Settings(BaseSettings):
 
     # ── Business ──
     MAX_UPLOAD_SIZE_MB: int = 50
-    RISK_SCORE_THRESHOLD_HIGH: int = 70
-    RISK_SCORE_THRESHOLD_CRITICAL: int = 85
+    # ── Fase 3B: Unified thresholds (single source of truth in ThresholdProvider) ──
+    RISK_SCORE_THRESHOLD_HIGH: int = 70    # >= 70 = HIGH (REJECT)
+    RISK_SCORE_THRESHOLD_MEDIUM: int = 40   # >= 40 = MEDIUM (MANUAL_REVIEW)
+    # < 40 = LOW (ACCEPT)
     DOCUMENT_RETENTION_DAYS: int = 2555  # 7 years for payroll records
 
     # ── LGPD / Privacy Compliance ──

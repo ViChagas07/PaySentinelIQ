@@ -39,10 +39,9 @@ class FraudCopilotConfig:
     max_retries: int = 2
     model_name: str = ""
 
-    # Risk thresholds
-    score_critical: float = 76.0
-    score_high: float = 51.0
-    score_medium: float = 26.0
+    # Risk thresholds (Fase 3B: unified 40/70)
+    score_high: float = 70.0    # >= 70 = HIGH (REJECT)
+    score_medium: float = 40.0   # >= 40 = MEDIUM (MANUAL_REVIEW)
 
 
 # ── Session memory for conversational follow-up ──

@@ -79,11 +79,10 @@ class AnalysisDashboardStats(BaseModel):
 
 
 def _map_risk_level(risk_score: float) -> str:
-    if risk_score >= 80:
-        return "CRITICAL"
-    if risk_score >= 60:
+    """Fase 3B: Unified thresholds (40/70)."""
+    if risk_score >= 70:
         return "HIGH"
-    if risk_score >= 30:
+    if risk_score >= 40:
         return "MEDIUM"
     return "LOW"
 

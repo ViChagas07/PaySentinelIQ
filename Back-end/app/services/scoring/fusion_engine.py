@@ -20,20 +20,19 @@ from typing import Any
 
 from app.core.contracts.evidence import Evidence, Severity, EvidenceSource
 from app.core.contracts.pipeline_result import EvidenceContribution
+from app.services.scoring.threshold_provider import ThresholdProvider, get_thresholds
 
 
 class FusionEngine:
     """Converts Evidence[] → risk score with full explainability.
 
-    Uses a 3-dimensional weighting model:
-        1. Severity weight (CRITICAL=35, HIGH=20, ...)
-        2. Source confidence multiplier (deterministic=1.5, crewai=1.0)
-        3. Evidence confidence (0.0-1.0 per evidence item)
+    SINGLE source of truth for risk scoring. All pipeline scoring
+    must go through this engine. No component may calculate its own score.
 
-    The algorithm ensures:
-        - Deterministic evidence carries more weight than AI evidence
-        - Multiple medium-severity evidences compound to HIGH risk
-        - Every point in the score is traceable to specific evidence
+    3-dimensional weighting model:
+        1. Severity weight (CRITICAL=35, HIGH=20, ...)
+        2. Source confidence multiplier (deterministic=1.5, crewai=0.9)
+        3. Evidence confidence (0.0-1.0 per evidence item)
     """
 
     # ── Severity weights ──
@@ -46,19 +45,17 @@ class FusionEngine:
     }
 
     # ── Source confidence multipliers ──
-    # Higher = more trustworthy. Deterministic math > external APIs > heuristics > AI agents.
     SOURCE_MULTIPLIERS: dict[EvidenceSource, float] = {
         EvidenceSource.DETERMINISTIC: 1.5,
         EvidenceSource.BRASILAPI: 1.3,
         EvidenceSource.OCR: 1.2,
         EvidenceSource.HEURISTIC: 1.0,
-        EvidenceSource.CREWAI: 0.9,       # AI agents get lower weight — LLMs can hallucinate
-        EvidenceSource.USER: 0.8,          # User reports are least reliable
+        EvidenceSource.CREWAI: 0.9,
+        EvidenceSource.USER: 0.8,
     }
 
-    # ── Classification thresholds ──
-    HIGH_THRESHOLD: float = 70.0
-    MEDIUM_THRESHOLD: float = 40.0
+    def __init__(self, thresholds: ThresholdProvider | None = None):
+        self._thresholds = thresholds or get_thresholds()
 
     def fuse(self, evidences: list[Evidence]) -> dict[str, Any]:
         """Convert a list of Evidence into a final risk score.
@@ -83,13 +80,8 @@ class FusionEngine:
 
         final_score = round(min(raw_score, 100.0), 1)
 
-        # ── Classify ──
-        if final_score >= self.HIGH_THRESHOLD:
-            level = "HIGH"
-        elif final_score >= self.MEDIUM_THRESHOLD:
-            level = "MEDIUM"
-        else:
-            level = "LOW"
+        # ── Classify (via ThresholdProvider — single source of truth) ──
+        level = self._thresholds.classify(final_score).value
 
         # ── Explainability ──
         source_breakdown = self._source_breakdown(contributions)

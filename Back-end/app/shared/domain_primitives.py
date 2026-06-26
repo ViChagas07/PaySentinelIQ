@@ -24,10 +24,10 @@ AuditLogId = NewType("AuditLogId", uuid.UUID)
 
 
 class RiskLevel(str, Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
+    LOW = "low"        # 0-39: No critical indicators
+    MEDIUM = "medium"  # 40-69: At least one concerning indicator
+    HIGH = "high"      # 70-100: Multiple indicators or one CRITICAL
+    # CRITICAL removed — now unified under HIGH (Fase 3B)
 
 
 class DocumentType(str, Enum):
@@ -141,8 +141,7 @@ class RiskScore:
 
     @property
     def level(self) -> RiskLevel:
-        if self.value >= 85:
-            return RiskLevel.CRITICAL
+        # Fase 3B: Unified thresholds (40/70)
         if self.value >= 70:
             return RiskLevel.HIGH
         if self.value >= 40:
