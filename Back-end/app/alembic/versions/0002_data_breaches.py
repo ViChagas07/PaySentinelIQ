@@ -8,6 +8,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "b2c3d4e5f6a7"
 down_revision: str | None = "a1b2c3d4e5f6"
@@ -21,7 +22,7 @@ def upgrade() -> None:
         # ── Primary key (inherited from Base) ─────────────
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -41,14 +42,14 @@ def upgrade() -> None:
         # ── Tenant / Reporter ────────────────────────────
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "reported_by",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("users.id"),
             nullable=False,
         ),
@@ -79,14 +80,14 @@ def upgrade() -> None:
         sa.Column("root_cause", sa.Text(), nullable=True),
         sa.Column(
             "containment_actions",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             nullable=True,
         ),
 
         # ── Impact ───────────────────────────────────────
         sa.Column(
             "affected_data_categories",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             nullable=False,
             server_default=sa.text("'[]'::jsonb"),
             comment="e.g. ['name','email','cpf','address','financial']",

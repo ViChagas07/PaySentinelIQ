@@ -8,6 +8,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "a1b2c3d4e5f6"
 down_revision: str | None = None
@@ -21,7 +22,7 @@ def upgrade() -> None:
         "tenants",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -42,7 +43,7 @@ def upgrade() -> None:
         sa.Column("plan", sa.String(50), server_default=sa.text("'starter'")),
         sa.Column(
             "features",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text("'{}'::jsonb"),
         ),
         sa.Column("is_active", sa.Boolean(), server_default=sa.text("true")),
@@ -53,7 +54,7 @@ def upgrade() -> None:
         "users",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -71,7 +72,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
@@ -104,7 +105,7 @@ def upgrade() -> None:
         "refresh_tokens",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -122,7 +123,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "user_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
             index=True,
@@ -141,7 +142,7 @@ def upgrade() -> None:
         "employees",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -159,7 +160,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
@@ -196,7 +197,7 @@ def upgrade() -> None:
         "payrolls",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -215,14 +216,14 @@ def upgrade() -> None:
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "employee_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("employees.id"),
             nullable=False,
             index=True,
@@ -240,7 +241,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "deductions",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text("'{}'::jsonb"),
         ),
         sa.Column(
@@ -276,7 +277,7 @@ def upgrade() -> None:
         "documents",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -295,14 +296,14 @@ def upgrade() -> None:
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "uploaded_by",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("users.id"),
             nullable=False,
         ),
@@ -324,7 +325,7 @@ def upgrade() -> None:
         sa.Column("ocr_confidence", sa.Float(), nullable=True),
         sa.Column(
             "extracted_fields",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             nullable=True,
         ),
     )
@@ -334,7 +335,7 @@ def upgrade() -> None:
         "verification_reports",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -352,14 +353,14 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "document_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("documents.id"),
             nullable=False,
             index=True,
@@ -375,17 +376,17 @@ def upgrade() -> None:
         ),
         sa.Column(
             "extracted_fields",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text("'{}'::jsonb"),
         ),
         sa.Column(
             "metadata_analysis",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text("'{}'::jsonb"),
         ),
         sa.Column(
             "fraud_indicators",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text("'[]'::jsonb"),
         ),
         sa.Column("ocr_confidence", sa.Float(), nullable=True),
@@ -404,7 +405,7 @@ def upgrade() -> None:
         "fraud_alerts",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -422,21 +423,21 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "document_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("documents.id"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "verification_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("verification_reports.id"),
             nullable=True,
         ),
@@ -452,7 +453,7 @@ def upgrade() -> None:
         sa.Column("ai_explanation", sa.Text(), nullable=True),
         sa.Column(
             "flagged_fields",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text("'[]'::jsonb"),
         ),
         sa.Column(
@@ -463,7 +464,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "assigned_to",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("users.id"),
             nullable=True,
             index=True,
@@ -495,7 +496,7 @@ def upgrade() -> None:
         "compliance_reports",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -513,7 +514,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
@@ -544,7 +545,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "adverse_media",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text("'[]'::jsonb"),
         ),
         sa.Column(
@@ -561,7 +562,7 @@ def upgrade() -> None:
         "audit_logs",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -579,14 +580,14 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "user_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("users.id"),
             nullable=True,
         ),
@@ -600,7 +601,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "details",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text("'{}'::jsonb"),
         ),
         sa.Column("ip_address", sa.String(50), nullable=True),
@@ -612,7 +613,7 @@ def upgrade() -> None:
         "notifications",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -630,14 +631,14 @@ def upgrade() -> None:
         ),
         sa.Column(
             "user_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
@@ -657,7 +658,7 @@ def upgrade() -> None:
         sa.Column("action_url", sa.String(500), nullable=True),
         sa.Column(
             "metadata",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             nullable=True,
         ),
         sa.CheckConstraint(
@@ -676,7 +677,7 @@ def upgrade() -> None:
         "risk_scores",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -694,7 +695,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
@@ -702,7 +703,7 @@ def upgrade() -> None:
         sa.Column("entity_type", sa.String(20), nullable=False),
         sa.Column(
             "entity_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             nullable=False,
             index=True,
         ),
@@ -721,7 +722,7 @@ def upgrade() -> None:
             sa.Float(),
             server_default=sa.text("0.0"),
         ),
-        sa.Column("explanation", sa.dialects.postgresql.JSONB(), nullable=True),
+        sa.Column("explanation", postgresql.JSONB(), nullable=True),
         sa.CheckConstraint(
             "risk_score >= 0 AND risk_score <= 100",
             name="chk_risk_score",
@@ -737,7 +738,7 @@ def upgrade() -> None:
         "user_settings",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -755,7 +756,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "user_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             unique=True,
             nullable=False,
@@ -880,7 +881,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "reminder_preferences",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text(
                 """'{"every_2_days": false, "weekly": false, "monthly": false, "on_due_date": true}'::jsonb"""
             ),
@@ -906,7 +907,7 @@ def upgrade() -> None:
         "consent_records",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -924,14 +925,14 @@ def upgrade() -> None:
         ),
         sa.Column(
             "user_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
@@ -976,7 +977,7 @@ def upgrade() -> None:
         "payment_schedules",
         sa.Column(
             "id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
@@ -993,21 +994,21 @@ def upgrade() -> None:
         ),
         sa.Column(
             "user_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "tenant_id",
-            sa.dialects.postgresql.UUID(),
+            postgresql.UUID(),
             sa.ForeignKey("tenants.id"),
             nullable=False,
             index=True,
         ),
         sa.Column(
             "boleto_data",
-            sa.dialects.postgresql.JSONB(),
+            postgresql.JSONB(),
             server_default=sa.text("'{}'::jsonb"),
         ),
         sa.Column(
