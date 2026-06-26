@@ -117,10 +117,20 @@ class Settings(BaseSettings):
     ENABLE_COMPLIANCE_CHECKS: bool = True
 
     # ── Fase 3A Feature Flags ──
-    USE_CANONICAL_PIPELINE: bool = False        # Use CanonicalPipeline as entry point
-    ENABLE_SHADOW_PIPELINE: bool = False         # Run legacy + canonical side-by-side
-    ENABLE_PIPELINE_EVENTS: bool = True          # Publish pipeline lifecycle events
-    ENABLE_EXPLAINABILITY_PREVIEW: bool = False  # Include explainability in response (preview)
+    USE_CANONICAL_PIPELINE: bool = False
+    ENABLE_SHADOW_PIPELINE: bool = False
+    ENABLE_PIPELINE_EVENTS: bool = True
+    ENABLE_EXPLAINABILITY_PREVIEW: bool = False
+
+    # ── Fase 4 Feature Flags ──
+    ENABLE_STRUCTURED_LOGGING: bool = True       # JSON-formatted logs
+    ENABLE_PROMETHEUS: bool = False              # Prometheus metrics endpoint
+    ENABLE_TRACING: bool = False                 # OpenTelemetry distributed tracing
+    ENABLE_HEALTHCHECK: bool = True              # /health, /ready, /live endpoints
+    ENABLE_RATE_LIMIT: bool = False              # Per-IP/user rate limiting
+    ENABLE_SECURITY_VALIDATION: bool = True      # Magic bytes + MIME + size validation
+    ENABLE_GOLDEN_DATASET: bool = False          # Golden dataset test runner
+    ENABLE_BENCHMARK: bool = False               # Performance benchmark mode
 
     # ── OCR ──
     OCR_PROVIDER: str = "tesseract"  # "tesseract" (today) or "textract" (future)

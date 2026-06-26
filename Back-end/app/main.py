@@ -303,6 +303,7 @@ def create_app() -> FastAPI:
 def _register_routers(app: FastAPI) -> None:
     """Register all module routers. Each import is wrapped so one failure doesn't crash startup."""
 
+    _safe_include(app, "app.observability.health", "", "Health")  # Fase 4
     _safe_include(app, "app.auth.presentation.router", "/api/auth", "Auth")
     _safe_include(app, "app.payroll.presentation.router", "/api/payrolls", "Payroll")
     _safe_include(app, "app.employees.presentation.router", "/api/employees", "Employees")
