@@ -175,6 +175,9 @@ export default function AuthPage() {
             if (data.user && effectiveToken) {
               loginStore(data.user, effectiveToken, effectiveRefreshToken);
               console.log('[PSI Auth DEBUG] loginStore chamado com token prefix:', effectiveToken.substring(0, 20) + '...');
+
+              // Aguarda persistência no localStorage antes do redirect
+              await new Promise(resolve => setTimeout(resolve, 100));
             } else {
               console.warn('[PSI Auth DEBUG] loginStore NÃO chamado — faltando user ou token', { user: !!data.user, token: !!effectiveToken });
             }
