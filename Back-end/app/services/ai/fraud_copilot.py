@@ -126,6 +126,7 @@ class FraudCopilot:
 
         # Step 2: Deterministic risk analysis
         risk_assessment = self._risk_analyzer.analyze(ctx.to_dict())
+        det_score = risk_assessment.risk_score
 
         # Merge risk results into context
         ctx.risk_score = risk_assessment.risk_score
@@ -145,6 +146,20 @@ class FraudCopilot:
         if self.llm_available and pipeline_report:
             try:
                 report = await self._enhance_with_llm(ctx, report, risk_assessment)
+                # ── ANTI-DOWNGRADE GUARD ──
+                # LLM can NEVER lower the deterministic score
+                if report.risk_score < det_score:
+                    logger.warning(
+                        "LLM attempted to downgrade score from %.0f to %.0f — REVERTED",
+                        det_score, report.risk_score,
+                    )
+                    report.risk_score = det_score
+                    if det_score >= 70:
+                        report.risk_level = "HIGH"
+                    elif det_score >= 40:
+                        report.risk_level = "MEDIUM"
+                    else:
+                        report.risk_level = "LOW"
             except Exception as e:
                 logger.warning(f"LLM enhancement failed, using deterministic results: {e}")
 

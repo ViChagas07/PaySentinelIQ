@@ -122,20 +122,30 @@ class ReportGenerator:
     ) -> InvestigationReport:
         """Enhance a deterministic report with LLM-generated insights.
 
-        Parses the LLM's structured JSON response and merges it with
-        the deterministic findings. LLM findings are ADDITIVE — they
-        never replace deterministic flags, only supplement with deeper analysis.
+        CRITICAL: LLM findings are ADDITIVE — they never replace
+        deterministic flags. The risk_score can only go UP (max rule).
+        The risk_level is DERIVED from the score, not the other way around.
         """
         try:
             llm_data = json.loads(llm_json_response)
         except (json.JSONDecodeError, TypeError):
             return base_report
 
-        # Update risk assessment from LLM (only if it provides higher confidence)
-        if llm_data.get("risk_level"):
-            base_report.risk_level = llm_data["risk_level"]
+        # ── Risk Score: can only INCREASE (deterministic is the FLOOR) ──
         if llm_data.get("risk_score") is not None:
-            base_report.risk_score = max(base_report.risk_score, llm_data["risk_score"])
+            llm_score = float(llm_data["risk_score"])
+            # NEVER allow LLM to lower the score
+            base_report.risk_score = max(base_report.risk_score, llm_score)
+
+        # ── Risk Level: DERIVED from score, NEVER from LLM opinion ──
+        # Recalculate level based on the (possibly increased) score
+        if base_report.risk_score >= 70:
+            base_report.risk_level = "HIGH"
+        elif base_report.risk_score >= 40:
+            base_report.risk_level = "MEDIUM"
+        else:
+            base_report.risk_level = "LOW"
+
         if llm_data.get("confidence") is not None:
             base_report.confidence = llm_data["confidence"]
         if llm_data.get("summary"):

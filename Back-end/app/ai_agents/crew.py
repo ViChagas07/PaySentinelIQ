@@ -358,18 +358,44 @@ class AIAgentCrew:
         1. Deterministic 7-stage pipeline (always runs — no LLM needed)
         2. CrewAI LLM enhancement layer (only if LLM provider is healthy and available)
 
-        Both modes produce the same structured output format.
+        CRITICAL: The deterministic score is the FLOOR. CrewAI can only INCREASE it.
+        The final risk_score returned is max(deterministic, crewai).
         """
         # ── Mode 1: Deterministic Pipeline (always runs, with or without LLM) ──
         pipeline_result = self._run_deterministic_pipeline(document_data)
+        det_score = pipeline_result.get("summary", {}).get("risk_score", 0)
 
         # ── Mode 2: CrewAI LLM Enhancement (only if LLM provider is available and healthy) ──
         if self._llm_available and self._llm is not None:
             try:
                 llm_insights = self._run_crewai_analysis(document_data, pipeline_result)
-                # Merge LLM insights into pipeline result
+                crew_score = llm_insights.get("final_score", det_score)
+
+                # Merge LLM insights — NEVER let it lower the score
                 pipeline_result["llm_insights"] = llm_insights
-                logger.info("CrewAI LLM analysis completed and merged")
+
+                # Update the risk score to the MAX of both
+                final_score = max(det_score, crew_score)
+                pipeline_result["summary"]["risk_score"] = final_score
+                if final_score >= 70:
+                    pipeline_result["summary"]["risk_classification"] = "high"
+                    pipeline_result["summary"]["recommended_action"] = "REJECT"
+                elif final_score >= 40:
+                    pipeline_result["summary"]["risk_classification"] = "medium"
+                    pipeline_result["summary"]["recommended_action"] = "MANUAL_REVIEW"
+
+                # Also update the report risk assessment
+                report = pipeline_result.get("report", {})
+                risk_assessment = report.get("RISK_ASSESSMENT", {})
+                if risk_assessment:
+                    risk_assessment["fraud_risk_score"] = final_score
+                    risk_assessment["risk_classification"] = pipeline_result["summary"]["risk_classification"].upper()
+
+                logger.info(
+                    "CrewAI analysis: det_score=%.0f crew_score=%.0f final=%.0f class=%s",
+                    det_score, crew_score, final_score,
+                    pipeline_result["summary"]["risk_classification"],
+                )
             except Exception as e:
                 logger.warning("CrewAI LLM analysis failed, using deterministic results: %s", e)
 
@@ -422,7 +448,12 @@ class AIAgentCrew:
     def _run_crewai_analysis(
         self, document_data: dict[str, Any], pipeline_result: dict[str, Any]
     ) -> dict[str, Any]:
-        """Run CrewAI LLM-powered analysis as enhancement layer on top of deterministic pipeline."""
+        """Run CrewAI LLM-powered analysis as enhancement layer on top of deterministic pipeline.
+
+        CRITICAL RULE: The deterministic pipeline score is the FLOOR.
+        CrewAI agents can ONLY increase the risk score, NEVER decrease it.
+        Agents that attempt to downplay fraud indicators will be overridden.
+        """
         fraud_agent = self.create_fraud_agent()
         verification_agent = self.create_verification_agent()
         compliance_agent = self.create_compliance_agent()
@@ -431,20 +462,54 @@ class AIAgentCrew:
         # Pass the deterministic pipeline findings as context for LLM analysis
         summary = pipeline_result.get("summary", {})
         report = pipeline_result.get("report", {})
+        det_score = summary.get("risk_score", 0)
+        det_class = summary.get("risk_classification", "UNKNOWN")
+        det_anomalies = summary.get("anomaly_count", 0)
+        det_critical = summary.get("critical_anomalies", 0)
+        det_high = summary.get("high_anomalies", 0)
+
+        # Build anomaly details for context
+        anomaly_list = report.get("ANOMALY_LIST", [])
+        anomaly_text = "\n".join(
+            f"- [{a.get('severity', '?').upper()}] {a.get('description', 'N/A')}"
+            for a in anomaly_list[:15]
+        ) if anomaly_list else "Nenhuma anomalia detectada."
+
+        # ── IRON RULE injected into EVERY task ──
+        IRON_RULE = (
+            f"\n\n⚠️ IRON RULE — READ BEFORE RESPONDING:\n"
+            f"The deterministic pipeline ALREADY analyzed this document and assigned:\n"
+            f"  • Risk Score: {det_score}/100\n"
+            f"  • Classification: {det_class}\n"
+            f"  • Anomalies: {det_anomalies} total ({det_critical} critical, {det_high} high)\n\n"
+            f"YOU ARE THE ENHANCEMENT LAYER. Your job is to ADD insights and INCREASE "
+            f"the score if you find MORE evidence of fraud. YOU CANNOT DOWNGRADE the "
+            f"deterministic score. The deterministic score is the MINIMUM. "
+            f"If the deterministic score is >= 70, the document IS high risk — "
+            f"your job is to explain WHY, not question it.\n\n"
+            f"FRAUD DETECTION BIAS: A false negative (missing fraud) causes REAL "
+            f"financial loss. A false positive (flagging a legitimate doc) is an "
+            f"inconvenience. DEFAULT TO SKEPTICAL. When in doubt, CLASSIFY AS HIGH RISK.\n"
+        )
 
         fraud_task = Task(
             description=(
                 f"Review and enhance the fraud analysis for this document. "
-                f"Deterministic pipeline found {summary.get('anomaly_count', 0)} anomalies "
-                f"with risk score {summary.get('risk_score', 0)}/100. "
-                f"Document data: {document_data}. "
-                f"Pipeline findings: {report.get('ANOMALY_LIST', [])}. "
-                f"Provide additional investigative insights and fraud pattern analysis."
+                f"Deterministic pipeline found {det_anomalies} anomalies "
+                f"with risk score {det_score}/100 ({det_class}).\n\n"
+                f"Document data: {document_data}\n\n"
+                f"Pipeline findings:\n{anomaly_text}\n"
+                f"Provide additional investigative insights and fraud pattern analysis. "
+                f"Identify any fraud indicators the pipeline may have missed."
+                f"{IRON_RULE}"
             ),
             expected_output=(
-                "Enhanced fraud analysis with investigative insights, "
-                "fraud pattern identification, and recommended "
-                "investigation steps in Portuguese."
+                "JSON with enhanced fraud analysis:\n"
+                '{"additional_indicators": [...], "fraud_patterns": [...], '
+                '"investigative_insights": "...", "enhanced_score": <number>, '
+                '"confidence": <0-1>}\n\n'
+                "enhanced_score MUST be >= deterministic score ({det_score}). "
+                "Use Portuguese for insights."
             ),
             agent=fraud_agent,
         )
@@ -454,9 +519,13 @@ class AIAgentCrew:
                 f"Review forensic findings and suggest additional document verification steps. "
                 f"Forensic data: {report.get('FORENSIC_FINDINGS', {})}. "
                 f"Metadata: {report.get('DOCUMENT_METADATA', {})}."
+                f"{IRON_RULE}"
             ),
             expected_output=(
-                "Document verification enhancement with specific forensic recommendations."
+                "JSON with forensic enhancement:\n"
+                '{"forensic_flags": [...], "tampering_evidence": "...", '
+                '"verification_steps": [...], "authenticity_confidence": <0-1>}\n\n'
+                "Flag ALL forensic anomalies as HIGH severity."
             ),
             agent=verification_agent,
         )
@@ -465,24 +534,47 @@ class AIAgentCrew:
             description=(
                 f"Review entity validation and flag additional compliance risks. "
                 f"Entity data: {report.get('ENTITY_VALIDATION', {})}. "
+                f"Structural data: {report.get('STRUCTURAL_VALIDATION', {})}. "
                 f"Suggest additional regulatory checks and compliance verification steps."
+                f"{IRON_RULE}"
             ),
             expected_output=(
-                "Compliance enhancement with regulatory risk flags and verification steps."
+                "JSON with compliance enhancement:\n"
+                '{"compliance_flags": [...], "regulatory_risks": [...], '
+                '"verification_steps": [...], "compliance_score": <number>}\n\n'
+                "Invalid CNPJ, invalid bank code → CRITICAL. No exceptions."
             ),
             agent=compliance_agent,
         )
 
         risk_task = Task(
             description=(
-                f"Synthesize all findings: deterministic score {summary.get('risk_score', 0)}/100, "
-                f"classification {summary.get('risk_classification', 'LOW')}. "
-                f"Provide risk interpretation, confidence assessment, and final recommendations "
-                f"in Portuguese for human analysts."
+                f"SYNTHESIZE all findings into the FINAL risk assessment.\n\n"
+                f"DETERMINISTIC BASELINE (CANNOT BE LOWERED):\n"
+                f"  Score: {det_score}/100 | Class: {det_class}\n"
+                f"  Anomalies: {det_anomalies} ({det_critical} critical, {det_high} high)\n\n"
+                f"YOUR TASK: Review findings from fraud, verification, and compliance "
+                f"agents. Produce the FINAL risk score and classification. "
+                f"The final score MUST be >= {det_score} (the deterministic baseline). "
+                f"Your job is to identify if the score should be HIGHER based on "
+                f"additional evidence from the other agents.\n\n"
+                f"RISK THRESHOLDS: LOW < 40, MEDIUM 40-69, HIGH >= 70.\n"
+                f"If {det_score} >= 70 → classification is HIGH. Period.\n"
+                f"If {det_score} >= 40 → at minimum MEDIUM.\n"
+                f"{IRON_RULE}"
             ),
             expected_output=(
-                "Final risk synthesis in Portuguese with plain-language explanation, "
-                "confidence assessment, and prioritized action items."
+                "JSON with FINAL risk synthesis:\n"
+                '{\n'
+                f'  "final_score": <number — MUST be >= {det_score}>,\n'
+                '  "final_classification": "LOW|MEDIUM|HIGH",\n'
+                '  "confidence": <0-1>,\n'
+                '  "explanation": "<Portuguese explanation of why this score>",\n'
+                '  "key_evidence": ["<top 3 pieces of evidence>"],\n'
+                '  "recommendation": "<REJECT|MANUAL_REVIEW|ACCEPT>",\n'
+                '  "escalation_required": <true|false>\n'
+                '}\n\n'
+                "CRITICAL: final_score >= {det_score}. NO EXCEPTIONS."
             ),
             agent=risk_agent,
             context=[fraud_task, verification_task, compliance_task],
@@ -496,7 +588,46 @@ class AIAgentCrew:
         )
 
         result = crew.kickoff()
-        return {"crewai_output": str(result), "agents_used": 4}
+        crew_output = str(result)
+
+        # ── Extract score from CrewAI output, enforce floor ──
+        crew_score = self._extract_score_from_crew_output(crew_output, det_score)
+
+        return {
+            "crewai_output": crew_output,
+            "agents_used": 4,
+            "crew_score": crew_score,
+            "deterministic_score": det_score,
+            "final_score": max(det_score, crew_score),
+        }
+
+    def _extract_score_from_crew_output(self, output: str, floor: float) -> float:
+        """Parse CrewAI output to extract risk score, enforcing the deterministic floor."""
+        import json
+        import re as re_score
+
+        # Try to find JSON with final_score
+        json_match = re_score.search(r'\{[^{}]*"final_score"\s*:\s*(\d+)[^{}]*\}', output)
+        if json_match:
+            try:
+                score = float(json_match.group(1))
+                return max(floor, score)
+            except (ValueError, IndexError):
+                pass
+
+        # Try any score field
+        for pattern in [r'"score"\s*:\s*(\d+)', r'"risk_score"\s*:\s*(\d+)',
+                        r'"enhanced_score"\s*:\s*(\d+)', r'Score:\s*(\d+)']:
+            match = re_score.search(pattern, output)
+            if match:
+                try:
+                    return max(floor, float(match.group(1)))
+                except ValueError:
+                    pass
+
+        # Fallback: return floor (crew output didn't provide a score)
+        logger.warning("Could not extract score from CrewAI output, using floor: %.0f", floor)
+        return floor
 
     def _mock_pipeline_result(self, document_data: dict[str, Any]) -> dict[str, Any]:
         """Fallback when both deterministic pipeline and LLM are unavailable."""
