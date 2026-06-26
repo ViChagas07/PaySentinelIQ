@@ -211,12 +211,12 @@ export function AIProcessingPipeline({ onComplete }: { onComplete?: () => void }
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-3 rounded-xl border border-psi-emerald/30 bg-psi-emerald/5 px-4 py-3"
+            className="flex items-center gap-2 rounded-lg border border-psi-emerald/30 bg-psi-emerald/5 px-3 py-2"
           >
-            <Sparkles className="h-5 w-5 text-psi-emerald" />
+            <Sparkles className="h-4 w-4 text-psi-emerald" />
             <div>
-              <p className="text-sm font-semibold text-psi-emerald">{t("pipeline.complete")}</p>
-              <p className="text-xs text-psi-text-secondary">
+              <p className="text-xs font-semibold text-psi-emerald">{t("pipeline.complete")}</p>
+              <p className="text-[11px] text-psi-text-secondary">
                 {t("pipeline.allStagesPassed", { count: STAGES.length })}
               </p>
             </div>
