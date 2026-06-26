@@ -25,23 +25,23 @@ from app.services.pipeline.stages.extract_stage import ExtractStage
 from app.services.pipeline.stages.validate_stage import ValidateStage
 from app.services.pipeline.stages.enrich_stage import EnrichStage
 from app.services.pipeline.stages.risk_stage import RiskStage
+from app.services.pipeline.stages.crewai_stage import CrewAIStage
 
 logger = logging.getLogger(__name__)
 
 
 class CanonicalPipeline:
-    """Thin orchestrator for the 5-stage deterministic pipeline.
+    """Thin orchestrator for the 6-stage pipeline.
 
-    ZERO business logic. Only sequences stages and builds the
-    final PipelineResult from PipelineContext.
+    Stages:
+        1. Ingest — validate file, setup identity
+        2. Extract — OCR, structured fields, metadata
+        3. Validate — FEBRABAN, CNPJ, dates, values (deterministic)
+        4. Enrich — BrasilAPI external data
+        5. Risk — RiskAnalyzer + FusionEngine scoring
+        6. CrewAI — 5 AI agents (A-E), parallel A,B,C (if LLM available)
 
-    Usage:
-        pipeline = CanonicalPipeline()
-        context = PipelineContext(file_bytes=pdf_bytes, document_type="boleto")
-        result = pipeline.execute(context)
-
-    Future (Fase 2): Add Stage 6 (CrewAI) and Stage 7 (FusionEngine
-    with explainability). These will be injected via constructor.
+    ZERO business logic. Dependency injection for all stages.
     """
 
     def __init__(
@@ -51,6 +51,7 @@ class CanonicalPipeline:
         validate: ValidateStage | None = None,
         enrich: EnrichStage | None = None,
         risk: RiskStage | None = None,
+        crewai: CrewAIStage | None = None,
     ):
         self._stages: list[Any] = [
             ingest or IngestStage(),
@@ -58,6 +59,7 @@ class CanonicalPipeline:
             validate or ValidateStage(),
             enrich or EnrichStage(),
             risk or RiskStage(),
+            crewai or CrewAIStage(),
         ]
 
     def execute(self, context: PipelineContext) -> PipelineResult:

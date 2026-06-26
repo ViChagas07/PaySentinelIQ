@@ -9,6 +9,7 @@ from app.services.pipeline.stages.extract_stage import ExtractStage
 from app.services.pipeline.stages.validate_stage import ValidateStage
 from app.services.pipeline.stages.enrich_stage import EnrichStage
 from app.services.pipeline.stages.risk_stage import RiskStage
+from app.services.pipeline.stages.crewai_stage import CrewAIStage
 
 __all__ = [
     "BaseStage",
@@ -17,4 +18,5 @@ __all__ = [
     "ValidateStage",
     "EnrichStage",
     "RiskStage",
+    "CrewAIStage",
 ]
