@@ -354,6 +354,7 @@ async def _run_canonical_from_analyze(
     tenant_id: str,
 ) -> dict[str, Any]:
     """Run CanonicalPipeline for the /analyze endpoint."""
+    import re as _re
     import time
     from app.core.contracts.pipeline_context import PipelineContext
     from app.services.pipeline.canonical_pipeline import CanonicalPipeline
@@ -366,12 +367,44 @@ async def _run_canonical_from_analyze(
         document_type=body.document_type or "unknown",
         extracted_text=raw_text,
     )
+
     # Populate extracted fields from request body
     for field in ["cnpj", "razao_social", "cnae", "linha_digitavel",
                    "valor_nominal", "beneficiario"]:
         value = getattr(body, field, None)
         if value is not None:
             ctx.extracted_fields[field] = value
+
+    # ── Smart CNPJ extraction: if cnpj is not directly provided,
+    #     try to extract from razao_social (frontend may map CNPJ there) ──
+    if not ctx.extracted_fields.get("cnpj"):
+        razao = ctx.extracted_fields.get("razao_social", "")
+        cnpj_match = _re.search(r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{14}", razao)
+        if cnpj_match:
+            ctx.extracted_fields["cnpj"] = cnpj_match.group()
+    # Also check raw_text for CNPJ patterns
+    if not ctx.extracted_fields.get("cnpj") and raw_text:
+        cnpj_match = _re.search(r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{14}", raw_text)
+        if cnpj_match:
+            ctx.extracted_fields["cnpj"] = cnpj_match.group()
+
+    # ── Smart linha_digitavel extraction ──
+    if not ctx.extracted_fields.get("linha_digitavel") and raw_text:
+        linha_match = _re.search(
+            r"(\d{5}\.\d{5}\s\d{6}\.\d{6}\s\d{6}\.\d{6}\s\d\s\d{14})", raw_text
+        )
+        if linha_match:
+            ctx.extracted_fields["linha_digitavel"] = linha_match.group()
+
+    # ── Smart value extraction ──
+    if not ctx.extracted_fields.get("valor_nominal") and raw_text:
+        amt_match = _re.search(r"(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})", raw_text)
+        if amt_match:
+            try:
+                clean = amt_match.group(1).replace(".", "").replace(",", ".")
+                ctx.extracted_fields["valor_nominal"] = float(clean)
+            except ValueError:
+                pass
 
     t0 = time.monotonic()
     pipeline = CanonicalPipeline()
