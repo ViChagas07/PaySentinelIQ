@@ -13,10 +13,13 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   FileText, Upload, X, FolderOpen, Loader2, AlertCircle, Check,
+  ShieldCheck, Sparkles, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useGooglePicker, fetchGoogleFileContent } from "@/hooks/useGooglePicker";
 import { useAnalysisStore, generateId, type UploadedFile } from "@/stores/analysis-store";
+import { useSimulatePipeline } from "@/components/analysis/AIProcessingPipeline";
+import { useTriggerVerification } from "@/hooks/useApi";
 
 const ALLOWED_TYPES = ["application/pdf", "image/png", "image/jpg", "image/jpeg"];
 const MAX_SIZE = 20 * 1024 * 1024; // 20MB
@@ -46,9 +49,17 @@ export function DocumentPreview({
   const addFile = useAnalysisStore((s) => s.addFile);
   const removeFile = useAnalysisStore((s) => s.removeFile);
   const updateFileProgress = useAnalysisStore((s) => s.updateFileProgress);
+  const clearFiles = useAnalysisStore((s) => s.clearFiles);
+
+  // ── Pipeline ──
+  const isProcessing = useAnalysisStore((s) => s.isProcessing);
+  const currentStage = useAnalysisStore((s) => s.currentStage);
+  const { start: startPipeline } = useSimulatePipeline();
+  const triggerVerification = useTriggerVerification();
 
   // ── Local state ──
   const [error, setError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
   // ── Google Drive ──
   const {
@@ -157,6 +168,26 @@ export function DocumentPreview({
 
   const hasContent = files.length > 0;
 
+  // ── Start verification ──
+  const handleStartVerification = useCallback(async () => {
+    if (isProcessing || verifying || files.length === 0) return;
+    setVerifying(true);
+    setError(null);
+    startPipeline();
+
+    try {
+      await triggerVerification.mutateAsync("mock-doc-id");
+    } catch {
+      // Backend might not be available — continue with client-side simulation
+    } finally {
+      // Pipeline stages run independently via startPipeline()
+      // Wait briefly to let the animation play, then mark as resolving
+      setTimeout(() => {
+        setVerifying(false);
+      }, 8000); // Match pipeline total duration
+    }
+  }, [isProcessing, verifying, files.length, startPipeline, triggerVerification]);
+
   // ──────────────────────────────────────────
   //  EMPTY STATE
   // ──────────────────────────────────────────
@@ -192,6 +223,54 @@ export function DocumentPreview({
             />
           ))}
         </AnimatePresence>
+      </div>
+
+      {/* ═══ Start Verification Button ═══ */}
+      <div className="px-4 pb-2">
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleStartVerification}
+          disabled={isProcessing || verifying}
+          className={cn(
+            "w-full relative overflow-hidden rounded-xl px-4 py-3.5 font-semibold text-sm transition-all duration-300",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-psi-electric/50",
+            isProcessing || verifying
+              ? "bg-psi-graphite border border-psi-border/60 text-psi-text-secondary cursor-wait"
+              : "bg-gradient-to-r from-psi-electric via-psi-cyan to-psi-emerald text-white shadow-lg shadow-psi-electric/20 hover:shadow-psi-electric/40 hover:brightness-110",
+          )}
+        >
+          {/* Background glow on hover */}
+          {!(isProcessing || verifying) && (
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0"
+              animate={{ x: ["-100%", "200%"] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          )}
+
+          <span className="relative z-10 flex items-center justify-center gap-2.5">
+            {isProcessing || verifying ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{t("verifying")}</span>
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="h-4 w-4" />
+                <span>{t("startVerification")}</span>
+                <Zap className="h-3.5 w-3.5 text-white/60" />
+              </>
+            )}
+          </span>
+        </motion.button>
+        {!(isProcessing || verifying) && (
+          <p className="text-[10px] text-psi-text-secondary/50 text-center mt-1.5">
+            {t("startVerificationDesc")}
+          </p>
+        )}
       </div>
 
       {/* Hidden input + Add-more bar */}

@@ -661,7 +661,12 @@
     "severityLow": "Low",
     "severityMedium": "Medium",
     "severityHigh": "High",
-    "severityCritical": "Critical"
+    "severityCritical": "Critical",
+    "startVerification": "Start Verification",
+    "startVerificationDesc": "AI agents will analyze the document for fraud and inconsistencies",
+    "verifying": "Verifying...",
+    "verificationComplete": "Verification complete",
+    "verificationFailed": "Verification failed"
   },
   "payroll": {
     "pageTitle": "AI Payment Intelligence Center",

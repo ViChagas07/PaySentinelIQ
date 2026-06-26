@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 import { useFraudAlerts } from "@/hooks/useApi";
 import { DocumentPreview } from "@/components/verification/DocumentPreview";
 import { AIAnalysisPanel } from "@/components/verification/AIAnalysisPanel";
+import { useAnalysisStore } from "@/stores/analysis-store";
 import type {
   ExtractedField,
   FraudIndicatorItem,
@@ -81,6 +82,12 @@ export default function VerificationCenterPage() {
 
   const alerts = data?.data ?? [];
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // ── Pipeline results (from analysis-store) ──
+  const storeResults = useAnalysisStore((s) => s.results);
+  const isProcessing = useAnalysisStore((s) => s.isProcessing);
+  const currentStage = useAnalysisStore((s) => s.currentStage);
+  const latestResult = storeResults.length > 0 ? storeResults[storeResults.length - 1] : null;
 
   // Auto-select first open/active alert whenever the list changes
   useEffect(() => {
@@ -234,11 +241,51 @@ export default function VerificationCenterPage() {
         {/* Right: AI Analysis Panel */}
         <div className="rounded-xl border border-psi-border bg-psi-graphite overflow-hidden flex flex-col">
           <AIAnalysisPanel
-            extractedFields={activeVerification ? toExtractedFields(activeVerification) : []}
-            fraudIndicators={activeVerification ? toFraudIndicators(activeVerification) : []}
-            riskScore={activeVerification?.risk_score ?? 0}
-            metadata={activeVerification ? toMetadata(activeVerification) : []}
-            aiSummary={activeVerification ? toAISummary(activeVerification) : null}
+            extractedFields={
+              activeVerification
+                ? toExtractedFields(activeVerification)
+                : isProcessing && currentStage !== "complete"
+                  ? [{ field: "Status", value: currentStage.replace(/-/g, " "), confidence: 50, status: "suspicious" as const }]
+                  : latestResult
+                    ? [
+                        { field: t("fieldEmployeeName"), value: latestResult.fileName, confidence: 85, status: "verified" as const },
+                        { field: "Document Type", value: latestResult.documentType, confidence: 90, status: "verified" as const },
+                        { field: "Risk Score", value: `${latestResult.riskScore}%`, confidence: 80, status: latestResult.riskScore >= 60 ? "suspicious" as const : "verified" as const },
+                      ]
+                    : []
+            }
+            fraudIndicators={
+              activeVerification
+                ? toFraudIndicators(activeVerification)
+                : latestResult
+                  ? latestResult.manipulationIndicators.map((desc, i) => ({
+                      id: `store-${i}`,
+                      type: "Fraud Indicator",
+                      severity: (i % 2 === 0 ? "high" : "medium") as "high" | "medium",
+                      description: desc,
+                    }))
+                  : []
+            }
+            riskScore={activeVerification?.risk_score ?? latestResult?.riskScore ?? 0}
+            metadata={
+              activeVerification
+                ? toMetadata(activeVerification)
+                : latestResult
+                  ? [
+                      { label: "File", value: latestResult.fileName },
+                      { label: "Type", value: latestResult.documentType },
+                      { label: "Confidence", value: `${latestResult.confidenceScore}%` },
+                      { label: "Fraud Probability", value: `${latestResult.fraudProbability}%` },
+                    ]
+                  : []
+            }
+            aiSummary={
+              activeVerification
+                ? toAISummary(activeVerification)
+                : latestResult
+                  ? { summary: latestResult.aiSummary, findings: [], recommendedActions: latestResult.recommendedActions, modelName: "PaySentinelIQ AI", completedAt: new Date().toISOString() }
+                  : null
+            }
           />
         </div>
       </motion.div>

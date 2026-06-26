@@ -648,7 +648,12 @@
         "severityLow": "Baixo",
         "severityMedium": "Médio",
         "severityHigh": "Alto",
-        "severityCritical": "Crítico"
+        "severityCritical": "Crítico",
+        "startVerification": "Iniciar Verificação",
+        "startVerificationDesc": "Agentes de IA analisarão o documento em busca de fraudes e inconsistências",
+        "verifying": "Verificando...",
+        "verificationComplete": "Verificação concluída",
+        "verificationFailed": "Falha na verificação"
     },
     "payroll": {
         "pageTitle": "Central de Inteligência de Pagamentos com IA",
