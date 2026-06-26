@@ -1,4 +1,5 @@
 {
     "python.defaultInterpreterPath": "C:\\Users\\Alisson Davi\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
-    "python.terminal.activateEnvironment": false
+    "python.terminal.activateEnvironment": false,
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }
