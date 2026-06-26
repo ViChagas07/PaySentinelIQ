@@ -27,6 +27,7 @@ import {
   useDashboardTrends,
   useDashboardRiskDistribution,
   useFraudAlertStats,
+  useAnalysisStats,
 } from "@/hooks/useApi";
 import { useMemo } from "react";
 
@@ -98,8 +99,13 @@ export default function ReportsPage() {
   const { data: trends, isLoading: trendsLoading } = useDashboardTrends();
   const { data: riskDistribution, isLoading: riskLoading } = useDashboardRiskDistribution();
   const { data: alertStats, isLoading: alertStatsLoading } = useFraudAlertStats();
+  const { data: analysisStats } = useAnalysisStats();
 
-  const hasData = useMemo(() => !!kpis && kpis.payrolls_processed > 0, [kpis]);
+  const hasData = useMemo(() => {
+    const fromKpis = !!kpis && kpis.payrolls_processed > 0;
+    const fromAnalysis = !!analysisStats && analysisStats.total_documents > 0;
+    return fromKpis || fromAnalysis;
+  }, [kpis, analysisStats]);
 
   return (
     <div className="space-y-8">
@@ -176,12 +182,12 @@ export default function ReportsPage() {
               </div>
             : kpis
               ? ([
-                  { value: kpis.payrolls_processed.toLocaleString(), subtext: t("totalDocuments") || "total documents" },
-                  { value: kpis.fraud_alerts.toLocaleString(), subtext: `${Math.round((kpis.fraud_alerts / Math.max(kpis.payrolls_processed, 1)) * 100)}% ${t("rate") || "rate"}` },
-                  { value: `${kpis.ai_confidence}%`, subtext: t("confidenceScore") || "confidence score" },
-                  { value: `R$ ${kpis.compliance_incidents.toLocaleString()}`, subtext: t("lossesPrevented") || "losses prevented" },
-                  { value: kpis.high_risk_docs.toLocaleString(), subtext: t("highRiskDocuments") || "high risk documents" },
-                  { value: `${kpis.verification_rate}%`, subtext: t("passRate") || "pass rate" },
+                  { value: ((kpis.payrolls_processed || 0) + (analysisStats?.total_documents || 0)).toLocaleString(), subtext: t("totalDocuments") || "total documents" },
+                  { value: ((kpis.fraud_alerts || 0) + (analysisStats?.fraudulent_count || 0)).toLocaleString(), subtext: `${Math.round((((kpis.fraud_alerts || 0) + (analysisStats?.fraudulent_count || 0)) / Math.max((kpis.payrolls_processed || 0) + (analysisStats?.total_documents || 0), 1)) * 100)}% ${t("rate") || "rate"}` },
+                  { value: `${analysisStats?.avg_confidence_score ? (analysisStats.avg_confidence_score * 100).toFixed(0) : kpis.ai_confidence}%`, subtext: t("confidenceScore") || "confidence score" },
+                  { value: `R$ ${(analysisStats?.losses_prevented || kpis.compliance_incidents || 0).toLocaleString()}`, subtext: t("lossesPrevented") || "losses prevented" },
+                  { value: ((kpis.high_risk_docs || 0) + (analysisStats?.high_risk_count || 0)).toLocaleString(), subtext: t("highRiskDocuments") || "high risk documents" },
+                  { value: `${analysisStats?.pass_rate ?? kpis.verification_rate}%`, subtext: t("passRate") || "pass rate" },
                 ] as const).map((item, i) => (
                   <KpiCard
                     key={i}

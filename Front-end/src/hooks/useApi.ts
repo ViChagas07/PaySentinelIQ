@@ -62,6 +62,10 @@ export const queryKeys = {
     heatmap: ["dashboard", "heatmap"] as const,
     riskDistribution: ["dashboard", "risk-distribution"] as const,
   },
+  analysis: {
+    history: (params?: Record<string, unknown>) => ["analysis", "history", params] as const,
+    stats: ["analysis", "stats"] as const,
+  },
 };
 
 // ============================================================
@@ -606,5 +610,103 @@ export function useAIChatSuggestions() {
     queryFn: () =>
       api.get<{ suggestions: { key: string; label: string }[] }>("/ai-assistant/suggestions"),
     staleTime: 1000 * 60 * 30, // 30 min — suggestions rarely change
+  });
+}
+
+// ============================================================
+// Analysis Persistence Hooks (save, history, stats)
+// ============================================================
+
+export interface AnalysisSavePayload {
+  document_type: string;
+  file_name: string;
+  file_size?: number;
+  risk_level: string;
+  risk_score: number;
+  confidence_score?: number;
+  fraud_probability?: number;
+  is_fraudulent: boolean;
+  fraud_indicators?: string[];
+  analysis_result?: unknown;
+  amount?: number;
+  ai_summary?: string;
+  processing_duration?: number;
+  status?: string;
+}
+
+export interface AnalysisRecord {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  document_type: string;
+  file_name: string;
+  file_size?: number;
+  risk_level: string;
+  risk_score: number;
+  confidence_score?: number;
+  fraud_probability?: number;
+  is_fraudulent: boolean;
+  fraud_indicators?: string[];
+  analysis_result?: unknown;
+  amount?: number;
+  ai_summary?: string;
+  processing_duration?: number;
+  analyzed_at: string;
+  status: string;
+  created_at: string;
+}
+
+export interface AnalysisDashboardStats {
+  total_documents: number;
+  fraudulent_count: number;
+  fraud_rate: number;
+  avg_confidence_score: number;
+  avg_risk_score: number;
+  losses_prevented: number;
+  high_risk_count: number;
+  pass_rate: number;
+  recent_analyses: AnalysisRecord[];
+}
+
+export function useSaveAnalysis() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: AnalysisSavePayload) =>
+      api.post<AnalysisRecord>("/analysis/save", payload),
+    onSuccess: () => {
+      // Invalidate all analysis-related caches so dashboard/history refresh
+      queryClient.invalidateQueries({ queryKey: ["analysis"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "kpis"] });
+    },
+  });
+}
+
+export function useAnalysisHistory(params?: {
+  document_type?: string;
+  risk_level?: string;
+  page?: number;
+}) {
+  const queryParams: Record<string, string | number | boolean | undefined> = {};
+  if (params?.document_type) queryParams.document_type = params.document_type;
+  if (params?.risk_level) queryParams.risk_level = params.risk_level;
+  if (params?.page) queryParams.page = params.page;
+
+  return useQuery({
+    queryKey: queryKeys.analysis.history(params),
+    queryFn: () => api.get<AnalysisRecord[]>("/analysis/history", queryParams),
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function useAnalysisStats() {
+  return useQuery({
+    queryKey: queryKeys.analysis.stats,
+    queryFn: () => api.get<AnalysisDashboardStats>("/analysis/stats"),
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+    placeholderData: (prev) => prev,
   });
 }

@@ -16,7 +16,7 @@ import {
   FileText, Upload, Brain, ShieldAlert, Sparkles, Zap,
   ArrowRight, History, FileCheck, Barcode, CreditCard,
 } from "lucide-react";
-import { useAnalyzeDocument } from "@/hooks/useApi";
+import { useAnalyzeDocument, useSaveAnalysis } from "@/hooks/useApi";
 import { mapPSIReportToAnalysisResult } from "@/lib/analysis-mapper";
 
 function getReadableError(error: unknown): string {
@@ -59,6 +59,7 @@ export default function AnalyzeBankSlipPage() {
   const { start: startPipeline } = useSimulatePipeline();
 
   const analyzeMutation = useAnalyzeDocument();
+  const saveAnalysis = useSaveAnalysis();
   const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = useCallback(async () => {
@@ -88,6 +89,29 @@ export default function AnalyzeBankSlipPage() {
         const report = await analyzeMutation.mutateAsync(payload);
         const result = mapPSIReportToAnalysisResult(report, file.name, "bank-slip", locale);
         newResults.push(result);
+
+        // Persist analysis to the database so dashboard/history reflect real data
+        try {
+          await saveAnalysis.mutateAsync({
+            document_type: "BOLETO",
+            file_name: file.name,
+            file_size: file.size,
+            risk_level: result.riskScore >= 80 ? "CRITICAL" : result.riskScore >= 60 ? "HIGH" : result.riskScore >= 30 ? "MEDIUM" : "LOW",
+            risk_score: result.riskScore,
+            confidence_score: result.confidenceScore,
+            fraud_probability: result.fraudProbability,
+            is_fraudulent: result.riskScore >= 70,
+            fraud_indicators: result.manipulationIndicators.length > 0 ? result.manipulationIndicators : undefined,
+            analysis_result: report,
+            amount: undefined,
+            ai_summary: result.aiSummary,
+            processing_duration: result.processingDuration,
+            status: result.riskScore >= 70 ? "flagged" : "completed",
+          });
+        } catch (saveErr) {
+          // Non-blocking — user already sees the result
+          console.error("Failed to persist analysis:", saveErr);
+        }
       } catch (err) {
         console.error("Analysis failed for", file.name, err);
         setError(getReadableError(err));

@@ -638,3 +638,65 @@ class DataBreachModel(Base):
             name="chk_breach_risk_level",
         ),
     )
+
+
+# ============================================================
+# Analysis Records (persisted analysis results from boleto/contracheque)
+# ============================================================
+
+
+class AnalysisRecordModel(Base):
+    """
+    Persists every AI-powered document analysis so that the dashboard,
+    history, and KPIs always show real, up-to-date data — not ephemeral
+    in-memory state that vanishes on page refresh.
+    """
+    __tablename__ = "analysis_records"
+
+    RISK_LEVEL_CHOICES = ("LOW", "MEDIUM", "HIGH", "CRITICAL")
+    DOCUMENT_TYPE_CHOICES = ("BOLETO", "CONTRACHEQUE")
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True,
+    )
+    document_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, index=True,
+    )
+    file_name: Mapped[str] = mapped_column(String(500), nullable=False)
+    file_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    risk_level: Mapped[str] = mapped_column(
+        String(10), nullable=False, default="LOW", index=True,
+    )
+    risk_score: Mapped[float] = mapped_column(Float, default=0.0)
+    confidence_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fraud_probability: Mapped[float | None] = mapped_column(Float, nullable=True)
+    is_fraudulent: Mapped[bool] = mapped_column(Boolean, default=False)
+    fraud_indicators: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
+    analysis_result: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ai_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    processing_duration: Mapped[float | None] = mapped_column(Float, nullable=True)
+    analyzed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, index=True,
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), default="completed", index=True,
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            f"risk_level IN {RISK_LEVEL_CHOICES}",
+            name="chk_analysis_risk_level",
+        ),
+        CheckConstraint(
+            f"document_type IN {DOCUMENT_TYPE_CHOICES}",
+            name="chk_analysis_document_type",
+        ),
+        CheckConstraint(
+            "status IN ('completed','flagged','failed')",
+            name="chk_analysis_status",
+        ),
+    )
