@@ -96,7 +96,7 @@ export default function AnalyzePayrollPage() {
             document_type: "CONTRACHEQUE",
             file_name: file.name,
             file_size: file.size,
-            risk_level: result.riskScore >= 80 ? "CRITICAL" : result.riskScore >= 60 ? "HIGH" : result.riskScore >= 30 ? "MEDIUM" : "LOW",
+            risk_level: result.riskScore >= 70 ? "HIGH" : result.riskScore >= 40 ? "MEDIUM" : "LOW",
             risk_score: result.riskScore,
             confidence_score: result.confidenceScore,
             fraud_probability: result.fraudProbability,

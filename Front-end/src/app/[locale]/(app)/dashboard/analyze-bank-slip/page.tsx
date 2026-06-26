@@ -58,56 +58,61 @@ export default function AnalyzeBankSlipPage() {
   const extraInfo = useAnalysisStore((s) => s.extraInfo);
   const { start: startPipeline } = useSimulatePipeline();
 
-  const analyzeMutation = useAnalyzeDocument();
-  const saveAnalysis = useSaveAnalysis();
-  const [error, setError] = useState<string | null>(null);
+    const analyzeMutation = useAnalyzeDocument();
+    const saveAnalysis = useSaveAnalysis();
+    const [error, setError] = useState<string | null>(null);
 
-  const handleAnalyze = useCallback(async () => {
-    if (files.length === 0 || isProcessing) return;
-    clearResults();
-    setError(null);
-    startPipeline();
+    const handleAnalyze = useCallback(async () => {
+        if (files.length === 0 || isProcessing) return;
+        clearResults();
+        setError(null);
+        startPipeline();
 
-    const doneFiles = files.filter((f) => f.status === "done");
-    const newResults: AnalysisResult[] = [];
+        const doneFiles = files.filter((f) => f.status === "done");
+        const newResults: AnalysisResult[] = [];
 
-    for (const file of doneFiles) {
-      try {
-        const payload: any = {
-          document_id: file.id,
-          document_type: "boleto",
-        };
+        for (const file of doneFiles) {
+            try {
+                const payload: any = {
+                    document_id: file.id,
+                    document_type: "boleto",
+                };
 
-        if (extraInfo.companyName) payload.razao_social = extraInfo.companyName;
-        if (extraInfo.expectedAmount) {
-          const amt = parseFloat(extraInfo.expectedAmount);
-          if (!isNaN(amt)) payload.valor_nominal = amt;
-        }
-        if (extraInfo.recipientName) payload.beneficiario = extraInfo.recipientName;
-        if (extraInfo.suspiciousObservations) payload.linha_digitavel = extraInfo.suspiciousObservations;
+                // Map extra info fields to backend field names
+                if (extraInfo.companyName) payload.razao_social = extraInfo.companyName;
+                // Also send companyName as cnpj if it looks like a CNPJ
+                if (extraInfo.companyName && /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{14}/.test(extraInfo.companyName)) {
+                    payload.cnpj = extraInfo.companyName;
+                }
+                if (extraInfo.expectedAmount) {
+                    const amt = parseFloat(extraInfo.expectedAmount);
+                    if (!isNaN(amt)) payload.valor_nominal = amt;
+                }
+                if (extraInfo.recipientName) payload.beneficiario = extraInfo.recipientName;
+                if (extraInfo.suspiciousObservations) payload.linha_digitavel = extraInfo.suspiciousObservations;
 
-        const report = await analyzeMutation.mutateAsync(payload);
-        const result = mapPSIReportToAnalysisResult(report, file.name, "bank-slip", locale);
-        newResults.push(result);
+                const report = await analyzeMutation.mutateAsync(payload);
+                const result = mapPSIReportToAnalysisResult(report, file.name, "bank-slip", locale);
+                newResults.push(result);
 
-        // Persist analysis to the database so dashboard/history reflect real data
-        try {
-          await saveAnalysis.mutateAsync({
-            document_type: "BOLETO",
-            file_name: file.name,
-            file_size: file.size,
-            risk_level: result.riskScore >= 80 ? "CRITICAL" : result.riskScore >= 60 ? "HIGH" : result.riskScore >= 30 ? "MEDIUM" : "LOW",
-            risk_score: result.riskScore,
-            confidence_score: result.confidenceScore,
-            fraud_probability: result.fraudProbability,
-            is_fraudulent: result.riskScore >= 70,
-            fraud_indicators: result.manipulationIndicators.length > 0 ? result.manipulationIndicators : undefined,
-            analysis_result: report,
-            amount: undefined,
-            ai_summary: result.aiSummary,
-            processing_duration: result.processingDuration,
-            status: result.riskScore >= 70 ? "flagged" : "completed",
-          });
+                // Persist analysis — unified thresholds (70/40 from Fase 3B)
+                try {
+                    await saveAnalysis.mutateAsync({
+                        document_type: "BOLETO",
+                        file_name: file.name,
+                        file_size: file.size,
+                        risk_level: result.riskScore >= 70 ? "HIGH" : result.riskScore >= 40 ? "MEDIUM" : "LOW",
+                        risk_score: result.riskScore,
+                        confidence_score: result.confidenceScore,
+                        fraud_probability: result.fraudProbability,
+                        is_fraudulent: result.riskScore >= 70,
+                        fraud_indicators: result.manipulationIndicators.length > 0 ? result.manipulationIndicators : undefined,
+                        analysis_result: report,
+                        amount: undefined,
+                        ai_summary: result.aiSummary,
+                        processing_duration: result.processingDuration,
+                        status: result.riskScore >= 70 ? "flagged" : "completed",
+                    });
         } catch (saveErr) {
           // Non-blocking — user already sees the result
           console.error("Failed to persist analysis:", saveErr);
@@ -151,7 +156,7 @@ export default function AnalyzeBankSlipPage() {
         resultId: r.id,
       });
     });
-  }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry, locale, extraInfo, analyzeMutation]);
+    }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry, locale, extraInfo, analyzeMutation, saveAnalysis, setError]);
 
   const showResults = results.length > 0 && !isProcessing && currentStage === "complete";
   const canAnalyze = files.filter((f) => f.status === "done").length > 0 && !isProcessing;
