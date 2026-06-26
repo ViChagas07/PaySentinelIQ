@@ -31,6 +31,8 @@ const API_BASE_URL = RAW_API_BASE_URL
 interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
   params?: Record<string, string | number | boolean | undefined>;
+  /** Custom timeout in milliseconds. Default 15000 for CRUD, 120000 for analysis. */
+  timeoutMs?: number;
 }
 
 export class ApiClientError extends Error {
@@ -122,7 +124,12 @@ async function tryRefreshToken(): Promise<string | null> {
  * Automatically retries once with a refreshed token on 401.
  */
 async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { params, body, headers: extraHeaders, ...rest } = options;
+  const { params, body, headers: extraHeaders, timeoutMs, ...rest } = options;
+
+  // Analysis endpoints need longer timeout (OCR + validation + Fusion + CrewAI)
+  const isAnalysisEndpoint = path.includes("/analyze") || path.includes("/documents/analyze") || path.includes("/upload");
+  const defaultTimeout = isAnalysisEndpoint ? 120_000 : 15_000;
+  const effectiveTimeout = timeoutMs ?? defaultTimeout;
 
   const execute = async (tokenOverride?: string): Promise<T> => {
     const token = tokenOverride ?? useAuthStore.getState().token;
@@ -133,7 +140,7 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
       ...extraHeaders,
     };
 
-    const timeoutSignal = AbortSignal.timeout(8_000);
+    const timeoutSignal = AbortSignal.timeout(effectiveTimeout);
     const combinedSignal = rest.signal
       ? AbortSignal.any([rest.signal, timeoutSignal])
       : timeoutSignal;
@@ -197,18 +204,18 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
 // ── Typed API Methods ── //
 
 export const api = {
-  get: <T>(path: string, params?: RequestOptions["params"]) =>
-    apiRequest<T>(path, { method: "GET", params }),
+  get: <T>(path: string, params?: RequestOptions["params"], timeoutMs?: number) =>
+    apiRequest<T>(path, { method: "GET", params, timeoutMs }),
 
-  post: <T>(path: string, body?: unknown) =>
-    apiRequest<T>(path, { method: "POST", body }),
+  post: <T>(path: string, body?: unknown, timeoutMs?: number) =>
+    apiRequest<T>(path, { method: "POST", body, timeoutMs }),
 
-  put: <T>(path: string, body?: unknown) =>
-    apiRequest<T>(path, { method: "PUT", body }),
+  put: <T>(path: string, body?: unknown, timeoutMs?: number) =>
+    apiRequest<T>(path, { method: "PUT", body, timeoutMs }),
 
-  patch: <T>(path: string, body?: unknown) =>
-    apiRequest<T>(path, { method: "PATCH", body }),
+  patch: <T>(path: string, body?: unknown, timeoutMs?: number) =>
+    apiRequest<T>(path, { method: "PATCH", body, timeoutMs }),
 
-  delete: <T>(path: string) =>
-    apiRequest<T>(path, { method: "DELETE" }),
+  delete: <T>(path: string, timeoutMs?: number) =>
+    apiRequest<T>(path, { method: "DELETE", timeoutMs }),
 };
