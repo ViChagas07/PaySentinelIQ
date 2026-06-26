@@ -20,6 +20,10 @@ engine = create_async_engine(
     settings.DATABASE_URL.get_secret_value(),
     echo=settings.DATABASE_ECHO,
     pool_pre_ping=True,
+    connect_args={
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    },
     # Use NullPool for testing to avoid connection leaks;
     # skip pool_size/max_overflow/pool_timeout — NullPool rejects those kwargs.
     poolclass=NullPool if settings.ENVIRONMENT == "test" else None,
