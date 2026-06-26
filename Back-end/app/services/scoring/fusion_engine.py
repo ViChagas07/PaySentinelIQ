@@ -72,12 +72,17 @@ class FusionEngine:
         contributions = self._calculate_contributions(evidences)
         raw_score = sum(c.contribution for c in contributions)
 
-        # ── Critical floor rule (IRON RULE: 1 CRITICAL → HIGH >= 70) ──
+        # ── IRON RULES (deterministic invariants) ──
         critical_count = sum(1 for e in evidences if e.severity == Severity.CRITICAL)
+        # Rule 1: Any CRITICAL → minimum HIGH (>= 70)
         if critical_count >= 1:
-            raw_score = max(raw_score, 70.0)  # Minimum score with any CRITICAL
+            raw_score = max(raw_score, 70.0)
+        # Rule 2: 3+ CRITICAL → minimum 90 (severe fraud)
+        if critical_count >= 3:
+            raw_score = max(raw_score, 90.0)  # Severe fraud floor
+        # Rule 3: Multiple criticals compound
         if critical_count >= 2:
-            raw_score = min(raw_score * 1.2, 100.0)  # Multiple criticals compound
+            raw_score = min(raw_score * 1.2, 100.0)
 
         final_score = round(min(raw_score, 100.0), 1)
 
