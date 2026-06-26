@@ -86,7 +86,7 @@ const navigationSections: NavSection[] = [
         labelKey: "payroll",
         href: "/payroll",
         icon: DollarSign,
-        roles: ["admin", "hr_manager", "payroll_specialist"],
+        roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager", "payroll_specialist"],
       },
     ],
   },

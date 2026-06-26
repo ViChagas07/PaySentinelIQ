@@ -32,7 +32,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AIAuraBackground />
 
       {/* Content layer — sits above the background */}
-      <Sidebar />
+      <ErrorBoundary>
+        <Sidebar />
+      </ErrorBoundary>
       <div className="flex flex-1 flex-col overflow-hidden min-w-0 relative z-10">
         <Navbar />
         <div className="flex flex-1 overflow-hidden">
