@@ -412,5 +412,30 @@ async def _run_canonical_from_analyze(
     elapsed = time.monotonic() - t0
 
     response = result.to_dict()
+
+    # ── GUARANTEED RESPONSE FIELDS (never return empty) ──
+    if "RISK_ASSESSMENT" not in response:
+        response["RISK_ASSESSMENT"] = {
+            "fraud_risk_score": result.risk_score,
+            "risk_classification": result.risk_level.upper(),
+            "recommended_action": "MANUAL_REVIEW",
+        }
+    if "ANOMALY_LIST" not in response:
+        response["ANOMALY_LIST"] = []
+    if "AI_REASONING_SUMMARY" not in response:
+        response["AI_REASONING_SUMMARY"] = "Analise deterministica concluida. Agentes de IA em processamento."
+
     response["processing_time_seconds"] = round(elapsed, 2)
+    response["pipeline_status"] = result.pipeline_status.value
+    response["processing_mode"] = "sync"
+
+    # ── Final response log for debugging ──
+    import logging
+    _log = logging.getLogger(__name__)
+    _log.info(
+        "[FINAL RESPONSE] doc=%s score=%.1f level=%s evidence=%d time=%.1fs",
+        ctx.document_id[:8], result.risk_score, result.risk_level,
+        len(result.evidence), elapsed,
+    )
+
     return response

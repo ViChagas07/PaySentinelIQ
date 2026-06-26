@@ -21,6 +21,10 @@ logger = logging.getLogger(__name__)
 class CrewAIStage(BaseStage):
     """Stage 6: AI Agent Execution via AIOrchestrationPort.
 
+    Runs in BACKGROUND mode by default — does NOT block the HTTP response.
+    Deterministic score is always returned immediately. AI agents enrich
+    the analysis asynchronously.
+
     Receives PipelineContext with deterministic evidence.
     Passes it to the AI orchestrator (CrewAI or FraudCopilot).
     Adds agent-found Evidence to context.evidences.
@@ -30,45 +34,75 @@ class CrewAIStage(BaseStage):
     completes successfully with empty findings — pipeline continues.
     """
 
-    def __init__(self, orchestrator=None):
+    def __init__(self, orchestrator=None, background: bool = True):
         super().__init__(name="CrewAIStage")
-        self._orchestrator = orchestrator  # AIOrchestrationPort
+        self._orchestrator = orchestrator
+        self._background = background  # True = fire-and-forget, False = sync
 
     def _execute(self, context: PipelineContext) -> None:
         orchestrator = self._get_orchestrator()
         if orchestrator is None or not orchestrator.is_available():
-            context.add_warning("AI orchestrator unavailable — skipping AI agents")
+            context.add_warning("AI orchestrator unavailable — deterministic-only mode")
+            context.metadata["agents_mode"] = "unavailable"
             return
 
+        if self._background:
+            # ── Background mode: fire-and-forget, don't block ──
+            self._launch_background(context, orchestrator)
+            context.add_warning("AI agents running in background — results will enrich analysis asynchronously")
+            context.metadata["agents_mode"] = "background"
+        else:
+            # ── Sync mode: block until agents complete (for shadow/comparison) ──
+            self._run_sync(context, orchestrator)
+
+    def _launch_background(self, context: PipelineContext, orchestrator) -> None:
+        """Fire agents in background thread. Does NOT block pipeline."""
+        import threading
+
+        def _bg_run():
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                crew_result = loop.run_until_complete(orchestrator.execute_agents(context))
+                if crew_result:
+                    for af in crew_result.agent_findings:
+                        context.add_evidences(af.evidence)
+                        context.agent_findings.append(af.to_dict())
+                    context.crew_result = crew_result.to_dict()
+                    logger.info(
+                        "CrewAI background: agents=%d evidence=%d",
+                        crew_result.agents_executed, len(crew_result.total_evidence),
+                    )
+            except Exception as e:
+                logger.warning("CrewAI background failed: %s", e)
+
+        thread = threading.Thread(target=_bg_run, daemon=True)
+        thread.start()
+
+    def _run_sync(self, context: PipelineContext, orchestrator) -> None:
+        """Run agents synchronously. Blocks until complete or timeout."""
         try:
-            # Run async orchestration in sync context
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # We're in an async context — create task
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    future = pool.submit(asyncio.run, orchestrator.execute_agents(context))
-                    crew_result: CrewResult = future.result(timeout=130)
-            else:
-                crew_result = asyncio.run(orchestrator.execute_agents(context))
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(asyncio.run, orchestrator.execute_agents(context))
+                crew_result: CrewResult = future.result(timeout=60)
         except Exception as e:
-            context.add_warning(f"CrewAI stage failed: {e}")
+            context.add_warning(f"CrewAI sync failed: {e}")
             context.agent_findings = []
             return
 
         if crew_result is None:
             crew_result = CrewResult()
 
-        # ── Add agent evidence to context ──
         for af in crew_result.agent_findings:
             context.add_evidences(af.evidence)
             context.agent_findings.append(af.to_dict())
 
-        # ── Update crew_result in context ──
         context.crew_result = crew_result.to_dict()
+        context.metadata["agents_mode"] = "sync"
 
         logger.info(
-            "CrewAI stage: agents=%d failed=%d evidence=%d",
+            "CrewAI sync: agents=%d failed=%d evidence=%d",
             crew_result.agents_executed, crew_result.agents_failed,
             len(crew_result.total_evidence),
         )

@@ -44,9 +44,19 @@ export function mapPSIReportToAnalysisResult(
   const entity = report.ENTITY_VALIDATION ?? {};
   const meta = report.DOCUMENT_METADATA ?? {};
 
-  const riskScore = risk.fraud_risk_score ?? 0;
-  const riskClass = risk.risk_classification ?? "LOW";
-  const anomalies = report.ANOMALY_LIST ?? [];
+  // Safety: extract score from ANY available field (never return 0 silently)
+  const riskScore =
+    risk.fraud_risk_score ??
+    report.risk_score ??
+    report.riskScore ??
+    report.score ??
+    0;
+  const riskClass =
+    risk.risk_classification ??
+    report.risk_level ??
+    report.riskLevel ??
+    (riskScore >= 70 ? "HIGH" : riskScore >= 40 ? "MEDIUM" : "LOW");
+  const anomalies = report.ANOMALY_LIST ?? report.anomaly_list ?? report.anomalies ?? [];
 
   // Build OCR data from financial + structural fields
   const ocrData: Record<string, string> = {};
