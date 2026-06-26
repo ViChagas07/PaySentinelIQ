@@ -37,6 +37,7 @@ class UserRepository(BaseRepository[UserModel]):
         google_id: str,
         tenant_id: uuid.UUID | None = None,
         role: str = "fraud_analyst",
+        avatar_url: str | None = None,
     ) -> UserModel:
         """Create a new user (typically from Google OIDC)."""
         user = UserModel(
@@ -47,5 +48,6 @@ class UserRepository(BaseRepository[UserModel]):
             hashed_password="",  # OIDC users authenticate via Google
             google_id=google_id,
             role=role,
+            avatar_url=avatar_url,
         )
         return await self.add(user)

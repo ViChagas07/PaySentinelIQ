@@ -141,6 +141,7 @@ async def google_login(
 
     email: str = google_user["email"]
     name: str = google_user.get("name", email.split("@")[0])
+    picture: str | None = google_user.get("picture")
     google_sub: str = google_user["sub"]
 
     # 2. Find or create user
@@ -161,12 +162,16 @@ async def google_login(
             full_name=name,
             google_id=google_sub,
             tenant_id=tenant.id,
+            avatar_url=picture,
         )
     else:
-        # Update google_id if user already exists but didn't have one
+        # Update google_id, full_name, and avatar if user already exists
         if not user.google_id:
             user.google_id = google_sub
-            await repo.update(user)
+        if not user.avatar_url and picture:
+            user.avatar_url = picture
+        user.full_name = name
+        await repo.update(user)
 
     # 3. Record consent (LGPD compliance)
     tv = body.terms_version if body.terms_version else settings.TERMS_VERSION
@@ -216,7 +221,7 @@ async def google_login(
         "user": {
             "id": str(user.id),
             "email": user.email,
-            "name": user.full_name,
+            "full_name": user.full_name,
             "role": user.role,
             "avatar_url": user.avatar_url,
             "tenant_id": str(user.tenant_id),

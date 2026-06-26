@@ -173,7 +173,13 @@ export default function AuthPage() {
 
             // Update auth store with user + token + refresh token from the backend
             if (data.user && effectiveToken) {
-              loginStore(data.user, effectiveToken, effectiveRefreshToken);
+              // Mapeia campos do backend → User type (full_name, avatar_url)
+              const mappedUser = {
+                ...data.user,
+                full_name: data.user.full_name ?? data.user.name ?? data.user.email?.split("@")[0],
+                avatar_url: data.user.avatar_url ?? data.user.picture ?? null,
+              };
+              loginStore(mappedUser, effectiveToken, effectiveRefreshToken);
               console.log('[PSI Auth DEBUG] loginStore chamado com token prefix:', effectiveToken.substring(0, 20) + '...');
 
               // Aguarda persistência no localStorage antes do redirect
