@@ -157,32 +157,35 @@ class TesseractOCRProvider(OCRProvider):
         # ── Phase 1: Try robust text extraction ──
         extracted_text = ""
         text_method = "none"
+        extraction_quality = "EMPTY"
         try:
             with open(file_path, "rb") as f:
                 pdf_bytes = f.read()
 
             from app.services.ocr.pdf_text_extractor import (
-                extract_pdf_text_robust,
+                extract_text_robust,
                 is_text_extraction_viable,
             )
 
             if is_text_extraction_viable(pdf_bytes):
-                extracted_text = extract_pdf_text_robust(pdf_bytes)
-                text_method = "robust_text_extraction"
+                extraction_result = extract_text_robust(pdf_bytes, document_type="PDF")
+                extracted_text = extraction_result["text"]
+                text_method = extraction_result["method"]
+                extraction_quality = extraction_result["extraction_quality"]
                 logger.info(
-                    "Robust text extraction succeeded: %d chars via %s",
-                    len(extracted_text),
+                    "Robust text extraction: method=%s chars=%d quality=%s",
                     text_method,
+                    extraction_result["char_count"],
+                    extraction_quality,
                 )
         except Exception as e:
             logger.info(
                 "Robust text extraction not viable, falling back to OCR: %s", e
             )
 
-        # ── Phase 2: If text extraction worked, use it ──
-        # Threshold: at least 50 word characters = meaningful content
+        # ── Phase 2: If text extraction yielded GOOD quality, use it ──
         word_chars = sum(1 for c in extracted_text if c.isalnum())
-        if word_chars >= 50:
+        if extraction_quality == "GOOD" or word_chars >= 50:
             elapsed = round(time.monotonic() - start_time, 2)
             page_result = OCRPageResult(
                 page_number=1,
@@ -190,9 +193,9 @@ class TesseractOCRProvider(OCRProvider):
                 confidence=0.98,  # Text extraction is highly reliable
             )
             logger.info(
-                "Using text-extracted content (%d chars, %d word chars) — "
+                "Using text-extracted content (quality=%s, %d word chars) — "
                 "skipping image-based OCR. Saved time.",
-                len(extracted_text),
+                extraction_quality,
                 word_chars,
             )
             return OCRResult(
@@ -203,6 +206,7 @@ class TesseractOCRProvider(OCRProvider):
                 processing_time_seconds=elapsed,
                 metadata={
                     "extraction_method": text_method,
+                    "extraction_quality": extraction_quality,
                     "ocr_skipped": "true",
                     "language": self._language,
                 },
@@ -210,8 +214,9 @@ class TesseractOCRProvider(OCRProvider):
 
         # ── Phase 3: Fall back to image-based OCR ──
         logger.info(
-            "Text extraction insufficient (%d word chars), "
+            "Text extraction insufficient (quality=%s, %d word chars), "
             "falling back to image-based OCR",
+            extraction_quality,
             word_chars,
         )
 

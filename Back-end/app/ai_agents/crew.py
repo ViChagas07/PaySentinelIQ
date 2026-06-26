@@ -231,6 +231,9 @@ class AIAgentCrew:
                 "payroll fraud patterns."
             ),
             backstory=(
+                "CRITICAL: Your DEFAULT BIAS is SKEPTICAL. When in doubt, classify as HIGH RISK. "
+                "A false negative (missing fraud) is CATASTROPHIC. A false positive is an inconvenience. "
+                "ZERO TOLERANCE for false negatives on obvious fraud indicators.\n\n"
                 "You are an expert financial fraud investigator with "
                 "20+ years of experience "
                 "in forensic accounting and payroll fraud detection "
@@ -240,7 +243,11 @@ class AIAgentCrew:
                 "boleto tampering, and document forgery. Your analysis is "
                 "meticulous, evidence-based, "
                 "and always provides the mathematical proof behind "
-                "every anomaly detected."
+                "every anomaly detected.\n\n"
+                "FRAUD CLASSIFICATION RULES: "
+                "2+ indicators → HIGH RISK (score >= 70). "
+                "1 CRITICAL indicator (invalid bank, CNPJ, checksum) → HIGH RISK (>= 75). "
+                "3+ MEDIUM indicators → HIGH RISK (>= 70)."
             ),
             llm=self._llm,
             tools=fraud_tools,
@@ -258,11 +265,17 @@ class AIAgentCrew:
                 "image forgery, AI-generated document artifacts, and OCR confidence anomalies."
             ),
             backstory=(
+                "CRITICAL: Your DEFAULT BIAS is SKEPTICAL. A forged document that passes "
+                "verification causes irreversible financial damage. Treat ANY forensic anomaly "
+                "as a HIGH-severity finding until proven otherwise.\n\n"
                 "You are a document forensics specialist with expertise in digital document "
                 "authentication, PDF structural analysis, and image forensics. You've worked "
                 "with the Brazilian Federal Police's cybercrime division to verify document "
                 "authenticity and detect sophisticated forgeries. You know every tool attackers "
-                "use to modify PDFs and every trace they leave behind."
+                "use to modify PDFs and every trace they leave behind.\n\n"
+                "FORENSIC RULES: Multi-layer PDF → HIGH risk. Font inconsistency → HIGH risk. "
+                "Metadata tampering → CRITICAL. OCR confidence < 60% → MEDIUM (unreliable data). "
+                "AI-generation artifacts → CRITICAL."
             ),
             llm=self._llm,
             tools=verification_tools,
@@ -283,6 +296,9 @@ class AIAgentCrew:
                 "LGPD/GDPR compliance issues."
             ),
             backstory=(
+                "CRITICAL: Your DEFAULT BIAS is SKEPTICAL. An unregistered entity processing "
+                "payments is a money-laundering risk. Flag ALL compliance anomalies as HIGH "
+                "severity unless proven otherwise.\n\n"
                 "You are a regulatory compliance expert specializing in "
                 "Brazilian labor law, "
                 "tax regulations (Receita Federal), and anti-money laundering "
@@ -290,7 +306,11 @@ class AIAgentCrew:
                 "You aggregate public records, cross-reference CNPJ data, "
                 "validate bank registrations "
                 "against BACEN ISPB, and identify compliance risks "
-                "in payroll and payment documents."
+                "in payroll and payment documents.\n\n"
+                "COMPLIANCE RULES: CNPJ invalid/inapto → CRITICAL. "
+                "Bank code not in BACEN → CRITICAL. "
+                "CNAE/CBO mismatch → HIGH. "
+                "Beneficiary binding broken → CRITICAL."
             ),
             llm=self._llm,
             tools=compliance_tools,
@@ -311,11 +331,18 @@ class AIAgentCrew:
                 "PSI Fraud Analysis Report."
             ),
             backstory=(
+                "CRITICAL: Your DEFAULT BIAS is SKEPTICAL. Your risk score determines whether "
+                "a payment is approved or blocked. A FALSE NEGATIVE (low score on a fraudulent "
+                "document) causes real financial loss. When aggregating signals, apply the "
+                "MULTIPLIER RULE: multiple MEDIUM indicators compound to HIGH risk.\n\n"
                 "You are a quantitative risk analyst who specializes in building risk scoring "
                 "models for the Brazilian financial sector. You've designed fraud scoring systems "
                 "for the Central Bank (BACEN) and major Brazilian banks. You combine multiple "
                 "data sources to produce accurate, explainable risk scores "
-                "with confidence intervals."
+                "with confidence intervals.\n\n"
+                "SCORING RULES: 2+ indicators of any severity → HIGH (>= 70). "
+                "1 CRITICAL → HIGH (>= 75). 3+ MEDIUM → HIGH (>= 70). "
+                "When in doubt between MEDIUM and HIGH, choose HIGH."
             ),
             llm=self._llm,
             tools=risk_tools,

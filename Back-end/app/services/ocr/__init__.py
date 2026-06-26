@@ -16,6 +16,7 @@ from app.services.ocr.tesseract_provider import TesseractOCRProvider
 from app.services.ocr.factory import OCRFactory, get_ocr_provider
 from app.services.ocr.extraction_service import DocumentExtractionService
 from app.services.ocr.pdf_text_extractor import (
+    extract_text_robust,
     extract_pdf_text_robust,
     is_text_extraction_viable,
 )
@@ -34,6 +35,7 @@ __all__ = [
     "OCRFactory",
     "get_ocr_provider",
     "DocumentExtractionService",
+    "extract_text_robust",
     "extract_pdf_text_robust",
     "is_text_extraction_viable",
 ]
