@@ -47,8 +47,8 @@ export function LandingNav() {
         ?.split(" ")
         .map((n) => n[0])
         .join("")
-        .toUpperCase() || "?",
-    [user?.full_name]
+        .toUpperCase() || user?.email?.[0]?.toUpperCase() || "U",
+    [user?.full_name, user?.email]
   );
 
   const highResAvatarUrl = useMemo(

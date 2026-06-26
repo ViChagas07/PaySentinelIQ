@@ -171,7 +171,7 @@ export function Navbar() {
     ?.split(" ")
     .map((n) => n[0])
     .join("")
-    .toUpperCase() || "U";
+    .toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
 
   // Upgrade Google profile picture to high resolution (256×256)
   const highResAvatarUrl = user?.avatar_url?.replace(/=s96-c$/, "=s256-c");
@@ -349,7 +349,7 @@ export function Navbar() {
                   ? "bg-psi-electric/20 text-psi-electric"
                   : "bg-psi-border/50 text-psi-text-secondary"
               )}>
-                {isAuthenticated ? userInitials : "?"}
+                {isAuthenticated ? userInitials : <User className="h-4 w-4" />}
               </AvatarFallback>
             </Avatar>
             <div className="hidden md:block text-left">
