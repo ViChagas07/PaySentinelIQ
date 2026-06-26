@@ -24,7 +24,7 @@ class RiskAssessment:
     """Result of the deterministic risk analysis."""
 
     risk_score: float = 0.0
-    risk_level: str = "LOW"  # LOW, MEDIUM, HIGH, CRITICAL
+    risk_level: str = "LOW"  # LOW, MEDIUM, HIGH
     flags: list[RiskFlag] = field(default_factory=list)
 
     @property
@@ -46,20 +46,21 @@ class RiskAnalyzer:
     Runs BEFORE the AI copilot. Uses pure business rules — no LLM calls.
     Produces risk_score (0-100) and risk_flags that feed into the FraudAnalysisContext.
 
-    Risk levels:
-      0-25   → LOW
-      26-50  → MEDIUM
-      51-75  → HIGH
-      76-100 → CRITICAL
+    Risk levels (CALIBRATED 2025-06-25 for fraud detection — skeptical bias):
+      0-39   → LOW
+      40-69  → MEDIUM
+      70-100 → HIGH
+    Note: CRITICAL is now merged into HIGH. Any CRITICAL flag → immediate HIGH.
     """
 
     # ── Severity weights for scoring ──
+    # Increased weights to ensure fraud signals are not buried
     SEVERITY_WEIGHTS = {
-        "critical": 25,
-        "high": 15,
-        "medium": 8,
-        "low": 3,
-        "info": 1,
+        "critical": 35,   # Was 25 — single critical flag now pushes into HIGH range
+        "high": 20,       # Was 15
+        "medium": 10,     # Was 8  — two medium flags = 20, enough for MEDIUM range
+        "low": 5,         # Was 3
+        "info": 2,        # Was 1
     }
 
     def analyze(self, context: dict[str, Any]) -> RiskAssessment:
@@ -328,30 +329,98 @@ class RiskAnalyzer:
 
         return flags
 
-    # ── Boleto Checks ──
+    # ── Boleto Checks (EXPANDED 2025-06-25) ──
 
     def _check_boleto(self, ctx: dict[str, Any]) -> list[RiskFlag]:
         flags = []
         doc_type = ctx.get("document_type", "")
         checksum = ctx.get("checksum_valid")
         bank_valid = ctx.get("bank_valid")
+        bank_code = ctx.get("bank_code", "")
 
         if doc_type in ("boleto", "bank-slip", "bank_slip"):
+            # Check barcode checksum
             if checksum is False:
                 flags.append(RiskFlag(
                     code="BOLETO_CHECKSUM_FAILED",
-                    description="Boleto barcode checksum validation failed — possible tampering.",
+                    description=(
+                        "Boleto barcode checksum validation failed "
+                        "(FEBRABAN Modulo 10/11) — possible tampering."
+                    ),
                     severity="critical",
                     category="document",
                     evidence="FEBRABAN Modulo 10/11 checksum returned invalid.",
                 ))
+
+            # Check bank code validity
             if bank_valid is False:
                 flags.append(RiskFlag(
                     code="BANK_CODE_INVALID",
-                    description="Bank code is not registered in BACEN ISPB registry.",
-                    severity="high",
+                    description=(
+                        f"Bank code '{bank_code}' is not registered in "
+                        "BACEN ISPB registry — possible fabricated boleto."
+                    ),
+                    severity="critical",
                     category="entity",
-                    evidence="BACEN bank validation returned invalid for the provided bank code.",
+                    evidence=(
+                        f"BACEN bank validation returned invalid for "
+                        f"bank code: {bank_code}."
+                    ),
+                ))
+
+            # Check for overdue boleto
+            due_date_str = ctx.get("due_date")
+            if due_date_str:
+                try:
+                    from datetime import datetime, timezone
+                    due_date = datetime.fromisoformat(
+                        due_date_str.replace("Z", "+00:00")
+                    )
+                    now = datetime.now(timezone.utc)
+                    days_overdue = (now - due_date).days
+                    if days_overdue > 365:
+                        flags.append(RiskFlag(
+                            code="BOLETO_SEVERELY_OVERDUE",
+                            description=(
+                                f"Boleto vencido há mais de 1 ano "
+                                f"({days_overdue} dias). Altamente suspeito."
+                            ),
+                            severity="critical",
+                            category="date",
+                            evidence=(
+                                f"Due date: {due_date_str}, "
+                                f"{days_overdue} days overdue."
+                            ),
+                        ))
+                    elif days_overdue > 30:
+                        flags.append(RiskFlag(
+                            code="BOLETO_OVERDUE",
+                            description=(
+                                f"Boleto vencido há {days_overdue} dias. "
+                                "Verificar legitimidade."
+                            ),
+                            severity="high",
+                            category="date",
+                            evidence=(
+                                f"Due date: {due_date_str}, "
+                                f"{days_overdue} days overdue."
+                            ),
+                        ))
+                except (ValueError, TypeError):
+                    pass
+
+            # Check for suspiciously round amounts
+            amount = ctx.get("amount") or ctx.get("valor_nominal")
+            if amount is not None and amount >= 100 and amount % 100 == 0:
+                flags.append(RiskFlag(
+                    code="BOLETO_ROUND_AMOUNT",
+                    description=(
+                        f"Valor do boleto (R$ {amount:,.2f}) é redondo — "
+                        "comum em boletos fraudulentos sem serviço discriminado."
+                    ),
+                    severity="medium",
+                    category="financial",
+                    evidence=f"Amount: R$ {amount:,.2f}",
                 ))
 
         return flags
@@ -359,7 +428,10 @@ class RiskAnalyzer:
     # ── Scoring ──
 
     def _calculate_score(self, flags: list[RiskFlag]) -> float:
-        """Calculate risk score from flags with severity-weighted accumulation."""
+        """Calculate risk score from flags with severity-weighted accumulation.
+
+        Uses calibrated weights that ensure fraud signals aren't buried.
+        """
         if not flags:
             return 0.0
 
@@ -367,14 +439,24 @@ class RiskAnalyzer:
         for flag in flags:
             total += self.SEVERITY_WEIGHTS.get(flag.severity, 1)
 
+        # Count critical flags — each additional critical adds a multiplier
+        critical_count = sum(1 for f in flags if f.severity == "critical")
+        if critical_count >= 2:
+            # Multiple criticals → compound effect
+            total *= 1.5
+
         # Cap at 100
         return min(100.0, total)
 
     def _classify_level(self, score: float) -> str:
-        if score >= 76:
-            return "CRITICAL"
-        elif score >= 51:
+        """Calibrated thresholds for fraud detection (skeptical bias).
+
+        LOW:    0-39  — No critical indicators
+        MEDIUM: 40-69 — At least one concerning indicator
+        HIGH:   70+   — Multiple indicators or one CRITICAL
+        """
+        if score >= 70:
             return "HIGH"
-        elif score >= 26:
+        elif score >= 40:
             return "MEDIUM"
         return "LOW"

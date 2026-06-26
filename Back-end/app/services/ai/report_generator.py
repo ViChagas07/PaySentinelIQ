@@ -90,7 +90,7 @@ class ReportGenerator:
             risk_score=risk_assessment.risk_score,
             risk_level=risk_assessment.risk_level,
             confidence=0.85,  # deterministic engine confidence
-            requires_manual_review=risk_assessment.risk_level in ("HIGH", "CRITICAL"),
+            requires_manual_review=risk_assessment.risk_level in ("HIGH", "MEDIUM"),
         )
 
         # Build findings from risk flags
@@ -206,6 +206,9 @@ class ReportGenerator:
             "DATE_ANOMALY": "Creation/modification timestamps are inconsistent. Document may have been altered after creation.",
             "DATE_PARSE_ERROR": "Date format is unrecognized. Manually verify all date fields on the document.",
             "INSS_UNUSUALLY_HIGH": "INSS exceeds legal maximum rate. Verify calculation against 2025 INSS progressive table.",
+            "BOLETO_OVERDUE": "Boleto is past due date. Verify if payment is still expected. Contact issuer to confirm.",
+            "BOLETO_SEVERELY_OVERDUE": "Boleto is over 1 year overdue. This is a strong fraud indicator. REJECT payment.",
+            "BOLETO_ROUND_AMOUNT": "Suspiciously round amount without service details — common in fake boletos. Request invoice with service description.",
         }
 
         return recommendations.get(code, "Manual review recommended for this finding.")
@@ -242,9 +245,11 @@ class ReportGenerator:
             if rec and rec not in recs:
                 recs.append(rec)
 
-        if assessment.risk_level in ("CRITICAL", "HIGH"):
+        if assessment.risk_level in ("HIGH",):
             recs.insert(0, "ESCALATE to senior fraud analyst for immediate review.")
             recs.insert(1, "Block any associated payments pending investigation.")
+        elif assessment.risk_level in ("MEDIUM",):
+            recs.insert(0, "MANUAL REVIEW required — verify document before processing.")
 
         if not recs:
             recs.append("No specific actions required. Document passed automated checks.")

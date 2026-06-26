@@ -539,12 +539,20 @@ class FraudDetectionPipeline:
         )
 
     def _validate_boleto(self, data: dict[str, Any], anomalies: list[Anomaly]) -> dict[str, Any]:
-        """Boleto structural validation sub-pipeline."""
+        """Boleto structural validation sub-pipeline.
+
+        CAUSA 2 FIX (2025-06-25): Expanded with deterministic checks for
+        invalid CNPJ patterns, illegal fees, round amounts, and enhanced
+        overdue detection via raw text when available.
+        """
         extracted: dict[str, Any] = {}
 
         linha = data.get("linha_digitavel", "")
         barcode_val = data.get("barcode_value", "")
         qr_payload = data.get("qr_code_payload", "")
+        raw_text = data.get("ocr_text", data.get("raw_text", ""))
+        cnpj = data.get("cnpj", "")
+        beneficiario = data.get("beneficiario", data.get("beneficiary_name", ""))
 
         # Validate linha digitável
         if linha:
@@ -575,7 +583,10 @@ class FraudDetectionPipeline:
                         Anomaly(
                             severity=Severity.CRITICAL,
                             category="structural",
-                            description=bank_result.get("error", "Código de banco inválido"),
+                            description=(
+                                f"Código de banco {banco} não existe no BACEN. "
+                                "Boleto possivelmente fraudulento."
+                            ),
                             evidence=bank_result.get("evidence", ""),
                             confidence=100,
                             stage_detected="Stage 4",
@@ -590,22 +601,94 @@ class FraudDetectionPipeline:
 
             # Check if overdue
             if bc_result.get("is_overdue"):
+                overdue_days = bc_result.get("dias_vencido", 0)
+                severity = Severity.CRITICAL if overdue_days > 365 else Severity.HIGH
                 anomalies.append(
                     Anomaly(
-                        severity=Severity.HIGH,
+                        severity=severity,
                         category="temporal",
                         description=(
-                            "Pagamento vencido! "
+                            f"Boleto vencido há {overdue_days} dias! "
                             f"Data de vencimento: {bc_result.get('vencimento_estimado', 'N/A')}. "
-                            "Selecione um boleto cujo prazo esteja em andamento."
+                            "Altamente suspeito se vencido há mais de 30 dias."
                         ),
                         evidence=(
                             f"Vencimento: {bc_result.get('vencimento_estimado')} | "
-                            f"Valor: {bc_result.get('valor_formatado', 'N/A')}"
+                            f"Valor: {bc_result.get('valor_formatado', 'N/A')} | "
+                            f"Dias vencido: {overdue_days}"
                         ),
                         confidence=100,
                         stage_detected="Stage 4",
                         tool_used="barcode_decoder",
+                    )
+                )
+
+        # ── NEW: CNPJ pattern validation (deterministic) ──
+        if cnpj:
+            import re as re_cnpj
+            digits = re_cnpj.sub(r"\D", "", cnpj)
+            known_invalid = {
+                "00000000000000", "11111111111111", "22222222222222",
+                "33333333333333", "44444444444444", "55555555555555",
+                "66666666666666", "77777777777777", "88888888888888",
+                "99999999999999", "00000010000199",
+            }
+            if digits in known_invalid:
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity.CRITICAL,
+                        category="structural",
+                        description=f"CNPJ {cnpj} possui padrão inválido (todos dígitos iguais ou sequência falsa comum).",
+                        evidence=f"CNPJ: {cnpj} — padrão inválido detectado deterministicamente.",
+                        confidence=100,
+                        stage_detected="Stage 4",
+                        tool_used="cnpj_pattern_validator",
+                    )
+                )
+
+        # ── NEW: Suspicious round amounts ──
+        valor = data.get("valor_nominal", data.get("amount", 0))
+        if isinstance(valor, (int, float)) and valor >= 100 and valor % 100 == 0:
+            anomalies.append(
+                Anomaly(
+                    severity=Severity.MEDIUM,
+                    category="financial",
+                    description=(
+                        f"Valor do boleto (R$ {valor:,.2f}) é redondo — "
+                        "comum em boletos fraudulentos sem serviço discriminado."
+                    ),
+                    evidence=f"Valor: R$ {valor:,.2f} (múltiplo exato de 100)",
+                    confidence=70,
+                    stage_detected="Stage 4",
+                    tool_used="amount_pattern_analyzer",
+                )
+            )
+
+        # ── NEW: Generic/suspicious beneficiary name ──
+        if beneficiario:
+            generic_names = [
+                "soluções", "serviços", "consultoria", "digital", "tecnologia",
+                "comércio", "administração", "gestão", "global", "brasil",
+                "nacional", "internacional", "master", "gold", "premium",
+                "ltda", "mei", "eireli",
+            ]
+            beneficiario_lower = beneficiario.lower()
+            generic_count = sum(
+                1 for name in generic_names if name in beneficiario_lower
+            )
+            if generic_count >= 2 and len(beneficiario) < 30:
+                anomalies.append(
+                    Anomaly(
+                        severity=Severity.MEDIUM,
+                        category="entity",
+                        description=(
+                            f"Razão social do beneficiário '{beneficiario}' "
+                            "é genérica — possível empresa fantasma."
+                        ),
+                        evidence=f"Beneficiário: {beneficiario} — contém termos genéricos.",
+                        confidence=60,
+                        stage_detected="Stage 4",
+                        tool_used="beneficiary_name_analyzer",
                     )
                 )
 
@@ -998,12 +1081,12 @@ class FraudDetectionPipeline:
         Aggregate all anomaly signals into a composite fraud risk score (0-100).
         Uses severity-weighted scoring with stage multipliers.
 
-        Scoring model:
-        - CRITICAL anomaly:  +25 base points
-        - HIGH anomaly:       +15 base points
-        - MEDIUM anomaly:     +8 base points
-        - LOW anomaly:        +3 base points
-        - INFO anomaly:       +1 base point
+        Scoring model (CALIBRATED 2025-06-25):
+        - CRITICAL anomaly:  +35 base points (single critical → immediate HIGH)
+        - HIGH anomaly:       +20 base points
+        - MEDIUM anomaly:     +10 base points (two mediums → MEDIUM range)
+        - LOW anomaly:        +5 base points
+        - INFO anomaly:       +2 base points
 
         Stage multipliers:
         - Stage 4 (Structural): 1.5x (mathematical certainty)
@@ -1017,11 +1100,11 @@ class FraudDetectionPipeline:
             all_anomalies.extend(stage.anomalies)
 
         severity_weights = {
-            Severity.CRITICAL: 25,
-            Severity.HIGH: 15,
-            Severity.MEDIUM: 8,
-            Severity.LOW: 3,
-            Severity.INFO: 1,
+            Severity.CRITICAL: 35,   # Was 25 — single critical now pushes to HIGH
+            Severity.HIGH: 20,       # Was 15
+            Severity.MEDIUM: 10,     # Was 8  — two mediums = 20, enough for attention
+            Severity.LOW: 5,         # Was 3
+            Severity.INFO: 2,        # Was 1
         }
 
         stage_multipliers = {
@@ -1042,17 +1125,14 @@ class FraudDetectionPipeline:
         # Cap at 100
         total_score = min(total_score, 100.0)
 
-        # Classification
-        if total_score >= 86:
-            classification = RiskLevel.CRITICAL
-            action = "ESCALATE"
-        elif total_score >= 66:
+        # Classification (CALIBRATED 2025-06-25 for fraud detection skeptical bias)
+        if total_score >= 70:
             classification = RiskLevel.HIGH
             action = "REJECT"
-        elif total_score >= 36:
+        elif total_score >= 40:
             classification = RiskLevel.MEDIUM
             action = "MANUAL_REVIEW"
-        elif total_score >= 16:
+        elif total_score >= 15:
             classification = RiskLevel.LOW
             action = "MANUAL_REVIEW"
         else:

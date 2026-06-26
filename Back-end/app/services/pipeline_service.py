@@ -1,6 +1,12 @@
 # ============================================================
 # PaySentinelIQ — Document Analysis Pipeline Service
-# Orchestrates: S3 → OCR → BrasilAPI → Risk → LLM → Report.
+# Orchestrates: S3 → OCR → BrasilAPI → Risk → BoletoPipeline → LLM → Report.
+# ============================================================
+# CAUSA 2 FIX (2025-06-25): Added 4-stage boleto analysis pipeline
+# between risk analysis and copilot for boleto-type documents.
+# This replaces the single generic LLM call with a calibrated
+# multi-stage pipeline combining deterministic rules + LLM semantic
+# analysis + FEBRABAN checksum validation.
 # ============================================================
 
 from __future__ import annotations
@@ -31,14 +37,15 @@ class DocumentPipelineService:
         1. Validate file (type, size)
         2. Upload to S3
         3. Download from S3 → temp file
-        4. OCR extraction (Tesseract)
+        4. OCR extraction (Tesseract with robust text extraction)
         5. Structured field extraction (CNPJ, amounts, dates...)
         6. BrasilAPI enrichment (if CNPJ found)
         7. Deterministic risk analysis
-        8. LLM copilot enhancement (optional)
-        9. Professional report generation
-        10. Report saved to S3
-        11. Cleanup temp files
+        8. [NEW] 4-Stage Boleto Pipeline (if document is boleto)
+        9. LLM copilot enhancement (optional)
+        10. Professional report generation
+        11. Report saved to S3
+        12. Cleanup temp files
     """
 
     def __init__(
@@ -171,6 +178,63 @@ class DocumentPipelineService:
                     for f in risk_assessment.flags
                 ],
             }
+
+            # ── Stage 6B: 4-Stage Boleto Pipeline (if document is boleto) ──
+            # CAUSA 2 FIX: Replaces single generic LLM call with calibrated
+            # 4-stage pipeline for boleto fraud detection.
+            doc_type = extra_context.get("document_type", "").lower() if extra_context else ""
+            is_boleto = (
+                doc_type == "boleto"
+                or context_data.get("linha_digitavel")
+                or ocr_result.full_text
+                and any(
+                    term in ocr_result.full_text.lower()
+                    for term in ["boleto", "linha digitável", "código de barras",
+                                 "vencimento", "cedente", "sacado"]
+                )
+            )
+            if is_boleto:
+                try:
+                    from app.services.ai.boleto_analyzer import analyze_boleto_pipeline
+                    # Use the raw OCR text for the boleto pipeline
+                    boleto_text = ocr_result.full_text
+                    # Pass LLM generate function if copilot is available
+                    llm_fn = None
+                    if self._copilot and self._copilot.llm_available:
+                        async def _llm_generate(prompt: str) -> str:
+                            return await self._copilot._call_llm([
+                                {"role": "user", "content": prompt}
+                            ])
+                        llm_fn = _llm_generate
+
+                    boleto_analysis = await analyze_boleto_pipeline(boleto_text, llm_fn)
+                    result["stages"]["boleto_pipeline"] = {
+                        "status": "completed",
+                        "risk_score": boleto_analysis["risk_score"],
+                        "risk_level": boleto_analysis["risk_level"],
+                        "fraud_probability": boleto_analysis["fraud_probability"],
+                        "is_fraudulent": boleto_analysis["is_fraudulent"],
+                        "total_indicators": boleto_analysis["total_indicators"],
+                        "fraud_indicators": boleto_analysis["fraud_indicators"],
+                        "recommendation": boleto_analysis["recommendation"],
+                        "stage_details": boleto_analysis["stage_details"],
+                    }
+                    # Override risk score with boleto pipeline result
+                    # (more accurate than generic risk analyzer for boletos)
+                    risk_assessment.risk_score = boleto_analysis["risk_score"]
+                    risk_assessment.risk_level = boleto_analysis["risk_level"]
+                    logger.info(
+                        "Boleto pipeline: score=%d level=%s indicators=%d",
+                        boleto_analysis["risk_score"],
+                        boleto_analysis["risk_level"],
+                        boleto_analysis["total_indicators"],
+                    )
+                except Exception as e:
+                    logger.warning("Boleto pipeline failed, using generic analysis: %s", e)
+                    result["stages"]["boleto_pipeline"] = {
+                        "status": "skipped",
+                        "reason": str(e),
+                    }
 
             # ── Stage 7: LLM Copilot (if available) ──
             if self._copilot and self._copilot.llm_available:

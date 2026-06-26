@@ -41,7 +41,10 @@ dependencies = [
     "google-auth (>=2.53.0,<3.0.0)",
     "pytesseract>=0.3.10",
     "Pillow>=10.0.0",
-    "pdf2image>=1.16.0"
+    "pdf2image>=1.16.0",
+    "pymupdf>=1.23.0",
+    "pdfplumber>=0.10.0",
+    "pypdf>=4.0.0"
 ]
 
 

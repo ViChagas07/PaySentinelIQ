@@ -7,7 +7,13 @@ from app.services.ai.fraud_copilot import FraudCopilot, FraudCopilotConfig
 from app.services.ai.context_builder import ContextBuilder, FraudAnalysisContext
 from app.services.ai.risk_analyzer import RiskAnalyzer, RiskFlag, RiskAssessment
 from app.services.ai.report_generator import ReportGenerator, InvestigationReport
-from app.services.ai.prompts import COPILOT_SYSTEM_PROMPT, REPORT_SYSTEM_PROMPT, EXPLAIN_SYSTEM_PROMPT
+from app.services.ai.prompts import (
+    COPILOT_SYSTEM_PROMPT,
+    REPORT_SYSTEM_PROMPT,
+    EXPLAIN_SYSTEM_PROMPT,
+    BOLETO_FRAUD_SYSTEM_PROMPT,
+)
+from app.services.ai.boleto_analyzer import analyze_boleto_pipeline
 
 __all__ = [
     "FraudCopilot",
@@ -22,4 +28,6 @@ __all__ = [
     "COPILOT_SYSTEM_PROMPT",
     "REPORT_SYSTEM_PROMPT",
     "EXPLAIN_SYSTEM_PROMPT",
+    "BOLETO_FRAUD_SYSTEM_PROMPT",
+    "analyze_boleto_pipeline",
 ]

@@ -139,7 +139,82 @@ class TesseractOCRProvider(OCRProvider):
     # ── Private: PDF Processing ──
 
     async def _process_pdf(self, file_path: str) -> OCRResult:
-        """Convert PDF pages to images, then OCR each page."""
+        """Extract text from PDF using multi-method approach.
+
+        Strategy:
+            1. Try robust text extraction first (PyMuPDF → pdfplumber → pypdf)
+               — this is faster and more accurate for text-based PDFs
+            2. If text extraction yields meaningful result, use it directly
+            3. If text extraction fails or returns near-empty text,
+               fall back to image-based OCR (Tesseract via pdf2image)
+
+        This dual approach eliminates the false-negative root cause
+        where canvas-generated PDFs (ReportLab, iText) produce garbled
+        or empty text with simple extractors.
+        """
+        start_time = time.monotonic()
+
+        # ── Phase 1: Try robust text extraction ──
+        extracted_text = ""
+        text_method = "none"
+        try:
+            with open(file_path, "rb") as f:
+                pdf_bytes = f.read()
+
+            from app.services.ocr.pdf_text_extractor import (
+                extract_pdf_text_robust,
+                is_text_extraction_viable,
+            )
+
+            if is_text_extraction_viable(pdf_bytes):
+                extracted_text = extract_pdf_text_robust(pdf_bytes)
+                text_method = "robust_text_extraction"
+                logger.info(
+                    "Robust text extraction succeeded: %d chars via %s",
+                    len(extracted_text),
+                    text_method,
+                )
+        except Exception as e:
+            logger.info(
+                "Robust text extraction not viable, falling back to OCR: %s", e
+            )
+
+        # ── Phase 2: If text extraction worked, use it ──
+        # Threshold: at least 50 word characters = meaningful content
+        word_chars = sum(1 for c in extracted_text if c.isalnum())
+        if word_chars >= 50:
+            elapsed = round(time.monotonic() - start_time, 2)
+            page_result = OCRPageResult(
+                page_number=1,
+                text=extracted_text.strip(),
+                confidence=0.98,  # Text extraction is highly reliable
+            )
+            logger.info(
+                "Using text-extracted content (%d chars, %d word chars) — "
+                "skipping image-based OCR. Saved time.",
+                len(extracted_text),
+                word_chars,
+            )
+            return OCRResult(
+                text=extracted_text.strip(),
+                pages=[page_result],
+                confidence=0.98,
+                provider="tesseract",
+                processing_time_seconds=elapsed,
+                metadata={
+                    "extraction_method": text_method,
+                    "ocr_skipped": "true",
+                    "language": self._language,
+                },
+            )
+
+        # ── Phase 3: Fall back to image-based OCR ──
+        logger.info(
+            "Text extraction insufficient (%d word chars), "
+            "falling back to image-based OCR",
+            word_chars,
+        )
+
         if not HAS_PDF2IMAGE:
             raise PDFConversionException(
                 "pdf2image is not installed. Install it with: pip install pdf2image",
