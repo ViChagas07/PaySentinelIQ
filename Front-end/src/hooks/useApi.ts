@@ -129,7 +129,7 @@ export function useFraudAlert(id: string) {
   });
 }
 
-export function useFraudAlertStats() {
+export function useFraudAlertStats(enabled = true) {
   return useQuery({
     queryKey: queryKeys.fraudAlerts.stats,
     queryFn: () => api.get<{
@@ -140,7 +140,8 @@ export function useFraudAlertStats() {
       confirmed: number;
       resolved: number;
     }>("/fraud-alerts/stats"),
-    refetchInterval: 30_000, // Refetch every 30s for real-time feel
+    refetchInterval: 30_000,
+    enabled,
   });
 }
 

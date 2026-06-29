@@ -29,6 +29,7 @@ import {
   useFraudAlertStats,
   useAnalysisStats,
 } from "@/hooks/useApi";
+import { useAuthStore } from "@/stores";
 import { useMemo } from "react";
 
 function EmptySection({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
@@ -94,12 +95,14 @@ const KPI_ICONS = [FileText, AlertTriangle, BarChart3, DollarSign, Clock, CheckC
 
 export default function ReportsPage() {
   const t = useTranslations("reports");
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const { data: kpis, isLoading: kpisLoading, isError: kpisError } = useDashboardKpis();
-  const { data: trends, isLoading: trendsLoading } = useDashboardTrends();
-  const { data: riskDistribution, isLoading: riskLoading } = useDashboardRiskDistribution();
-  const { data: alertStats, isLoading: alertStatsLoading } = useFraudAlertStats();
-  const { data: analysisStats } = useAnalysisStats();
+  // Only fetch when authenticated (prevents 401 errors on page load)
+  const { data: kpis, isLoading: kpisLoading, isError: kpisError } = useDashboardKpis(isAuthenticated);
+  const { data: trends, isLoading: trendsLoading } = useDashboardTrends(isAuthenticated);
+  const { data: riskDistribution, isLoading: riskLoading } = useDashboardRiskDistribution(isAuthenticated);
+  const { data: alertStats, isLoading: alertStatsLoading } = useFraudAlertStats(isAuthenticated);
+  const { data: analysisStats } = useAnalysisStats(isAuthenticated);
 
   const hasData = useMemo(() => {
     const fromKpis = !!kpis && kpis.payrolls_processed > 0;
@@ -169,17 +172,26 @@ export default function ReportsPage() {
               </motion.div>
             ))
           : kpisError
-            ? <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                <div className="mb-3 rounded-2xl bg-psi-fraud/10 p-4 ring-1 ring-psi-fraud/20">
-                  <AlertTriangle className="h-8 w-8 text-psi-fraud/60" />
-                </div>
-                <h3 className="text-base font-semibold text-psi-text-primary mb-1">
-                  {t("errorLoadingKpis") || "Unable to load KPIs"}
-                </h3>
-                <p className="text-sm text-psi-text-secondary max-w-md">
-                  {t("errorLoadingDescription") || "There was a problem fetching your dashboard data. Please try again later."}
-                </p>
-              </div>
+            ? (
+              // Show KPIs with zeros instead of error — user may have no activity yet
+              (([
+                { value: (analysisStats?.total_documents || 0).toLocaleString(), subtext: t("totalDocuments") || "total documents" },
+                { value: (analysisStats?.fraudulent_count || 0).toLocaleString(), subtext: `0% ${t("rate") || "rate"}` },
+                { value: `${analysisStats?.avg_confidence_score ? (analysisStats.avg_confidence_score * 100).toFixed(0) : 0}%`, subtext: t("confidenceScore") || "confidence score" },
+                { value: `R$ ${(analysisStats?.losses_prevented || 0).toLocaleString()}`, subtext: t("lossesPrevented") || "losses prevented" },
+                { value: (analysisStats?.high_risk_count || 0).toLocaleString(), subtext: t("highRiskDocuments") || "high risk documents" },
+                { value: `${analysisStats?.pass_rate || 0}%`, subtext: t("successRate") || "success rate" },
+              ] as { value: string; subtext: string }[]).map((item, i) => (
+                <KpiCard
+                  key={i}
+                  label={t(`kpiLabels.${KPI_LABELS[i]}` as any) || KPI_LABELS[i]}
+                  value={item.value}
+                  subtext={item.subtext}
+                  icon={KPI_ICONS[i]}
+                  delay={0.1 * i}
+                />
+              ))
+            )
             : kpis
               ? ([
                   { value: ((kpis.payrolls_processed || 0) + (analysisStats?.total_documents || 0)).toLocaleString(), subtext: t("totalDocuments") || "total documents" },
