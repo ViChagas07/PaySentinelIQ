@@ -73,25 +73,29 @@ export default function AnalyzeBankSlipPage() {
 
         for (const file of doneFiles) {
             try {
-                const payload: any = {
-                    document_id: file.id,
-                    document_type: "boleto",
-                };
+                // Build multipart form data with the actual PDF file
+                const formData = new FormData();
+                if (file.file) {
+                    formData.append("file", file.file, file.name);
+                }
+                formData.append("document_type", "boleto");
 
-                // Map extra info fields to backend field names
-                if (extraInfo.companyName) payload.razao_social = extraInfo.companyName;
-                // Also send companyName as cnpj if it looks like a CNPJ
-                if (extraInfo.companyName && /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{14}/.test(extraInfo.companyName)) {
-                    payload.cnpj = extraInfo.companyName;
+                // Also send structured fields for enhanced analysis
+                if (extraInfo.companyName) {
+                    formData.append("observations", extraInfo.companyName);
+                    // Also detect CNPJ pattern
+                    if (/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{14}/.test(extraInfo.companyName)) {
+                        formData.append("cnpj", extraInfo.companyName);
+                    }
                 }
                 if (extraInfo.expectedAmount) {
-                    const amt = parseFloat(extraInfo.expectedAmount);
-                    if (!isNaN(amt)) payload.valor_nominal = amt;
+                    formData.append("expected_amount", extraInfo.expectedAmount);
                 }
-                if (extraInfo.recipientName) payload.beneficiario = extraInfo.recipientName;
-                if (extraInfo.suspiciousObservations) payload.linha_digitavel = extraInfo.suspiciousObservations;
+                if (extraInfo.suspiciousObservations) {
+                    formData.append("observations", (formData.get("observations") as string || "") + " | " + extraInfo.suspiciousObservations);
+                }
 
-                const report = await analyzeMutation.mutateAsync(payload);
+                const report = await analyzeMutation.mutateAsync(formData);
                 const result = mapPSIReportToAnalysisResult(report, file.name, "bank-slip", locale);
                 newResults.push(result);
 

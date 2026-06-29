@@ -27,6 +27,8 @@ export interface UploadedFile {
   progress: number;
   status: "pending" | "uploading" | "done" | "error";
   preview?: string;
+  /** The actual File object — needed for multipart upload to analysis endpoint. */
+  file?: File;
 }
 
 export interface AnalysisResult {

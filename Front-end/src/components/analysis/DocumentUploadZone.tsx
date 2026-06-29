@@ -74,6 +74,7 @@ export function DocumentUploadZone() {
           type: file.type,
           progress: 0,
           status: "pending",
+          file,  // Preserve the actual File object for multipart upload
         };
         addFile(uploaded);
 

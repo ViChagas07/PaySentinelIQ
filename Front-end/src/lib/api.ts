@@ -210,6 +210,24 @@ export const api = {
   post: <T>(path: string, body?: unknown, timeoutMs?: number) =>
     apiRequest<T>(path, { method: "POST", body, timeoutMs }),
 
+  /** Multipart file upload — sends FormData without JSON Content-Type header. */
+  upload: async <T>(path: string, formData: FormData, timeoutMs?: number): Promise<T> => {
+    const token = useAuthStore.getState().token;
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+    const base = API_BASE_URL;
+    if (!base) throw new Error("API_BASE_URL not configured");
+    const url = `${base}${path}`;
+    const timeout = timeoutMs ?? 120_000;
+    const signal = AbortSignal.timeout(timeout);
+    const res = await fetch(url, { method: "POST", headers, body: formData, signal, credentials: "include" });
+    if (!res.ok) {
+      let err: any;
+      try { err = await res.json(); } catch { err = {}; }
+      throw new ApiClientError(res.status, err?.code || "UPLOAD_ERROR", err?.message || "Upload failed", err?.details);
+    }
+    return res.json() as Promise<T>;
+  },
+
   put: <T>(path: string, body?: unknown, timeoutMs?: number) =>
     apiRequest<T>(path, { method: "PUT", body, timeoutMs }),
 

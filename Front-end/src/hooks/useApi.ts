@@ -560,26 +560,14 @@ export function useUpdateReminderPreferences() {
 
 export function useAnalyzeDocument() {
   return useMutation({
-    mutationFn: (payload: {
-      document_id?: string;
-      document_type: string;
-      salario_bruto?: number;
-      inss?: number;
-      irrf?: number;
-      fgts?: number;
-      liquido?: number;
-      cargo?: string;
-      cbo?: string;
-      cnpj?: string;
-      razao_social?: string;
-      cnae?: string;
-      linha_digitavel?: string;
-      qr_code_payload?: string;
-      valor_nominal?: number;
-      beneficiario?: string;
-      ocr_text?: string;     // Raw extracted text for boleto deep analysis
-      raw_text?: string;     // Alternative field name
-    }) => api.post<any>("/fraud-alerts/analyze", payload),
+    mutationFn: (payload: FormData | Record<string, unknown>) => {
+      // Use canonical multipart endpoint when FormData (has actual PDF file)
+      if (payload instanceof FormData) {
+        return api.upload<any>("/documents/analyze", payload);
+      }
+      // Fallback: structured JSON (legacy)
+      return api.post<any>("/fraud-alerts/analyze", payload);
+    },
   });
 }
 
