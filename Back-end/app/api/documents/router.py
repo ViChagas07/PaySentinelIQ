@@ -91,12 +91,14 @@ async def _run_canonical(
     result = pipeline.execute(ctx)
     elapsed = time.monotonic() - t0
 
+    # ── Persist document + fraud alert (if HIGH risk) ──
+    await _persist_analysis(ctx, result, document_id, tenant_id)
+
     # ── Shadow mode ──
     settings = get_settings()
     if getattr(settings, "ENABLE_SHADOW_PIPELINE", False):
         try:
             from app.services.pipeline.shadow_runner import ShadowRunner
-            # Legacy path: use existing pipeline service for comparison
             legacy_result = await _run_legacy_internal(
                 file_data, document_type, document_id, file_name, mime_type, tenant_id, observations
             )
@@ -110,11 +112,118 @@ async def _run_canonical(
         except Exception as e:
             logger.warning("Shadow mode failed: %s", e)
 
-    # ── Build response ──
+    # ── Build response with extracted metadata ──
     response = result.to_dict()
     response["document_id"] = document_id
     response["processing_time_seconds"] = round(elapsed, 2)
+    response["extracted_metadata"] = _build_extracted_metadata(ctx)
     return response
+
+
+async def _persist_analysis(
+    ctx, result, document_id: str, tenant_id: str,
+) -> None:
+    """Persist document record and fraud alert to database."""
+    import uuid as _uuid
+    from app.shared.database import get_engine
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from app.shared.orm_models import DocumentModel, FraudAlertModel
+
+    try:
+        engine = get_engine()
+        async with AsyncSession(engine) as db:
+            # Create document record
+            doc = DocumentModel(
+                id=_uuid.UUID(document_id),
+                tenant_id=_uuid.UUID(tenant_id),
+                filename=ctx.filename or "document.pdf",
+                file_type=ctx.mime_type or "application/pdf",
+                file_size=len(ctx.file_bytes),
+                document_type=ctx.document_type,
+            )
+            db.add(doc)
+            await db.flush()
+
+            # If HIGH risk, create fraud alert with extracted metadata
+            if result.risk_score >= 70:
+                flagged = []
+                for e in result.evidence:
+                    flagged.append({
+                        "field_name": e.code,
+                        "detected_value": e.description[:200],
+                        "confidence": e.confidence * 100,
+                        "explanation": f"[{e.severity.value.upper()}] {e.source.value}: {e.description[:300]}",
+                    })
+                fields = ctx.extracted_fields
+                if fields.get("data_vencimento") or fields.get("dates"):
+                    flagged.append({
+                        "field_name": "data_vencimento",
+                        "detected_value": str(fields.get("data_vencimento") or (fields.get("dates", [None])[0] if fields.get("dates") else "N/A")),
+                        "confidence": 90,
+                        "explanation": "Data de vencimento extraida do documento",
+                    })
+                if fields.get("beneficiario"):
+                    flagged.append({
+                        "field_name": "beneficiario",
+                        "detected_value": str(fields.get("beneficiario")),
+                        "confidence": 85,
+                        "explanation": "Nome do beneficiario/emissor extraido do documento",
+                    })
+                if fields.get("cnpj"):
+                    flagged.append({
+                        "field_name": "cnpj",
+                        "detected_value": str(fields.get("cnpj")),
+                        "confidence": 90,
+                        "explanation": "CNPJ do emissor extraido do documento",
+                    })
+                if fields.get("valor_nominal") or fields.get("amounts"):
+                    flagged.append({
+                        "field_name": "valor",
+                        "detected_value": str(fields.get("valor_nominal") or (fields.get("amounts", [0])[0] if fields.get("amounts") else "N/A")),
+                        "confidence": 95,
+                        "explanation": "Valor do documento extraido",
+                    })
+                if fields.get("codigo_banco") or ctx.extracted_text:
+                    flagged.append({
+                        "field_name": "banco_emissor",
+                        "detected_value": str(fields.get("codigo_banco") or "N/A"),
+                        "confidence": 85,
+                        "explanation": "Codigo do banco emissor extraido do documento",
+                    })
+
+                alert = FraudAlertModel(
+                    tenant_id=_uuid.UUID(tenant_id),
+                    document_id=_uuid.UUID(document_id),
+                    risk_level=result.risk_level.lower(),
+                    risk_score=result.risk_score,
+                    ai_confidence=result.confidence,
+                    anomaly_category="document_fraud",
+                    description=f"Documento {ctx.document_type} classificado como {result.risk_level} (score: {result.risk_score:.0f}/100)",
+                    ai_explanation=result.reasoning_summary or "Analise deterministica detectou multiplas evidencias de fraude",
+                    flagged_fields=flagged,
+                    status="new",
+                )
+                db.add(alert)
+                logger.info("Fraud alert created: doc=%s score=%.0f level=%s", document_id[:8], result.risk_score, result.risk_level)
+
+            await db.commit()
+    except Exception as e:
+        logger.warning("Failed to persist fraud alert (non-fatal): %s", e)
+
+
+def _build_extracted_metadata(ctx) -> dict:
+    """Build extracted metadata for the frontend."""
+    fields = ctx.extracted_fields
+    return {
+        "due_date": str(fields.get("data_vencimento") or (fields.get("dates", [None])[0] if fields.get("dates") else None) or ""),
+        "issuer": str(fields.get("beneficiario") or fields.get("razao_social") or ""),
+        "cnpj": str(fields.get("cnpj") or ""),
+        "amount": str(fields.get("valor_nominal") or (fields.get("amounts", [None])[0] if fields.get("amounts") else "") or ""),
+        "bank_code": str(fields.get("codigo_banco") or ""),
+        "linha_digitavel": str(fields.get("linha_digitavel") or ""),
+        "document_type": ctx.document_type,
+        "file_name": ctx.filename,
+    }
 
 
 async def _run_legacy(
