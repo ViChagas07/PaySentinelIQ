@@ -124,6 +124,26 @@ async def _background_run_migrations() -> None:
             await conn.execute(text(
                 "CREATE INDEX IF NOT EXISTS ix_analysis_status ON analysis_records(status)"
             ))
+            # Ensure notifications table exists
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    created_at TIMESTAMPTZ DEFAULT now(),
+                    updated_at TIMESTAMPTZ DEFAULT now(),
+                    user_id UUID NOT NULL,
+                    tenant_id UUID NOT NULL,
+                    type VARCHAR(50) NOT NULL DEFAULT 'system',
+                    title VARCHAR(300) NOT NULL DEFAULT '',
+                    message TEXT NOT NULL DEFAULT '',
+                    severity VARCHAR(20) NOT NULL DEFAULT 'normal',
+                    is_read BOOLEAN NOT NULL DEFAULT false,
+                    action_url VARCHAR(500),
+                    metadata_ JSONB DEFAULT '{}'
+                )
+            """))
+            await conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_notifications_user ON notifications(user_id, is_read)"
+            ))
         logger.info("Supabase tables verified/created")
     except Exception as exc:
         logger.warning("Table creation skipped (non-fatal): %s", exc)

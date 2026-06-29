@@ -94,6 +94,9 @@ async def _run_canonical(
     # ── Persist document + fraud alert (if HIGH risk) ──
     await _persist_analysis(ctx, result, document_id, tenant_id)
 
+    # ── Send notification ──
+    await _send_analysis_notification(ctx, result, document_id, tenant_id)
+
     # ── Shadow mode ──
     settings = get_settings()
     if getattr(settings, "ENABLE_SHADOW_PIPELINE", False):
@@ -224,6 +227,53 @@ def _build_extracted_metadata(ctx) -> dict:
         "document_type": ctx.document_type,
         "file_name": ctx.filename,
     }
+
+
+async def _send_analysis_notification(
+    ctx, result, document_id: str, tenant_id: str,
+) -> None:
+    """Push real-time notification via WebSocket when analysis completes."""
+    try:
+        level = result.risk_level
+        score = result.risk_score
+        doc_type = ctx.document_type or "documento"
+
+        if level == "HIGH":
+            title = f"ALERTA: Documento fraudulento detectado ({score:.0f}/100)"
+            msg = f"'{ctx.filename}' — {len(result.evidence)} evidencias. REJEITAR."
+            severity = "critical"
+        elif level == "MEDIUM":
+            title = f"Analise concluida: {level} ({score:.0f}/100)"
+            msg = f"'{ctx.filename}' — Anomalias detectadas. Revisar."
+            severity = "warning"
+        else:
+            title = f"Analise concluida: {level} ({score:.0f}/100)"
+            msg = f"'{ctx.filename}' — Nenhum indicador critico."
+            severity = "normal"
+
+        try:
+            from app.websocket.router import publish_ws_notification
+            await publish_ws_notification({
+                "id": document_id,
+                "tenant_id": tenant_id,
+                "type": "analysis_complete",
+                "title": title,
+                "message": msg,
+                "severity": severity,
+                "action_url": f"/verification-center?document={document_id}",
+                "metadata": {
+                    "document_type": doc_type,
+                    "risk_score": score,
+                    "risk_level": level,
+                    "evidence_count": len(result.evidence),
+                    "file_name": ctx.filename,
+                },
+            })
+            logger.info("Notification sent: doc=%s level=%s", document_id[:8], level)
+        except Exception as e:
+            logger.warning("WS notification failed (non-fatal): %s", e)
+    except Exception as e:
+        logger.warning("Notification dispatch failed: %s", e)
 
 
 async def _run_legacy(
