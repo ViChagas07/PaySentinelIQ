@@ -181,25 +181,49 @@ class ValidateStage(BaseStage):
         pass
 
     def _validate_cnpj(self, ctx: PipelineContext, fields: dict) -> None:
-        """CNPJ/CPF validation."""
+        """CNPJ/CPF validation. Detects all-same-digit, sequential, and known fake patterns."""
         import re
         cnpj = fields.get("cnpj", "")
         if not cnpj:
             return
         digits = re.sub(r"\D", "", cnpj)
+        if len(digits) < 14:
+            return
+
+        # All-same-digit patterns (000...000, 111...111, ..., 999...999)
+        if len(set(digits)) == 1:
+            ctx.add_evidence(Evidence(
+                code="CNPJ_INVALID_PATTERN",
+                description=f"CNPJ {cnpj} possui todos os digitos iguais — invalido",
+                severity=Severity.CRITICAL, source=EvidenceSource.DETERMINISTIC,
+                confidence=1.0, category="entity", rule_reference="Modulo 11 CNPJ",
+            ))
+            return
+
+        # Known fake patterns
         known_invalid = {
-            "00000000000000", "11111111111111", "99999999999999",
-            "00000010000199",
+            "00000010000199", "00000000000199",
+            "12345678901234", "01234567890123",
         }
         if digits in known_invalid:
             ctx.add_evidence(Evidence(
                 code="CNPJ_INVALID_PATTERN",
-                description=f"CNPJ {cnpj} possui padrão inválido (todos dígitos iguais ou sequência falsa)",
-                severity=Severity.CRITICAL,
-                source=EvidenceSource.DETERMINISTIC,
-                confidence=1.0,
-                category="entity",
-                rule_reference="Módulo 11 CNPJ",
+                description=f"CNPJ {cnpj} possui padrao invalido (sequencia falsa conhecida)",
+                severity=Severity.CRITICAL, source=EvidenceSource.DETERMINISTIC,
+                confidence=1.0, category="entity", rule_reference="Modulo 11 CNPJ",
+            ))
+            return
+
+        # Sequential ascending (e.g., 12345678901234, 23456789012345) — CRITICAL fake
+        if any(
+            digits == "".join(str((start + i) % 10) for i in range(14))
+            for start in range(10)
+        ):
+            ctx.add_evidence(Evidence(
+                code="CNPJ_SEQUENTIAL_FAKE",
+                description=f"CNPJ {cnpj} possui sequencia numerica progressiva — padrao falso classico, 100% invalido",
+                severity=Severity.CRITICAL, source=EvidenceSource.DETERMINISTIC,
+                confidence=1.0, category="entity", rule_reference="Modulo 11 CNPJ — checksum impossivel",
             ))
 
     def _validate_dates(self, ctx: PipelineContext, text: str, fields: dict) -> None:
