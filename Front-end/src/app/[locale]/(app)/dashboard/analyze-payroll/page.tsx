@@ -73,20 +73,21 @@ export default function AnalyzePayrollPage() {
 
     for (const file of doneFiles) {
       try {
-        const payload: any = {
-          document_id: file.id,
-          document_type: "contracheque",
-        };
+        // Build multipart form data with the actual PDF file
+        const formData = new FormData();
+        if (file.file) {
+            formData.append("file", file.file, file.name);
+        }
+        formData.append("document_type", "contracheque");
 
         // Map extraInfo fields to backend payload
         if (extraInfo.expectedSalary) {
-          const sal = parseFloat(extraInfo.expectedSalary);
-          if (!isNaN(sal)) payload.salario_bruto = sal;
+          formData.append("salario_bruto", extraInfo.expectedSalary);
         }
-        if (extraInfo.companyName) payload.razao_social = extraInfo.companyName;
-        if (extraInfo.jobPosition) payload.cargo = extraInfo.jobPosition;
+        if (extraInfo.companyName) formData.append("razao_social", extraInfo.companyName);
+        if (extraInfo.jobPosition) formData.append("cargo", extraInfo.jobPosition);
 
-        const report = await analyzeMutation.mutateAsync(payload);
+        const report = await analyzeMutation.mutateAsync(formData);
         const result = mapPSIReportToAnalysisResult(report, file.name, "payroll", locale);
         newResults.push(result);
 
