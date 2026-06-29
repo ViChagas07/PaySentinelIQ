@@ -99,10 +99,10 @@ class FraudCopilotOrchestrator(AIOrchestrationPort):
 class CrewAIOrchestrator(AIOrchestrationPort):
     """Full CrewAI integration. 5 agents: A(Fraud), B(Forensics), C(Compliance), D(Investigator), E(Reviewer).
     A,B,C run in PARALLEL. D and E sequential. All output JSON AgentFinding. Zero score fields."""
-
-    def __init__(self):
+    def __init__(self, knowledge_tool=None):
         self._cb = CircuitBreaker()
         self._llm_available = False
+        self._knowledge_tool = knowledge_tool  # RAG injection
         self._init_llm()
 
     # ── Public ──
@@ -110,8 +110,12 @@ class CrewAIOrchestrator(AIOrchestrationPort):
     async def execute_agents(self, context: PipelineContext) -> CrewResult:
         if not self.is_available():
             return CrewResult()
+
         if self._cb.is_open:
             return CrewResult(agents_failed=5)
+
+        # ── RAG context injection: enrich agent context with knowledge base ──
+        await self._inject_knowledge_context(context)
 
         start = time.monotonic()
         try:
@@ -235,6 +239,19 @@ class CrewAIOrchestrator(AIOrchestrationPort):
 
     # ── Prompt Builder ──
 
+    async def _inject_knowledge_context(self, context: PipelineContext) -> None:
+        """Fetch RAG knowledge and store in pipeline context for agent prompts."""
+        if self._knowledge_tool is None:
+            return
+        try:
+            query = f"{context.document_type or ''} {context.extracted_text[:200]}"
+            results = await self._knowledge_tool.search(query, top_k=5)
+            if results:
+                context.metadata["rag_context"] = results
+                logger.info("RAG context: %d chunks retrieved", len(results))
+        except Exception as e:
+            logger.warning("RAG context failed: %s", e)
+
     def _build_user_prompt(
         self, name: str, ctx: PipelineContext,
         prev: list[AgentFinding] | dict[str, AgentFinding | None] | None = None,
@@ -244,10 +261,23 @@ class CrewAIOrchestrator(AIOrchestrationPort):
             for e in ctx.evidences[:20]
         ) if ctx.evidences else "Nenhuma evidencia deterministica."
 
+        # ── RAG Knowledge Context ──
+        rag_context = ctx.metadata.get("rag_context", [])
+        rag_text = ""
+        if rag_context:
+            rag_items = []
+            for r in rag_context[:5]:
+                rag_items.append(
+                    f"[{r.get('authority', 'N/A')}] {r.get('document_name', 'N/A')} "
+                    f"p.{r.get('page', '?')}: {r.get('excerpt', r.get('text', ''))[:200]}"
+                )
+            rag_text = "CONHECIMENTO OFICIAL RECUPERADO:\n" + "\n".join(rag_items) + "\n\n"
+
         base = (
             f"DOCUMENTO: {ctx.document_type.upper()}\n"
             f"ID: {ctx.document_id}\n"
             f"TEXTO (3000 chars):\n{ctx.extracted_text[:3000]}\n\n"
+            f"{rag_text}"
             f"EVIDENCIAS DETERMINISTICAS:\n{ev_text}\n\n"
             f"CAMPOS: {json.dumps(ctx.extracted_fields, ensure_ascii=False, default=str)[:2000]}\n"
         )

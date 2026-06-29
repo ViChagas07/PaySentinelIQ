@@ -47,6 +47,7 @@ class FusionEngine:
     # ── Source confidence multipliers ──
     SOURCE_MULTIPLIERS: dict[EvidenceSource, float] = {
         EvidenceSource.DETERMINISTIC: 1.5,
+        EvidenceSource.KNOWLEDGE_BASE: 1.3,  # Official knowledge (FEBRABAN, BACEN) via RAG
         EvidenceSource.BRASILAPI: 1.3,
         EvidenceSource.OCR: 1.2,
         EvidenceSource.HEURISTIC: 1.0,

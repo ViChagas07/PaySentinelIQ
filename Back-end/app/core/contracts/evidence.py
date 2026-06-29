@@ -31,9 +31,10 @@ class EvidenceSource(str, Enum):
     """Origin of the evidence — determines trust multiplier in FusionEngine.
 
     Trust hierarchy:
-        deterministic > brasilapi > heuristic > crewai
+        deterministic > knowledge_base > brasilapi > heuristic > crewai
     """
     DETERMINISTIC = "deterministic"    # Mathematical certainty (checksums, modulo 10/11)
+    KNOWLEDGE_BASE = "knowledge_base"  # Official knowledge base (FEBRABAN, BACEN) via RAG
     BRASILAPI = "brasilapi"            # Official government source (Receita Federal)
     HEURISTIC = "heuristic"            # Established heuristics (round amounts, generic names)
     CREWAI = "crewai"                  # AI agent analysis (lower trust weight)
