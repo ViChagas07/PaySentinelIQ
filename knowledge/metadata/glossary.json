@@ -1,0 +1,13 @@
+{
+  "title": "Glossário Antifraude — Termos Técnicos",
+  "filename": "glossary.pdf",
+  "version": "v1",
+  "authority": "PaySentinelIQ",
+  "category": "glossary",
+  "weight": 0.6,
+  "description": "Dicionário completo de termos bancários e de cobrança",
+  "generated_at": "2026-06-29T02:37:37.897498+00:00",
+  "sha256": "4c80a6801b925b485d70900d42ee6b6c1d351c4cb0b77471574eb69edb2f00f4",
+  "file_size": 2575,
+  "output_dir": "pdfs/glossary"
+}

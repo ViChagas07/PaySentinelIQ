@@ -1,0 +1,13 @@
+{
+  "title": "FAQ Antifraude — Perguntas e Respostas",
+  "filename": "antifraud_faq.pdf",
+  "version": "v1",
+  "authority": "PaySentinelIQ",
+  "category": "faq",
+  "weight": 0.7,
+  "description": "Base Q&A para agentes de IA e analistas humanos",
+  "generated_at": "2026-06-29T02:37:37.884916+00:00",
+  "sha256": "4572789a0ef38afcfc0c8b9716802507c035feb66ed4718694a98649414a643e",
+  "file_size": 3085,
+  "output_dir": "pdfs/faq"
+}

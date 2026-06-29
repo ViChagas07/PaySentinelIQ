@@ -1,0 +1,13 @@
+{
+  "title": "Manual FEBRABAN — Boleto Bancário",
+  "filename": "manual_febraban_v1.pdf",
+  "version": "v1",
+  "authority": "FEBRABAN",
+  "category": "febraban",
+  "weight": 1.0,
+  "description": "Referência técnica completa para análise de autenticidade e detecção de fraude em boletos",
+  "generated_at": "2026-06-29T02:37:23.701798+00:00",
+  "sha256": "03dc221e7433d5db62ec6b1ed183537dac1a96678d50b9c8148a7f4650d17f96",
+  "file_size": 9226,
+  "output_dir": "pdfs/febraban"
+}
