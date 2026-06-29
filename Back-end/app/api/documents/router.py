@@ -242,21 +242,24 @@ async def _send_analysis_notification(
             title = f"ALERTA: Documento fraudulento detectado ({score:.0f}/100)"
             msg = f"'{ctx.filename}' — {len(result.evidence)} evidencias. REJEITAR."
             severity = "critical"
+            ntype = "fraud_alert"
         elif level == "MEDIUM":
             title = f"Analise concluida: {level} ({score:.0f}/100)"
             msg = f"'{ctx.filename}' — Anomalias detectadas. Revisar."
             severity = "warning"
+            ntype = "compliance_alert"
         else:
             title = f"Analise concluida: {level} ({score:.0f}/100)"
             msg = f"'{ctx.filename}' — Nenhum indicador critico."
-            severity = "normal"
+            severity = "success"
+            ntype = "verification_complete"
 
         try:
             from app.websocket.router import publish_ws_notification
             await publish_ws_notification({
                 "id": document_id,
                 "tenant_id": tenant_id,
-                "type": "analysis_complete",
+                "type": ntype,
                 "title": title,
                 "message": msg,
                 "severity": severity,
