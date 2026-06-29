@@ -86,6 +86,49 @@ async def _background_init_llm() -> None:
         logger.warning("LLM service initialization deferred (non-fatal): %s", exc)
 
 
+async def _background_run_migrations() -> None:
+    """Ensure critical tables exist on Supabase (non-blocking)."""
+    try:
+        from app.shared.database import get_engine
+        from sqlalchemy import text
+        engine = get_engine()
+        async with engine.begin() as conn:
+            # Create analysis_records if not exists (idempotent)
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS analysis_records (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    created_at TIMESTAMPTZ DEFAULT now(),
+                    updated_at TIMESTAMPTZ DEFAULT now(),
+                    user_id UUID NOT NULL,
+                    tenant_id UUID NOT NULL,
+                    document_type VARCHAR(20) NOT NULL DEFAULT 'BOLETO',
+                    file_name VARCHAR(500) NOT NULL DEFAULT '',
+                    file_size INTEGER,
+                    risk_level VARCHAR(10) NOT NULL DEFAULT 'LOW',
+                    risk_score FLOAT NOT NULL DEFAULT 0,
+                    confidence_score FLOAT,
+                    fraud_probability FLOAT,
+                    is_fraudulent BOOLEAN NOT NULL DEFAULT false,
+                    fraud_indicators JSONB,
+                    analysis_result JSONB,
+                    amount FLOAT,
+                    ai_summary TEXT,
+                    processing_duration FLOAT,
+                    analyzed_at TIMESTAMPTZ DEFAULT now(),
+                    status VARCHAR(20) NOT NULL DEFAULT 'completed'
+                )
+            """))
+            await conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_analysis_tenant ON analysis_records(tenant_id)"
+            ))
+            await conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_analysis_status ON analysis_records(status)"
+            ))
+        logger.info("Supabase tables verified/created")
+    except Exception as exc:
+        logger.warning("Table creation skipped (non-fatal): %s", exc)
+
+
 # ── WebSocket Redis listener handle (for shutdown) ──
 _ws_redis_task: asyncio.Task[None] | None = None
 _domain_event_redis_task: asyncio.Task[None] | None = None
@@ -100,6 +143,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     asyncio.create_task(_background_init_redis())
     asyncio.create_task(_background_init_llm())
+    asyncio.create_task(_background_run_migrations())  # Ensure Supabase tables exist
 
     # ── Start WebSocket Redis listener (Celery → WS bridge) ──
     try:
