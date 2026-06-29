@@ -34,12 +34,26 @@ export function GoogleDriveUploadButton() {
     isConfigured,
   } = useGooglePicker();
 
-  // Keep the latest token in a ref so the picker callback
-  // always has access to it (avoids closure staleness).
+  // Keep the latest token and status in refs to avoid closure staleness
   const tokenRef = useRef<string | null>(null);
+  const statusRef = useRef(status);
   useEffect(() => { tokenRef.current = token; }, [token]);
+  useEffect(() => { statusRef.current = status; }, [status]);
 
   const canUpload = files.length < maxFiles;
+
+  // Safety: if googleLoading gets stuck (OAuth popup blocked/closed),
+  // reset status after 60s so the button becomes clickable again
+  useEffect(() => {
+    if (!googleLoading) return;
+    const timer = setTimeout(() => {
+      if (statusRef.current === "connecting") {
+        setStatus("idle");
+        setStatusMsg("");
+      }
+    }, 60_000);
+    return () => clearTimeout(timer);
+  }, [googleLoading]);
 
   const handleConnect = useCallback(() => {
     if (!canUpload) {
@@ -51,7 +65,17 @@ export function GoogleDriveUploadButton() {
     setStatus("connecting");
     setStatusMsg(t("drive.connecting"));
 
+    // Safety timeout: if picker window is closed without response, reset after 90s
+    const safetyTimer = setTimeout(() => {
+      const s = statusRef.current;
+      if (s === "connecting" || s === "importing") {
+        setStatus("idle");
+        setStatusMsg("");
+      }
+    }, 90_000);
+
     openPicker(async (picked) => {
+      clearTimeout(safetyTimer);
       if (!picked.length) {
         setStatus("idle");
         setStatusMsg("");

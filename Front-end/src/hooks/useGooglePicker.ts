@@ -279,6 +279,13 @@ export function useGooglePicker() {
                     );
 
                   onPick(files);
+                } else if (
+                  data.action ===
+                  window.google!.picker
+                    .Action.CANCEL
+                ) {
+                  // User closed the picker without selecting files
+                  onPick([]);
                 }
               }
             )
