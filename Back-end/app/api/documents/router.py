@@ -60,7 +60,7 @@ async def analyze_document(
     use_canonical = getattr(settings, "USE_CANONICAL_PIPELINE", False)
 
     if use_canonical:
-        return await _run_canonical(file_data, document_type, document_id, file_name, mime_type, tenant_id, observations)
+        return await _run_canonical(file_data, document_type, document_id, file_name, mime_type, tenant_id, user_id, observations)
 
     # ── Fallback: legacy pipeline ──
     return await _run_legacy(file_data, document_type, document_id, file_name, mime_type, tenant_id, observations)
@@ -68,7 +68,7 @@ async def analyze_document(
 
 async def _run_canonical(
     file_data: bytes, document_type: str, document_id: str,
-    file_name: str, mime_type: str, tenant_id: str, observations: str,
+    file_name: str, mime_type: str, tenant_id: str, user_id: str, observations: str,
 ) -> dict[str, Any]:
     """Run CanonicalPipeline and return backward-compatible response."""
     import time
@@ -92,10 +92,10 @@ async def _run_canonical(
     elapsed = time.monotonic() - t0
 
     # ── Persist document + fraud alert (if HIGH risk) ──
-    await _persist_analysis(ctx, result, document_id, tenant_id)
+    await _persist_analysis(ctx, result, document_id, tenant_id, user_id)
 
     # ── Send notification ──
-    await _send_analysis_notification(ctx, result, document_id, tenant_id)
+    await _send_analysis_notification(ctx, result, document_id, tenant_id, user_id)
 
     # ── Shadow mode ──
     settings = get_settings()
@@ -124,7 +124,7 @@ async def _run_canonical(
 
 
 async def _persist_analysis(
-    ctx, result, document_id: str, tenant_id: str,
+    ctx, result, document_id: str, tenant_id: str, user_id: str,
 ) -> None:
     """Persist document record and fraud alert to database. Non-fatal."""
     import uuid as _uuid
@@ -232,9 +232,10 @@ def _build_extracted_metadata(ctx) -> dict:
 
 
 async def _send_analysis_notification(
-    ctx, result, document_id: str, tenant_id: str,
+    ctx, result, document_id: str, tenant_id: str, user_id: str,
 ) -> None:
-    """Push real-time notification via WebSocket when analysis completes."""
+    """Push real-time WS notification + persist to DB when analysis completes."""
+    import uuid as _uuid
     try:
         level = result.risk_level
         score = result.risk_score
@@ -256,25 +257,52 @@ async def _send_analysis_notification(
             severity = "success"
             ntype = "verification_complete"
 
+        notification_data = {
+            "id": document_id,
+            "tenant_id": tenant_id,
+            "type": ntype,
+            "title": title,
+            "message": msg,
+            "severity": severity,
+            "action_url": f"/verification-center?document={document_id}",
+            "metadata": {
+                "document_type": doc_type,
+                "risk_score": score,
+                "risk_level": level,
+                "evidence_count": len(result.evidence),
+                "file_name": ctx.filename,
+            },
+        }
+
+        # ── Persist to database ──
+        try:
+            from app.shared.database import get_engine
+            engine = get_engine()
+            if engine:
+                from sqlalchemy.ext.asyncio import AsyncSession
+                from app.shared.orm_models import NotificationModel
+                async with AsyncSession(engine, expire_on_commit=False) as db:
+                    notif = NotificationModel(
+                        user_id=_uuid.UUID(user_id),
+                        tenant_id=_uuid.UUID(tenant_id),
+                        type=ntype,
+                        title=title,
+                        message=msg,
+                        severity=severity,
+                        action_url=f"/verification-center?document={document_id}",
+                        metadata_=notification_data.get("metadata", {}),
+                    )
+                    db.add(notif)
+                    await db.commit()
+                    logger.info("Notification persisted to DB: doc=%s", document_id[:8])
+        except Exception as e:
+            logger.warning("DB notification persist failed (non-fatal): %s", e)
+
+        # ── Push via WebSocket ──
         try:
             from app.websocket.router import publish_ws_notification
-            await publish_ws_notification({
-                "id": document_id,
-                "tenant_id": tenant_id,
-                "type": ntype,
-                "title": title,
-                "message": msg,
-                "severity": severity,
-                "action_url": f"/verification-center?document={document_id}",
-                "metadata": {
-                    "document_type": doc_type,
-                    "risk_score": score,
-                    "risk_level": level,
-                    "evidence_count": len(result.evidence),
-                    "file_name": ctx.filename,
-                },
-            })
-            logger.info("Notification sent: doc=%s level=%s", document_id[:8], level)
+            await publish_ws_notification(notification_data)
+            logger.info("WS notification sent: doc=%s level=%s", document_id[:8], level)
         except Exception as e:
             logger.warning("WS notification failed (non-fatal): %s", e)
     except Exception as e:
