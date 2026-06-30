@@ -126,15 +126,17 @@ async def _run_canonical(
 async def _persist_analysis(
     ctx, result, document_id: str, tenant_id: str,
 ) -> None:
-    """Persist document record and fraud alert to database."""
+    """Persist document record and fraud alert to database. Non-fatal."""
     import uuid as _uuid
-    from app.shared.database import get_engine
-    from sqlalchemy.ext.asyncio import AsyncSession
-    from app.shared.orm_models import DocumentModel, FraudAlertModel
-
     try:
+        from app.shared.database import get_engine
         engine = get_engine()
-        async with AsyncSession(engine) as db:
+        if engine is None:
+            return
+        from sqlalchemy.ext.asyncio import AsyncSession
+        from app.shared.orm_models import DocumentModel, FraudAlertModel
+
+        async with AsyncSession(engine, expire_on_commit=False) as db:
             # Create document record
             doc = DocumentModel(
                 id=_uuid.UUID(document_id),

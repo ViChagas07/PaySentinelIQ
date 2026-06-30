@@ -31,7 +31,11 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     WORKERS: int = 4
-    CORS_ORIGINS: list[str] = Field(default=["http://localhost:3000"])
+    CORS_ORIGINS: list[str] = Field(default=[
+        "http://localhost:3000",
+        "https://pay-sentinel-iq.vercel.app",
+        "https://paysentineliq.vercel.app",
+    ])
 
     # ── Database (PostgreSQL) ──
     DATABASE_URL: SecretStr = Field(
