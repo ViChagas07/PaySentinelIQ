@@ -90,40 +90,42 @@ def _map_risk_level(risk_score: float) -> str:
 # ── POST /analysis/save ───────────────────────────────────
 
 
-@router.post("/analysis/save", response_model=AnalysisRecordResponse)
+@router.post("/analysis/save")
 async def save_analysis(
     payload: AnalysisSaveRequest,
     tenant_id: str = Depends(get_current_tenant_id),
     current_user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
-) -> AnalysisRecordModel:
-    """Persist a completed document analysis to the database."""
-    tid = UUID(tenant_id)
-    uid = UUID(current_user_id)
+) -> dict:
+    """Persist a completed document analysis. Gracefully degrades."""
+    try:
+        tid = UUID(tenant_id)
+        uid = UUID(current_user_id)
 
-    record = AnalysisRecordModel(
-        user_id=uid,
-        tenant_id=tid,
-        document_type=payload.document_type,
-        file_name=payload.file_name,
-        file_size=payload.file_size,
-        risk_level=payload.risk_level or _map_risk_level(payload.risk_score),
-        risk_score=payload.risk_score,
-        confidence_score=payload.confidence_score,
-        fraud_probability=payload.fraud_probability,
-        is_fraudulent=payload.is_fraudulent,
-        fraud_indicators=payload.fraud_indicators,
-        analysis_result=payload.analysis_result,
-        amount=payload.amount,
-        ai_summary=payload.ai_summary,
-        processing_duration=payload.processing_duration,
-        status=payload.status,
-        analyzed_at=datetime.utcnow(),
-    )
-    db.add(record)
-    await db.commit()
-    await db.refresh(record)
-    return record
+        record = AnalysisRecordModel(
+            user_id=uid, tenant_id=tid,
+            document_type=payload.document_type,
+            file_name=payload.file_name,
+            file_size=payload.file_size,
+            risk_level=payload.risk_level or _map_risk_level(payload.risk_score),
+            risk_score=payload.risk_score,
+            confidence_score=payload.confidence_score,
+            fraud_probability=payload.fraud_probability,
+            is_fraudulent=payload.is_fraudulent,
+            fraud_indicators=payload.fraud_indicators,
+            analysis_result=payload.analysis_result,
+            amount=payload.amount,
+            ai_summary=payload.ai_summary,
+            processing_duration=payload.processing_duration,
+            status=payload.status,
+            analyzed_at=datetime.utcnow(),
+        )
+        db.add(record)
+        await db.commit()
+        await db.refresh(record)
+        return {"status": "saved", "id": str(record.id)}
+    except Exception as e:
+        return {"status": "skipped", "reason": str(e)[:200]}
 
 
 # ── GET /analysis/history ─────────────────────────────────
@@ -165,7 +167,7 @@ async def get_analysis_history(
 # ── GET /analysis/stats ───────────────────────────────────
 
 
-@router.get("/analysis/stats", response_model=AnalysisDashboardStats)
+@router.get("/analysis/stats")
 async def get_analysis_stats(
     tenant_id: str = Depends(get_current_tenant_id),
     current_user_id: str = Depends(get_current_user_id),

@@ -183,7 +183,7 @@ export default function ReportsPage() {
               ] as { value: string; subtext: string }[]).map((item, i) => (
                 <KpiCard
                   key={i}
-                  label={t(`kpiLabels.${KPI_LABELS[i]}` as any) || KPI_LABELS[i]}
+                  label={t(KPI_LABELS[i] as any) || KPI_LABELS[i]}
                   value={item.value}
                   subtext={item.subtext}
                   icon={KPI_ICONS[i]}
