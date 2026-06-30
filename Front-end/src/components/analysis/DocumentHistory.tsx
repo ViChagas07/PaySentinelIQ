@@ -123,7 +123,19 @@ export function DocumentHistory({
                     <RotateCcw className="h-3.5 w-3.5" />
                   </button>
                 )}
-                <button className="rounded p-1.5 text-psi-text-secondary hover:text-psi-text-primary hover:bg-psi-border/20 transition-colors" title={t("history.download")}>
+                <button
+                  onClick={() => {
+                    // Download analysis result as JSON report
+                    const report = entry.resultId ? (entry as any).analysisResult : entry;
+                    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url; a.download = `report-${entry.fileName || "analysis"}.json`;
+                    a.click(); URL.revokeObjectURL(url);
+                  }}
+                  className="rounded p-1.5 text-psi-text-secondary hover:text-psi-text-primary hover:bg-psi-border/20 transition-colors"
+                  title={t("history.download")}
+                >
                   <Download className="h-3.5 w-3.5" />
                 </button>
                 {onRemove && (

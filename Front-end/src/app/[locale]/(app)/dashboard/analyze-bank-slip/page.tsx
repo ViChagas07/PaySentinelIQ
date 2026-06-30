@@ -304,7 +304,9 @@ export default function AnalyzeBankSlipPage() {
               <h2 className="text-base font-semibold text-psi-text-primary">{t("historyTitle")}</h2>
               <span className="text-[11px] text-psi-text-secondary ml-auto">{tc("entries", { count: history.length })}</span>
             </div>
-            <DocumentHistory entries={history} onRemove={removeHistoryEntry} onReopen={() => {}} />
+            <DocumentHistory entries={history} onRemove={removeHistoryEntry} onReopen={(entry) => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }} />
           </div>
         </GlowCard>
       </motion.div>
