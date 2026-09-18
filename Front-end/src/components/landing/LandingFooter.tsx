@@ -1,6 +1,6 @@
 // ============================================================
 // PaySentinelIQ — Landing Footer
-// Enterprise multi-column footer with brand, product, company, legal
+// Enterprise multi-column footer with brand, product, legal
 // ============================================================
 
 "use client";
@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AppName } from "@/components/shared/AppName";
 import Image from "next/image";
-import { Globe, Mail, ExternalLink, Link2 } from "lucide-react";
+import { Mail, ExternalLink, Link2 } from "lucide-react";
 
 const SOCIAL_LINKS = [
   { href: "https://github.com", icon: ExternalLink, label: "GitHub" },
@@ -21,31 +21,12 @@ const SOCIAL_LINKS = [
 
 const PRODUCT_LINKS = [
   { href: "#", key: "footer.features" },
-  { href: "#", key: "footer.pricing" },
   { href: "#", key: "footer.security" },
-];
-
-const COMPANY_LINKS = [
-  { href: "#", key: "footer.about" },
-  { href: "#", key: "footer.docs" },
-  { href: "#", key: "footer.support" },
 ];
 
 const LEGAL_LINKS = [
   { href: "/privacy-policy", key: "footer.privacy" },
   { href: "/privacy-policy", key: "footer.terms" },
-];
-
-const LOCALES = [
-  { code: "en", label: "English" },
-  { code: "pt-BR", label: "Português" },
-  { code: "es", label: "Español" },
-  { code: "fr", label: "Français" },
-  { code: "de", label: "Deutsch" },
-  { code: "ja", label: "日本語" },
-  { code: "zh", label: "中文" },
-  { code: "ru", label: "Русский" },
-  { code: "ar", label: "العربية" },
 ];
 
 const footerVariants = {
@@ -64,7 +45,7 @@ export function LandingFooter() {
   return (
     <footer className="w-full border-t border-white/[0.06] bg-[#050816]">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {/* Column 1 — Brand */}
           <motion.div
             custom={0}
@@ -139,34 +120,9 @@ export function LandingFooter() {
             </ul>
           </motion.div>
 
-          {/* Column 3 — Company */}
+          {/* Column 3 — Legal */}
           <motion.div
             custom={2}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ margin: "-40px" }}
-            variants={footerVariants}
-          >
-            <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white/50">
-              {t("footer.company")}
-            </h3>
-            <ul className="space-y-2.5">
-              {COMPANY_LINKS.map((link) => (
-                <li key={link.key}>
-                  <a
-                    href={link.href}
-                    className="text-sm text-white/40 transition-colors hover:text-white"
-                  >
-                    {t(link.key)}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Column 4 — Legal */}
-          <motion.div
-            custom={3}
             initial="hidden"
             whileInView="visible"
             viewport={{ margin: "-40px" }}
@@ -193,12 +149,6 @@ export function LandingFooter() {
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-6 sm:flex-row">
           <p className="text-xs text-white/30">{t("footer.copyright")}</p>
-
-          {/* Locale display */}
-          <div className="flex items-center gap-1.5 text-xs text-white/30">
-            <Globe className="h-3 w-3" />
-            <span>{tc("language")}</span>
-          </div>
         </div>
       </div>
     </footer>
