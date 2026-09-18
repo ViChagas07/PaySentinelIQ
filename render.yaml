@@ -1,0 +1,158 @@
+# 🌐 PaySentinelIQ — Render Blueprint
+# Deploy: Backend API + Redis (Free Tier)
+# ⚠️ Workers não rodam no Free Tier do Render (apenas Web Services)
+
+services:
+  # ─── API Principal ───
+  - type: web
+    name: paysentinel-api
+    runtime: python
+    rootDir: Back-end
+    buildCommand: "poetry install --no-root"
+    startCommand: "python -m uvicorn app.main:create_app --factory --host 0.0.0.0 --port $PORT --workers 1 --ws-ping-interval 30 --ws-ping-timeout 10 --ws-max-size 1048576"
+    envVars:
+      - key: APP_VERSION
+        value: "1.0.0"
+      - name: ENVIRONMENT
+        value: "production"
+      - name: DEBUG
+        value: "false"
+      - name: LOG_LEVEL
+        value: "INFO"
+      - name: HOST
+        value: "0.0.0.0"
+      - name: PORT
+        value: "$PORT"
+      - name: CORS_ORIGINS
+        value: '["https://pay-sentinel-iq.vercel.app","http://localhost:3000"]'
+      - name: DATABASE_URL
+        fromDatabase:
+          name: paysentinel-db
+          property: connectionString
+      - name: REDIS_URL
+        fromService:
+          name: paysentinel-redis
+          type: redis
+          property: connectionString
+      - name: CELERY_BROKER_URL
+        fromService:
+          name: paysentinel-redis
+          type: redis
+          property: connectionString
+      - name: CELERY_RESULT_BACKEND
+        fromService:
+          name: paysentinel-redis
+          type: redis
+          property: connectionString
+      - name: RABBITMQ_ENABLED
+        value: "false"  # Workers não rodam no free tier
+      - name: RABBITMQ_URL
+        value: ""  # Preencha se ativar RabbitMQ
+      - name: RABBITMQ_EXCHANGE
+        value: "sentinel.events"
+      - name: EVENT_SOURCE
+        value: "paysentinel-api"
+      - name: EVENT_RETRY_MAX_ATTEMPTS
+        value: "3"
+      - name: EVENT_RETRY_BACKOFF_SECONDS
+        value: "5,30,120"
+      - name: EMAIL_ENABLED
+        value: "false"
+      - name: EMAIL_FROM
+        value: "SentinelaPay <no-reply@paysentineliq.com>"
+      - name: SMTP_HOST
+        value: "localhost"
+      - name: SMTP_PORT
+        value: "587"
+      - name: SMTP_USE_TLS
+        value: "true"
+      - name: APP_BASE_URL
+        value: "https://paysentinel-api.onrender.com"
+      - name: BILL_SCHEDULER_ENABLED
+        value: "true"
+      - name: BILL_SCHEDULER_INTERVAL_SECONDS
+        value: "3600"
+      - name: BILL_DUE_SOON_DAYS
+        value: "2"
+      - name: ENABLE_AI_AGENTS
+        value: "true"
+      - name: ENABLE_OCR
+        value: "true"
+      - name: ENABLE_COMPLIANCE_CHECKS
+        value: "true"
+      - name: JWT_SECRET_KEY
+        generateValue: true  # Render gera automaticamente
+      - name: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "15"
+      - name: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+      - name: GOOGLE_CLIENT_ID
+        sync: false
+        value: "701434590028-kulmv1ocov07s4qhkpdca0tlcntvft0e.apps.googleusercontent.com"
+      - name: GOOGLE_CLIENT_SECRET
+        sync: false
+        value: ""  # Preencha no painel
+      - name: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        value: "701434590028-kulmv1ocov07s4qhkpdca0tlcntvft0e.apps.googleusercontent.com"
+      - name: NEXT_PUBLIC_GOOGLE_API_KEY
+        value: ""  # Preencha no painel
+      - name: NEXT_PUBLIC_API_URL
+        value: "https://paysentinel-api.onrender.com"
+      - name: NEXT_PUBLIC_WS_BASE_URL
+        value: "wss://paysentinel-api.onrender.com/ws"
+      - name: GOOGLE_REDIRECT_URI
+        value: "https://paysentinel-api.onrender.com/auth/google/callback"
+      - name: GEMINI_API_KEY
+        sync: false
+        value: ""  # Preencha no painel
+      - name: GEMINI_MODEL
+        value: "gemini-2.5-flash"
+      - name: AI_TEMPERATURE
+        value: "0.1"
+      - name: AI_MAX_TOKENS
+        value: "4096"
+      - name: ENABLE_AI_AGENTS
+        value: "true"
+      - name: ENABLE_OCR
+        value: "true"
+      - name: ENABLE_COMPLIANCE_CHECKS
+        value: "true"
+      - name: SENTRY_DSN
+        sync: false
+        value: ""
+      - name: AWS_ACCESS_KEY_ID
+        value: ""
+      - name: AWS_SECRET_ACCESS_KEY
+        sync: false
+        value: ""
+      - name: AWS_REGION
+        value: "us-east-2"
+      - name: S3_BUCKET
+        value: "psi-documents"
+    healthCheckPath: /health
+    autoDeploy: true
+    numInstances: 1
+    instanceType: free  # 512MB RAM, 0.1 CPU
+
+  # ─── Redis (Upstash-compatible no Render) ───
+  - type: redis
+    name: paysentinel-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  - name: paysentinel-db
+    plan: free
+    ipAllowList: []
+    databaseName: paysentineliq
+    user: postgres
+    postgresMajorVersion: "15"
+    region: oregon  # ou frankfurt
+
+# ⚠️ LIMITAÇÕES DO FREE TIER RENDER:
+# - Web Service dorme após 15 min inativo (cold start 30-60s)
+# - Background Workers NÃO disponíveis no free tier
+# - Redis free: 25MB, 30 conexões
+# - Postgres free: 90 dias, depois expira (upgrade pago)
+# - Para workers + scheduler, use Koyeb (free tier) ou Oracle Cloud Always Free

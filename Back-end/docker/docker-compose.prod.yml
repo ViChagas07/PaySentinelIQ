@@ -1,0 +1,226 @@
+# 🐳 PaySentinelIQ — Production Docker Compose
+# Sobe: API + 3 Workers + Scheduler + RabbitMQ + Redis + Postgres (opcional)
+# Uso: docker compose -f docker-compose.prod.yml up -d
+
+version: "3.9"
+
+services:
+  # ─── PostgreSQL (opcional — use Supabase em produção) ───
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-psi_secret}
+      POSTGRES_DB: paysentineliq
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d paysentineliq"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - paysentinel
+
+  # ─── Redis (Upstash-compatible) ───
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - paysentinel
+
+  # ─── RabbitMQ 4.x Management ───
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-psi}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-psi_secret}
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - paysentinel
+
+  # ─── API (FastAPI) ───
+  api:
+    build:
+      context: ../..
+      dockerfile: Back-end/docker/Dockerfile
+      target: production
+    command: python -m uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000 --workers 1 --ws-ping-interval 30 --ws-ping-timeout 10 --ws-max-size 1048576
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-psi_secret}@postgres:5432/paysentineliq
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/
+      - RABBITMQ_EXCHANGE=sentinel.events
+      - RABBITMQ_DLX=sentinel.dlx
+      - RABBITMQ_ENABLED=true
+      - RABBITMQ_PREFETCH_COUNT=10
+      - EVENT_SOURCE=paysentinel-api
+      - EVENT_RETRY_MAX_ATTEMPTS=3
+      - EVENT_RETRY_BACKOFF_SECONDS=5,30,120
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=15
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - RABBITMQ_EXCHANGE=sentinel.events
+      - RABBITMQ_DLX=sentinel.dlx
+      - RABBITMQ_PREFETCH_COUNT=10
+      - EVENT_SOURCE=paysentinel-api
+      - EVENT_RETRY_MAX_ATTEMPTS=3
+      - EVENT_RETRY_BACKOFF_SECONDS=5,30,120
+      - EMAIL_ENABLED=false
+      - EMAIL_FROM="SentinelaPay <no-reply@paysentineliq.com>"
+      - SMTP_HOST=localhost
+      - SMTP_PORT=587
+      - SMTP_USE_TLS=true
+      - APP_BASE_URL=http://localhost:8000
+      - BILL_SCHEDULER_ENABLED=true
+      - BILL_SCHEDULER_INTERVAL_SECONDS=3600
+      - BILL_DUE_SOON_DAYS=2
+      - ENABLE_AI_AGENTS=true
+      - ENABLE_OCR=true
+      - ENABLE_COMPLIANCE_CHECKS=true
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - paysentinel
+
+  # ─── Audit Worker ───
+  audit-worker:
+    build:
+      context: ../..
+      dockerfile: Back-end/docker/Dockerfile
+      target: production
+    command: python -m app.workers.audit_worker
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-psi_secret}@postgres:5432/paysentineliq
+      - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/
+      - RABBITMQ_EXCHANGE=sentinel.events
+      - RABBITMQ_DLX=sentinel.dlx
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - paysentinel
+
+  # ─── Notification Worker ───
+  notification-worker:
+    build:
+      context: ../..
+      dockerfile: Back-end/docker/Dockerfile
+      target: production
+    command: python -m app.workers.notification_worker
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-psi_secret}@postgres:5432/paysentineliq
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/
+      - RABBITMQ_EXCHANGE=sentinel.events
+      - RABBITMQ_DLX=sentinel.dlx
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - paysentinel
+
+  # ─── Email Worker ───
+  email-worker:
+    build:
+      context: ../..
+      dockerfile: Back-end/docker/Dockerfile
+      target: production
+    command: python -m app.workers.email_worker
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-psi_secret}@postgres:5432/paysentineliq
+      - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/
+      - RABBITMQ_EXCHANGE=sentinel.events
+      - RABBITMQ_DLX=sentinel.dlx
+      - EMAIL_ENABLED=false
+      - EMAIL_FROM="SentinelaPay <no-reply@paysentineliq.com>"
+      - SMTP_HOST=localhost
+      - SMTP_PORT=587
+      - SMTP_USE_TLS=true
+      - APP_BASE_URL=http://localhost:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - paysentinel
+
+  # ─── Bill Scheduler ───
+  scheduler:
+    build:
+      context: ../..
+      dockerfile: Back-end/docker/Dockerfile
+      target: production
+    command: python -m app.workers.scheduler
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-psi_secret}@postgres:5432/paysentineliq
+      - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/
+      - RABBITMQ_EXCHANGE=sentinel.events
+      - RABBITMQ_DLX=sentinel.dlx
+      - BILL_SCHEDULER_ENABLED=true
+      - BILL_SCHEDULER_INTERVAL_SECONDS=3600
+      - BILL_DUE_SOON_DAYS=2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - paysentinel
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  paysentinel:
+    driver: bridge

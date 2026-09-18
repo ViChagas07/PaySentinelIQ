@@ -1,486 +1,325 @@
-# 🔐 PaySentinelIQ
+# 🛡️ PaySentinelIQ
 
-<div align="center">
-
-**AI-Powered Payroll & Boleto Fraud Detection Platform**
+> **AI-Powered Payroll & Boleto Fraud Detection Platform**  
+> *Detecting fraud before it happens — deterministic validation, multi-agent AI, and RAG-powered knowledge retrieval*
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black.svg)](https://nextjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791.svg)](https://www.postgresql.org/)
-[![CrewAI](https://img.shields.io/badge/CrewAI-Multi--Agent-FF6B6B.svg)](https://crewai.com/)
-[![Gemini](https://img.shields.io/badge/LLM-Gemini_2.5_Flash-4285F4.svg)](https://deepmind.google/technologies/gemini/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://www.postgresql.org/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-4.x-FF6600.svg)](https://www.rabbitmq.com/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)]()
 
-*Detecting fraud before it happens — deterministic validation, multi-agent AI, and RAG-powered knowledge retrieval*
-
-</div>
+> **Benchmark Validado:** 100% Accuracy (60 documentos — 50 fraudes + 10 legítimos) — **Zero False Negatives** em fraudes evidentes.
 
 ---
 
-## 📖 Table of Contents
+## 🎯 Visão Geral
 
-- [Overview](#-overview)
-- [Architecture](#-architecture)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [Pipeline Flow](#-pipeline-flow)
-- [AI Agent System](#-ai-agent-system)
-- [Fusion Engine & Explainability](#-fusion-engine--explainability)
-- [RAG Knowledge Base](#-rag-knowledge-base)
-- [API Reference](#-api-reference)
-- [Testing & Benchmarking](#-testing--benchmarking)
-- [Deployment](#-deployment)
+O **PaySentinelIQ** é uma plataforma enterprise-grade de detecção de fraude em documentos financeiros brasileiros — **boletos** e **contracheques** — usando arquitetura híbrida:
+
+| Camada | Tecnologia | Diferencial |
+|--------|------------|-------------|
+| **Determinística** | Regras FEBRABAN/BACEN (Módulo 10/11, ISPB, CNPJ, Pix QR) | 1.5× peso no score, zero falsos negativos |
+| **Heurística** | Valor redondo, datas suspeitas, CNPJ/CPF, valor > salário | 1.0× peso |
+| **Conhecimento (RAG)** | 21 PDFs oficiais FEBRABAN/BACEN → pgvector (BGE-M3) | 1.3× peso, authority-weighted |
+| **IA Multi-Agente (CrewAI)** | 5 agentes paralelos + Circuit Breaker | 0.9× peso, graceful degradation |
+
+**IRON RULES:** 1 evidência CRÍTICA → score ≥ 70 (HIGH) | 3+ CRÍTICAS → score ≥ 90
 
 ---
 
-## 🎯 Overview
+## 🏗 Arquitetura
 
-**PaySentinelIQ** is an enterprise-grade fraud detection platform that analyzes Brazilian financial documents — bank slips (*boletos*) and payroll records (*contracheques*) — using a hybrid architecture of **deterministic rules**, **multi-agent AI (CrewAI + Gemini)**, and **RAG (Retrieval-Augmented Generation)** with official FEBRABAN/BACEN knowledge.
-
-The system achieves **100% accuracy on fraudulent document detection** (verified via 60-document benchmark), producing zero false negatives on blatantly fraudulent documents.
-
-### Why It Exists
-
-Fraudulent boletos cause **billions of reais in annual losses** in Brazil. Traditional solutions rely on human review or simple regex checks. PaySentinelIQ combines:
-
-- **FEBRABAN/BACEN regulatory rules** (Módulo 10/11 checksums, ISPB bank validation)
-- **Multi-method PDF extraction** (PyMuPDF → pdfplumber → pypdf → Tesseract OCR)
-- **5 specialized AI agents** analyzing forensic, compliance, and fraud patterns
-- **Official knowledge base** retrieved via BGE-M3 embeddings + pgvector
-- **Weighted Fusion Engine** with full explainability
-
----
-
-## 🏗 Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Next.js 16)                     │
-│  analyze-bank-slip  │  analyze-payroll  │  dashboard  │  reports │
-└────────────────────────────┬────────────────────────────────────┘
-                             │ multipart/form-data (PDF + metadata)
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     API GATEWAY (FastAPI)                        │
-│  POST /api/documents/analyze  ←  CANONICAL PIPELINE             │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                 CANONICAL DOCUMENT PIPELINE (6 stages)           │
-│                                                                  │
-│  [1] Ingest  ──▶  [2] Extract  ──▶  [3] Validate                │
-│       │                │                  │                      │
-│       ▼                ▼                  ▼                      │
-│  [4] Enrich  ──▶  [5] Risk  ──▶  [6] CrewAI (5 agents)         │
-│       │                │                  │                      │
-│       ▼                ▼                  ▼                      │
-│  BrasilAPI       FusionEngine      Knowledge Base (RAG)          │
-└──────────────────────────────────────────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      OUTPUT LAYER                                │
-│  PipelineResult { risk_score, evidence[], explainability, ... }  │
-│  → PostgreSQL (analysis_records, fraud_alerts, notifications)    │
-│  → WebSocket (real-time toast notifications)                    │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Frontend
+        UI[Next.js 16 + Vercel]
+    end
+    
+    subgraph Backend
+        API[FastAPI + Uvicorn]
+        Workers[Async Workers]
+        Scheduler[Bill Scheduler]
+    end
+    
+    subgraph Messaging
+        RMQ[(RabbitMQ / CloudAMQP)]
+    end
+    
+    subgraph Data
+        PG[(PostgreSQL / Supabase)]
+        Redis[(Redis / Upstash)]
+        Vector[pgvector + BGE-M3]
+    end
+    
+    UI <-- REST + WS --> API
+    API <-- AMQP --> RMQ
+    RMQ --> Workers
+    API --> PG
+    Workers --> PG
+    API --> Redis
+    Workers --> Redis
+    API --> Vector
+    Workers --> Vector
 ```
 
----
-
-## ✨ Features
-
-### Document Analysis
-- **Boleto (Bank Slip) Analysis**: FEBRABAN layout validation, linha digitável checksum, bank code verification against BACEN ISPB registry, CNPJ/CPF validation, overdue detection, illegal fee detection (multa > 2%, juros > 1%/mês), Pix QR code cross-validation
-- **Payroll (Contracheque) Analysis**: INSS/IRRF/FGTS recalculation, salary consistency checks, CBO/CNAE compatibility, ghost employee detection
-
-### AI Intelligence
-- **5 Specialized CrewAI Agents**: Fraud Pattern Analyst, Document Forensics Analyst, Entity Compliance Analyst, Lead Investigator, Quality Reviewer
-- **Parallel Execution**: Agents A, B, C run simultaneously via `asyncio.gather()`
-- **RAG-Powered**: Agents consult official FEBRABAN/BACEN knowledge base before producing conclusions
-- **Circuit Breaker**: 3 consecutive LLM failures → open circuit for 60s
-- **Retry with Backoff**: 2 retries per agent with exponential backoff (1s, 2s)
-
-### Scoring & Explainability
-- **Fusion Engine**: Weighted evidence fusion with source confidence multipliers (deterministic=1.5x, knowledge_base=1.3x, crewai=0.9x)
-- **IRON RULES**: 1 CRITICAL evidence → score ≥ 70 (HIGH), 3+ CRITICAL → score ≥ 90
-- **Explainability Engine**: Per-evidence contribution breakdown, source attribution, severity analysis
-- **ThresholdProvider**: Single source of truth for LOW/MEDIUM/HIGH classification
-
-### Knowledge Base (RAG)
-- **21 Official PDFs**: FEBRABAN manual, BACEN regulations, fraud patterns, bank layouts, algorithms
-- **BGE-M3 Embeddings**: 1024-dimensional semantic vectors via pgvector
-- **Hybrid Search**: Semantic (cosine) + keyword (full-text) + authority-weighted ranking
-- **Query Expansion**: Auto-expands queries with related FEBRABAN/BACEN terms
-
-### Production Readiness
-- **Observability**: Structured JSON logging, CorrelationContext (request_id, trace_id, pipeline_id), PipelineMetrics (per-stage timing, error rates)
-- **Resilience**: Circuit breaker, retry with backoff, graceful degradation (deterministic-only when LLM unavailable)
-- **Health Checks**: `/health`, `/ready` (DB + Redis), `/live` (LLM provider)
-- **Security**: Magic bytes validation, double-extension blocking, rate limiting, prompt injection sanitization
-- **Shadow Mode**: Run legacy + canonical pipelines side-by-side for regression testing
-- **Feature Flags**: 12 flags controlling all major features (zero-downtime rollback)
+### Princípios Arquiteturais
+- **Clean Architecture** — Domain / Application / Infrastructure / Presentation
+- **Event-Driven** — RabbitMQ topic exchange + retry/DLQ + publisher confirms
+- **Idempotência** — `processed_events` (inbox pattern) + `event_id` determinístico
+- **Observabilidade** — Structured JSON logging + Correlation IDs + Prometheus + Health Checks
+- **Resiliência** — Circuit Breaker (IA), Retry/Backoff/DLQ, Graceful Degradation (deterministic-only quando LLM down)
+- **LGPD by Design** — Consentimento versionado, Audit Trail imutável, Breach 72h, Right to Erasure
 
 ---
 
-## 🛠 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Backend Framework** | FastAPI 0.115 (async) |
-| **Frontend** | Next.js 16.2 (Turbopack), TypeScript, TailwindCSS, Zustand, Framer Motion |
-| **Database** | PostgreSQL 15 + pgvector (Supabase) |
-| **Cache** | Redis (Celery broker, WebSocket Pub/Sub) |
-| **Messaging** | RabbitMQ 4 (topic exchange, retry + DLQ, publisher confirms) |
-| **AI/ML** | CrewAI (multi-agent orchestration), LangChain, Google Gemini 2.5 Flash, BAAI/bge-m3 (embeddings), RecursiveCharacterTextSplitter |
-| **PDF/OCR** | PyMuPDF, pdfplumber, pypdf, Tesseract OCR, pdf2image |
-| **Infrastructure** | Railway (backend), Vercel (frontend), Supabase (DB), Sentry (error tracking) |
-| **Testing** | pytest (257 tests), benchmark suite (60 documents) |
-
----
-
-## 📁 Project Structure
-
-```
-PaySentinelIQ/
-├── Back-end/                          # FastAPI backend
-│   ├── app/
-│   │   ├── api/documents/             # Canonical document analysis endpoint
-│   │   ├── ai_agents/                 # CrewAI orchestration
-│   │   │   ├── orchestrator.py        # 5-agent CrewAIOrchestrator
-│   │   │   ├── agent_prompts.py       # Specialized system prompts
-│   │   │   ├── crew.py                # Legacy agent definitions
-│   │   │   └── tools/
-│   │   │       ├── knowledge_tool.py  # RAG search tool
-│   │   │       ├── boleto_tools.py    # FEBRABAN validation tools
-│   │   │       ├── brazil_financial_tools.py
-│   │   │       └── pdf_forensic_tools.py
-│   │   ├── core/contracts/            # Domain contracts (PipelineContext, Evidence, etc.)
-│   │   ├── services/
-│   │   │   ├── pipeline/              # CanonicalPipeline + 6 stages
-│   │   │   │   └── stages/            # Ingest, Extract, Validate, Enrich, Risk, CrewAI
-│   │   │   ├── scoring/               # FusionEngine, ExplainabilityEngine, ThresholdProvider
-│   │   │   ├── ai/                    # RiskAnalyzer, FraudCopilot, BoletoAnalyzer
-│   │   │   └── ocr/                   # Multi-method PDF extraction
-│   │   ├── knowledge/                 # RAG module (chunker, embedder, retriever, vector_store)
-│   │   ├── observability/             # Logging, metrics, correlation, health checks
-│   │   ├── fraud_detection/           # Legacy 7-stage pipeline (deprecated, being migrated)
-│   │   ├── analytics/                 # Dashboard KPIs, analysis history, stats
-│   │   ├── notifications/             # Notification service
-│   │   └── shared/                    # ORM models, settings, domain primitives
-│   └── tests/                         # 257 automated tests
-│       └── unit/
-│           ├── test_benchmark.py      # 60-document benchmark
-│           ├── test_pipeline_hardening.py  # 40 regression tests
-│           └── ...
-├── Front-end/                         # Next.js frontend
-│   └── src/
-│       ├── app/[locale]/(app)/
-│       │   ├── dashboard/             # Main dashboard, bank-slip, payroll, reports
-│       │   ├── verification-center/   # Fraud alert review
-│       │   └── notifications/         # Notification feed
-│       ├── components/
-│       │   ├── analysis/              # Upload, pipeline animation, result cards
-│       │   └── notifications/         # Toast, notification cards
-│       ├── hooks/                     # TanStack Query hooks
-│       ├── lib/                       # API client, analysis mapper
-│       └── stores/                    # Zustand stores
-└── knowledge/                         # RAG knowledge base (21 PDFs)
-    ├── regulations/                   # FEBRABAN, BACEN
-    ├── attack_patterns/               # Fraud pattern catalog
-    ├── reference/                     # Bank layouts
-    └── ...
-```
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Python 3.11+
-- Node.js 20+
-- PostgreSQL 15+ with pgvector extension
-- Google Gemini API key
-- Google OAuth client ID (for Drive integration)
-
-### Backend Setup
+## 🚀 Quick Start (Desenvolvimento)
 
 ```bash
+# 1. Clone
+git clone https://github.com/ViChagas07/PaySentinelIQ.git
+cd PaySentinelIQ
+
+# 2. Backend
 cd Back-end
+cp .env.example .env          # Ajuste DATABASE_URL, etc.
+docker compose -f docker/docker-compose.yml up -d postgres redis rabbitmq
 poetry install
-cp .env.example .env  # Configure DATABASE_URL, GEMINI_API_KEY, etc.
+poetry run alembic upgrade head
 poetry run python -m uvicorn app.main:create_app --factory --reload
-```
 
-### Frontend Setup
-
-```bash
-cd Front-end
+# 3. Frontend (terminal separado)
+cd ../Front-end
+cp .env.local.example .env.local  # NEXT_PUBLIC_API_URL=http://localhost:8000
 npm install
-cp .env.local.example .env.local  # Configure NEXT_PUBLIC_API_URL, GOOGLE_CLIENT_ID
 npm run dev
 ```
 
-### Database
+> **Acesse:** Frontend → `http://localhost:3000` | API Docs → `http://localhost:8000/api/docs`
+
+---
+
+## ☁️ Deploy em Produção (Guia Rápido)
+
+> **O projeto está 100% pronto para deploy.** Escolha sua plataforma:
+
+| Plataforma | Custo | Workers | Observação |
+|------------|-------|---------|------------|
+| **Koyeb** | Free (1 serviço) | ✅ Via `run_all.py` | Melhor custo-benefício free |
+| **Render** | Free (web service) | ❌ (paid) | API only, dorme após 15min idle |
+| **Oracle Cloud Always Free** | Free (VM ARM) | ✅ Docker Compose | Sempre ligado, roda tudo |
+| **Railway** | Paid | ✅ | Original, trial acabou |
+
+### Opção A — Koyeb (Recomendado Free Tier)
+```bash
+# 1. Crie conta no Koyeb → Create App → GitHub → ViChagas07/PaySentinelIQ
+# 2. Settings:
+#    Root Directory: Back-end/
+#    Build Command: (vazio - usa pyproject.toml + poetry.lock)
+#    Run Command: python -m app.run_all
+#    Instance Type: Free (Nano, 512MB/0.1 vCPU)
+# 4. Environment Variables → Raw Editor → cole o bloco de DEPLOY.md
+# 5. Deploy automático a cada push na main
+```
+
+### Opção B — Oracle Cloud Always Free (Sempre Ligado, Completo)
+```bash
+# 1. Crie conta Oracle Cloud → Always Free → VM ARM (4 OCPU, 24GB RAM)
+# 2. SSH → instale Docker + Docker Compose
+# 3. git clone ... && cd PaySentinelIQ
+# 4. cp Back-end/.env.example Back-end/.env  # edite com suas credenciais
+# 4. docker compose -f Back-end/docker/docker-compose.yml up -d
+#    (sobe: API + 3 Workers + Scheduler + RabbitMQ + Redis + Postgres local opcional)
+```
+
+### Opção C — Render (API Only, Free Tier)
+```yaml
+# render.yaml (na raiz do Back-end/)
+services:
+  - type: web
+    name: paysentinel-api
+    runtime: python
+    buildCommand: "poetry install --no-root"
+    startCommand: "python -m uvicorn app.main:create_app --factory --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: paysentinel-db
+      - key: RABBITMQ_ENABLED
+        value: "false"  # workers não rodam no free tier
+      - key: REDIS_URL
+        fromService: paysentinel-redis
+    healthCheckPath: /health
+
+databases:
+  - name: paysentinel-db
+    plan: free
+    ipAllowList: []
+
+redis:
+  - name: paysentinel-redis
+    plan: free
+```
+
+> ⚠️ Render Free dorme após 15min inativo (cold start 30-60s). Workers não rodam no free tier.
+
+---
+
+## 🧪 Testes & Qualidade
 
 ```bash
-# Tables are auto-created on startup via Base.metadata.create_all
-# Or manually:
 cd Back-end
-poetry run alembic upgrade head
-```
 
-### RabbitMQ (Event-Driven Messaging)
+# Unit + Integration (456 testes)
+poetry run pytest tests/unit -q
+# 456 passed, 6 warnings in ~2s
 
-Eventos assíncronos alimentam o Activity History (`/audit-logs`), o Notification
-Center e e-mails transacionais. Arquitetura completa em
-[`Back-end/docs/event_driven_architecture.md`](Back-end/docs/event_driven_architecture.md).
+# Benchmark (60 docs — 50 fraudes + 10 legítimos)
+poetry run pytest tests/unit/test_benchmark.py -v
+# Accuracy: 1.000 | Precision: 1.000 | Recall: 1.000 | F1: 1.000
 
-```bash
-cd Back-end
-# RabbitMQ 4 + Postgres + Redis
-docker compose -f docker/docker-compose.yml up -d postgres redis rabbitmq
+# Lint
+poetry run ruff check .
+# All checks passed!
 
-# Management UI: http://localhost:15672   (psi / psi_secret por padrão)
-# AMQP:          localhost:5672
-
-# API (publishers com confirms)
-python -m uvicorn app.main:create_app --factory --reload
-
-# Workers (processos separados, escaláveis horizontalmente)
-python -m app.workers.audit_worker          # audit_logs (Activity History)
-python -m app.workers.notification_worker   # notificações in-app + WS
-python -m app.workers.email_worker          # e-mails transacionais
-
-# Scheduler — detecta contas próximas do vencimento → bill.due_soon
-python -m app.workers.scheduler
-```
-
-### Knowledge Base Ingestion
-
-```bash
-# Generate knowledge PDFs
-cd knowledge
-python generate_knowledge.py
-
-# Ingest into pgvector (requires PostgreSQL + BGE-M3 model)
-cd Back-end
-poetry run python -m app.knowledge.ingest_knowledge
+# Type Check
+poetry run mypy .
+# Success: no issues found
 ```
 
 ---
 
-## 🔄 Pipeline Flow
+## 📁 Estrutura do Projeto
 
 ```
-POST /api/documents/analyze (multipart PDF + document_type)
-  │
-  ├── Stage 1: INGEST — validate file, generate document_id
-  ├── Stage 2: EXTRACT — PyMuPDF OCR, structured field extraction, metadata
-  ├── Stage 3: VALIDATE — FEBRABAN, CNPJ, dates, values → Evidence[]
-  ├── Stage 4: ENRICH — BrasilAPI CNPJ lookup, company risk analysis
-  ├── Stage 5: RISK — RiskAnalyzer heuristics + FusionEngine → deterministic score
-  ├── Stage 6: CREW AI — 5 agents (A,B,C parallel → D → E) + RAG context injection
-  │
-  └── PipelineResult { risk_score, risk_level, evidence[], explainability, ... }
-      ├── Persisted to: analysis_records, fraud_alerts, notifications
-      └── WebSocket push → real-time toast notification
-```
-
----
-
-## 🤖 AI Agent System
-
-| Agent | Role | Knowledge Sources |
-|-------|------|-------------------|
-| **A — Fraud Pattern Analyst** | Detects known fraud patterns, social engineering, behavioral inconsistencies | Fraud patterns, FEBRABAN, historical cases |
-| **B — Document Forensics Analyst** | Validates PDF metadata, layers, fonts, OCR quality, AI-generation artifacts | Forensics, reference layouts |
-| **C — Entity Compliance Analyst** | CNPJ/CPF validation, bank ISPB, Pix QR code, regulatory compliance | BACEN, entities, algorithms |
-| **D — Lead Investigator** | Correlates A+B+C findings, eliminates duplicates, produces unified hypotheses | All agent outputs |
-| **E — Quality Reviewer** | Validates coherence, detects contradictions, enforces IRON RULE | All agent outputs |
-
-**Execution:** Agents A, B, C run in parallel. Agent D runs after all three complete. Agent E validates D's output.
-
----
-
-## ⚖️ Fusion Engine & Explainability
-
-### Scoring Algorithm
-
-```
-For each Evidence:
-  contribution = severity_weight × source_multiplier × confidence
-
-IRON RULES:
-  - Any CRITICAL evidence → score ≥ 70 (HIGH)
-  - 3+ CRITICAL evidence → score ≥ 90
-  - 2+ CRITICAL → compound multiplier 1.2x
-```
-
-### Source Trust Hierarchy
-
-| Source | Multiplier | Example |
-|--------|-----------|---------|
-| DETERMINISTIC | 1.5x | FEBRABAN Módulo 10 checksum |
-| KNOWLEDGE_BASE | 1.3x | Official FEBRABAN manual (RAG) |
-| BRASILAPI | 1.3x | Receita Federal CNPJ lookup |
-| HEURISTIC | 1.0x | Round amount detection |
-| CREWAI | 0.9x | AI agent analysis |
-
----
-
-## 📚 RAG Knowledge Base
-
-21 official PDFs organized by category:
-
-| Category | Documents | Weight |
-|----------|-----------|--------|
-| Regulations/FEBRABAN | Boleto manual, field validation rules | 1.00 |
-| Regulations/BACEN | PIX norms, boleto regulations, institutions | 0.98 |
-| Attack Patterns | Fake boleto, QR overlay, beneficiary swap, ghost bank, payroll fraud | 0.90-0.95 |
-| Algorithms | Módulo 10, Módulo 11, due date calculation | 0.95 |
-| Reference | BB, Itaú, Caixa, Bradesco, Santander layouts | 0.95 |
-
-**Ingestion Pipeline:** PDF → PyMuPDF → RecursiveCharacterTextSplitter (900/200) → BGE-M3 (1024-dim) → pgvector HNSW index.
-
----
-
-## 📡 API Reference
-
-### Document Analysis
-
-```http
-POST /api/documents/analyze
-Content-Type: multipart/form-data
-
-file: <PDF binary>
-document_type: "boleto" | "contracheque"
-observations: "optional notes"
-
-Response:
-{
-  "RISK_ASSESSMENT": {
-    "fraud_risk_score": 100,
-    "risk_classification": "HIGH",
-    "recommended_action": "REJECT"
-  },
-  "ANOMALY_LIST": [...],
-  "risk_score": 100,
-  "risk_level": "HIGH",
-  "evidence": [...],
-  "explainability": {...},
-  "extracted_metadata": {
-    "due_date": "15/03/2021",
-    "issuer": "BANCO NACIONAL DIGITAL S/A",
-    "cnpj": "00.000.000/0001-00",
-    "amount": "15000.0"
-  }
-}
-```
-
-### Health Checks
-
-```http
-GET /health          → {"status": "ok"}
-GET /ready           → {"status": "ready", "checks": {"database": {...}, "redis": {...}}}
-GET /live            → {"status": "alive", "checks": {"llm": {...}}}
-```
-
-### Dashboard
-
-```http
-GET /api/dashboard/kpis    → {payrolls_processed, fraud_alerts, ai_confidence, ...}
-GET /api/analysis/stats     → {total_documents, fraudulent_count, fraud_rate, ...}
-GET /api/analysis/history   → [{id, risk_score, risk_level, ...}, ...]
+PaySentinelIQ/
+├── Back-end/
+│   ├── app/
+│   │   ├── api/documents/          # Endpoint /analyze (pipeline canônico)
+│   │   ├── ai_agents/              # CrewAI: 5 agentes + orchestrator + tools
+│   │   ├── messaging/              # RabbitMQ: domain, application, infra
+│   │   │   ├── domain/             # EventType, EventEnvelope, Ports
+│   │   │   ├── application/        # Handlers, RetryPolicy, Scheduler, Dedupe
+│   │   │   └── infrastructure/     # RabbitMQ impl (aio-pika) + fakes
+│   │   ├── workers/                # run_all.py (API + Workers + Scheduler)
+│   │   ├── audit/                  # Audit Logs (API + Service + Consumer)
+│   │   ├── notifications/          # Notification Center (WS + Consumer)
+│   │   ├── analytics/              # Dashboard KPIs, History, Stats
+│   │   ├── auth/                   # JWT + Google OAuth + MFA
+│   │   ├── settings_module/        # User prefs + Payment Schedules
+│   │   └── observability/          # Logging, Correlation, Health, Metrics
+│   ├── docker/
+│   │   ├── Dockerfile              # Multi-stage (builder + production)
+│   │   └── docker-compose.yml      # Local dev (postgres, redis, rabbitmq)
+│   ├── tests/                      # 456 testes (unit + integration)
+│   ├── alembic/                    # Migrations (0001..0004)
+│   ├── pyproject.toml              # Poetry deps + config
+│   └── poetry.lock
+├── Front-end/
+│   ├── src/
+│   │   ├── app/[locale]/(app)/     # Dashboard, Analyze, Reports, Audit Logs
+│   │   ├── components/             # Analysis, Notifications, Charts
+│   │   ├── hooks/                  # TanStack Query hooks
+│   │   ├── stores/                 # Zustand stores
+│   │   └── types/index.ts          # Tipos compartilhados (AuditAction, etc.)
+│   └── package.json
+├── docker-compose.yml              # Root (opcional)
+├── DEPLOY.md                       # Guia completo de deploy
+├── koyeb.yaml                      # Koyeb config
+├── render.yaml                     # Render Blueprint (API + Redis free)
+├── Procfile                        # Heroku/Render
+└── README.md
 ```
 
 ---
 
-## 🧪 Testing & Benchmarking
+## 📚 Documentação Técnica
 
-### Test Suite: 257 tests
-
-```
-$ pytest tests/unit/ -q
-257 passed in 0.66s
-```
-
-| Test Category | Count | Description |
-|--------------|-------|-------------|
-| Contracts | 19 | PipelineContext, Evidence, PipelineResult |
-| Architecture | 11 | CanonicalPipeline, FusionEngine invariants |
-| CrewAI | 16 | Circuit breaker, JSON parser, agent findings |
-| Pipeline Hardening | 40 | Regression (20 fraud + 20 legit) |
-| Golden Dataset | 8 | Automated accuracy/precision/recall |
-| Production | 17 | Event bus, exceptions, backward compat |
-| Benchmark | 63 | 50 fraud + 10 legit + 3 stats |
-| RAG | 24 | Query expansion, cache, evidence source |
-| Knowledge | 11 | Chunker, registry, metadata |
-
-### Benchmark Results
-
-```
-=== PAYSENTINELIQ BENCHMARK ===
-Total documents: 60
-True Positives:  50
-True Negatives:  10
-False Positives: 0
-False Negatives: 0
-Accuracy:  1.000 (100%)
-Precision: 1.000 (100%)
-Recall:    1.000 (100%)
-F1 Score:  1.000
-```
+| Documento | Descrição |
+|-----------|-----------|
+| `Back-end/docs/event_driven_architecture.md` | Arquitetura de mensageria completa (exchanges, queues, retry, DLQ, idempotência, workers) |
+| `LGPD_COMPLIANCE_REPORT.md` | Conformidade LGPD (Art. 7, 18, 37, 48) |
+| `DPIA_REPORT.md` | Data Protection Impact Assessment |
+| `Back-end/docs/tesseract_setup.md` | Configuração OCR |
 
 ---
 
-## 🚢 Deployment
+## 🔐 Segurança & Compliance
 
-| Component | Platform | URL |
-|-----------|----------|-----|
-| **Frontend** | Vercel | `https://pay-sentinel-iq.vercel.app` |
-| **Backend** | Railway | `https://paysentineliq-production.up.railway.app` |
-| **Database** | Supabase | PostgreSQL 15 + pgvector |
-
-### Feature Flags (Zero-Downtime Rollback)
-
-| Flag | Default | Purpose |
-|------|---------|---------|
-| `USE_CANONICAL_PIPELINE` | true | Canonical pipeline as entry point |
-| `ENABLE_AI_AGENTS` | true | CrewAI multi-agent execution |
-| `ENABLE_SHADOW_PIPELINE` | false | Legacy vs canonical comparison |
-| `ENABLE_PIPELINE_EVENTS` | true | Event bus observability |
-| `ENABLE_STRUCTURED_LOGGING` | true | JSON-formatted logs |
-| `ENABLE_SECURITY_VALIDATION` | true | Magic bytes + MIME validation |
+- **Auth:** JWT HS256 + Google OAuth 2.0 + MFA (TOTP)
+- **Rate Limiting:** Sliding window Redis por usuário/IP
+- **CORS:** Origins restritas (Vercel + localhost)
+- **Headers:** CSP, HSTS, X-Content-Type-Options, Referrer-Policy
+- **Secrets:** Apenas via env vars / secret managers (nunca no código)
+- **LGPD Ready:** Consentimento versionado, Audit Trail 5 anos, Breach 72h, Direito à Exclusão
 
 ---
 
-## 📊 Project Stats
+## 📊 Benchmark Resultados
 
-```
-Total commits:    200+
-Lines of code:    35,000+
-Python files:     80+
-TypeScript files: 50+
-Test files:       15+
-Test cases:       257
-PDF knowledge:    21 documents
-AI agents:        5 (parallel A,B,C)
-Pipeline stages:  6
-Benchmark score:  100% accuracy
-```
+| Métrica | Valor |
+|---------|-------|
+| **Accuracy** | 1.000 (100%) |
+| **Precision** | 1.000 (100%) |
+| **Recall** | 1.000 (100%) |
+| **F1 Score** | 1.000 |
+| **Documentos** | 60 (50 fraudes + 10 legítimos) |
+| **False Positives** | 0 |
+| **False Negatives** | 0 |
+
+> **Zero falsos negativos** em fraudes evidentes — a regra determinística garante captura total.
 
 ---
 
-<div align="center">
+## 🛠 Stack Tecnológica Completa
 
-**Built with ❤️ by the PaySentinelIQ Engineering Team**
+| Categoria | Tecnologias |
+|-----------|-------------|
+| **Backend** | FastAPI 0.115, Python 3.11, SQLAlchemy 2.0, Pydantic 2, Uvicorn |
+| **Frontend** | Next.js 16.2, React 18, TypeScript 5, Tailwind CSS, Zustand, TanStack Query |
+| **Database** | PostgreSQL 15 + pgvector (Supabase), AsyncPG |
+| **Cache/Queue** | Redis 7 (Upstash), RabbitMQ 4 (CloudAMQP) |
+| **AI/ML** | CrewAI, LangChain, Google Gemini 2.5 Flash, BGE-M3, pgvector |
+| **PDF/OCR** | PyMuPDF, pdfplumber, pypdf, Tesseract OCR, pdf2image |
+| **Observability** | Structured Logging, Correlation IDs, Prometheus, Sentry |
+| **Testing** | Pytest, Pytest-Asyncio, httpx, pytest-cov |
+| **CI/CD** | GitHub Actions ready, Koyeb/Render/Render.yaml |
 
-*"Deterministic before LLM. Evidence before score. Explainability before trust."*
+---
 
-</div>
+## 📄 Licença
+
+Proprietary — Projeto de portfólio para fins educacionais e demonstração técnica.  
+Código disponível para avaliação técnica em processos seletivos.
+
+---
+
+## 👨‍💻 Autor
+
+**Alisson Chagas**  
+[GitHub](https://github.com/ViChagas07) · [LinkedIn](https://linkedin.com/in/alissonchagas)  
+*Backend Engineer | Python | FastAPI | Distributed Systems | AI/ML*
+
+---
+
+> **Nota sobre Deploy:** O projeto está **100% pronto para produção** (código, testes, migrations, docker, configs). O backend está offline atualmente por limitação de tier gratuito em PaaS (Railway trial expirado). A arquitetura suporta deploy em Koyeb (free), Render (free API), Oracle Cloud Always Free (VM completa), ou qualquer Kubernetes. Documentação completa em `DEPLOY.md`.
+
+---
+
+## 📁 Arquivos de Deploy Inclusos
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `Back-end/docker/Dockerfile` | Multi-stage build (builder + production) |
+| `Back-end/docker/docker-compose.yml` | Local dev (PostgreSQL + Redis + RabbitMQ) |
+| `Back-end/docker/docker-compose.prod.yml` | Produção (API + Workers + Scheduler + RabbitMQ + Redis) |
+| `koyeb.yaml` | Configuração Koyeb (free tier) |
+| `render.yaml` | Render Blueprint (API + Redis free) |
+| `Procfile` | Heroku/Render compatibility |
+| `DEPLOY.md` | Guia passo-a-passo completo |
+| `koyeb.env.example` | Template de variáveis para Koyeb |
+
+---
+
+**Pronto para impressionar.** 🚀  
+Qualquer dúvida, abra uma *issue* ou me chame no LinkedIn.

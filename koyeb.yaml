@@ -1,0 +1,54 @@
+# 🐰 PaySentinelIQ — Koyeb Configuration
+# Deploy automático via GitHub → Koyeb (Free Tier: 1 serviço)
+
+name: paysentineliq-api
+type: web
+git:
+  branch: main
+  repository: ViChagas07/PaySentinelIQ
+  build_command: ""  # Usa pyproject.toml + poetry.lock automaticamente
+  run_command: python -m app.run_all
+
+instance:
+  type: nano  # Free tier: 512MB RAM, 0.1 vCPU, 2GB SSD
+  regions: [fra, was]  # Frankfurt (EU) ou Washington DC (US)
+  count: 1
+
+health_check:
+  http_path: /health
+  initial_delay: 30
+  period: 10
+  timeout: 5
+  failure_threshold: 3
+
+ports:
+  - port: 8000
+    protocol: http
+    expose: true
+
+# Variáveis de ambiente (configure no painel Koyeb → Settings → Environment Variables)
+# Use o arquivo koyeb.env.example como referência
+environment_variables:
+  - name: APP_VERSION
+    value: "1.0.0"
+  - name: ENVIRONMENT
+    value: "production"
+  - name: DEBUG
+    value: "false"
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: HOST
+    value: "0.0.0.0"
+  - name: PORT
+    value: "8000"
+  - name: CORS_ORIGINS
+    value: '["https://pay-sentinel-iq.vercel.app","http://localhost:3000"]'
+  # As variáveis sensíveis (DATABASE_URL, RABBITMQ_URL, etc.) devem ser
+  # configuradas manualmente no painel Koyeb → Settings → Environment Variables
+  # Veja koyeb.env.example para a lista completa
+
+# Health check endpoint
+# GET /health     → {"status": "healthy"}
+# GET /health/full → {"status": "...", "checks": {"database": {...}, "redis": {...}, "rabbitmq": {...}}}
+# GET /ready      → {"status": "ready", "checks": {"database": {...}, "redis": {...}}}
+# GET /live       → {"status": "alive", "checks": {"llm": {...}}}
