@@ -122,11 +122,11 @@ class Settings(BaseSettings):
     AWS_TEXTRACT_ROLE_ARN: str | None = None
 
     # ── AI / LLM Provider Selection ──
-    # Supported providers: ollama, openai, anthropic, bedrock, groq, gemini
+    # Supported providers: ollama, openai, anthropic, bedrock, groq, gemini, mock
     # Default is 'ollama' for zero-cost local inference.
     LLM_PROVIDER: str = Field(
         default="ollama",
-        pattern="^(ollama|openai|anthropic|bedrock|groq|gemini)$",
+        pattern="^(ollama|openai|anthropic|bedrock|groq|gemini|mock)$",
     )
 
     # ── Shared LLM Settings ──
@@ -166,6 +166,15 @@ class Settings(BaseSettings):
     ENABLE_AI_AGENTS: bool = True
     ENABLE_OCR: bool = True
     ENABLE_COMPLIANCE_CHECKS: bool = True
+
+    # ── Demo/Interview Mode ──
+    # When true: uses MockLLMProvider (instant, deterministic responses) for smooth demos
+    # When false: uses real Ollama (slower, but shows real LLM reasoning)
+    DEMO_MODE: bool = False
+    DEMO_SCENARIO: str = Field(
+        default="auto",
+        pattern="^(auto|clean|high_risk)$"
+    )
 
     # ── Fase 3A Feature Flags ──
     USE_CANONICAL_PIPELINE: bool = True     # Fase 5: CanonicalPipeline is now the default

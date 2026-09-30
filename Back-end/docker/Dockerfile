@@ -21,6 +21,36 @@ RUN pip install --no-cache-dir poetry && \
         "jaraco.context>=6.1.0"
 
 # ─────────────────────────────────────────────
+FROM python:3.11-slim AS development
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Dev dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    curl \
+    tesseract-ocr \
+    tesseract-ocr-por \
+    tesseract-ocr-eng \
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry and project dependencies
+COPY pyproject.toml poetry.lock ./
+RUN pip install --no-cache-dir poetry && \
+    poetry config virtualenvs.in-project true && \
+    poetry install --no-root --no-interaction --no-ansi
+
+WORKDIR /app
+
+# Application code will be mounted via volume in docker-compose
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:create_app", "--factory", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+
+# ─────────────────────────────────────────────
 FROM python:3.11-slim AS production
 
 WORKDIR /app

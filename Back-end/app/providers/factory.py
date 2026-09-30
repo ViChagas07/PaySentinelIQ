@@ -12,9 +12,7 @@ from functools import lru_cache
 from typing import Any
 
 from app.providers.base import BaseLLMProvider, LLMConfig
-from app.providers.gemini import GeminiProvider
-from app.providers.ollama import OllamaProvider
-from app.providers.openai import OpenAIProvider
+from app.providers.mock import MockLLMProvider
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +22,12 @@ class ProviderType(str, Enum):
 
     OLLAMA = "ollama"
     OPENAI = "openai"
+    GEMINI = "gemini"
+    MOCK = "mock"
     # Reserved for future providers
     ANTHROPIC = "anthropic"
     BEDROCK = "bedrock"
     GROQ = "groq"
-    GEMINI = "gemini"
 
 
 class LLMProviderFactory:
@@ -59,6 +58,7 @@ class LLMProviderFactory:
             **kwargs: Provider-specific arguments (api_key, base_url, etc.).
         """
         if provider_type == ProviderType.OLLAMA:
+            from app.providers.ollama import OllamaProvider
             return OllamaProvider(
                 config=config,
                 base_url=kwargs.get("base_url"),
@@ -67,16 +67,21 @@ class LLMProviderFactory:
             )
 
         if provider_type == ProviderType.OPENAI:
+            from app.providers.openai import OpenAIProvider
             api_key = kwargs.get("api_key")
             if not api_key:
                 raise ValueError("OPENAI_API_KEY is required for OpenAI provider")
             return OpenAIProvider(config=config, api_key=api_key)
 
         if provider_type == ProviderType.GEMINI:
+            from app.providers.gemini import GeminiProvider
             api_key = kwargs.get("api_key")
             if not api_key:
                 raise ValueError("GEMINI_API_KEY is required for Gemini provider")
             return GeminiProvider(config=config, api_key=api_key)
+
+        if provider_type == ProviderType.MOCK:
+            return MockLLMProvider(config=config, scenario=kwargs.get("scenario", "auto"))
 
         # Reserved for future providers
         if provider_type in (
@@ -159,6 +164,8 @@ def get_llm_provider() -> BaseLLMProvider:
                 "Set LLM_PROVIDER=ollama for local inference."
             )
         extra_kwargs["api_key"] = api_key
+    elif provider_type == ProviderType.MOCK:
+        extra_kwargs["scenario"] = getattr(settings, 'DEMO_SCENARIO', 'auto')
 
     provider = LLMProviderFactory.create(provider_type, config, **extra_kwargs)
     logger.info(
@@ -231,6 +238,13 @@ def get_crewai_llm() -> Any:
         return CrewAILLM(
             model=f"gemini/{settings.GEMINI_MODEL}",
             api_key=api_key,
+            temperature=settings.AI_TEMPERATURE,
+            max_tokens=settings.AI_MAX_TOKENS,
+        )
+
+    if provider_type == ProviderType.MOCK.value:
+        return CrewAILLM(
+            model="mock/demo",
             temperature=settings.AI_TEMPERATURE,
             max_tokens=settings.AI_MAX_TOKENS,
         )

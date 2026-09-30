@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: psi
+      POSTGRES_PASSWORD: psi_secret
+      POSTGRES_DB: paysentineliq
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psi -d paysentineliq"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Ollama — Local LLM (CPU-only, Windows compatible) ──
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_PARALLEL=1
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    restart: unless-stopped
+    # Pull model on startup
+    command: >
+      sh -c "ollama serve & sleep 10 && ollama pull qwen3:4b-q4_k_m && wait"
+
+  # ── API (local dev) ──
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: development
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env.local
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    volumes:
+      - ../Back-end:/app/Back-end
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
