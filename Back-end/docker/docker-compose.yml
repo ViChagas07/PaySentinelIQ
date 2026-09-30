@@ -35,13 +35,12 @@ services:
   rabbitmq:
     image: rabbitmq:4-management-alpine
     environment:
-      # Credentials come from the environment — never hardcode secrets here.
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-psi}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-psi_secret}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
     ports:
-      - "5672:5672"    # AMQP
-      - "15672:15672"  # Management UI
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -51,12 +50,33 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
+    profiles: ["full", "production"]  # Only start in full/production mode
+
+  # ── Ollama — Local LLM Inference (auto-enabled in demo/development) ──
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_PARALLEL=1
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    restart: unless-stopped
+    profiles: ["local", "demo", "development"]  # Only start in local modes
+    command: >
+      sh -c "ollama serve & sleep 10 && ollama pull qwen3:4b-q4_k_m && wait"
 
   api:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      target: production
+      target: ${DOCKER_TARGET:-production}
     ports:
       - "8000:8000"
     env_file:
@@ -66,9 +86,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - LLM_PROVIDER=ollama
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3
       - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/${RABBITMQ_DEFAULT_VHOST:-/}
     depends_on:
       postgres:
@@ -77,13 +95,16 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      ollama:
+        condition: service_started
     restart: unless-stopped
+    profiles: ["local", "demo", "development", "full", "production"]
 
   celery-worker:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      target: production
+      target: ${DOCKER_TARGET:-production}
     command: celery -A app.tasks worker --loglevel=info --concurrency=4
     env_file:
       - ../.env
@@ -92,21 +113,22 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - LLM_PROVIDER=ollama
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      ollama:
+        condition: service_started
     restart: unless-stopped
+    profiles: ["full", "production"]
 
   celery-beat:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      target: production
+      target: ${DOCKER_TARGET:-production}
     command: celery -A app.tasks beat --loglevel=info
     env_file:
       - ../.env
@@ -114,14 +136,14 @@ services:
       - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
-      - LLM_PROVIDER=ollama
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3
     depends_on:
       - redis
+      - ollama
     restart: unless-stopped
+    profiles: ["full", "production"]
 
-  # ══════════════════════════════════════════════════════════
+  # ═══════════════════════════════════════════════════════════
   # EVENT-DRIVEN WORKERS (RabbitMQ consumers) + SCHEDULER
   # Each is a separate, horizontally-scalable process.
   # ══════════════════════════════════════════════════════════
@@ -130,10 +152,10 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      target: production
+      target: ${DOCKER_TARGET:-production}
     command: python -m app.workers.audit_worker
     env_file:
-      - ../.env
+      - ../ .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
       - REDIS_URL=redis://redis:6379/0
@@ -144,15 +166,16 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
+    profiles: ["full", "production"]
 
   notification-worker:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      target: production
+      target: ${DOCKER_TARGET:-production}
     command: python -m app.workers.notification_worker
     env_file:
-      - ../.env
+      - ../ .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
       - REDIS_URL=redis://redis:6379/0
@@ -165,15 +188,16 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
+    profiles: ["full", "production"]
 
   email-worker:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      target: production
+      target: ${DOCKER_TARGET:-production}
     command: python -m app.workers.email_worker
     env_file:
-      - ../.env
+      - ../ .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
       - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/${RABBITMQ_DEFAULT_VHOST:-/}
@@ -187,15 +211,16 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
+    profiles: ["full", "production"]
 
   scheduler:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      target: production
+      target: ${DOCKER_TARGET:-production}
     command: python -m app.workers.scheduler
     env_file:
-      - ../.env
+      - ../ .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
       - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/${RABBITMQ_DEFAULT_VHOST:-/}
@@ -206,33 +231,10 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
-
-  # ── Ollama — Local LLM Inference (Optional, zero API cost) ──
-  # Uncomment this service to run Ollama inside Docker.
-  # Alternatively, run Ollama natively on the host and set OLLAMA_BASE_URL=http://host.docker.internal:11434
-  #
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   ports:
-  #     - "11434:11434"
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #   environment:
-  #     - OLLAMA_KEEP_ALIVE=24h
-  #     - OLLAMA_HOST=0.0.0.0
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             count: 1
-  #             capabilities: [gpu]
-  #   restart: unless-stopped
-  #   # Run this after container starts to pull the model:
-  #   # docker compose exec ollama ollama pull llama3
+    profiles: ["full", "production"]
 
 volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
-  # ollama_data:
+  ollama_data:

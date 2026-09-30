@@ -5,7 +5,7 @@
 
 from functools import lru_cache
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = Field(
         default="development",
-        pattern="^(development|staging|production|test)$",
+        pattern="^(development|staging|production|test|demo)$",
     )
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
@@ -123,10 +123,13 @@ class Settings(BaseSettings):
 
     # ── AI / LLM Provider Selection ──
     # Supported providers: ollama, openai, anthropic, bedrock, groq, gemini, mock
-    # Default is 'ollama' for zero-cost local inference.
+    # Leave empty to auto-select based on ENVIRONMENT:
+    #   demo → mock (instant, deterministic)
+    #   development → ollama with Qwen3 4B
+    #   production → gemini (requires GEMINI_API_KEY)
     LLM_PROVIDER: str = Field(
-        default="ollama",
-        pattern="^(ollama|openai|anthropic|bedrock|groq|gemini|mock)$",
+        default="",
+        pattern="^(ollama|openai|anthropic|bedrock|groq|gemini|mock)?$",
     )
 
     # ── Shared LLM Settings ──
@@ -166,15 +169,6 @@ class Settings(BaseSettings):
     ENABLE_AI_AGENTS: bool = True
     ENABLE_OCR: bool = True
     ENABLE_COMPLIANCE_CHECKS: bool = True
-
-    # ── Demo/Interview Mode ──
-    # When true: uses MockLLMProvider (instant, deterministic responses) for smooth demos
-    # When false: uses real Ollama (slower, but shows real LLM reasoning)
-    DEMO_MODE: bool = False
-    DEMO_SCENARIO: str = Field(
-        default="auto",
-        pattern="^(auto|clean|high_risk)$"
-    )
 
     # ── Fase 3A Feature Flags ──
     USE_CANONICAL_PIPELINE: bool = True     # Fase 5: CanonicalPipeline is now the default
@@ -224,6 +218,94 @@ class Settings(BaseSettings):
     BREACH_DEADLINE_HOURS: int = 72  # LGPD Art. 48 — 72-hour notification window
     BREACH_AFFECTED_THRESHOLD: int = 50  # Notify all subjects if affected > this number
     BREACH_AUTO_NOTIFY_ANPD: bool = True  # Auto-trigger notification task on registration
+
+    # ── Environment-based computed defaults ──
+    @computed_field
+    @property
+    def effective_llm_provider(self) -> str:
+        """Determine effective LLM provider based on ENVIRONMENT."""
+        if self.ENVIRONMENT == "demo":
+            return "mock"  # Instant, deterministic for demos
+        if self.ENVIRONMENT == "development":
+            return "ollama"  # Local LLM
+        if self.ENVIRONMENT == "production":
+            # Default to gemini for production unless explicitly set to cloud provider
+            if not self.LLM_PROVIDER or self.LLM_PROVIDER in ("ollama", "mock"):
+                return "gemini"
+            return self.LLM_PROVIDER
+        return self.LLM_PROVIDER or "ollama"
+
+    @computed_field
+    @property
+    def effective_ollama_model(self) -> str:
+        """Use Qwen3 4B in demo/development for faster inference."""
+        if self.ENVIRONMENT in ("demo", "development"):
+            return "qwen3:4b-q4_k_m"
+        return self.OLLAMA_MODEL
+
+    @computed_field
+    @property
+    def effective_ai_temperature(self) -> float:
+        """Lower temperature for demo/development for more deterministic output."""
+        if self.ENVIRONMENT in ("demo", "development"):
+            return 0.2
+        return self.AI_TEMPERATURE
+
+    @computed_field
+    @property
+    def effective_ai_max_tokens(self) -> int:
+        """Smaller context for demo/development to save memory."""
+        if self.ENVIRONMENT in ("demo", "development"):
+            return 2048
+        return self.AI_MAX_TOKENS
+
+    @computed_field
+    @property
+    def effective_ollama_num_gpu(self) -> int:
+        """CPU-only on Windows for demo/development."""
+        if self.ENVIRONMENT in ("demo", "development"):
+            return 0
+        return self.OLLAMA_NUM_GPU or 0
+
+    @computed_field
+    @property
+    def effective_ollama_num_thread(self) -> int:
+        """Leave threads for OS on demo/development."""
+        if self.ENVIRONMENT in ("demo", "development"):
+            return 12
+        return self.OLLAMA_NUM_THREAD or 4
+
+    @computed_field
+    @property
+    def effective_rabbitmq_enabled(self) -> bool:
+        """Disable RabbitMQ in demo/development for simplicity."""
+        if self.ENVIRONMENT in ("demo", "development", "test"):
+            return False
+        return self.RABBITMQ_ENABLED
+
+    @computed_field
+    @property
+    def effective_email_enabled(self) -> bool:
+        """Disable email in demo/development/test."""
+        if self.ENVIRONMENT in ("demo", "development", "test"):
+            return False
+        return self.EMAIL_ENABLED
+
+    @computed_field
+    @property
+    def effective_bill_scheduler_enabled(self) -> bool:
+        """Disable scheduler in demo/development/test."""
+        if self.ENVIRONMENT in ("demo", "development", "test"):
+            return False
+        return self.BILL_SCHEDULER_ENABLED
+
+    @computed_field
+    @property
+    def effective_log_level(self) -> str:
+        """Debug logging in demo/development."""
+        if self.ENVIRONMENT in ("demo", "development"):
+            return "DEBUG"
+        return self.LOG_LEVEL
 
 
 @lru_cache

@@ -1,54 +1,64 @@
 <#
 .SYNOPSIS
     PaySentinelIQ - Demo/Interview Launcher
-    Starts everything needed for a smooth demo in ONE command.
+    Uses ENVIRONMENT variable to auto-configure everything.
 #>
 
 param(
-    [switch]$UseMock = $true,
-    [switch]$UseOllama = $false,
-    [switch]$PullModel = $true,
-    [switch]$SkipDocker = $false
+    [ValidateSet("demo", "development", "production")]
+    [string]$Environment = "demo",   # demo = mock (instant), development = Ollama Qwen3 4B
+    [switch]$PullModel = $true,      # Download Qwen3 4B if missing
+    [switch]$SkipDocker = $false     # Run services manually
 )
 
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host "  PaySentinelIQ - Demo Launcher" -ForegroundColor Cyan
+Write-Host "  PaySentinelIQ - Launcher" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
+Write-Host "Mode: $Environment" -ForegroundColor Yellow
 
+# 1. Copy appropriate .env
 $envFile = "Back-end\.env"
 $localEnv = "Back-end\.env.local"
-
-if (-not (Test-Path $envFile) -or (Get-Content $envFile -Raw) -notmatch "DEMO_MODE") {
+if ($Environment -eq "production") {
+    # Production uses the existing .env (already configured)
+    Write-Host "Using existing .env (production config)" -ForegroundColor Green
+} else {
     Write-Host "Copiando .env.local -> .env..." -ForegroundColor Yellow
     Copy-Item $localEnv $envFile -Force
+    
+    # Override ENVIRONMENT if different from .env.local
+    if ($Environment -ne "demo") {
+        $content = Get-Content $envFile -Raw
+        $content = $content -replace 'ENVIRONMENT=.*', "ENVIRONMENT=$Environment"
+        Set-Content $envFile $content -Encoding utf8
+    }
 }
 
-$demoMode = if ($UseMock) { "true" } else { "false" }
-$scenario = "auto"
-if ($UseMock -and $UseOllama) { $scenario = "high_risk" }
-
-$content = Get-Content $envFile -Raw
-$content = $content -replace 'DEMO_MODE=.*', "DEMO_MODE=$demoMode"
-$content = $content -replace 'DEMO_SCENARIO=.*', "DEMO_SCENARIO=$scenario"
-$content = $content -replace 'LLM_PROVIDER=.*', "LLM_PROVIDER=$(if ($UseMock) { 'mock' } else { 'ollama' })"
-Set-Content $envFile $content -Encoding utf8
-
-Write-Host "Config: LLM_PROVIDER=$(if ($UseMock) { 'mock (instant)' } else { 'ollama (real)' }), DEMO_MODE=$demoMode" -ForegroundColor Green
-
+# 2. Start infrastructure
 if (-not $SkipDocker) {
-    Write-Host "Subindo infraestrutura (Postgres + Redis + Ollama)..." -ForegroundColor Yellow
-    docker compose -f Back-end\docker\docker-compose.local.yml up -d --remove-orphans
+    $profile = switch ($Environment) {
+        "demo" { "demo" }
+        "development" { "local" }
+        "production" { "production" }
+        default { "local" }
+    }
+    
+    Write-Host "🐳 Subindo infraestrutura (profile: $profile)..." -ForegroundColor Yellow
+    docker compose -f Back-end\docker\docker-compose.yml --profile $profile up -d --remove-orphans
 
-    if ($PullModel -and -not $UseMock) {
-        Write-Host "Baixando Qwen3 4B (pode demorar na primeira vez)..." -ForegroundColor Yellow
-        docker compose -f Back-end\docker\docker-compose.local.yml exec ollama ollama pull qwen3:4b-q4_k_m
+    if ($PullModel -and $Environment -in @("demo", "development")) {
+        Write-Host "⬇️  Baixando Qwen3 4B (pode demorar na primeira vez)..." -ForegroundColor Yellow
+        docker compose -f Back-end\docker\docker-compose.yml exec ollama ollama pull qwen3:4b-q4_k_m
     }
 
-    Write-Host "Aguardando servicos ficarem healthy..." -ForegroundColor Yellow
-    Start-Sleep 15
+    Write-Host "⏳ Aguardando serviços..." -ForegroundColor Yellow
+    Start-Sleep 10
 }
 
-Write-Host "Iniciando API (uvicorn + hot reload)..." -ForegroundColor Green
+# 3. Start API
+Write-Host "🚀 Iniciando API..." -ForegroundColor Green
 Set-Location Back-end
 $env:PYTHONPATH = "$(Get-Location)\.."
+$target = if ($Environment -in @("demo", "development")) { "development" } else { "production" }
+$env:DOCKER_TARGET = $target
 python -m uvicorn app.main:create_app --factory --reload --host 0.0.0.0 --port 8000

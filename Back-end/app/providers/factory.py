@@ -100,26 +100,23 @@ class LLMProviderFactory:
 
 
 def _resolve_llm_config() -> LLMConfig:
-    """Build LLMConfig from application settings."""
+    """Build LLMConfig from application settings (using effective_* computed fields)."""
     from app.shared.settings import get_settings
 
     settings = get_settings()
-    provider = settings.LLM_PROVIDER
 
-    # Determine which model to use based on the active provider
-    if provider == ProviderType.OLLAMA.value:
-        model = settings.OLLAMA_MODEL
-    elif provider == ProviderType.GEMINI.value:
-        model = settings.GEMINI_MODEL
-    elif provider == ProviderType.OPENAI.value:
-        model = settings.OPENAI_MODEL
-    else:
-        model = settings.OLLAMA_MODEL  # sensible fallback
+    # Use environment-aware computed fields
+    provider = settings.effective_llm_provider
+    model = settings.effective_ollama_model if provider == "ollama" else (
+        settings.GEMINI_MODEL if provider == "gemini" else
+        settings.OPENAI_MODEL if provider == "openai" else
+        "mock"
+    )
 
     return LLMConfig(
         model=model,
-        temperature=settings.AI_TEMPERATURE,
-        max_tokens=settings.AI_MAX_TOKENS,
+        temperature=settings.effective_ai_temperature,
+        max_tokens=settings.effective_ai_max_tokens,
         timeout=settings.OLLAMA_TIMEOUT,
         max_retries=settings.OLLAMA_MAX_RETRIES,
     )
@@ -130,13 +127,15 @@ def get_llm_provider() -> BaseLLMProvider:
     """
     Get or create the configured LLM provider (singleton, cached).
 
-    Uses the LLM_PROVIDER setting to determine which provider to instantiate.
-    Defaults to Ollama for zero-cost local inference.
+    Uses the ENVIRONMENT setting to determine which provider to instantiate:
+    - demo → mock (instant, deterministic)
+    - development → ollama with Qwen3 4B (local, zero-cost)
+    - production → gemini (or explicitly configured provider)
     """
     from app.shared.settings import get_settings
 
     settings = get_settings()
-    provider_type = ProviderType(settings.LLM_PROVIDER)
+    provider_type = ProviderType(settings.effective_llm_provider)
 
     config = _resolve_llm_config()
 
@@ -144,16 +143,14 @@ def get_llm_provider() -> BaseLLMProvider:
 
     if provider_type == ProviderType.OLLAMA:
         extra_kwargs["base_url"] = settings.OLLAMA_BASE_URL
-        if settings.OLLAMA_NUM_GPU is not None:
-            extra_kwargs["num_gpu"] = settings.OLLAMA_NUM_GPU
-        if settings.OLLAMA_NUM_THREAD is not None:
-            extra_kwargs["num_thread"] = settings.OLLAMA_NUM_THREAD
+        extra_kwargs["num_gpu"] = settings.effective_ollama_num_gpu
+        extra_kwargs["num_thread"] = settings.effective_ollama_num_thread
     elif provider_type == ProviderType.OPENAI:
         api_key = settings.OPENAI_API_KEY.get_secret_value() if settings.OPENAI_API_KEY else None
         if not api_key:
             raise ValueError(
                 "OPENAI_API_KEY is required when LLM_PROVIDER is 'openai'. "
-                "Set LLM_PROVIDER=ollama for local inference."
+                "Set ENVIRONMENT=demo for mock or ENVIRONMENT=development for ollama."
             )
         extra_kwargs["api_key"] = api_key
     elif provider_type == ProviderType.GEMINI:
@@ -161,15 +158,16 @@ def get_llm_provider() -> BaseLLMProvider:
         if not api_key:
             raise ValueError(
                 "GEMINI_API_KEY is required when LLM_PROVIDER is 'gemini'. "
-                "Set LLM_PROVIDER=ollama for local inference."
+                "Set ENVIRONMENT=demo for mock or ENVIRONMENT=development for ollama."
             )
         extra_kwargs["api_key"] = api_key
     elif provider_type == ProviderType.MOCK:
-        extra_kwargs["scenario"] = getattr(settings, 'DEMO_SCENARIO', 'auto')
+        extra_kwargs["scenario"] = "auto"
 
     provider = LLMProviderFactory.create(provider_type, config, **extra_kwargs)
     logger.info(
-        "LLM provider initialized: type=%s, model=%s",
+        "LLM provider initialized: environment=%s, type=%s, model=%s",
+        settings.ENVIRONMENT,
         provider_type.value,
         config.model,
     )
@@ -205,14 +203,14 @@ def get_crewai_llm() -> Any:
     from app.shared.settings import get_settings
 
     settings = get_settings()
-    provider_type = settings.LLM_PROVIDER
+    provider_type = settings.effective_llm_provider
 
     if provider_type == ProviderType.OLLAMA.value:
         return CrewAILLM(
-            model=f"ollama/{settings.OLLAMA_MODEL}",
+            model=f"ollama/{settings.effective_ollama_model}",
             base_url=settings.OLLAMA_BASE_URL,
-            temperature=settings.AI_TEMPERATURE,
-            max_tokens=settings.AI_MAX_TOKENS,
+            temperature=settings.effective_ai_temperature,
+            max_tokens=settings.effective_ai_max_tokens,
             timeout=settings.OLLAMA_TIMEOUT,
         )
 
@@ -224,8 +222,8 @@ def get_crewai_llm() -> Any:
         return CrewAILLM(
             model=settings.OPENAI_MODEL,
             api_key=api_key,
-            temperature=settings.AI_TEMPERATURE,
-            max_tokens=settings.AI_MAX_TOKENS,
+            temperature=settings.effective_ai_temperature,
+            max_tokens=settings.effective_ai_max_tokens,
         )
 
     if provider_type == ProviderType.GEMINI.value:
@@ -238,15 +236,15 @@ def get_crewai_llm() -> Any:
         return CrewAILLM(
             model=f"gemini/{settings.GEMINI_MODEL}",
             api_key=api_key,
-            temperature=settings.AI_TEMPERATURE,
-            max_tokens=settings.AI_MAX_TOKENS,
+            temperature=settings.effective_ai_temperature,
+            max_tokens=settings.effective_ai_max_tokens,
         )
 
     if provider_type == ProviderType.MOCK.value:
         return CrewAILLM(
             model="mock/demo",
-            temperature=settings.AI_TEMPERATURE,
-            max_tokens=settings.AI_MAX_TOKENS,
+            temperature=settings.effective_ai_temperature,
+            max_tokens=settings.effective_ai_max_tokens,
         )
 
     logger.warning("Unsupported provider for CrewAI LLM: %s", provider_type)
