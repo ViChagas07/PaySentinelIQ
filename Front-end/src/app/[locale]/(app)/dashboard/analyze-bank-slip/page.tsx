@@ -62,7 +62,7 @@ export default function AnalyzeBankSlipPage() {
   const removeHistoryEntry = useAnalysisStore(selectRemoveHistoryEntry);
   const removeHistoryEntryWrapper = useCallback((id: string) => removeHistoryEntry(DOC_TYPE, id), [removeHistoryEntry]);
   const resetAll = useAnalysisStore(selectResetAll);
-  const { start: startPipeline } = useSimulatePipeline();
+  const { start: startPipeline } = useSimulatePipeline({ analysisType: DOC_TYPE });
 
   const analyzeMutation = useAnalyzeDocument();
   const saveAnalysis = useSaveAnalysis();
@@ -242,7 +242,7 @@ export default function AnalyzeBankSlipPage() {
       {/* ═══════════ SECTION 4 — AI PROCESSING ═══════════ */}
       {isProcessing && (
         <GlowCard glowColor="psi-warning" glowIntensity="high">
-          <AIProcessingPipeline />
+          <AIProcessingPipeline analysisType={DOC_TYPE} />
         </GlowCard>
       )}
 

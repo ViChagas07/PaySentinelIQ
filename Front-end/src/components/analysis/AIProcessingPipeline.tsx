@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { useAnalysisStore, selectAnyIsProcessing, selectLatestStage, selectCombinedStageProgress, selectSetStage, selectSetStageProgress, type AnalysisStage } from "@/stores/analysis-store";
+import { useAnalysisStore, selectCurrentStage, selectStageProgress, selectIsProcessing, selectSetStage, selectSetStageProgress, type AnalysisStage } from "@/stores/analysis-store";
 import {
   Loader2, CheckCircle2, Clock, Brain, ScanEye, ShieldCheck,
   FileSearch, BarChart3, FileCheck, Sparkles,
@@ -42,15 +42,15 @@ function useStageData(t: ReturnType<typeof useTranslations<"analysis">>) {
   })), [t]);
 }
 
-export function AIProcessingPipeline({ onComplete }: { onComplete?: () => void }) {
+export function AIProcessingPipeline({ onComplete, analysisType }: { onComplete?: () => void; analysisType: "payroll" | "bank-slip" }) {
   const t = useTranslations("analysis");
   const STAGES = useStageData(t);
 
-  const currentStage = useAnalysisStore(selectLatestStage);
+  const currentStage = useAnalysisStore(selectCurrentStage(analysisType));
   const setStage = useAnalysisStore(selectSetStage);
-  const stageProgress = useAnalysisStore(selectCombinedStageProgress);
+  const stageProgress = useAnalysisStore(selectStageProgress(analysisType));
   const setStageProgress = useAnalysisStore(selectSetStageProgress);
-  const isProcessing = useAnalysisStore(selectAnyIsProcessing);
+  const isProcessing = useAnalysisStore(selectIsProcessing(analysisType));
   const [elapsed, setElapsed] = useState(0);
   const progressRef = useRef(0);
 
@@ -69,7 +69,7 @@ export function AIProcessingPipeline({ onComplete }: { onComplete?: () => void }
 
     const interval = setInterval(() => {
       progressRef.current = Math.min(100, progressRef.current + Math.random() * 8);
-      setStageProgress(progressRef.current);
+      setStageProgress(analysisType, progressRef.current);
     }, 200);
 
     return () => clearInterval(interval);
@@ -231,31 +231,31 @@ export function AIProcessingPipeline({ onComplete }: { onComplete?: () => void }
    Simulated pipeline runner
    ═══════════════════════════════════════════════════ */
 
-export function useSimulatePipeline() {
+export function useSimulatePipeline({ analysisType }: { analysisType: "payroll" | "bank-slip" }) {
   const t = useTranslations("analysis");
   const STAGES = useStageData(t);
 
-  const setStage = useAnalysisStore((s) => s.setStage);
-  const setStageProgress = useAnalysisStore((s) => s.setStageProgress);
+  const setStage = useAnalysisStore(selectSetStage);
+  const setStageProgress = useAnalysisStore(selectSetStageProgress);
   const setIsProcessing = useAnalysisStore((s) => s.setIsProcessing);
-  const isProcessing = useAnalysisStore((s) => s.isProcessing);
+  const isProcessing = useAnalysisStore(selectIsProcessing(analysisType));
 
   const start = () => {
     if (isProcessing) return;
-    setIsProcessing(true);
-    setStageProgress(0);
-    setStage("uploading");
+    setIsProcessing(analysisType, true);
+    setStageProgress(analysisType, 0);
+    setStage(analysisType, "uploading");
 
     let currentIdx = 1;
     const advance = () => {
       if (currentIdx >= STAGES.length) {
-        setStage("complete");
-        setIsProcessing(false);
+        setStage(analysisType, "complete");
+        setIsProcessing(analysisType, false);
         return;
       }
       const stage = STAGES[currentIdx];
-      setStage(stage.stage);
-      setStageProgress(0);
+      setStage(analysisType, stage.stage);
+      setStageProgress(analysisType, 0);
       currentIdx++;
       setTimeout(advance, STAGE_DURATIONS[currentIdx - 1] || 1500);
     };
