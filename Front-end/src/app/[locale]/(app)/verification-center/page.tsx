@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl";
 import { useFraudAlerts } from "@/hooks/useApi";
 import { DocumentPreview } from "@/components/verification/DocumentPreview";
 import { AIAnalysisPanel } from "@/components/verification/AIAnalysisPanel";
-import { useAnalysisStore } from "@/stores/analysis-store";
+import { useAnalysisStore, selectAllResults, selectAnyIsProcessing, selectLatestStage } from "@/stores/analysis-store";
 import type {
   ExtractedField,
   FraudIndicatorItem,
@@ -84,9 +84,9 @@ export default function VerificationCenterPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // ── Pipeline results (from analysis-store) ──
-  const storeResults = useAnalysisStore((s) => s.results);
-  const isProcessing = useAnalysisStore((s) => s.isProcessing);
-  const currentStage = useAnalysisStore((s) => s.currentStage);
+  const storeResults = useAnalysisStore(selectAllResults);
+  const isProcessing = useAnalysisStore(selectAnyIsProcessing);
+  const currentStage = useAnalysisStore(selectLatestStage);
   const latestResult = storeResults.length > 0 ? storeResults[storeResults.length - 1] : null;
 
   // Auto-select first open/active alert whenever the list changes
