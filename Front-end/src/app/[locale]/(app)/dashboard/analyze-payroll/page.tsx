@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
