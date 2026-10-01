@@ -320,5 +320,8 @@ export const selectResetAll = (state: AnalysisStore) => state.resetAll;
 export const selectAllResults = (state: AnalysisStore) => [...state.states.payroll.results, ...state.states["bank-slip"].results];
 export const selectAnyIsProcessing = (state: AnalysisStore) => state.states.payroll.isProcessing || state.states["bank-slip"].isProcessing;
 export const selectLatestStage = (state: AnalysisStore) => state.states.payroll.currentStage !== "idle" ? state.states.payroll.currentStage : state.states["bank-slip"].currentStage;
+export const selectCombinedStageProgress = (state: AnalysisStore) => state.states.payroll.currentStage !== "idle" ? state.states.payroll.stageProgress : state.states["bank-slip"].stageProgress;
+export const selectSetStage = (state: AnalysisStore) => state.setStage;
+export const selectSetStageProgress = (state: AnalysisStore) => state.setStageProgress;
 
 export { generateId };

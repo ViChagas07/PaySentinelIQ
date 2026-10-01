@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { useAnalysisStore, type AnalysisStage } from "@/stores/analysis-store";
+import { useAnalysisStore, selectAnyIsProcessing, selectLatestStage, selectCombinedStageProgress, selectSetStage, selectSetStageProgress, type AnalysisStage } from "@/stores/analysis-store";
 import {
   Loader2, CheckCircle2, Clock, Brain, ScanEye, ShieldCheck,
   FileSearch, BarChart3, FileCheck, Sparkles,
@@ -46,11 +46,11 @@ export function AIProcessingPipeline({ onComplete }: { onComplete?: () => void }
   const t = useTranslations("analysis");
   const STAGES = useStageData(t);
 
-  const currentStage = useAnalysisStore((s) => s.currentStage);
-  const setStage = useAnalysisStore((s) => s.setStage);
-  const stageProgress = useAnalysisStore((s) => s.stageProgress);
-  const setStageProgress = useAnalysisStore((s) => s.setStageProgress);
-  const isProcessing = useAnalysisStore((s) => s.isProcessing);
+  const currentStage = useAnalysisStore(selectLatestStage);
+  const setStage = useAnalysisStore(selectSetStage);
+  const stageProgress = useAnalysisStore(selectCombinedStageProgress);
+  const setStageProgress = useAnalysisStore(selectSetStageProgress);
+  const isProcessing = useAnalysisStore(selectAnyIsProcessing);
   const [elapsed, setElapsed] = useState(0);
   const progressRef = useRef(0);
 
