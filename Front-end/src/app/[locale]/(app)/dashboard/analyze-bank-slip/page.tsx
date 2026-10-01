@@ -220,7 +220,7 @@ export default function AnalyzeBankSlipPage() {
       {/* Start Analysis Button — Disabled with Coming Soon Tooltip */}
       {!isProcessing && !showResults && (
         <div className="flex justify-center">
-          <div className="relative inline-flex" role="group" aria-label={t("bankSlip.comingSoon")}>
+          <div className="group relative inline-flex" role="group" aria-label={t("bankSlip.comingSoon")}>
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleAnalyze} disabled={true}
               className={cn("inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-sm transition-all",
                 "bg-psi-border/30 text-psi-text-secondary/50 cursor-not-allowed")}>
