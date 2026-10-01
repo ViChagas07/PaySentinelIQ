@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
-import { useAnalysisStore, selectFiles, selectExtraInfo, selectResults, selectHistory, selectIsProcessing, selectCurrentStage, type AnalysisResult, type HistoryEntry } from "@/stores/analysis-store";
+import { useAnalysisStore, selectFiles, selectExtraInfo, selectResults, selectHistory, selectIsProcessing, selectCurrentStage, selectAddResult, selectClearResults, selectAddHistoryEntry, selectRemoveHistoryEntry, selectResetAll, type AnalysisResult, type HistoryEntry } from "@/stores/analysis-store";
 import { DocumentUploadZone } from "@/components/analysis/DocumentUploadZone";
 import { AIProcessingPipeline, useSimulatePipeline } from "@/components/analysis/AIProcessingPipeline";
 import { AnalysisResultCard } from "@/components/analysis/AnalysisResultCard";
