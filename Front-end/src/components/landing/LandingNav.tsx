@@ -63,6 +63,7 @@ export function LandingNav() {
   }, []);
 
   const currentLocale = LOCALES.find((l) => l.code === locale);
+  const isRTL = locale === "ar";
 
   return (
     <header
@@ -124,7 +125,7 @@ export function LandingNav() {
         </nav>
 
         {/* Right actions - right */}
-        <div className="flex items-center justify-end gap-2 w-[20%]">
+        <div className="flex items-center justify-end gap-2 w-[20%] sm:w-auto">
           {/* Language switcher */}
           <div className="relative hidden sm:block">
             <button
@@ -210,7 +211,7 @@ export function LandingNav() {
           )}
 
           {/* Guest "Entrar" button + hamburger (mobile only) */}
-          <div className="flex sm:hidden items-center gap-2">
+          <div className={cn("flex sm:hidden items-center gap-2", isRTL ? "mr-auto" : "ml-auto")}>
             {!isAuthenticated && (
               <Button
                 onClick={() => router.push("/auth/login")}
