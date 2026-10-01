@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Upload, FileText, X, Check, AlertCircle, FileWarning, FolderOpen, ChevronDown } from "lucide-react";
-import { useAnalysisStore, generateId, type UploadedFile } from "@/stores/analysis-store";
+import { useAnalysisStore, selectFiles, selectMaxFiles, selectAddFile, selectRemoveFile, selectUpdateFileProgress, generateId, type UploadedFile } from "@/stores/analysis-store";
 import { FileSourceSelector } from "@/components/analysis/FileSourceSelector";
 import { GoogleDriveUploadButton } from "@/components/analysis/GoogleDriveUploadButton";
 
@@ -29,14 +29,18 @@ function formatSize(bytes: number): string {
    Document Upload Zone
    ═══════════════════════════════════════════════════ */
 
-export function DocumentUploadZone() {
+interface DocumentUploadZoneProps {
+  analysisType: "payroll" | "bank-slip";
+}
+
+export function DocumentUploadZone({ analysisType }: DocumentUploadZoneProps) {
   const t = useTranslations("analysis");
   const tc = useTranslations("common");
-  const files = useAnalysisStore((s) => s.files);
-  const maxFiles = useAnalysisStore((s) => s.maxFiles);
-  const addFile = useAnalysisStore((s) => s.addFile);
-  const removeFile = useAnalysisStore((s) => s.removeFile);
-  const updateFileProgress = useAnalysisStore((s) => s.updateFileProgress);
+  const files = useAnalysisStore(selectFiles(analysisType));
+  const maxFiles = useAnalysisStore(selectMaxFiles);
+  const addFile = useAnalysisStore(selectAddFile);
+  const removeFile = useAnalysisStore(selectRemoveFile);
+  const updateFileProgress = useAnalysisStore(selectUpdateFileProgress);
 
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +80,7 @@ export function DocumentUploadZone() {
           status: "pending",
           file,  // Preserve the actual File object for multipart upload
         };
-        addFile(uploaded);
+        addFile(analysisType, uploaded);
 
         let progress = 0;
         const interval = setInterval(() => {
@@ -85,11 +89,11 @@ export function DocumentUploadZone() {
             progress = 100;
             clearInterval(interval);
           }
-          updateFileProgress(id, Math.min(100, progress));
+          updateFileProgress(analysisType, id, Math.min(100, progress));
         }, 300);
       });
     },
-    [files.length, maxFiles, addFile, updateFileProgress, t]
+    [files.length, maxFiles, addFile, updateFileProgress, t, analysisType]
   );
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {

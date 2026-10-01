@@ -1,10 +1,8 @@
-"use client";
-
 import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
-import { useAnalysisStore, type AnalysisResult, type HistoryEntry } from "@/stores/analysis-store";
+import { useAnalysisStore, selectFiles, selectExtraInfo, selectResults, selectHistory, selectIsProcessing, selectCurrentStage, type AnalysisResult, type HistoryEntry, generateId } from "@/stores/analysis-store";
 import { DocumentUploadZone } from "@/components/analysis/DocumentUploadZone";
 import { AIProcessingPipeline, useSimulatePipeline } from "@/components/analysis/AIProcessingPipeline";
 import { AnalysisResultCard } from "@/components/analysis/AnalysisResultCard";
@@ -19,6 +17,8 @@ import {
 } from "lucide-react";
 import { useAnalyzeDocument, useSaveAnalysis } from "@/hooks/useApi";
 import { mapPSIReportToAnalysisResult } from "@/lib/analysis-mapper";
+
+const DOC_TYPE = "bank-slip" as const;
 
 function getReadableError(error: unknown): string {
   if (error instanceof Error) {
@@ -46,17 +46,19 @@ export default function AnalyzeBankSlipPage() {
   const t = useTranslations("analysis");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const files = useAnalysisStore((s) => s.files);
-  const results = useAnalysisStore((s) => s.results);
+
+  const files = useAnalysisStore(selectFiles(DOC_TYPE));
+  const results = useAnalysisStore(selectResults(DOC_TYPE));
+  const history = useAnalysisStore(selectHistory(DOC_TYPE));
+  const isProcessing = useAnalysisStore(selectIsProcessing(DOC_TYPE));
+  const currentStage = useAnalysisStore(selectCurrentStage(DOC_TYPE));
+  const extraInfo = useAnalysisStore(selectExtraInfo(DOC_TYPE));
+
   const addResult = useAnalysisStore((s) => s.addResult);
   const clearResults = useAnalysisStore((s) => s.clearResults);
-  const history = useAnalysisStore((s) => s.history);
   const addHistoryEntry = useAnalysisStore((s) => s.addHistoryEntry);
   const removeHistoryEntry = useAnalysisStore((s) => s.removeHistoryEntry);
-  const isProcessing = useAnalysisStore((s) => s.isProcessing);
-  const currentStage = useAnalysisStore((s) => s.currentStage);
   const resetAll = useAnalysisStore((s) => s.resetAll);
-  const extraInfo = useAnalysisStore((s) => s.extraInfo);
   const { start: startPipeline } = useSimulatePipeline();
 
   const analyzeMutation = useAnalyzeDocument();
@@ -64,60 +66,60 @@ export default function AnalyzeBankSlipPage() {
   const [error, setError] = useState<string | null>(null);
 
     const handleAnalyze = useCallback(async () => {
-        if (files.length === 0 || isProcessing) return;
-        clearResults();
-        setError(null);
-        startPipeline();
+    if (files.length === 0 || isProcessing) return;
+    clearResults(DOC_TYPE);
+    setError(null);
+    startPipeline();
 
-        const doneFiles = files.filter((f) => f.status === "done");
-        const newResults: AnalysisResult[] = [];
+    const doneFiles = files.filter((f) => f.status === "done");
+    const newResults: AnalysisResult[] = [];
 
-        for (const file of doneFiles) {
+    for (const file of doneFiles) {
+        try {
+            // Build multipart form data with the actual PDF file
+            const formData = new FormData();
+            if (file.file) {
+                formData.append("file", file.file, file.name);
+            }
+            formData.append("document_type", "boleto");
+
+            // Also send structured fields for enhanced analysis
+            if (extraInfo.companyName) {
+                formData.append("observations", extraInfo.companyName);
+                // Also detect CNPJ pattern
+                if (/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{14}/.test(extraInfo.companyName)) {
+                    formData.append("cnpj", extraInfo.companyName);
+                }
+            }
+            if (extraInfo.expectedAmount) {
+                formData.append("expected_amount", extraInfo.expectedAmount);
+            }
+            if (extraInfo.suspiciousObservations) {
+                formData.append("observations", (formData.get("observations") as string || "") + " | " + extraInfo.suspiciousObservations);
+            }
+
+            const report = await analyzeMutation.mutateAsync(formData);
+            const result = mapPSIReportToAnalysisResult(report, file.name, "bank-slip", locale);
+            newResults.push(result);
+
+            // Persist analysis — unified thresholds (70/40 from Fase 3B)
             try {
-                // Build multipart form data with the actual PDF file
-                const formData = new FormData();
-                if (file.file) {
-                    formData.append("file", file.file, file.name);
-                }
-                formData.append("document_type", "boleto");
-
-                // Also send structured fields for enhanced analysis
-                if (extraInfo.companyName) {
-                    formData.append("observations", extraInfo.companyName);
-                    // Also detect CNPJ pattern
-                    if (/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{14}/.test(extraInfo.companyName)) {
-                        formData.append("cnpj", extraInfo.companyName);
-                    }
-                }
-                if (extraInfo.expectedAmount) {
-                    formData.append("expected_amount", extraInfo.expectedAmount);
-                }
-                if (extraInfo.suspiciousObservations) {
-                    formData.append("observations", (formData.get("observations") as string || "") + " | " + extraInfo.suspiciousObservations);
-                }
-
-                const report = await analyzeMutation.mutateAsync(formData);
-                const result = mapPSIReportToAnalysisResult(report, file.name, "bank-slip", locale);
-                newResults.push(result);
-
-                // Persist analysis — unified thresholds (70/40 from Fase 3B)
-                try {
-                    await saveAnalysis.mutateAsync({
-                        document_type: "BOLETO",
-                        file_name: file.name,
-                        file_size: file.size,
-                        risk_level: result.riskScore >= 70 ? "HIGH" : result.riskScore >= 40 ? "MEDIUM" : "LOW",
-                        risk_score: result.riskScore,
-                        confidence_score: result.confidenceScore,
-                        fraud_probability: result.fraudProbability,
-                        is_fraudulent: result.riskScore >= 70,
-                        fraud_indicators: result.manipulationIndicators.length > 0 ? result.manipulationIndicators : undefined,
-                        analysis_result: report,
-                        amount: undefined,
-                        ai_summary: result.aiSummary,
-                        processing_duration: result.processingDuration,
-                        status: result.riskScore >= 70 ? "flagged" : "completed",
-                    });
+                await saveAnalysis.mutateAsync({
+                    document_type: "BOLETO",
+                    file_name: file.name,
+                    file_size: file.size,
+                    risk_level: result.riskScore >= 70 ? "HIGH" : result.riskScore >= 40 ? "MEDIUM" : "LOW",
+                    risk_score: result.riskScore,
+                    confidence_score: result.confidenceScore,
+                    fraud_probability: result.fraudProbability,
+                    is_fraudulent: result.riskScore >= 70,
+                    fraud_indicators: result.manipulationIndicators.length > 0 ? result.manipulationIndicators : undefined,
+                    analysis_result: report,
+                    amount: undefined,
+                    ai_summary: result.aiSummary,
+                    processing_duration: result.processingDuration,
+                    status: result.riskScore >= 70 ? "flagged" : "completed",
+                });
         } catch (saveErr) {
           // Non-blocking — user already sees the result
           console.error("Failed to persist analysis:", saveErr);
@@ -148,8 +150,8 @@ export default function AnalyzeBankSlipPage() {
     }
 
     newResults.forEach((r) => {
-      addResult(r);
-      addHistoryEntry({
+      addResult(DOC_TYPE, r);
+      addHistoryEntry(DOC_TYPE, {
         id: r.id,
         fileName: r.fileName,
         documentType: "bank-slip",
@@ -161,7 +163,7 @@ export default function AnalyzeBankSlipPage() {
         resultId: r.id,
       });
     });
-    }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry, locale, extraInfo, analyzeMutation, saveAnalysis, setError]);
+  }, [files, isProcessing, startPipeline, clearResults, addResult, addHistoryEntry, locale, extraInfo, analyzeMutation, saveAnalysis, setError]);
 
   const showResults = results.length > 0 && !isProcessing && currentStage === "complete";
   const canAnalyze = files.filter((f) => f.status === "done").length > 0 && !isProcessing;
@@ -201,7 +203,7 @@ export default function AnalyzeBankSlipPage() {
             <h2 className="text-base font-semibold text-psi-text-primary">{t("bankSlip.uploadTitle")}</h2>
             <span className="text-[11px] text-psi-text-secondary ml-auto">{t("bankSlip.filesCount", { count: files.length })}</span>
           </div>
-          <DocumentUploadZone />
+          <DocumentUploadZone analysisType={DOC_TYPE} />
         </div>
       </GlowCard>
 
@@ -294,7 +296,7 @@ export default function AnalyzeBankSlipPage() {
           </div>
           {results.map((result, idx) => <AnalysisResultCard key={result.id} result={result} index={idx} />)}
           <div className="flex justify-center pt-2">
-            <button onClick={() => resetAll()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-psi-border text-sm text-psi-text-secondary hover:bg-psi-border/20 transition-colors">
+            <button onClick={() => resetAll(DOC_TYPE)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-psi-border text-sm text-psi-text-secondary hover:bg-psi-border/20 transition-colors">
               <FileText className="h-4 w-4" /> {t("newAnalysis")}
             </button>
           </div>

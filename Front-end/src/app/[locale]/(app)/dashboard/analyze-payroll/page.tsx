@@ -1,10 +1,8 @@
-"use client";
-
 import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
-import { useAnalysisStore, type AnalysisResult, type HistoryEntry } from "@/stores/analysis-store";
+import { useAnalysisStore, selectFiles, selectExtraInfo, selectResults, selectHistory, selectIsProcessing, selectCurrentStage, type AnalysisResult, type HistoryEntry } from "@/stores/analysis-store";
 import { DocumentUploadZone } from "@/components/analysis/DocumentUploadZone";
 import { AIProcessingPipeline, useSimulatePipeline } from "@/components/analysis/AIProcessingPipeline";
 import { AnalysisResultCard } from "@/components/analysis/AnalysisResultCard";
@@ -19,6 +17,8 @@ import {
 } from "lucide-react";
 import { useAnalyzeDocument, useSaveAnalysis } from "@/hooks/useApi";
 import { mapPSIReportToAnalysisResult } from "@/lib/analysis-mapper";
+
+const DOC_TYPE = "payroll" as const;
 
 function getReadableError(error: unknown): string {
   if (error instanceof Error) {
@@ -46,17 +46,19 @@ export default function AnalyzePayrollPage() {
   const t = useTranslations("analysis");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const files = useAnalysisStore((s) => s.files);
-  const results = useAnalysisStore((s) => s.results);
+
+  const files = useAnalysisStore(selectFiles(DOC_TYPE));
+  const results = useAnalysisStore(selectResults(DOC_TYPE));
+  const history = useAnalysisStore(selectHistory(DOC_TYPE));
+  const isProcessing = useAnalysisStore(selectIsProcessing(DOC_TYPE));
+  const currentStage = useAnalysisStore(selectCurrentStage(DOC_TYPE));
+  const extraInfo = useAnalysisStore(selectExtraInfo(DOC_TYPE));
+
   const addResult = useAnalysisStore((s) => s.addResult);
   const clearResults = useAnalysisStore((s) => s.clearResults);
-  const history = useAnalysisStore((s) => s.history);
   const addHistoryEntry = useAnalysisStore((s) => s.addHistoryEntry);
   const removeHistoryEntry = useAnalysisStore((s) => s.removeHistoryEntry);
-  const isProcessing = useAnalysisStore((s) => s.isProcessing);
-  const currentStage = useAnalysisStore((s) => s.currentStage);
   const resetAll = useAnalysisStore((s) => s.resetAll);
-  const extraInfo = useAnalysisStore((s) => s.extraInfo);
   const { start: startPipeline } = useSimulatePipeline();
 
   const analyzeMutation = useAnalyzeDocument();
@@ -65,7 +67,7 @@ export default function AnalyzePayrollPage() {
 
   const handleAnalyze = useCallback(async () => {
     if (files.length === 0 || isProcessing) return;
-    clearResults();
+    clearResults(DOC_TYPE);
     setError(null);
     startPipeline();
 
@@ -139,8 +141,8 @@ export default function AnalyzePayrollPage() {
     }
 
     newResults.forEach((r) => {
-      addResult(r);
-      addHistoryEntry({
+      addResult(DOC_TYPE, r);
+      addHistoryEntry(DOC_TYPE, {
         id: r.id,
         fileName: r.fileName,
         documentType: "payroll",
@@ -192,7 +194,7 @@ export default function AnalyzePayrollPage() {
             <h2 className="text-base font-semibold text-psi-text-primary">{t("payroll.uploadTitle")}</h2>
             <span className="text-[11px] text-psi-text-secondary ml-auto">{t("payroll.filesCount", { count: files.length })}</span>
           </div>
-          <DocumentUploadZone />
+          <DocumentUploadZone analysisType={DOC_TYPE} />
         </div>
       </GlowCard>
 
@@ -285,7 +287,7 @@ export default function AnalyzePayrollPage() {
           </div>
           {results.map((result, idx) => <AnalysisResultCard key={result.id} result={result} index={idx} />)}
           <div className="flex justify-center pt-2">
-            <button onClick={() => resetAll()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-psi-border text-sm text-psi-text-secondary hover:bg-psi-border/20 transition-colors">
+            <button onClick={() => resetAll(DOC_TYPE)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-psi-border text-sm text-psi-text-secondary hover:bg-psi-border/20 transition-colors">
               <FileText className="h-4 w-4" /> {t("newAnalysis")}
             </button>
           </div>

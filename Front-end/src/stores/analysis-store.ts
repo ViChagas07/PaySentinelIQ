@@ -77,45 +77,59 @@ export interface ExtraInfo {
   comments?: string;
 }
 
-interface AnalysisStore {
-  // Upload state
+/** Per-analysis-type state */
+interface AnalysisTypeState {
   files: UploadedFile[];
-  maxFiles: number;
-  addFile: (file: UploadedFile) => void;
-  updateFileProgress: (id: string, progress: number) => void;
-  removeFile: (id: string) => void;
-  clearFiles: () => void;
-
-  // Extra info
   extraInfo: ExtraInfo;
-  setExtraInfo: (info: Partial<ExtraInfo>) => void;
-  clearExtraInfo: () => void;
-
-  // Processing
   currentStage: AnalysisStage;
   stageProgress: number;
   isProcessing: boolean;
-  setStage: (stage: AnalysisStage) => void;
-  setStageProgress: (progress: number) => void;
-  setIsProcessing: (v: boolean) => void;
-
-  // Results
   results: AnalysisResult[];
-  setResults: (results: AnalysisResult[]) => void;
-  addResult: (result: AnalysisResult) => void;
-  clearResults: () => void;
-
-  // History
   history: HistoryEntry[];
-  setHistory: (history: HistoryEntry[]) => void;
-  addHistoryEntry: (entry: HistoryEntry) => void;
-  removeHistoryEntry: (id: string) => void;
+}
 
-  // Reset
-  resetAll: () => void;
+interface AnalysisStore {
+  // Per-type state
+  states: Record<AnalysisType, AnalysisTypeState>;
+  maxFiles: number;
+
+  // Actions with analysis type parameter
+  addFile: (type: AnalysisType, file: UploadedFile) => void;
+  updateFileProgress: (type: AnalysisType, id: string, progress: number) => void;
+  removeFile: (type: AnalysisType, id: string) => void;
+  clearFiles: (type: AnalysisType) => void;
+
+  setExtraInfo: (type: AnalysisType, info: Partial<ExtraInfo>) => void;
+  clearExtraInfo: (type: AnalysisType) => void;
+  getExtraInfo: (type: AnalysisType) => ExtraInfo;
+
+  setStage: (type: AnalysisType, stage: AnalysisStage) => void;
+  setStageProgress: (type: AnalysisType, progress: number) => void;
+  setIsProcessing: (type: AnalysisType, v: boolean) => void;
+
+  setResults: (type: AnalysisType, results: AnalysisResult[]) => void;
+  addResult: (type: AnalysisType, result: AnalysisResult) => void;
+  clearResults: (type: AnalysisType) => void;
+
+  setHistory: (type: AnalysisType, history: HistoryEntry[]) => void;
+  addHistoryEntry: (type: AnalysisType, entry: HistoryEntry) => void;
+  removeHistoryEntry: (type: AnalysisType, id: string) => void;
+
+  resetAll: (type: AnalysisType) => void;
+  resetAllTypes: () => void;
 }
 
 const generateId = () => `doc-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+const createInitialTypeState = (): AnalysisTypeState => ({
+  files: [],
+  extraInfo: {},
+  currentStage: "idle",
+  stageProgress: 0,
+  isProcessing: false,
+  results: [],
+  history: [],
+});
 
 /* ═══════════════════════════════════════════════════
    Store
@@ -123,56 +137,183 @@ const generateId = () => `doc-${Date.now()}-${Math.random().toString(36).slice(2
 
 export const useAnalysisStore = create<AnalysisStore>((set) => ({
   // Upload
-  files: [],
   maxFiles: 3,
-  addFile: (file) =>
+  states: {
+    payroll: createInitialTypeState(),
+    "bank-slip": createInitialTypeState(),
+  },
+
+  addFile: (type, file) =>
     set((s) => ({
-      files: s.files.length < s.maxFiles ? [...s.files, file] : s.files,
+      states: {
+        ...s.states,
+        [type]: {
+          ...s.states[type],
+          files: s.states[type].files.length < s.maxFiles ? [...s.states[type].files, file] : s.states[type].files,
+        },
+      },
     })),
-  updateFileProgress: (id, progress) =>
+
+  updateFileProgress: (type, id, progress) =>
     set((s) => ({
-      files: s.files.map((f) => (f.id === id ? { ...f, progress, status: progress >= 100 ? "done" : "uploading" } : f)),
+      states: {
+        ...s.states,
+        [type]: {
+          ...s.states[type],
+          files: s.states[type].files.map((f) =>
+            f.id === id ? { ...f, progress, status: progress >= 100 ? "done" : "uploading" } : f
+          ),
+        },
+      },
     })),
-  removeFile: (id) => set((s) => ({ files: s.files.filter((f) => f.id !== id) })),
-  clearFiles: () => set({ files: [] }),
+
+  removeFile: (type, id) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: {
+          ...s.states[type],
+          files: s.states[type].files.filter((f) => f.id !== id),
+        },
+      },
+    })),
+
+  clearFiles: (type) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], files: [] },
+      },
+    })),
 
   // Extra info
-  extraInfo: {},
-  setExtraInfo: (info) => set((s) => ({ extraInfo: { ...s.extraInfo, ...info } })),
-  clearExtraInfo: () => set({ extraInfo: {} }),
+  setExtraInfo: (type, info) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: {
+          ...s.states[type],
+          extraInfo: { ...s.states[type].extraInfo, ...info },
+        },
+      },
+    })),
+  clearExtraInfo: (type) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], extraInfo: {} },
+      },
+    })),
+  getExtraInfo: (type) => {
+    // This is a getter, not an action - we'll use selector pattern instead
+    return {} as ExtraInfo; // Placeholder, actual value comes from selector
+  },
 
   // Processing
-  currentStage: "idle",
-  stageProgress: 0,
-  isProcessing: false,
-  setStage: (stage) => set({ currentStage: stage }),
-  setStageProgress: (progress) => set({ stageProgress: progress }),
-  setIsProcessing: (v) => set({ isProcessing: v }),
+  setStage: (type, stage) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], currentStage: stage },
+      },
+    })),
+  setStageProgress: (type, progress) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], stageProgress: progress },
+      },
+    })),
+  setIsProcessing: (type, v) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], isProcessing: v },
+      },
+    })),
 
   // Results
-  results: [],
-  setResults: (results) => set({ results }),
-  addResult: (result) => set((s) => ({ results: [...s.results, result] })),
-  clearResults: () => set({ results: [] }),
+  setResults: (type, results) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], results },
+      },
+    })),
+  addResult: (type, result) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], results: [...s.states[type].results, result] },
+      },
+    })),
+  clearResults: (type) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], results: [] },
+      },
+    })),
 
   // History
-  history: [],
-  setHistory: (history) => set({ history }),
-  addHistoryEntry: (entry) =>
-    set((s) => ({ history: [entry, ...s.history] })),
-  removeHistoryEntry: (id) =>
-    set((s) => ({ history: s.history.filter((h) => h.id !== id) })),
+  setHistory: (type, history) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], history },
+      },
+    })),
+  addHistoryEntry: (type, entry) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], history: [entry, ...s.states[type].history] },
+      },
+    })),
+  removeHistoryEntry: (type, id) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: { ...s.states[type], history: s.states[type].history.filter((h) => h.id !== id) },
+      },
+    })),
 
   // Reset
-  resetAll: () =>
+  resetAll: (type) =>
+    set((s) => ({
+      states: {
+        ...s.states,
+        [type]: createInitialTypeState(),
+      },
+    })),
+  resetAllTypes: () =>
     set({
-      files: [],
-      extraInfo: {},
-      currentStage: "idle",
-      stageProgress: 0,
-      isProcessing: false,
-      results: [],
+      states: {
+        payroll: createInitialTypeState(),
+        "bank-slip": createInitialTypeState(),
+      },
     }),
 }));
+
+/** Selector helpers for per-type state */
+export const selectFiles = (type: AnalysisType) => (state: AnalysisStore) => state.states[type].files;
+export const selectExtraInfo = (type: AnalysisType) => (state: AnalysisStore) => state.states[type].extraInfo;
+export const selectCurrentStage = (type: AnalysisType) => (state: AnalysisStore) => state.states[type].currentStage;
+export const selectStageProgress = (type: AnalysisType) => (state: AnalysisStore) => state.states[type].stageProgress;
+export const selectIsProcessing = (type: AnalysisType) => (state: AnalysisStore) => state.states[type].isProcessing;
+export const selectResults = (type: AnalysisType) => (state: AnalysisStore) => state.states[type].results;
+export const selectHistory = (type: AnalysisType) => (state: AnalysisStore) => state.states[type].history;
+export const selectMaxFiles = (state: AnalysisStore) => state.maxFiles;
+export const selectAddFile = (state: AnalysisStore) => state.addFile;
+export const selectRemoveFile = (state: AnalysisStore) => state.removeFile;
+export const selectUpdateFileProgress = (state: AnalysisStore) => state.updateFileProgress;
+export const selectSetExtraInfo = (state: AnalysisStore) => state.setExtraInfo;
+export const selectClearExtraInfo = (state: AnalysisStore) => state.clearExtraInfo;
+export const selectClearFiles = (state: AnalysisStore) => state.clearFiles;
+export const selectClearResults = (state: AnalysisStore) => state.clearResults;
+export const selectAddResult = (state: AnalysisStore) => state.addResult;
+export const selectAddHistoryEntry = (state: AnalysisStore) => state.addHistoryEntry;
+export const selectRemoveHistoryEntry = (state: AnalysisStore) => state.removeHistoryEntry;
+export const selectResetAll = (state: AnalysisStore) => state.resetAll;
 
 export { generateId };

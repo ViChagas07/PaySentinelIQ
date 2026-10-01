@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { useAnalysisStore, type ExtraInfo } from "@/stores/analysis-store";
+import { useAnalysisStore, selectExtraInfo, selectSetExtraInfo, type ExtraInfo } from "@/stores/analysis-store";
 import { Lightbulb, MessageSquare, Building2, User, DollarSign, Briefcase, Calendar } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════
@@ -45,10 +45,10 @@ function FloatingInput({
 
 export function ExtraInfoForm({ documentType }: { documentType: "payroll" | "bank-slip" }) {
   const t = useTranslations("analysis");
-  const extraInfo = useAnalysisStore((s) => s.extraInfo);
-  const setExtraInfo = useAnalysisStore((s) => s.setExtraInfo);
+  const extraInfo = useAnalysisStore(selectExtraInfo(documentType));
+  const setExtraInfo = useAnalysisStore(selectSetExtraInfo);
 
-  const set = (name: keyof ExtraInfo, value: string) => setExtraInfo({ [name]: value });
+  const set = (name: keyof ExtraInfo, value: string) => setExtraInfo(documentType, { [name]: value });
 
   return (
     <motion.div
