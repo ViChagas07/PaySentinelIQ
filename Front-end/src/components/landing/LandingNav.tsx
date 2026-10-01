@@ -73,28 +73,30 @@ export function LandingNav() {
           : "bg-transparent"
       )}
     >
-      <div className="mx-auto max-w-7xl flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-3 shrink-0 group"
-          aria-label={tc("appName")}
-        >
-          <Image
-            src="/PSI_Logo2.png"
-            alt={tc("appName")}
-            width={40}
-            height={40}
-            className="h-9 w-auto object-contain"
-            priority
-          />
-          <span className="hidden sm:block">
-            <AppName as="span" className="text-base font-bold text-white" />
-          </span>
-        </Link>
+      <div className="mx-auto max-w-7xl flex items-center h-16 px-4 sm:px-6 lg:px-8">
+        {/* Logo - left */}
+        <div className="flex items-center gap-3 shrink-0 w-[20%]">
+          <Link
+            href="/"
+            className="flex items-center gap-3 shrink-0 group"
+            aria-label={tc("appName")}
+          >
+            <Image
+              src="/PSI_Logo2.png"
+              alt={tc("appName")}
+              width={40}
+              height={40}
+              className="h-9 w-auto object-contain"
+              priority
+            />
+            <span className="hidden sm:block">
+              <AppName as="span" className="text-base font-bold text-white" />
+            </span>
+          </Link>
+        </div>
 
-        {/* Desktop nav links */}
-        <nav className="hidden lg:flex items-center gap-1">
+        {/* Nav links - center */}
+        <nav className="hidden lg:flex items-center justify-center gap-1 flex-1">
           <a
             href="#features"
                         className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05] cursor-pointer"
@@ -121,8 +123,8 @@ export function LandingNav() {
           </a>
         </nav>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-2">
+        {/* Right actions - right */}
+        <div className="flex items-center justify-end gap-2 w-[20%]">
           {/* Language switcher */}
           <div className="relative hidden sm:block">
             <button
