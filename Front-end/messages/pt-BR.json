@@ -1,7 +1,7 @@
 {
     "common": {
         "appName": "SentinelaPay",
-        "tagline": "Verifica��o de Folha de Pagamento & Intelig�ncia Antifraude com IA",
+        "tagline": "Verificação de Folha de Pagamento com IA & Inteligência Antifraude",
         "errors": {
             "sessionExpired": "Sua sessão expirou. Por favor, faça login novamente.",
             "invalidToken": "Erro de autenticação. Por favor, faça login novamente.",
