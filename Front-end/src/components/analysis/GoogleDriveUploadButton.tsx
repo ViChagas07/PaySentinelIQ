@@ -8,7 +8,7 @@ import {
   FolderOpen, Loader2, AlertCircle, Check, ExternalLink, LogIn,
 } from "lucide-react";
 import { useGooglePicker, fetchGoogleFileContent } from "@/hooks/useGooglePicker";
-import { useAnalysisStore, generateId } from "@/stores/analysis-store";
+import { useAnalysisStore, selectFiles, selectAddFile, selectMaxFiles, generateId, type AnalysisType } from "@/stores/analysis-store";
 
 /* ═══════════════════════════════════════════════════
    Google Drive Upload Button
@@ -16,15 +16,15 @@ import { useAnalysisStore, generateId } from "@/stores/analysis-store";
    Uses NEXT_PUBLIC_GOOGLE_CLIENT_ID from .env.local
    ═══════════════════════════════════════════════════ */
 
-export function GoogleDriveUploadButton() {
+export function GoogleDriveUploadButton({ analysisType }: { analysisType: AnalysisType }) {
   const t = useTranslations("analysis");
   const [status, setStatus] = useState<"idle" | "connecting" | "importing" | "done" | "error">("idle");
   const [statusMsg, setStatusMsg] = useState("");
   const [pickedCount, setPickedCount] = useState(0);
 
-  const addFile = useAnalysisStore((s) => s.addFile);
-  const maxFiles = useAnalysisStore((s) => s.maxFiles);
-  const files = useAnalysisStore((s) => s.files);
+  const addFile = useAnalysisStore(selectAddFile);
+  const maxFiles = useAnalysisStore(selectMaxFiles);
+  const files = useAnalysisStore(selectFiles(analysisType));
 
   const {
     openPicker,
@@ -107,7 +107,7 @@ export function GoogleDriveUploadButton() {
 
           const blob = await fetchGoogleFileContent(pf.url, accessToken);
           const id = generateId();
-          addFile({
+          addFile(analysisType, {
             id,
             name: pf.name,
             size: blob.size,

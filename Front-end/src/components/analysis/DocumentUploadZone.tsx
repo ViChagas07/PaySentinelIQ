@@ -200,7 +200,7 @@ export function DocumentUploadZone({ analysisType }: DocumentUploadZoneProps) {
             <span className="text-[11px] font-medium text-psi-text-secondary/60 uppercase tracking-widest">{tc("or")}</span>
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-psi-border/40 to-transparent" />
           </div>
-          <GoogleDriveUploadButton />
+          <GoogleDriveUploadButton analysisType={analysisType} />
         </div>
       )}
 
@@ -228,7 +228,7 @@ export function DocumentUploadZone({ analysisType }: DocumentUploadZoneProps) {
                 className="overflow-hidden"
               >
                 <div className="pt-3">
-                  <FileSourceSelector onClose={() => setShowSourceSelector(false)} />
+                  <FileSourceSelector onClose={() => setShowSourceSelector(false)} analysisType={analysisType} />
                 </div>
               </motion.div>
             )}
@@ -257,7 +257,7 @@ export function DocumentUploadZone({ analysisType }: DocumentUploadZoneProps) {
         {files.length > 0 && (
           <div className="space-y-2">
             {files.map((file) => (
-              <FileCard key={file.id} file={file} onRemove={() => removeFile(file.id)} />
+              <FileCard key={file.id} file={file} onRemove={() => removeFile(analysisType, file.id)} />
             ))}
           </div>
         )}

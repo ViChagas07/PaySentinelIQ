@@ -9,7 +9,7 @@ import {
   Loader2, AlertCircle, X,
 } from "lucide-react";
 import { useGooglePicker, type PickedFile, fetchGoogleFileContent } from "@/hooks/useGooglePicker";
-import { useAnalysisStore, generateId, type UploadedFile } from "@/stores/analysis-store";
+import { useAnalysisStore, selectFiles, selectAddFile, selectUpdateFileProgress, selectMaxFiles, generateId, type UploadedFile, type AnalysisType } from "@/stores/analysis-store";
 
 /* ═══════════════════════════════════════════════════
    File Source Selector
@@ -18,17 +18,17 @@ import { useAnalysisStore, generateId, type UploadedFile } from "@/stores/analys
 
 type SourceTab = "device" | "drive" | "photos";
 
-export function FileSourceSelector({ onClose }: { onClose?: () => void }) {
+export function FileSourceSelector({ onClose, analysisType }: { onClose?: () => void; analysisType: AnalysisType }) {
   const t = useTranslations("analysis");
   const [activeTab, setActiveTab] = useState<SourceTab>("device");
   const [pickedFiles, setPickedFiles] = useState<PickedFile[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "importing" | "done" | "error">("idle");
   const [statusMsg, setStatusMsg] = useState("");
 
-  const addFile = useAnalysisStore((s) => s.addFile);
-  const updateFileProgress = useAnalysisStore((s) => s.updateFileProgress);
-  const maxFiles = useAnalysisStore((s) => s.maxFiles);
-  const files = useAnalysisStore((s) => s.files);
+  const addFile = useAnalysisStore(selectAddFile);
+  const updateFileProgress = useAnalysisStore(selectUpdateFileProgress);
+  const maxFiles = useAnalysisStore(selectMaxFiles);
+  const files = useAnalysisStore(selectFiles(analysisType));
 
   const { openPicker, loading: googleLoading, error: googleError, token } = useGooglePicker();
 
@@ -63,13 +63,13 @@ export function FileSourceSelector({ onClose }: { onClose?: () => void }) {
         progress: idx === 0 ? 100 : 0,
         status: "pending",
       };
-      addFile(uploaded);
+      addFile(analysisType, uploaded);
       // Simulate upload
       let p = 0;
       const interval = setInterval(() => {
         p += Math.random() * 40;
         if (p >= 100) { p = 100; clearInterval(interval); }
-        updateFileProgress(id, Math.min(100, p));
+        updateFileProgress(analysisType, id, Math.min(100, p));
       }, 200);
     });
     setStatus("done");
@@ -92,7 +92,7 @@ export function FileSourceSelector({ onClose }: { onClose?: () => void }) {
           const blob = await fetchGoogleFileContent(pf.url, token);
           const file = new File([blob], pf.name, { type: pf.mimeType || "application/pdf" });
           const id = generateId();
-          addFile({ id, name: pf.name, size: blob.size, type: pf.mimeType || "application/pdf", progress: 100, status: "done" });
+          addFile(analysisType, { id, name: pf.name, size: blob.size, type: pf.mimeType || "application/pdf", progress: 100, status: "done" });
         }
         setStatus("done");
         setStatusMsg(t("upload.importedFromGoogle", { count: picked.length }));

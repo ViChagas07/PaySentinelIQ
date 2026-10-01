@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useGooglePicker, fetchGoogleFileContent } from "@/hooks/useGooglePicker";
-import { useAnalysisStore, generateId, type UploadedFile } from "@/stores/analysis-store";
+import { useAnalysisStore, selectFiles, selectMaxFiles, selectAddFile, selectRemoveFile, selectUpdateFileProgress, selectClearFiles, selectIsProcessing, selectCurrentStage, generateId, type UploadedFile, type AnalysisType } from "@/stores/analysis-store";
 import { useSimulatePipeline } from "@/components/analysis/AIProcessingPipeline";
 import { useTriggerVerification } from "@/hooks/useApi";
 
@@ -37,24 +37,26 @@ interface Highlight {
 
 export function DocumentPreview({
   highlights = [],
+  analysisType = "payroll",
 }: {
   highlights?: Highlight[];
+  analysisType?: AnalysisType;
 }) {
   const t = useTranslations("verification");
   const ta = useTranslations("analysis");
 
   // ── Store ──
-  const files = useAnalysisStore((s) => s.files);
-  const maxFiles = useAnalysisStore((s) => s.maxFiles);
-  const addFile = useAnalysisStore((s) => s.addFile);
-  const removeFile = useAnalysisStore((s) => s.removeFile);
-  const updateFileProgress = useAnalysisStore((s) => s.updateFileProgress);
-  const clearFiles = useAnalysisStore((s) => s.clearFiles);
+  const files = useAnalysisStore(selectFiles(analysisType));
+  const maxFiles = useAnalysisStore(selectMaxFiles);
+  const addFile = useAnalysisStore(selectAddFile);
+  const removeFile = useAnalysisStore(selectRemoveFile);
+  const updateFileProgress = useAnalysisStore(selectUpdateFileProgress);
+  const clearFiles = useAnalysisStore(selectClearFiles);
 
   // ── Pipeline ──
-  const isProcessing = useAnalysisStore((s) => s.isProcessing);
-  const currentStage = useAnalysisStore((s) => s.currentStage);
-  const { start: startPipeline } = useSimulatePipeline();
+  const isProcessing = useAnalysisStore(selectIsProcessing(analysisType));
+  const currentStage = useAnalysisStore(selectCurrentStage(analysisType));
+  const { start: startPipeline } = useSimulatePipeline({ analysisType });
   const triggerVerification = useTriggerVerification();
 
   // ── Local state ──
@@ -104,7 +106,7 @@ export function DocumentPreview({
 
       fileList.forEach((file) => {
         const id = generateId();
-        addFile({
+        addFile(analysisType, {
           id, name: file.name, size: file.size,
           type: file.type, progress: 0, status: "pending",
         });
@@ -112,11 +114,11 @@ export function DocumentPreview({
         const iv = setInterval(() => {
           p += Math.random() * 30;
           if (p >= 100) { p = 100; clearInterval(iv); }
-          updateFileProgress(id, Math.min(100, p));
+          updateFileProgress(analysisType, id, Math.min(100, p));
         }, 300);
       });
     },
-    [files.length, maxFiles, addFile, updateFileProgress, validateFile, ta],
+    [files.length, maxFiles, addFile, updateFileProgress, validateFile, ta, analysisType],
   );
 
   // ── Native file input change ──
@@ -133,9 +135,9 @@ export function DocumentPreview({
   const handleRemove = useCallback(
     (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      removeFile(id);
+      removeFile(analysisType, id);
     },
-    [removeFile],
+    [removeFile, analysisType],
   );
 
   // ── Google Drive picker ──
@@ -153,7 +155,7 @@ export function DocumentPreview({
         for (const pf of picked) {
           if (files.length + n >= maxFiles) break;
           const blob = await fetchGoogleFileContent(pf.url, at);
-          addFile({
+          addFile(analysisType, {
             id: generateId(), name: pf.name, size: blob.size,
             type: pf.mimeType || "application/pdf",
             progress: 100, status: "done",
@@ -164,7 +166,7 @@ export function DocumentPreview({
         setError(err.message || ta("drive.failedToImport"));
       }
     });
-  }, [files.length, maxFiles, openPicker, addFile, ta]);
+  }, [files.length, maxFiles, openPicker, addFile, ta, analysisType]);
 
   const hasContent = files.length > 0;
 
