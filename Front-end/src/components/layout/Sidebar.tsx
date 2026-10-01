@@ -21,7 +21,6 @@ import {
   ShieldCheck,
   AlertTriangle,
   DollarSign,
-  FileBarChart,
   ScrollText,
   Bell,
   Settings,
@@ -41,7 +40,7 @@ type NavLabelKey =
   | "menu" | "dashboard" | "payroll"
   | "verification" | "fraudIntelligence"
   | "analyzePayroll" | "analyzeBankSlip"
-  | "reports" | "auditLogs"
+  | "auditLogs"
   | "notifications" | "settings";
 
 interface NavItem {
@@ -127,12 +126,6 @@ const navigationSections: NavSection[] = [
         roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager", "payroll_specialist", "auditor", "viewer"],
         badgeKey: "badgeAI",
         badgeVariant: "warning",
-      },
-      {
-        labelKey: "reports",
-        href: "/reports",
-        icon: FileBarChart,
-        roles: ["admin", "fraud_analyst", "compliance_officer", "hr_manager", "auditor"],
       },
       {
         labelKey: "auditLogs",
