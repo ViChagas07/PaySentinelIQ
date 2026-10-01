@@ -128,7 +128,7 @@ def get_llm_provider() -> BaseLLMProvider:
     Get or create the configured LLM provider (singleton, cached).
 
     Uses the ENVIRONMENT setting to determine which provider to instantiate:
-    - demo → mock (instant, deterministic)
+    - demo → ollama with Qwen3 1.7B (local, zero-cost, fast)
     - development → ollama with Qwen3 4B (local, zero-cost)
     - production → gemini (or explicitly configured provider)
     """

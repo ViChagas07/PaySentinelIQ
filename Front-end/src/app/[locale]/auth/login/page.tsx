@@ -521,7 +521,7 @@ export default function AuthPage() {
                         type="checkbox"
                         checked={agreeToTermsSignIn}
                         onChange={(e) => setAgreeToTermsSignIn(e.target.checked)}
-                        className="mt-0.5 rounded border-psi-border bg-psi-navy/50 accent-psi-electric h-3 w-3"
+                        className="mt-0.5 rounded border-psi-border bg-psi-navy/50 accent-psi-electric h-4 w-4"
                       />
                       <span>
                         {t("agreeToTerms")}{" "}
@@ -550,7 +550,7 @@ export default function AuthPage() {
                       <label className="flex items-center gap-2 text-xs text-psi-text-secondary cursor-pointer select-none">
                         <input
                           type="checkbox"
-                          className="rounded border-psi-border bg-psi-navy/50 accent-psi-electric h-3 w-3"
+                          className="rounded border-psi-border bg-psi-navy/50 accent-psi-electric h-4 w-4"
                         />
                         {t("rememberMe")}
                       </label>
@@ -708,7 +708,7 @@ export default function AuthPage() {
                           type="checkbox"
                           checked={agreeToTerms}
                           onChange={(e) => setAgreeToTerms(e.target.checked)}
-                          className="mt-0.5 rounded border-psi-border bg-psi-navy/50 accent-psi-electric h-3 w-3"
+                          className="mt-0.5 rounded border-psi-border bg-psi-navy/50 accent-psi-electric h-4 w-4"
                         />
                         <span>
                           {t("agreeToTerms")}{" "}

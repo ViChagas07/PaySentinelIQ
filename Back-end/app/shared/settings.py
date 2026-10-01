@@ -225,7 +225,7 @@ class Settings(BaseSettings):
     def effective_llm_provider(self) -> str:
         """Determine effective LLM provider based on ENVIRONMENT."""
         if self.ENVIRONMENT == "demo":
-            return "mock"  # Instant, deterministic for demos
+            return "ollama"  # Local Ollama with Qwen3 1.7B for demo
         if self.ENVIRONMENT == "development":
             return "ollama"  # Local LLM
         if self.ENVIRONMENT == "production":
@@ -238,8 +238,10 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def effective_ollama_model(self) -> str:
-        """Use Qwen3 4B in demo/development for faster inference."""
-        if self.ENVIRONMENT in ("demo", "development"):
+        """Use Qwen3 1.7B in demo for faster inference, Qwen3 4B in development."""
+        if self.ENVIRONMENT == "demo":
+            return "qwen3:1.7b"
+        if self.ENVIRONMENT == "development":
             return "qwen3:4b-q4_k_m"
         return self.OLLAMA_MODEL
 
