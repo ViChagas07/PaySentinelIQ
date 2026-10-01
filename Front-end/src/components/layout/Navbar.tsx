@@ -178,15 +178,6 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur-md px-4 lg:px-6">
-      {/* Mobile menu toggle */}
-      <button
-        onClick={() => setSidebarMobileOpen(true)}
-        className="lg:hidden rounded-lg p-2 text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-text-primary transition-colors"
-        aria-label={t("openMenu")}
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-
       {/* Desktop sidebar toggle */}
       <button
         onClick={toggleSidebar}
@@ -467,6 +458,14 @@ export function Navbar() {
             )}
           </AnimatePresence>
         </div>
+        {/* Mobile menu toggle — inside right actions for proper RTL handling */}
+        <button
+          onClick={() => setSidebarMobileOpen(true)}
+          className="lg:hidden rounded-lg p-2 text-psi-text-secondary hover:bg-psi-border/50 hover:text-psi-text-primary transition-colors"
+          aria-label={t("openMenu")}
+        >
+          <Menu className="h-5 w-5" />
+        </button>
       </div>
     </header>
   );

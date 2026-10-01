@@ -680,7 +680,7 @@ h3 { font-size: clamp(1rem, 3vw, 1.5rem); font-weight: var(--font-weight-heading
    ═══════════════════════════════════════════════════ */
 
 @media (pointer: coarse) {
-  button, a, [role="button"], input, select, textarea {
+  button, a, [role="button"], input:not([type="checkbox"]):not([type="radio"]), select, textarea {
     min-height: 44px;
     min-width: 44px;
   }
