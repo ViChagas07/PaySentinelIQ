@@ -1144,7 +1144,8 @@
             "extraHint": "Geben Sie zusätzlichen Kontext an, um unseren KI-Agenten zu helfen, Gehaltsdiskrepanzen, Geistermitarbeiter und finanzielle Betrugsmuster genauer zu erkennen.",
             "startButton": "KI-Analyse Starten",
             "resultsTitle": "Analyseergebnisse",
-            "documentsCount": "{count, plural, one {# Dokument} other {# Dokumente}}"
+            "documentsCount": "{count, plural, one {# Dokument} other {# Dokumente}}",
+            "comingSoon": "BALD VERFÜGBAR — Wir bereiten intelligente KI-gestützte Automatisierungen vor. Weitere Neuigkeiten demnächst!"
         },
         "bankSlip": {
             "title": "Zahlungsbeleg",
@@ -1163,7 +1164,8 @@
             "extraHint": "Zusätzliche Informationen helfen unserer KI, gefälschte Boletos, PIX-Betrug und Zahlungsunstimmigkeiten mit höherer Präzision zu identifizieren.",
             "startButton": "KI-Analyse Starten",
             "resultsTitle": "Analyseergebnisse",
-            "documentsCount": "{count, plural, one {# Dokument} other {# Dokumente}}"
+            "documentsCount": "{count, plural, one {# Dokument} other {# Dokumente}}",
+            "comingSoon": "BALD VERFÜGBAR — Wir bereiten intelligente KI-gestützte Automatisierungen vor. Weitere Neuigkeiten demnächst!"
         },
         "upload": {
             "dropFiles": "Dateien hier ablegen",

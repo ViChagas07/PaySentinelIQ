@@ -1243,7 +1243,8 @@
       "extraHint": "Provide extra context to help our AI agents detect salary discrepancies, ghost employees, and financial fraud patterns more accurately.",
       "startButton": "Start AI Analysis",
       "resultsTitle": "Analysis Results",
-      "documentsCount": "{count, plural, one {# document} other {# documents}}"
+      "documentsCount": "{count, plural, one {# document} other {# documents}}",
+      "comingSoon": "COMING SOON — We're preparing intelligent AI-powered automations. More news soon!"
     },
     "bankSlip": {
       "title": "Bank Slip",
@@ -1262,7 +1263,8 @@
       "extraHint": "Additional information helps our AI identify forged boletos, PIX fraud, and payment inconsistencies with higher precision.",
       "startButton": "Start AI Analysis",
       "resultsTitle": "Analysis Results",
-      "documentsCount": "{count, plural, one {# document} other {# documents}}"
+      "documentsCount": "{count, plural, one {# document} other {# documents}}",
+      "comingSoon": "COMING SOON — We're preparing intelligent AI-powered automations. More news soon!"
     },
     "upload": {
       "dropFiles": "Drop files here",

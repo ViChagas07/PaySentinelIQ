@@ -1142,7 +1142,8 @@
             "extraHint": "Fournissez un contexte supplémentaire pour aider nos agents IA à détecter les écarts salariaux, les employés fantômes et les schémas de fraude financière avec plus de précision.",
             "startButton": "Lancer l'Analyse IA",
             "resultsTitle": "Résultats de l'Analyse",
-            "documentsCount": "{count, plural, one {# document} other {# documents}}"
+            "documentsCount": "{count, plural, one {# document} other {# documents}}",
+            "comingSoon": "BIENTÔT DISPONIBLE — Nous préparons des automatisations intelligentes alimentées par l'IA. Plus de nouvelles bientôt !"
         },
         "bankSlip": {
             "title": "Bordereau Bancaire",
@@ -1161,7 +1162,8 @@
             "extraHint": "Les informations supplémentaires aident notre IA à identifier les bordereaux falsifiés, les fraudes PIX et les incohérences de paiement avec une plus grande précision.",
             "startButton": "Lancer l'Analyse IA",
             "resultsTitle": "Résultats de l'Analyse",
-            "documentsCount": "{count, plural, one {# document} other {# documents}}"
+            "documentsCount": "{count, plural, one {# document} other {# documents}}",
+            "comingSoon": "BIENTÔT DISPONIBLE — Nous préparons des automatisations intelligentes alimentées par l'IA. Plus de nouvelles bientôt !"
         },
         "upload": {
             "dropFiles": "Déposez les fichiers ici",

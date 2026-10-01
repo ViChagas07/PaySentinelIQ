@@ -1142,7 +1142,8 @@
             "extraHint": "AIエージェントが給与の不一致、架空従業員、不正パターンをより正確に検出するための追加情報を提供してください。",
             "startButton": "AI分析を開始",
             "resultsTitle": "分析結果",
-            "documentsCount": "{count, plural, other {# 文書}}"
+            "documentsCount": "{count, plural, other {# 文書}}",
+            "comingSoon": "近日公開 — AIを活用したインテリジェントな自動化を準備中です。続報をお待ちください！"
         },
         "bankSlip": {
             "title": "銀行伝票",
@@ -1161,7 +1162,8 @@
             "extraHint": "追加情報により、AIが偽造ボレト、PIX不正、支払い不整合をより高い精度で特定できます。",
             "startButton": "AI分析を開始",
             "resultsTitle": "分析結果",
-            "documentsCount": "{count, plural, other {# 文書}}"
+            "documentsCount": "{count, plural, other {# 文書}}",
+            "comingSoon": "近日公開 — AIを活用したインテリジェントな自動化を準備中です。続報をお待ちください！"
         },
         "upload": {
             "dropFiles": "ここにファイルをドロップ",

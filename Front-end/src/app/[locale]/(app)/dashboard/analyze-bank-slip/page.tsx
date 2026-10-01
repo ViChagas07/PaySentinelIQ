@@ -13,7 +13,7 @@ import { ExtraInfoForm } from "@/components/analysis/ExtraInfoForm";
 import { GlowCard, StatusPill } from "@/components/shared/GlowCard";
 import { Badge } from "@/components/ui/Badge";
 import {
-  FileText, Upload, Brain, ShieldAlert, Sparkles, Zap,
+  FileText, Upload, Brain, Sparkles, Zap,
   ArrowRight, History, FileCheck, Barcode, CreditCard,
   AlertTriangle,
 } from "lucide-react";
@@ -62,8 +62,6 @@ export default function AnalyzeBankSlipPage() {
   const analyzeMutation = useAnalyzeDocument();
   const saveAnalysis = useSaveAnalysis();
   const [error, setError] = useState<string | null>(null);
-
-  const comingSoonMessage = t("comingSoon");
 
     const handleAnalyze = useCallback(async () => {
         if (files.length === 0 || isProcessing) return;
@@ -170,29 +168,6 @@ export default function AnalyzeBankSlipPage() {
 
   return (
     <div className="space-y-8 animate-slide-in-up">
-      {/* ═══════════ COMING SOON OVERLAY ═══════════ */}
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 pointer-events-none">
-        <div className="w-full max-w-4xl pointer-events-auto">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative rounded-2xl border-2 border-psi-warning/50 bg-psi-navy/95 backdrop-blur-sm p-4 md:p-6 shadow-2xl shadow-psi-warning/10 ring-1 ring-psi-warning/20"
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 mt-1">
-                <div className="w-10 h-10 rounded-xl bg-psi-warning/20 flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-psi-warning" />
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-psi-warning">EM BREVE</h3>
-                <p className="mt-1 text-sm text-psi-text-secondary">{comingSoonMessage}</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-
       {/* ═══════════ SECTION 1 — HERO HEADER ═══════════ */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-2xl border border-psi-border bg-gradient-to-br from-psi-navy via-psi-navy to-psi-warning/5 p-6 md:p-8">
@@ -219,45 +194,45 @@ export default function AnalyzeBankSlipPage() {
       </motion.div>
 
       {/* ═══════════ SECTION 2 — DOCUMENT UPLOAD ═══════════ */}
-      <div className="relative" style={{ filter: "blur(4px)", pointerEvents: "none" }}>
-        <GlowCard glowColor="psi-warning">
-          <div className="pt-3">
-            <div className="flex items-center gap-2 mb-4">
-              <Upload className="h-4 w-4 text-psi-warning" />
-              <h2 className="text-base font-semibold text-psi-text-primary">{t("bankSlip.uploadTitle")}</h2>
-              <span className="text-[11px] text-psi-text-secondary ml-auto">{t("bankSlip.filesCount", { count: files.length })}</span>
-            </div>
-            <DocumentUploadZone />
+      <GlowCard glowColor="psi-warning">
+        <div className="pt-3">
+          <div className="flex items-center gap-2 mb-4">
+            <Upload className="h-4 w-4 text-psi-warning" />
+            <h2 className="text-base font-semibold text-psi-text-primary">{t("bankSlip.uploadTitle")}</h2>
+            <span className="text-[11px] text-psi-text-secondary ml-auto">{t("bankSlip.filesCount", { count: files.length })}</span>
           </div>
-        </GlowCard>
-      </div>
+          <DocumentUploadZone />
+        </div>
+      </GlowCard>
 
       {/* ═══════════ SECTION 3 — EXTRA INFO FORM ═══════════ */}
-      <div className="relative" style={{ filter: "blur(4px)", pointerEvents: "none" }}>
-        <GlowCard glowColor="psi-warning">
-          <div className="pt-3">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-4 w-4 text-psi-warning" />
-              <h2 className="text-base font-semibold text-psi-text-primary">{t("bankSlip.extraTitle")}</h2>
-              <span className="text-[11px] text-psi-text-secondary ml-auto">{t("bankSlip.extraOptional")}</span>
-            </div>
-            <ExtraInfoForm documentType="bank-slip" />
+      <GlowCard glowColor="psi-warning">
+        <div className="pt-3">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="h-4 w-4 text-psi-warning" />
+            <h2 className="text-base font-semibold text-psi-text-primary">{t("bankSlip.extraTitle")}</h2>
+            <span className="text-[11px] text-psi-text-secondary ml-auto">{t("bankSlip.extraOptional")}</span>
           </div>
-        </GlowCard>
-      </div>
+          <ExtraInfoForm documentType="bank-slip" />
+        </div>
+      </GlowCard>
 
-      {/* Start Analysis Button — Disabled with Coming Soon */}
-      <div className="relative" style={{ filter: "blur(4px)", pointerEvents: "none" }}>
-        {!isProcessing && !showResults && (
-          <div className="flex justify-center">
+      {/* Start Analysis Button — Disabled with Coming Soon Tooltip */}
+      {!isProcessing && !showResults && (
+        <div className="flex justify-center">
+          <div className="relative inline-flex" role="group" aria-label={t("bankSlip.comingSoon")}>
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleAnalyze} disabled={true}
               className={cn("inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-sm transition-all",
                 "bg-psi-border/30 text-psi-text-secondary/50 cursor-not-allowed")}>
               <Brain className="h-5 w-5" /> {t("bankSlip.startButton")} <ArrowRight className="h-4 w-4" />
             </motion.button>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-psi-warning/95 rounded-lg shadow-lg whitespace-nowrap opacity-0 pointer-events-none transition-opacity duration-200 group-hover:opacity-100 z-10">
+              {t("bankSlip.comingSoon")}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-psi-warning/95" />
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ═══════════ SECTION 4 — AI PROCESSING ═══════════ */}
       {isProcessing && (

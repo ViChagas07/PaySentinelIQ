@@ -1142,7 +1142,8 @@
             "extraHint": "提供额外信息，帮助我们的AI智能体更准确地检测工资差异、虚构员工和财务欺诈模式。",
             "startButton": "开始AI分析",
             "resultsTitle": "分析结果",
-            "documentsCount": "{count, plural, other {# 份文档}}"
+            "documentsCount": "{count, plural, other {# 份文档}}",
+            "comingSoon": "即将推出 — 我们正在准备由AI驱动的智能自动化。更多消息敬请期待！"
         },
         "bankSlip": {
             "title": "银行单据",
@@ -1161,7 +1162,8 @@
             "extraHint": "额外信息有助于我们的AI更准确地识别伪造单据、PIX欺诈和付款不一致。",
             "startButton": "开始AI分析",
             "resultsTitle": "分析结果",
-            "documentsCount": "{count, plural, other {# 份文档}}"
+            "documentsCount": "{count, plural, other {# 份文档}}",
+            "comingSoon": "即将推出 — 我们正在准备由AI驱动的智能自动化。更多消息敬请期待！"
         },
         "upload": {
             "dropFiles": "将文件拖放到此处",

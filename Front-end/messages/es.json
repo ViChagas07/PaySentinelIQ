@@ -1142,7 +1142,8 @@
             "extraHint": "Proporcione contexto adicional para ayudar a nuestros agentes de IA a detectar discrepancias salariales, empleados fantasma y patrones de fraude financiero con mayor precisión.",
             "startButton": "Iniciar Análisis IA",
             "resultsTitle": "Resultados del Análisis",
-            "documentsCount": "{count, plural, one {# documento} other {# documentos}}"
+            "documentsCount": "{count, plural, one {# documento} other {# documentos}}",
+            "comingSoon": "PRÓXIMAMENTE — Estamos preparando automatizaciones inteligentes impulsadas por IA. ¡Más novedades pronto!"
         },
         "bankSlip": {
             "title": "Boleta Bancaria",
@@ -1161,7 +1162,8 @@
             "extraHint": "La información adicional ayuda a nuestra IA a identificar boletas falsificadas, fraude PIX e inconsistencias de pago con mayor precisión.",
             "startButton": "Iniciar Análisis IA",
             "resultsTitle": "Resultados del Análisis",
-            "documentsCount": "{count, plural, one {# documento} other {# documentos}}"
+            "documentsCount": "{count, plural, one {# documento} other {# documentos}}",
+            "comingSoon": "PRÓXIMAMENTE — Estamos preparando automatizaciones inteligentes impulsadas por IA. ¡Más novedades pronto!"
         },
         "upload": {
             "dropFiles": "Suelte los archivos aquí",
