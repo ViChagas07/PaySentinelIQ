@@ -125,7 +125,7 @@ export function LandingNav() {
         </nav>
 
         {/* Right actions - right */}
-        <div className="flex items-center justify-end gap-2 w-auto sm:w-auto">
+        <div className="flex-1 flex items-center justify-end gap-2">
           {/* Language switcher */}
           <div className="relative hidden sm:block">
             <button
