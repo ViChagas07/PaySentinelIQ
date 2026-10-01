@@ -56,11 +56,12 @@ export default function AnalyzeBankSlipPage() {
   const currentStage = useAnalysisStore(selectCurrentStage(DOC_TYPE));
   const extraInfo = useAnalysisStore(selectExtraInfo(DOC_TYPE));
 
-  const addResult = useAnalysisStore((s) => s.addResult);
-  const clearResults = useAnalysisStore((s) => s.clearResults);
-  const addHistoryEntry = useAnalysisStore((s) => s.addHistoryEntry);
-  const removeHistoryEntry = useAnalysisStore((s) => s.removeHistoryEntry);
-  const resetAll = useAnalysisStore((s) => s.resetAll);
+  const addResult = useAnalysisStore(selectAddResult);
+  const clearResults = useAnalysisStore(selectClearResults);
+  const addHistoryEntry = useAnalysisStore(selectAddHistoryEntry);
+  const removeHistoryEntry = useAnalysisStore(selectRemoveHistoryEntry);
+  const removeHistoryEntryWrapper = useCallback((id: string) => removeHistoryEntry(DOC_TYPE, id), [removeHistoryEntry]);
+  const resetAll = useAnalysisStore(selectResetAll);
   const { start: startPipeline } = useSimulatePipeline();
 
   const analyzeMutation = useAnalyzeDocument();
@@ -314,7 +315,7 @@ export default function AnalyzeBankSlipPage() {
               <h2 className="text-base font-semibold text-psi-text-primary">{t("historyTitle")}</h2>
               <span className="text-[11px] text-psi-text-secondary ml-auto">{tc("entries", { count: history.length })}</span>
             </div>
-            <DocumentHistory entries={history} onRemove={removeHistoryEntry} onReopen={(entry) => {
+            <DocumentHistory entries={history} onRemove={removeHistoryEntryWrapper} onReopen={(entry) => {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }} />
           </div>
