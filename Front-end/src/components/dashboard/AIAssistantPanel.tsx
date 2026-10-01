@@ -6,13 +6,15 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores";
-import { Bot, X, Send, Sparkles, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import { Bot, X, Send, Sparkles, ArrowRight, Loader2, AlertCircle, AlertTriangle } from "lucide-react";
 import { useAIChat, useAIChatSuggestions, type AIChatResponse } from "@/hooks/useApi";
+
+const COMING_SOON_NOTICE = "EM BREVE - ESTAMOS PREPARANDO AUTOMAÇÕES INTELIGENTES COM IA. MAIS NOVIDADES EM BREVE!";
 
 interface Message {
   id: string;
@@ -54,55 +56,13 @@ export function AIAssistantPanel() {
   const { data: suggestionsData } = useAIChatSuggestions();
   const backendSuggestions = suggestionsData?.suggestions ?? [];
 
-  // ── Auto-scroll to bottom ── //
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, chatMutation.isPending]);
+  const isComingSoon = useMemo(() => true, []);
+  const isWaiting = chatMutation.isPending;
 
-  // ── Focus input when panel opens ── //
-  useEffect(() => {
-    if (aiPanelOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-      // Show greeting if no messages yet
-      if (messages.length === 0) {
-        setMessages([
-          {
-            id: "greeting",
-            role: "assistant",
-            content: t("greeting"),
-            timestamp: new Date(),
-          },
-        ]);
-      }
-    }
-  }, [aiPanelOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Keyboard: Escape to close ── //
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && aiPanelOpen) {
-        toggleAiPanel();
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [aiPanelOpen, toggleAiPanel]);
-
-  // ── Focus trap within panel ── //
-  const handlePanelKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        toggleAiPanel();
-      }
-    },
-    [toggleAiPanel]
-  );
-
-  // ── Send message via API ── //
+  // ── Send message via API (disabled when coming soon) ── //
   const sendMessage = useCallback(
     (text: string) => {
-      if (!text.trim() || chatMutation.isPending) return;
+      if (!text.trim() || chatMutation.isPending || isComingSoon) return;
       const trimmed = text.trim();
 
       const userMsg: Message = {
@@ -141,20 +101,31 @@ export function AIAssistantPanel() {
         }
       );
     },
-    [chatMutation, conversationId]
+    [chatMutation, conversationId, isComingSoon]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isComingSoon) return;
     sendMessage(input);
   };
 
   const handleSuggestionClick = (key: string) => {
+    if (isComingSoon) return;
     const label = t(key);
     sendMessage(label);
   };
 
-  const isWaiting = chatMutation.isPending;
+  // ── Focus trap within panel ── //
+  const handlePanelKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        toggleAiPanel();
+      }
+    },
+    [toggleAiPanel]
+  );
 
   return (
     <AnimatePresence>
@@ -211,6 +182,14 @@ export function AIAssistantPanel() {
               >
                 <X className="h-4.5 w-4.5" />
               </button>
+            </div>
+
+            {/* Coming Soon Banner */}
+            <div className="border-b border-psi-border px-4 py-3 shrink-0 bg-psi-electric/5">
+              <div className="flex items-center gap-2 rounded-lg bg-psi-warning/10 border border-psi-warning/30 px-3 py-2.5">
+                <AlertTriangle className="h-4 w-4 text-psi-warning flex-shrink-0" />
+                <p className="text-xs font-medium text-psi-warning">{COMING_SOON_NOTICE}</p>
+              </div>
             </div>
 
             {/* Messages */}
@@ -300,7 +279,7 @@ export function AIAssistantPanel() {
                     <button
                       key={suggestion.key}
                       onClick={() => handleSuggestionClick(suggestion.key)}
-                      disabled={isWaiting}
+                      disabled={isWaiting || isComingSoon}
                       className="inline-flex items-center gap-1.5 rounded-full border border-psi-border bg-psi-navy/60 px-3 py-1.5 text-xs text-psi-text-secondary hover:text-psi-text-primary hover:border-psi-electric/40 hover:bg-psi-electric/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <ArrowRight className="h-3 w-3 text-psi-electric" />
@@ -322,14 +301,14 @@ export function AIAssistantPanel() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={t("inputPlaceholder")}
-                  disabled={isWaiting}
+                  placeholder={isComingSoon ? COMING_SOON_NOTICE : t("inputPlaceholder")}
+                  disabled={isWaiting || isComingSoon}
                   className="flex-1 rounded-lg border border-psi-border bg-psi-navy/80 px-3.5 py-2.5 text-sm text-psi-text-primary placeholder:text-psi-text-secondary/50 outline-none focus:border-psi-electric focus:ring-1 focus:ring-psi-electric/30 transition-all disabled:opacity-50"
                   aria-label={t("inputPlaceholder")}
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim() || isWaiting}
+                  disabled={!input.trim() || isWaiting || isComingSoon}
                   className="flex h-10 w-10 items-center justify-center rounded-lg bg-psi-electric text-white hover:bg-psi-electric/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   aria-label={t("send")}
                 >
