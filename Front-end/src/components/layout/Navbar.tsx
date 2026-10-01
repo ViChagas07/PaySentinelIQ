@@ -190,7 +190,7 @@ export function Navbar() {
       {/* Global Search */}
       <div
         className={cn(
-          "relative flex-1 max-w-xl transition-all duration-200",
+          "relative flex-1 max-w-xs sm:max-w-md lg:max-w-xl transition-all duration-200",
           searchFocused && "scale-[1.02]"
         )}
       >
@@ -217,8 +217,8 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Right actions — ml-auto keeps icons tracking the right wall on zoom out */}
-      <div className="flex items-center gap-1 ml-auto pr-3">
+      {/* Right actions — ml-auto keeps icons tracking the right wall on zoom out, flex-shrink-0 prevents squishing on mobile */}
+      <div className="flex items-center gap-1 ml-auto pr-3 flex-shrink-0">
         {/* AI Assistant quick toggle */}
         <HoverButton
           icon={(hovered) => <AnimatedBotIcon isHovered={hovered} />}
