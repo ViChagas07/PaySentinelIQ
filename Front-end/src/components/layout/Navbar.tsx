@@ -187,10 +187,10 @@ export function Navbar() {
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Global Search */}
+      {/* Global Search — hidden on mobile, shown on desktop */}
       <div
         className={cn(
-          "relative flex-1 max-w-xs sm:max-w-md lg:max-w-xl transition-all duration-200",
+          "relative hidden lg:block lg:max-w-xl transition-all duration-200",
           searchFocused && "scale-[1.02]"
         )}
       >
