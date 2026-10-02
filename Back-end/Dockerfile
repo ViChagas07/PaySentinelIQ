@@ -29,4 +29,4 @@ USER psi
 EXPOSE 8000
 
 # Run migrations then start
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:create_app --factory --host 0.0.0.0 --port $PORT --workers 1 --ws-ping-interval 30 --ws-ping-timeout 10 --ws-max-size 1048576"]
+CMD ["sh", "-c", "PYTHONPATH=/app alembic upgrade head && PYTHONPATH=/app uvicorn app.main:create_app --factory --host 0.0.0.0 --port $PORT --workers 1 --ws-ping-interval 30 --ws-ping-timeout 10 --ws-max-size 1048576"]
