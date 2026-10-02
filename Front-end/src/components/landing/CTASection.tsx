@@ -73,7 +73,7 @@ export function CTASection() {
                 </Link>
               </Button>
             ) : (
-              <>
+              <div className="flex flex-col items-center justify-center gap-4 w-full sm:flex-row">
                 <Button
                   asChild
                   size="lg"
@@ -107,7 +107,7 @@ export function CTASection() {
                     </span>
                   </Link>
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </motion.div>
