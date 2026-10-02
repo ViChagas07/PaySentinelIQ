@@ -49,7 +49,8 @@ dependencies = [
     "sentence-transformers>=3.0.0",
     "langchain-text-splitters>=0.3.0",
     "pgvector>=0.3.0",
-    "psycopg[binary]>=3.2.0"
+    "psycopg[binary]>=3.2.0",
+    "psycopg2-binary>=2.9.0",
 ]
 
 
