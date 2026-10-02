@@ -17,7 +17,13 @@ from app.shared.settings import get_settings
 settings = get_settings()
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.get_secret_value())
+# Force asyncpg dialect for async migrations
+db_url = settings.DATABASE_URL.get_secret_value()
+if db_url.startswith("postgresql+psycopg2://"):
+    db_url = db_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
