@@ -4,6 +4,7 @@
 # ============================================================
 
 from collections.abc import AsyncGenerator
+from urllib.parse import urlparse
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -17,14 +18,20 @@ from app.shared.settings import get_settings
 
 settings = get_settings()
 
+# Build connect_args based on the driver (asyncpg vs psycopg)
+_db_url = settings.database_url_async
+_parsed = urlparse(_db_url)
+_is_asyncpg = _parsed.scheme == "postgresql+asyncpg"
+
+_connect_args = {"prepared_statement_cache_size": 0} if _is_asyncpg else {}
+if _is_asyncpg:
+    _connect_args["statement_cache_size"] = 0
+
 engine = create_async_engine(
-    settings.database_url_async,
+    _db_url,
     echo=settings.DATABASE_ECHO,
     pool_pre_ping=True,
-    connect_args={
-        "statement_cache_size": 0,
-        "prepared_statement_cache_size": 0,
-    },
+    connect_args=_connect_args,
     # Use NullPool for testing to avoid connection leaks;
     # skip pool_size/max_overflow/pool_timeout — NullPool rejects those kwargs.
     poolclass=NullPool if settings.ENVIRONMENT == "test" else None,

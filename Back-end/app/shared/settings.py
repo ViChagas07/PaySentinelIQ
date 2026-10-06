@@ -23,9 +23,10 @@ class Settings(BaseSettings):
         """
         Normalize DATABASE_URL for asyncpg (async) or psycopg (sync).
         
-        - Converts postgres://, postgresql://, postgresql+psycopg2:// → postgresql+asyncpg:// (async) 
-          or postgresql+psycopg:// (sync)
-        - Keeps postgresql+asyncpg:// or postgresql+psycopg:// as-is
+        - For async_driver=True: ALWAYS converts to postgresql+asyncpg://
+          (postgres://, postgresql://, postgresql+psycopg2://, postgresql+psycopg:// → postgresql+asyncpg://)
+        - For async_driver=False: converts to postgresql+psycopg:// for Alembic sync migrations
+        - Keeps postgresql+asyncpg:// or postgresql+psycopg:// as-is when matching the target driver
         - Converts sslmode= query parameter to ssl= (asyncpg doesn't support sslmode)
         - Removes unsupported query parameters for asyncpg
         - Does NOT log the full URL (only host/db name for debugging)
@@ -34,15 +35,16 @@ class Settings(BaseSettings):
         
         # Determine the scheme
         scheme = parsed.scheme
-        if scheme in ("postgres", "postgresql", "postgresql+psycopg2"):
-            if async_driver:
+        if async_driver:
+            # ALWAYS use asyncpg for async engine
+            if scheme in ("postgres", "postgresql", "postgresql+psycopg2", "postgresql+psycopg"):
                 scheme = "postgresql+asyncpg"
-            else:
+            # Keep postgresql+asyncpg:// as-is
+        else:
+            # For sync (Alembic): use psycopg
+            if scheme in ("postgres", "postgresql", "postgresql+psycopg2", "postgresql+asyncpg"):
                 scheme = "postgresql+psycopg"
-        elif scheme == "postgresql+asyncpg" and not async_driver:
-            scheme = "postgresql+psycopg"
-        elif scheme == "postgresql+psycopg" and async_driver:
-            scheme = "postgresql+asyncpg"
+            # Keep postgresql+psycopg:// as-is
         
         # Parse query parameters
         query_params = parse_qs(parsed.query, keep_blank_values=True)

@@ -67,7 +67,7 @@ async def _background_init_redis() -> None:
         await get_redis()
         logger.info("Redis connection pool initialized")
     except Exception as exc:
-        logger.warning("Redis initialization deferred (non-fatal): %s", exc)
+        logger.exception("Redis initialization deferred (non-fatal): %s", exc)
 
 
 async def _background_init_llm() -> None:
@@ -82,7 +82,7 @@ async def _background_init_llm() -> None:
             info["provider"], info["model"], info["healthy"],
         )
     except Exception as exc:
-        logger.warning("LLM service initialization deferred (non-fatal): %s", exc)
+        logger.exception("LLM service initialization deferred (non-fatal): %s", exc)
 
 
 async def _background_run_migrations() -> None:
@@ -98,7 +98,7 @@ async def _background_run_migrations() -> None:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Supabase tables verified/created (all models)")
     except Exception as exc:
-        logger.warning("Table creation skipped (non-fatal): %s", exc)
+        logger.exception("Table creation failed (non-fatal): %s", exc)
 
 
 # ── WebSocket Redis listener handle (for shutdown) ──
