@@ -76,6 +76,15 @@ class OCRFactory:
             )
 
 
+def _get_ocr_provider_type() -> str:
+    """Lazy settings accessor to avoid circular imports at module load time."""
+    try:
+        from app.shared.settings import get_settings
+        return getattr(get_settings(), "OCR_PROVIDER", "tesseract")
+    except Exception:
+        return "tesseract"
+
+
 def get_ocr_provider(
     provider_type: str | None = None,
     force_recreate: bool = False,
@@ -95,11 +104,7 @@ def get_ocr_provider(
 
     if provider_type is None:
         # Read from settings
-        try:
-            from app.shared.settings import settings
-            provider_type = getattr(settings, "OCR_PROVIDER", "tesseract")
-        except Exception:
-            provider_type = "tesseract"
+        provider_type = _get_ocr_provider_type()
 
     if force_recreate or _ocr_provider is None or _provider_type != provider_type:
         logger.info("Creating OCR provider: type=%s", provider_type)

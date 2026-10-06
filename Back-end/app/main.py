@@ -273,10 +273,11 @@ def create_app() -> FastAPI:
 
     @app.get("/health/full")
     async def health_check_full() -> dict[str, Any]:
-        """Deep check (DB, Redis, LLM). NOT used by Railway."""
+        """Deep check (DB, Redis, LLM, routers). NOT used by Railway."""
         checks: dict[str, Any] = {
             "status": "healthy", "service": "PaySentinelIQ",
             "timestamp": datetime.now(timezone.utc).isoformat(), "dependencies": {},
+            "routers": getattr(app.state, "router_status", []),
         }
         # DB
         try:
@@ -321,48 +322,70 @@ def create_app() -> FastAPI:
 
     # ── Register Routers (lazy — each wrapped in try/except) ──
     print("[psi] Registering routers...", flush=True)
-    _register_routers(app)
+    router_status = _register_routers(app)
     print("[psi] All routers registered", flush=True)
     print("[psi] create_app() complete — returning app", flush=True)
+
+    # Store router status for /health/full
+    app.state.router_status = router_status
 
     return app
 
 
-def _register_routers(app: FastAPI) -> None:
-    """Register all module routers. Each import is wrapped so one failure doesn't crash startup."""
+def _register_routers(app: FastAPI) -> list[dict[str, str]]:
+    """Register all module routers. Each import is wrapped so one failure doesn't crash startup.
+    
+    Returns a list of dicts with router status for /health/full endpoint.
+    In production, Auth router failure is fatal.
+    """
+    router_status: list[dict[str, str]] = []
 
-    _safe_include(app, "app.observability.health", "", "Health")  # Fase 4
-    _safe_include(app, "app.auth.presentation.router", "/api/auth", "Auth")
-    _safe_include(app, "app.payroll.presentation.router", "/api/payrolls", "Payroll")
-    _safe_include(app, "app.employees.presentation.router", "/api/employees", "Employees")
-    _safe_include(app, "app.verification.presentation.router", "/api/verifications", "Verification")
-    _safe_include(app, "app.fraud_detection.presentation.router", "/api/fraud-alerts", "Fraud Detection")
-    _safe_include(app, "app.api.documents.router", "/api/documents", "Documents")  # Fase 3A — canonical
-    _safe_include(app, "app.compliance.presentation.router", "/api/compliance", "Compliance")
-    _safe_include(app, "app.audit.infrastructure.router", "/api/audit-logs", "Audit Logs")
-    _safe_include(app, "app.notifications.infrastructure.router", "/api/notifications", "Notifications")
-    _safe_include(app, "app.ai_assistant.presentation.router", "/api/ai-assistant", "AI Assistant")
-    _safe_include(app, "app.settings_module.presentation.router", "/api/settings", "Settings")
-    _safe_include(app, "app.analytics.application.router", "/api", "Analytics")
-    _safe_include(app, "app.analytics.application.analysis_history_router", "/api", "Analysis History")
-    _safe_include(app, "app.account.presentation.router", "/api", "Account")
-    _safe_include(app, "app.breach_notification.infrastructure.router", "/api", "Breach Notifications")
-    _safe_include(app, "app.websocket.router", "/ws", "WebSocket")
+    def _safe_include(module_path: str, prefix: str, tag: str, required: bool = False) -> None:
+        """Import a router module and include it. Failure is logged; if required=True in production, re-raise."""
+        try:
+            import importlib
+            mod = importlib.import_module(module_path)
+            router = getattr(mod, "router", None)
+            if router is None:
+                msg = f"No 'router' in {module_path}"
+                print(f"[psi] WARNING: {msg}", flush=True)
+                router_status.append({"router": tag, "prefix": prefix, "status": "skipped", "reason": msg})
+                return
+            app.include_router(router, prefix=prefix, tags=[tag])
+            print(f"[psi]   Router loaded: {prefix} ({tag})", flush=True)
+            router_status.append({"router": tag, "prefix": prefix, "status": "loaded", "reason": ""})
+        except Exception as exc:
+            import traceback
+            tb = traceback.format_exc()
+            logger.exception(f"Router import failed: {prefix} ({tag})")
+            reason = f"{exc}"
+            router_status.append({"router": tag, "prefix": prefix, "status": "failed", "reason": reason})
+            if required and settings.ENVIRONMENT == "production":
+                print(f"[psi] FATAL: Required router {prefix} ({tag}) failed to load in production", flush=True)
+                print(f"[psi] Traceback:\n{tb}", flush=True)
+                raise
+            else:
+                print(f"[psi]   Router SKIPPED: {prefix} ({tag}) — {exc}", flush=True)
+
+    _safe_include("app.observability.health", "", "Health")  # Fase 4
+    _safe_include("app.auth.presentation.router", "/api/auth", "Auth", required=True)
+    _safe_include("app.payroll.presentation.router", "/api/payrolls", "Payroll")
+    _safe_include("app.employees.presentation.router", "/api/employees", "Employees")
+    _safe_include("app.verification.presentation.router", "/api/verifications", "Verification")
+    _safe_include("app.fraud_detection.presentation.router", "/api/fraud-alerts", "Fraud Detection")
+    _safe_include("app.api.documents.router", "/api/documents", "Documents")  # Fase 3A — canonical
+    _safe_include("app.compliance.presentation.router", "/api/compliance", "Compliance")
+    _safe_include("app.audit.infrastructure.router", "/api/audit-logs", "Audit Logs")
+    _safe_include("app.notifications.infrastructure.router", "/api/notifications", "Notifications")
+    _safe_include("app.ai_assistant.presentation.router", "/api/ai-assistant", "AI Assistant")
+    _safe_include("app.settings_module.presentation.router", "/api/settings", "Settings")
+    _safe_include("app.analytics.application.router", "/api", "Analytics")
+    _safe_include("app.analytics.application.analysis_history_router", "/api", "Analysis History")
+    _safe_include("app.account.presentation.router", "/api", "Account")
+    _safe_include("app.breach_notification.infrastructure.router", "/api", "Breach Notifications")
+    _safe_include("app.websocket.router", "/ws", "WebSocket")
 
     if settings.ENVIRONMENT != "production":
-        _safe_include(app, "app.shared.debug_router", "/api", "Debug")
+        _safe_include("app.shared.debug_router", "/api", "Debug")
 
-
-def _safe_include(app: FastAPI, module_path: str, prefix: str, tag: str) -> None:
-    """Import a router module and include it. Failure is logged, not fatal."""
-    try:
-        import importlib
-        mod = importlib.import_module(module_path)
-        router = getattr(mod, "router", None)
-        if router is None:
-            print(f"[psi] WARNING: No 'router' in {module_path}", flush=True)
-            return
-        app.include_router(router, prefix=prefix, tags=[tag])
-        print(f"[psi]   Router loaded: {prefix} ({tag})", flush=True)
-    except Exception as exc:
-        print(f"[psi]   Router SKIPPED: {prefix} ({tag}) — {exc}", flush=True)
+    return router_status

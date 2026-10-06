@@ -17,12 +17,8 @@ from app.shared.settings import get_settings
 settings = get_settings()
 
 config = context.config
-# Force asyncpg dialect for async migrations
-db_url = settings.DATABASE_URL.get_secret_value()
-if db_url.startswith("postgresql+psycopg2://"):
-    db_url = db_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://", 1)
-elif db_url.startswith("postgresql://"):
-    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+# Force asyncpg dialect for async migrations - use sync URL for alembic
+db_url = settings.database_url_sync
 config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:

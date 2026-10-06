@@ -82,7 +82,7 @@ USER psi
 
 EXPOSE 8000
 
-# ── Single-worker uvicorn ──────────────────────────────────────
+# ── Entrypoint script: run migrations (with pgvector extension) then start uvicorn ──
 # IMPORTANTE (WebSocket):
 #   Usamos 1 worker porque o ConnectionManager do WebSocket é
 #   in-memory (dict Python). Múltiplos workers criam processos
@@ -98,6 +98,10 @@ EXPOSE 8000
 #   - ws-ping-interval: 30s (alinhado com heartbeat do frontend)
 #   - ws-ping-timeout:  10s (se não receber pong, fecha conexão)
 #   - ws-max-size:      1MB (proteção contra payloads gigantes)
+COPY --chown=psi:psi docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD [
     "uvicorn", "app.main:create_app", "--factory",
     "--host", "0.0.0.0", "--port", "8000",

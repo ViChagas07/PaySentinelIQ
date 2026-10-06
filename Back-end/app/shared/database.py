@@ -18,7 +18,7 @@ from app.shared.settings import get_settings
 settings = get_settings()
 
 engine = create_async_engine(
-    settings.DATABASE_URL.get_secret_value(),
+    settings.database_url_async,
     echo=settings.DATABASE_ECHO,
     pool_pre_ping=True,
     connect_args={

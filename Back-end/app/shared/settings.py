@@ -4,6 +4,7 @@
 # ============================================================
 
 from functools import lru_cache
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from pydantic import Field, SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,6 +17,90 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    # ── Database URL Normalization ──
+    def _normalize_database_url(self, url: str, async_driver: bool = True) -> str:
+        """
+        Normalize DATABASE_URL for asyncpg (async) or psycopg (sync).
+        
+        - Converts postgres://, postgresql://, postgresql+psycopg2:// → postgresql+asyncpg:// (async) 
+          or postgresql+psycopg:// (sync)
+        - Keeps postgresql+asyncpg:// or postgresql+psycopg:// as-is
+        - Converts sslmode= query parameter to ssl= (asyncpg doesn't support sslmode)
+        - Removes unsupported query parameters for asyncpg
+        - Does NOT log the full URL (only host/db name for debugging)
+        """
+        parsed = urlparse(url)
+        
+        # Determine the scheme
+        scheme = parsed.scheme
+        if scheme in ("postgres", "postgresql", "postgresql+psycopg2"):
+            if async_driver:
+                scheme = "postgresql+asyncpg"
+            else:
+                scheme = "postgresql+psycopg"
+        elif scheme == "postgresql+asyncpg" and not async_driver:
+            scheme = "postgresql+psycopg"
+        elif scheme == "postgresql+psycopg" and async_driver:
+            scheme = "postgresql+asyncpg"
+        
+        # Parse query parameters
+        query_params = parse_qs(parsed.query, keep_blank_values=True)
+        
+        # For asyncpg: convert sslmode to ssl, remove unsupported params
+        if async_driver:
+            sslmode = query_params.pop("sslmode", [None])[0]
+            if sslmode:
+                # Map sslmode to asyncpg ssl parameter
+                # asyncpg accepts: True, False, "require", "verify-ca", "verify-full"
+                # sslmode values: disable, allow, prefer, require, verify-ca, verify-full
+                ssl_mapping = {
+                    "disable": "false",
+                    "allow": "true",
+                    "prefer": "true",
+                    "require": "true",
+                    "verify-ca": "verify-ca",
+                    "verify-full": "verify-full",
+                }
+                query_params["ssl"] = [ssl_mapping.get(sslmode, "true")]
+            
+            # Remove parameters not supported by asyncpg
+            unsupported = {"channel_binding", "gssencmode", "krbsrvname", "target_session_attrs"}
+            for param in unsupported:
+                query_params.pop(param, None)
+        
+        # Reconstruct query string
+        new_query = urlencode({k: v[0] if v else "" for k, v in query_params.items()}, doseq=True)
+        
+        # Rebuild URL
+        normalized = urlunparse((
+            scheme,
+            parsed.netloc,
+            parsed.path,
+            parsed.params,
+            new_query,
+            parsed.fragment,
+        ))
+        
+        # Debug: log only host and database name (mask user/pass)
+        if self.ENVIRONMENT != "production" or self.DEBUG:
+            masked_netloc = parsed.netloc
+            if "@" in parsed.netloc:
+                masked_netloc = parsed.netloc.split("@")[-1]
+            db_name = parsed.path.lstrip("/") if parsed.path else "unknown"
+            print(f"[psi] Normalized DB URL: host={masked_netloc}, db={db_name}, async={async_driver}", flush=True)
+        
+        return normalized
+
+    @property
+    def database_url_async(self) -> str:
+        """Get DATABASE_URL normalized for asyncpg (async driver)."""
+        return self._normalize_database_url(self.DATABASE_URL.get_secret_value(), async_driver=True)
+
+    @property
+    def database_url_sync(self) -> str:
+        """Get DATABASE_URL normalized for psycopg (sync driver, for Alembic)."""
+        return self._normalize_database_url(self.DATABASE_URL.get_secret_value(), async_driver=False)
 
     # ── Application ──
     APP_NAME: str = "PaySentinelIQ"

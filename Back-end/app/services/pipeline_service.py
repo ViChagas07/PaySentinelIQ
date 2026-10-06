@@ -25,9 +25,14 @@ from app.services.enrichment import EnrichmentService
 from app.services.ai import FraudCopilot
 from app.services.ai.context_builder import FraudAnalysisContext, ContextBuilder
 from app.services.ai.risk_analyzer import RiskAnalyzer
-from app.shared.settings import settings
+from app.shared.settings import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+def _get_pipeline_settings():
+    """Lazy settings accessor to avoid circular imports at module load time."""
+    return get_settings()
 
 
 class DocumentPipelineService:
@@ -54,7 +59,8 @@ class DocumentPipelineService:
         copilot: FraudCopilot | None = None,
     ):
         self._storage = storage or S3StorageProvider()
-        self._validator = FileValidator(max_size_bytes=settings.MAX_UPLOAD_SIZE_MB * 1_048_576)
+        s = _get_pipeline_settings()
+        self._validator = FileValidator(max_size_bytes=s.MAX_UPLOAD_SIZE_MB * 1_048_576)
         self._ocr = get_ocr_provider()
         self._extractor = DocumentExtractionService()
         self._enrichment = EnrichmentService()

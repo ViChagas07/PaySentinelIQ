@@ -73,11 +73,6 @@ async def _check_llm() -> dict:
         return {"status": "unhealthy", "error": str(e)}
 
 
-@router.get("/health")
-async def health_check() -> dict:
-    return {"status": "ok", "version": "1.0.0", "service": "PaySentinelIQ"}
-
-
 @router.get("/ready")
 async def readiness_check() -> dict:
     checks = {}

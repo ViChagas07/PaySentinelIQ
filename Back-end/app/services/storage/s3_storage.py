@@ -18,9 +18,14 @@ from app.services.storage.exceptions import (
     FileNotFoundError,
     UploadFailedError,
 )
-from app.shared.settings import settings
+from app.shared.settings import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+def _get_s3_settings():
+    """Lazy settings accessor to avoid circular imports at module load time."""
+    return get_settings()
 
 
 class S3StorageProvider(StorageProvider):
@@ -42,11 +47,12 @@ class S3StorageProvider(StorageProvider):
         bucket: str | None = None,
         region: str | None = None,
     ):
-        self._bucket = bucket or settings.S3_BUCKET
-        self._region = region or settings.AWS_REGION
-        self._client = self._create_client()
+        s = _get_s3_settings()
+        self._bucket = bucket or s.S3_BUCKET
+        self._region = region or s.AWS_REGION
+        self._client = self._create_client(s)
 
-    def _create_client(self) -> Any:
+    def _create_client(self, settings) -> Any:
         """Create boto3 S3 client."""
         return boto3.client(
             "s3",
@@ -128,7 +134,8 @@ class S3StorageProvider(StorageProvider):
 
     async def generate_presigned_url(self, key: str, expiration: int | None = None) -> str:
         """Generate a time-limited presigned URL for secure file access."""
-        expiry = expiration or settings.S3_PRESIGNED_URL_EXPIRY
+        s = _get_s3_settings()
+        expiry = expiration or s.S3_PRESIGNED_URL_EXPIRY
         try:
             url = self._client.generate_presigned_url(
                 "get_object",
