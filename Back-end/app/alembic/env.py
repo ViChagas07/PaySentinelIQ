@@ -5,6 +5,7 @@
 
 import asyncio
 from logging.config import fileConfig
+from urllib.parse import urlparse
 
 import alembic.context as context
 from sqlalchemy import pool
@@ -17,8 +18,8 @@ from app.shared.settings import get_settings
 settings = get_settings()
 
 config = context.config
-# Force asyncpg dialect for async migrations - use sync URL for alembic
-db_url = settings.database_url_sync
+# Use asyncpg URL for async migrations (alembic uses async_engine_from_config)
+db_url = settings.database_url_async
 config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
@@ -47,11 +48,18 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
+    # Build connect_args based on the driver (asyncpg vs psycopg)
+    _parsed = urlparse(db_url)
+    _is_asyncpg = _parsed.scheme == "postgresql+asyncpg"
+    _connect_args = {"prepared_statement_cache_size": 0} if _is_asyncpg else {}
+    if _is_asyncpg:
+        _connect_args["statement_cache_size"] = 0
+
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        connect_args={"statement_cache_size": 0},
+        connect_args=_connect_args,
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
