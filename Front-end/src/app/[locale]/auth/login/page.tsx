@@ -91,28 +91,7 @@ export default function AuthPage() {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [agreeToTermsSignIn, setAgreeToTermsSignIn] = useState(false);
 
-  // ── Google OIDC / GIS Popup OAuth ── //
-
-  useEffect(() => {
-    // Load Google Identity Services script if not already present
-    if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.onerror = () => console.error("Failed to load Google Sign-In script");
-    document.body.appendChild(script);
-
-    return () => {
-      const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (existing) {
-        document.body.removeChild(existing);
-      }
-    };
-  }, []);
+  // ── Google OAuth2 — Traditional Authorization Code Flow ── //
 
   const loginStore = useAuthStore((s) => s.login);
 
@@ -123,98 +102,36 @@ export default function AuthPage() {
       return;
     }
 
-    const google = (window as any).google;
-    if (!google?.accounts?.oauth2) {
-      console.warn("GIS library not loaded yet");
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      console.error("GOOGLE_CLIENT_ID not configured");
       setSignInError(t("googleSignInUnavailable"));
       return;
     }
 
-    // Use initTokenClient which opens a REAL browser popup window
-    // (unlike the deprecated One Tap prompt() that gets suppressed by browsers)
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      scope: "openid profile email",
-      callback: async (response: any) => {
-        if (response.access_token) {
-          try {
-            const res = await fetch("/api/auth/google", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                access_token: response.access_token,
-                consent_given: true,
-                terms_version: "1.0.0",
-                privacy_version: "1.0.0",
-              }),
-            });
-
-            const data = await res.json();
-
-            console.log('[PSI Auth DEBUG] Resposta /auth/google:', data);
-            console.log('[PSI Auth DEBUG] data.token:', data.token);
-            console.log('[PSI Auth DEBUG] data.access_token:', data.access_token);
-            console.log('[PSI Auth DEBUG] data.refreshToken:', data.refreshToken);
-            // Detecta se é JWT (ey...) ou Google token (ya29...)
-            if (data.token) {
-              const isJwt = data.token.startsWith("ey");
-              const isGoogleToken = data.token.startsWith("ya29");
-              console.log('[PSI Auth DEBUG] token type:', isJwt ? 'JWT (ey)' : isGoogleToken ? 'GOOGLE (ya29)' : 'OUTRO');
-            }
-
-            if (!res.ok) {
-              setSignInError(data.error || t("googleSignInFailed"));
-              return;
-            }
-
-            // Tenta token principal ou access_token (alguns endpoints retornam access_token)
-            const effectiveToken = data.token ?? data.access_token;
-            const effectiveRefreshToken = data.refreshToken ?? data.refresh_token;
-
-            // Update auth store with user + token + refresh token from the backend
-            if (data.user && effectiveToken) {
-              loginStore(
-                {
-                  id: data.user.id,                    // UUID real do banco
-                  email: data.user.email,
-                  full_name: data.user.full_name,
-                  role: data.user.role,
-                  tenant_id: data.user.tenant_id,
-                  avatar_url: data.user.avatar_url ?? null,
-                  mfa_enabled: data.user.mfa_enabled ?? false,
-                  last_login: data.user.last_login ?? null,
-                  created_at: data.user.created_at ?? null,
-                },
-                effectiveToken,
-                effectiveRefreshToken
-              );
-              console.log('[PSI Auth DEBUG] loginStore chamado com token prefix:', effectiveToken.substring(0, 20) + '...');
-
-              // Aguarda persistência no localStorage antes do redirect
-              await new Promise(resolve => setTimeout(resolve, 100));
-            } else {
-              console.warn('[PSI Auth DEBUG] loginStore NÃO chamado — faltando user ou token', { user: !!data.user, token: !!effectiveToken });
-            }
-
-            // Success — redirect to dashboard
-            router.push(`/${locale}/dashboard`);
-          } catch {
-            setSignInError(t("googleSignInRetry"));
-          }
-        } else if (response.error) {
-          console.error("Google OAuth error:", response.error);
-          if (response.error === "popup_closed" || response.error === "user_cancelled") {
-            setSignInError(t("googleSignInDismissed"));
-          } else {
-            setSignInError(t("googleSignInFailed"));
-          }
-        }
-      },
+    // Build Google OAuth2 authorization URL
+    const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+    const scope = "openid profile email";
+    const state = crypto.randomUUID(); // CSRF protection
+    
+    // Store state in sessionStorage for validation on callback
+    sessionStorage.setItem("google_oauth_state", state);
+    
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: scope,
+      state: state,
+      access_type: "offline",
+      prompt: "consent",
     });
 
-    // Request access token — this opens a proper popup window
-    client.requestAccessToken();
-  }, [agreeToTermsSignIn, locale, router, t, loginStore]);
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    
+    // Redirect to Google consent screen
+    window.location.href = authUrl;
+  }, [agreeToTermsSignIn, t]);
 
   // ── Sign In handler ── //
   const handleSignIn = async (e: React.FormEvent) => {

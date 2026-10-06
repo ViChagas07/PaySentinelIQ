@@ -8,8 +8,10 @@ import logging
 import uuid
 from datetime import datetime, timezone as dt_timezone
 from typing import Any
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -237,6 +239,195 @@ async def google_login(
             "created_at": user.created_at.isoformat() if user.created_at else None,
         },
     }
+
+
+# ═══════════════════════════════════════════════════════════════
+# GOOGLE OAUTH2 — Authorization Code Flow (Traditional Redirect)
+# ═══════════════════════════════════════════════════════════════
+
+
+class GoogleCallbackRequest(BaseModel):
+    """Query params from Google OAuth2 redirect."""
+    model_config = ConfigDict(strict=False, extra="allow")
+    code: str | None = None
+    state: str | None = None
+    error: str | None = None
+    error_description: str | None = None
+
+
+@router.get("/google/callback")
+async def google_callback(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    error_description: str | None = None,
+) -> RedirectResponse:
+    """
+    Google OAuth2 Authorization Code callback.
+    
+    Flow:
+    1. Frontend redirects user to Google OAuth consent screen
+    2. User authorizes → Google redirects to this endpoint with `code`
+    3. Exchange `code` for access_token + id_token
+    4. Verify id_token, find/create user, record LGPD consent
+    5. Issue PaySentinelIQ JWT + refresh token
+    6. Redirect to frontend dashboard with tokens in query params (or set cookies)
+    """
+    # Handle OAuth errors from Google
+    if error:
+        logger.warning("Google OAuth error: %s — %s", error, error_description)
+        frontend_url = settings.APP_BASE_URL.rstrip("/")
+        error_msg = error_description or error
+        return RedirectResponse(
+            url=f"{frontend_url}/auth/login?error={error_msg}",
+            status_code=302,
+        )
+
+    if not code:
+        logger.warning("Google callback missing authorization code")
+        frontend_url = settings.APP_BASE_URL.rstrip("/")
+        return RedirectResponse(
+            url=f"{frontend_url}/auth/login?error=missing_authorization_code",
+            status_code=302,
+        )
+
+    # ── 1. Exchange authorization code for tokens ──────────────────
+    import httpx
+    token_url = "https://oauth2.googleapis.com/token"
+    redirect_uri = settings.GOOGLE_REDIRECT_URI
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            token_resp = await client.post(
+                token_url,
+                data={
+                    "code": code,
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET.get_secret_value()
+                        if settings.GOOGLE_CLIENT_SECRET else "",
+                    "redirect_uri": redirect_uri,
+                    "grant_type": "authorization_code",
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+        if token_resp.status_code != 200:
+            logger.error("Google token exchange failed: %s", token_resp.text)
+            raise AuthenticationError("Failed to exchange authorization code for tokens")
+        
+        token_data = token_resp.json()
+        id_token_jwt = token_data.get("id_token")
+        access_token = token_data.get("access_token")
+        
+        if not id_token_jwt:
+            raise AuthenticationError("No ID token in Google response")
+            
+    except httpx.RequestError as exc:
+        logger.exception("Google token exchange request failed")
+        raise AuthenticationError(f"Google token exchange failed: {exc}") from exc
+
+    # ── 2. Verify ID token ─────────────────────────────────────────
+    try:
+        google_user = id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
+            id_token_jwt,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+    except ValueError as exc:
+        raise AuthenticationError(f"Invalid Google ID token: {exc}") from exc
+
+    email: str = google_user["email"]
+    name: str = google_user.get("name", email.split("@")[0])
+    picture: str | None = google_user.get("picture")
+    google_sub: str = google_user["sub"]
+
+    # ── 3. Find or create user ─────────────────────────────────────
+    repo = UserRepository(db)
+    user = await repo.get_by_email(email)
+
+    if user is None:
+        tenant_result = await db.execute(
+            sa_select(TenantModel).where(TenantModel.slug == "default")
+        )
+        tenant = tenant_result.scalar_one_or_none()
+        if not tenant:
+            raise HTTPException(status_code=500, detail="Default tenant not found")
+
+        user = await repo.create(
+            email=email,
+            full_name=name,
+            google_id=google_sub,
+            tenant_id=tenant.id,
+            avatar_url=picture,
+        )
+    else:
+        if not user.google_id:
+            user.google_id = google_sub
+        if not user.avatar_url and picture:
+            user.avatar_url = picture
+        user.full_name = name
+        await repo.update(user)
+
+    # ── 4. Record consent (LGPD compliance) ────────────────────────
+    tv = settings.TERMS_VERSION
+    pv = settings.PRIVACY_VERSION
+
+    existing_consent = await db.execute(
+        sa_select(ConsentRecordModel).where(
+            ConsentRecordModel.user_id == user.id,
+            ConsentRecordModel.consent_type == "terms_of_service",
+            ConsentRecordModel.terms_version == tv,
+            ConsentRecordModel.privacy_version == pv,
+        )
+    )
+    if not existing_consent.scalar_one_or_none():
+        ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or (
+            request.client.host if request.client else None
+        )
+        ua = request.headers.get("User-Agent", "")[:500]
+        consent_record = ConsentRecordModel(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            tenant_id=user.tenant_id,
+            consent_type="terms_of_service",
+            terms_version=tv,
+            privacy_version=pv,
+            accepted_at=datetime.now(dt_timezone.utc),
+            ip_address=ip,
+            user_agent=ua,
+            method="oauth",
+        )
+        db.add(consent_record)
+
+    # ── 5. Update last_login & issue tokens ────────────────────────
+    user.last_login = datetime.now(dt_timezone.utc)
+    await db.commit()
+    await db.refresh(user)
+
+    access_token = AuthService.create_access_token(
+        user_id=str(user.id),
+        tenant_id=str(user.tenant_id),
+        role=user.role,
+    )
+    refresh_token_raw, _ = AuthService.create_refresh_token(str(user.id))
+
+    # ── 6. Redirect to frontend with tokens ────────────────────────
+    # Option A: Query params (simple, but tokens in URL history)
+    # Option B: Set secure HttpOnly cookies (better security)
+    # Option C: PostMessage to opener (requires popup)
+    # Using Option A for simplicity; frontend extracts tokens from URL
+    frontend_url = settings.APP_BASE_URL.rstrip("/")
+    params = urlencode({
+        "access_token": access_token,
+        "refresh_token": refresh_token_raw,
+        "token_type": "bearer",
+        "expires_in": str(settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60),
+    })
+    return RedirectResponse(
+        url=f"{frontend_url}/auth/callback?{params}",
+        status_code=302,
+    )
 
 
 @router.post("/login", response_model=TokenResponse)

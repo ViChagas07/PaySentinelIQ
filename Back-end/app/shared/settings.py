@@ -199,6 +199,8 @@ class Settings(BaseSettings):
 
     # ── Google OIDC ──
     GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: SecretStr | None = None
+    GOOGLE_REDIRECT_URI: str = "http://localhost:3000/api/auth/google/callback"
 
     # ── AWS ──
     AWS_ACCESS_KEY_ID: str | None = None
