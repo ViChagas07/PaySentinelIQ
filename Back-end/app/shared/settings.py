@@ -122,6 +122,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "https://pay-sentinel-iq.vercel.app",
         "https://paysentineliq.vercel.app",
+        "https://paysentineliq-3.onrender.com",
     ])
 
     # ── Database (PostgreSQL) ──
@@ -177,7 +178,7 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     SMTP_TIMEOUT: float = 15.0
     # Public URL of the frontend — used to build links inside emails.
-    APP_BASE_URL: str = "http://localhost:3000"
+    APP_BASE_URL: str = "https://pay-sentinel-iq.vercel.app"
 
     # ── Bill due-soon scheduler (standalone worker) ──
     BILL_SCHEDULER_ENABLED: bool = True
@@ -200,7 +201,7 @@ class Settings(BaseSettings):
     # ── Google OIDC ──
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: SecretStr | None = None
-    GOOGLE_REDIRECT_URI: str = "http://localhost:3000/api/auth/google/callback"
+    GOOGLE_REDIRECT_URI: str = "https://paysentineliq-3.onrender.com/api/auth/google/callback"
 
     # ── AWS ──
     AWS_ACCESS_KEY_ID: str | None = None

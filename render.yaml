@@ -24,7 +24,7 @@ services:
       - name: PORT
         value: "$PORT"
       - name: CORS_ORIGINS
-        value: '["https://pay-sentinel-iq.vercel.app","http://localhost:3000"]'
+        value: '["https://pay-sentinel-iq.vercel.app","https://paysentineliq.vercel.app","http://localhost:3000"]'
       - name: DATABASE_URL
         fromDatabase:
           name: paysentinel-db
@@ -97,11 +97,11 @@ services:
       - name: NEXT_PUBLIC_GOOGLE_API_KEY
         value: ""  # Preencha no painel
       - name: NEXT_PUBLIC_API_URL
-        value: "https://paysentinel-api.onrender.com"
+        value: "https://paysentineliq-3.onrender.com/api"
       - name: NEXT_PUBLIC_WS_BASE_URL
-        value: "wss://paysentinel-api.onrender.com/ws"
+        value: "wss://paysentineliq-3.onrender.com/ws"
       - name: GOOGLE_REDIRECT_URI
-        value: "https://paysentinel-api.onrender.com/auth/google/callback"
+        value: "https://paysentineliq-3.onrender.com/api/auth/google/callback"
       - name: GEMINI_API_KEY
         sync: false
         value: ""  # Preencha no painel

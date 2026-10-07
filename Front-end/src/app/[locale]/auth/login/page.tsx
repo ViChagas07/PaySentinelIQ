@@ -103,14 +103,20 @@ export default function AuthPage() {
     }
 
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!clientId) {
       console.error("GOOGLE_CLIENT_ID not configured");
       setSignInError(t("googleSignInUnavailable"));
       return;
     }
+    if (!apiUrl) {
+      console.error("NEXT_PUBLIC_API_URL not configured");
+      setSignInError(t("googleSignInUnavailable"));
+      return;
+    }
 
-    // Build Google OAuth2 authorization URL
-    const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+    // Build Google OAuth2 authorization URL - use BACKEND callback URL
+    const redirectUri = `${apiUrl.replace(/\/api\/?$/, '')}/api/auth/google/callback`;
     const scope = "openid profile email";
     const state = crypto.randomUUID(); // CSRF protection
     
