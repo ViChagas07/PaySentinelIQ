@@ -10,11 +10,12 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
-from starlette.responses import Response
+from starlette.responses import Response as StarletteResponse
 
 # ── Startup trace (stdout — visible in Railway logs) ──
 print("[psi] Importing app.shared modules...", flush=True)
@@ -97,8 +98,38 @@ async def _background_run_migrations() -> None:
             from app.shared.orm_models import Base
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Supabase tables verified/created (all models)")
+        
+        # Seed default tenant if not exists
+        await _seed_default_tenant(engine)
     except Exception as exc:
         logger.exception("Table creation failed (non-fatal): %s", exc)
+
+
+async def _seed_default_tenant(engine) -> None:
+    """Create default tenant if it doesn't exist."""
+    try:
+        from app.shared.database import get_session_factory
+        from app.shared.orm_models import TenantModel
+        from sqlalchemy import select
+        
+        async_session = get_session_factory()
+        async with async_session() as db:
+            result = await db.execute(select(TenantModel).where(TenantModel.slug == "default"))
+            tenant = result.scalar_one_or_none()
+            if not tenant:
+                tenant = TenantModel(
+                    name="Default Tenant",
+                    slug="default",
+                    plan="starter",
+                    is_active=True,
+                )
+                db.add(tenant)
+                await db.commit()
+                logger.info("Default tenant created")
+            else:
+                logger.debug("Default tenant already exists")
+    except Exception as exc:
+        logger.exception("Default tenant seeding failed (non-fatal): %s", exc)
 
 
 # ── WebSocket Redis listener handle (for shutdown) ──
@@ -185,6 +216,24 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     print("[psi] FastAPI instance created", flush=True)
+
+    # ── Static files (favicon.ico) ──
+    import os
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    if os.path.exists(static_dir):
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    
+    # Favicon handler (fallback if no static dir)
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon():
+        return Response(
+            content="",
+            media_type="image/x-icon",
+            headers={
+                "Cache-Control": "public, max-age=31536000",
+                "Cross-Origin-Resource-Policy": "cross-origin",
+            },
+        )
 
     # ── CORS ──
     app.add_middleware(
