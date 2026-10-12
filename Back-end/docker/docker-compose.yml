@@ -63,6 +63,7 @@ services:
       - OLLAMA_KEEP_ALIVE=24h
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:4b-q4_k_m}
     deploy:
       resources:
         limits:
@@ -70,7 +71,7 @@ services:
     restart: unless-stopped
     profiles: ["local", "demo", "development"]  # Only start in local modes
     command: >
-      sh -c "ollama serve & sleep 10 && ollama pull qwen3:4b-q4_k_m && wait"
+      sh -c "ollama serve & sleep 10 && ollama pull $${OLLAMA_MODEL} && wait"
 
   api:
     build:
