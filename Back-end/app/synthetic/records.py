@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -204,7 +204,7 @@ def _render_lines(
 
     if document.doc_kind == "boleto":
         _line(lines, labels["beneficiario"], fields["beneficiario"], layout)
-        lines.append(f"CNPJ do BeneficiÃ¡rio: {format_cnpj(fields['beneficiario_cnpj'])}")
+        lines.append(f"CNPJ do Beneficiário: {format_cnpj(fields['beneficiario_cnpj'])}")
         _line(lines, labels["pagador"], fields["pagador"], layout)
         lines.append(f"CPF/CNPJ do Pagador: {fields['pagador_documento']}")
         _line(
@@ -590,11 +590,17 @@ def _make_payslip(
                 - Decimal(fields["total_descontos"])
             )
         elif tamper == "P3":
-            fields["irrf"] = "0.00"
+            original_irrf = Decimal(fields["irrf"])
+            # A no-op tamper cannot be detected. When the original IRRF is
+            # already zero, move it by a material delta instead.
+            new_irrf = (
+                Decimal("0.00")
+                if original_irrf > 0
+                else Decimal("123.45")
+            )
+            fields["irrf"] = str(new_irrf)
             fields["total_descontos"] = str(
-                Decimal(fields["inss"])
-                + Decimal(fields["total_descontos"])
-                - Decimal(fields["irrf"])
+                Decimal(fields["total_descontos"]) + new_irrf - original_irrf
             )
             fields["salario_liquido"] = str(
                 Decimal(fields["salario_bruto"])

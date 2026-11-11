@@ -16,6 +16,8 @@ def main() -> None:
     parser.add_argument("--n-total", type=int, default=1000)
     parser.add_argument("--render", type=int, default=60)
     parser.add_argument("--langs", default="pt,es,en")
+    parser.add_argument("--dataset-version", default="v2")
+    parser.add_argument("--generator-version", default="v2")
     parser.add_argument("--golden", action="store_true")
     args = parser.parse_args()
     out = Path(args.out)
@@ -31,6 +33,8 @@ def main() -> None:
         n_total=args.n_total,
         render=args.render,
         langs=tuple(args.langs.split(",")),
+        dataset_version=args.dataset_version,
+        generator_version=args.generator_version,
     )
     print(json.dumps(manifest["splits"], ensure_ascii=False))
     print(

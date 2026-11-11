@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import date, timedelta
 from hashlib import sha256
@@ -10,6 +10,8 @@ from typing import Any
 from app.synthetic.records import SyntheticDocument, build_document
 from app.synthetic.render import render_all, render_variant
 
+GENERATOR_VERSION = "v2"
+DEFAULT_DATASET_VERSION = "v2"
 LANGUAGES = ("pt", "es", "en")
 LAYOUTS = ("A", "B", "C")
 BOLETO_NAIVE = ("B1", "B2", "B3", "B4", "B5", "B8")
@@ -84,6 +86,15 @@ def _hash_file(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
 
 
+def _hash_records(records: list[SyntheticDocument]) -> str:
+    payload = json.dumps(
+        [record.to_dict() for record in records],
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return sha256(payload).hexdigest()
+
+
 def build_dataset(
     out_dir: str | Path,
     *,
@@ -91,6 +102,8 @@ def build_dataset(
     n_total: int = 1000,
     render: int = 60,
     langs: tuple[str, ...] = LANGUAGES,
+    dataset_version: str = DEFAULT_DATASET_VERSION,
+    generator_version: str = GENERATOR_VERSION,
 ) -> dict[str, Any]:
     root = Path(out_dir)
     root.mkdir(parents=True, exist_ok=True)
@@ -152,7 +165,16 @@ def build_dataset(
             paths = render_all(record, root / "files")
             rendered_documents[record.id] = paths
 
+    split_hashes = {
+        split: _hash_records(
+            [record for record in records if record.split == split]
+        )
+        for split in ("train", "val", "test_iid", "test_shift")
+    }
     manifest = {
+        "dataset_version": dataset_version,
+        "generator_version": generator_version,
+        "generated_on": today.isoformat(),
         "seed": seed,
         "n_total": len(records),
         "render": len(rendered_documents),
@@ -163,6 +185,7 @@ def build_dataset(
             "test_iid": iid_count,
             "test_shift": shift_count,
         },
+        "split_hashes": split_hashes,
         "records_sha256": _hash_file(records_path),
         "files": {
             document_id: {
@@ -340,13 +363,13 @@ def _write_golden_readme(
     documents: list[dict[str, Any]],
 ) -> None:
     lines = [
-        "# Golden set sintÃ©tico â€” PaySentinelIQ",
+        "# Golden set sintético — PaySentinelIQ",
         "",
-        "Documentos 100% fictÃ­cios, gerados por `app/synthetic`.",
-        "Cada item possui a variante `native`; itens legÃ­timos possuem tambÃ©m "
+        "Documentos 100% fictícios, gerados por `app/synthetic`.",
+        "Cada item possui a variante `native`; itens legítimos possuem também "
         "`scanned_clean` ou `scanned_rot`.",
         "",
-        "| ID | Tipo | Idioma | Layout | AdulteraÃ§Ã£o | Esperado | Banda |",
+        "| ID | Tipo | Idioma | Layout | Adulteração | Esperado | Banda |",
         "|---|---|---|---|---|---|---|",
     ]
     for item in documents:
