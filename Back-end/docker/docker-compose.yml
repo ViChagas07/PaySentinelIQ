@@ -176,7 +176,7 @@ services:
       target: ${DOCKER_TARGET:-production}
     command: python -m app.workers.notification_worker
     env_file:
-      - ../ .env
+      - ../.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
       - REDIS_URL=redis://redis:6379/0
@@ -198,7 +198,7 @@ services:
       target: ${DOCKER_TARGET:-production}
     command: python -m app.workers.email_worker
     env_file:
-      - ../ .env
+      - ../.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
       - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/${RABBITMQ_DEFAULT_VHOST:-/}
@@ -221,7 +221,7 @@ services:
       target: ${DOCKER_TARGET:-production}
     command: python -m app.workers.scheduler
     env_file:
-      - ../ .env
+      - ../.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
       - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-psi}:${RABBITMQ_DEFAULT_PASS:-psi_secret}@rabbitmq:5672/${RABBITMQ_DEFAULT_VHOST:-/}
