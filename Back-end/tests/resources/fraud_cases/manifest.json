@@ -1,0 +1,1766 @@
+{
+  "seed": 2026,
+  "count": 36,
+  "documents": [
+    {
+      "id": "syn-2026-00000",
+      "seed": 2026,
+      "doc_kind": "boleto",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "001",
+        "moeda": "9",
+        "carteira": "109",
+        "campo_livre": "8813998698797309114170753",
+        "nosso_numero": "64556815188",
+        "numero_documento": "44729405",
+        "agencia_codigo_beneficiario": "8573/929904-1",
+        "valor_nominal": "2477.34",
+        "valor_codificado": "2477.34",
+        "data_vencimento": "2026-12-22",
+        "data_documento": "2026-12-09",
+        "beneficiario": "Sigma Fictícia Alimentos Ltda",
+        "beneficiario_cnpj": "16897684000106",
+        "pagador": "Bruno Simulado Ribeiro",
+        "pagador_documento": "97880932054",
+        "local_pagamento": "Cidade Fictícia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "00198813909869879730991141707538216680000247734",
+        "codigo_barras": "00192166800002477348813998698797309114170753",
+        "fator": "1668",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiário do Título\nSigma Fictícia Alimentos Ltda\nCNPJ do BeneficiÃ¡rio: 16.897.684/0001-06\nPagador do Título\nBruno Simulado Ribeiro\nCPF/CNPJ do Pagador: 97880932054\nBanco\n001-1\nData de Vencimento\n22/12/2026\nValor Nominal\n2.477,34\nNosso Número\n64556815188\nNúmero do Documento\n44729405\nData do Documento\n09/12/2026\nLocal de Pagamento\nCidade Fictícia\nCarteira\n109\nAgência/Código do Beneficiário\n8573/929904-1\nMulta\n2,00%\nJuros\n1,00% ao mês\nLinha Digitável\n00198813909869879730991141707538216680000247734",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00000_native.pdf",
+          "sha256": "98d1db64aae3f0347df176717477da884af732bc13728475507646be31941425"
+        },
+        "scanned_clean": {
+          "path": "legitimate/syn-2026-00000_scanned_clean.pdf",
+          "sha256": "f9670593154ada581667c5b1687f791f606f3490843658f4aedde39abe02c284"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00001",
+      "seed": 3035,
+      "doc_kind": "boleto",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "341",
+        "moeda": "9",
+        "carteira": "109",
+        "campo_livre": "4166027589899634388349341",
+        "nosso_numero": "30251960267",
+        "numero_documento": "61336750",
+        "agencia_codigo_beneficiario": "8678/516093-8",
+        "valor_nominal": "4408.3",
+        "valor_codificado": "4408.3",
+        "data_vencimento": "2026-12-26",
+        "data_documento": "2026-12-19",
+        "beneficiario": "Delta Hipotetica Logistica S.A.",
+        "beneficiario_cnpj": "63755672000127",
+        "pagador": "Helena Hipotetica Suarez",
+        "pagador_documento": "62257316525",
+        "local_pagamento": "Ciudad Ficticia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "34194166012758989963543883493413716720000440830",
+        "codigo_barras": "34197167200004408304166027589899634388349341",
+        "fator": "1672",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiario del Titulo: Delta Hipotetica Logistica S.A.\nCNPJ do BeneficiÃ¡rio: 63.755.672/0001-27\nPagador del Titulo: Helena Hipotetica Suarez\nCPF/CNPJ do Pagador: 62257316525\nBanco: 341-1\nFecha de vencimiento: 26/12/2026\nValor Nominal del Titulo: 4.408,30\nNuestro numero: 30251960267\nNumero del documento: 61336750\nFecha del documento: 19/12/2026\nLugar de pago: Ciudad Ficticia\nCartera: 109\nAgencia/Codigo del beneficiario: 8678/516093-8\nMulta: 2,00%\nIntereses de mora: 1,00% ao mês\nLinea digitable: 34194166012758989963543883493413716720000440830",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00001_native.pdf",
+          "sha256": "d135cefb79d29a71f36e1ad9d6648fe57a2d29dc77ceabf2d950d65f46fcfa75"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00002",
+      "seed": 4044,
+      "doc_kind": "boleto",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "260",
+        "moeda": "9",
+        "carteira": "SR",
+        "campo_livre": "9755395695222790963472572",
+        "nosso_numero": "05455202058",
+        "numero_documento": "70658103",
+        "agencia_codigo_beneficiario": "5342/320466-1",
+        "valor_nominal": "1876.31",
+        "valor_codificado": "1876.31",
+        "data_vencimento": "2027-03-02",
+        "data_documento": "2027-02-03",
+        "beneficiario": "Sigma Fictional Foods Inc.",
+        "beneficiario_cnpj": "20382334000184",
+        "pagador": "Diego Fictional Martin",
+        "pagador_documento": "34526890502",
+        "local_pagamento": "Fictional City",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "26099755339569522279409634725726717380000187631",
+        "codigo_barras": "26097173800001876319755395695222790963472572",
+        "fator": "1738",
+        "number_style": "us"
+      },
+      "page_text": "Beneficiary Name: Sigma Fictional Foods Inc.\nCNPJ do BeneficiÃ¡rio: 20.382.334/0001-84\nPayer Name: Diego Fictional Martin\nCPF/CNPJ do Pagador: 34526890502\nBank Code: 260-1\nDue Date: March 02, 2027\nDocument Amount: 1,876.31\nOur Number: 05455202058\nDocument Number: 70658103\nDocument Date: February 03, 2027\nPlace of Payment: Fictional City\nWallet: SR\nAgency/Beneficiary Code: 5342/320466-1\nFine: 2,00%\nLate Interest: 1,00% ao mês\nDigitable Line: 26099755339569522279409634725726717380000187631",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00002_native.pdf",
+          "sha256": "eea636fea24f6c18d86427131b80f75c05c0da717727cf5fecce7df5d593c1ce"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00003",
+      "seed": 5053,
+      "doc_kind": "boleto",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "077",
+        "moeda": "9",
+        "carteira": "17",
+        "campo_livre": "9602871187307152017221020",
+        "nosso_numero": "63405461240",
+        "numero_documento": "06316839",
+        "agencia_codigo_beneficiario": "1870/205379-0",
+        "valor_nominal": "3622.21",
+        "valor_codificado": "3622.21",
+        "data_vencimento": "2027-02-23",
+        "data_documento": "2027-02-03",
+        "beneficiario": "Beta Inventada Serviços S.A.",
+        "beneficiario_cnpj": "15598057000101",
+        "pagador": "Clara Imaginária Nunes",
+        "pagador_documento": "49048328683",
+        "local_pagamento": "Cidade Fictícia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "07799602857118730715320172210203117310000362221",
+        "codigo_barras": "07791173100003622219602871187307152017221020",
+        "fator": "1731",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiário do Título\nBeta Inventada Serviços S.A.\nCNPJ do BeneficiÃ¡rio: 15.598.057/0001-01\nPagador do Título\nClara Imaginária Nunes\nCPF/CNPJ do Pagador: 49048328683\nBanco\n077-1\nData de Vencimento\n23/02/2027\nValor Nominal\n3.622,21\nNosso Número\n63405461240\nNúmero do Documento\n06316839\nData do Documento\n03/02/2027\nLocal de Pagamento\nCidade Fictícia\nCarteira\n17\nAgência/Código do Beneficiário\n1870/205379-0\nMulta\n2,00%\nJuros\n1,00% ao mês\nLinha Digitável\n07799602857118730715320172210203117310000362221",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00003_native.pdf",
+          "sha256": "28b4f81f93aee897f8ff18851566e898a521fbd6bf7cf28b0fd145f05cc0d68f"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00004",
+      "seed": 6062,
+      "doc_kind": "boleto",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "077",
+        "moeda": "9",
+        "carteira": "SR",
+        "campo_livre": "3904825591290751294938591",
+        "nosso_numero": "25675342678",
+        "numero_documento": "12124793",
+        "agencia_codigo_beneficiario": "4503/798593-2",
+        "valor_nominal": "2244.45",
+        "valor_codificado": "2244.45",
+        "data_vencimento": "2026-12-12",
+        "data_documento": "2026-12-09",
+        "beneficiario": "Zeta Simulada Industria S.A.",
+        "beneficiario_cnpj": "75563822000180",
+        "pagador": "Diego Ficticio Martinez",
+        "pagador_documento": "04443247122",
+        "local_pagamento": "Ciudad Ficticia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "07793904832559129075112949385913116580000224445",
+        "codigo_barras": "07791165800002244453904825591290751294938591",
+        "fator": "1658",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiario del Titulo: Zeta Simulada Industria S.A.\nCNPJ do BeneficiÃ¡rio: 75.563.822/0001-80\nPagador del Titulo: Diego Ficticio Martinez\nCPF/CNPJ do Pagador: 04443247122\nBanco: 077-1\nFecha de vencimiento: 12/12/2026\nValor Nominal del Titulo: 2.244,45\nNuestro numero: 25675342678\nNumero del documento: 12124793\nFecha del documento: 09/12/2026\nLugar de pago: Ciudad Ficticia\nCartera: SR\nAgencia/Codigo del beneficiario: 4503/798593-2\nMulta: 2,00%\nIntereses de mora: 1,00% ao mês\nLinea digitable: 07793904832559129075112949385913116580000224445",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00004_native.pdf",
+          "sha256": "0d47c9d122d19aa3672707f9530f5514fa0755c062b814cee8301486cb36e79d"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00005",
+      "seed": 7071,
+      "doc_kind": "boleto",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "077",
+        "moeda": "9",
+        "carteira": "SR",
+        "campo_livre": "2555031180260068781699776",
+        "nosso_numero": "56637057041",
+        "numero_documento": "89665963",
+        "agencia_codigo_beneficiario": "4897/428555-9",
+        "valor_nominal": "1674.31",
+        "valor_codificado": "1674.31",
+        "data_vencimento": "2026-12-24",
+        "data_documento": "2026-12-05",
+        "beneficiario": "Beta Invented Services Inc.",
+        "beneficiario_cnpj": "31921726000190",
+        "pagador": "Clara Imaginary Nunes",
+        "pagador_documento": "27850934610",
+        "local_pagamento": "Fictional City",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "07792555043118026006487816997768316700000167431",
+        "codigo_barras": "07793167000001674312555031180260068781699776",
+        "fator": "1670",
+        "number_style": "us"
+      },
+      "page_text": "Beneficiary Name: Beta Invented Services Inc.\nCNPJ do BeneficiÃ¡rio: 31.921.726/0001-90\nPayer Name: Clara Imaginary Nunes\nCPF/CNPJ do Pagador: 27850934610\nBank Code: 077-1\nDue Date: 12/24/2026\nDocument Amount: 1,674.31\nOur Number: 56637057041\nDocument Number: 89665963\nDocument Date: December 05, 2026\nPlace of Payment: Fictional City\nWallet: SR\nAgency/Beneficiary Code: 4897/428555-9\nFine: 2,00%\nLate Interest: 1,00% ao mês\nDigitable Line: 07792555043118026006487816997768316700000167431",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00005_native.pdf",
+          "sha256": "d7bf2de3c2c98b17877637799690d2fb19b6047755a56d4d8e39bb07c86a4a0b"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00006",
+      "seed": 8080,
+      "doc_kind": "boleto",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "001",
+        "moeda": "9",
+        "carteira": "SR",
+        "campo_livre": "3797745279104860768199969",
+        "nosso_numero": "97858611531",
+        "numero_documento": "89793493",
+        "agencia_codigo_beneficiario": "2841/403823-8",
+        "valor_nominal": "3622.97",
+        "valor_codificado": "3622.97",
+        "data_vencimento": "2026-12-21",
+        "data_documento": "2026-12-18",
+        "beneficiario": "Alfa Fictícia Comércio Ltda",
+        "beneficiario_cnpj": "88218589000140",
+        "pagador": "Bruno Simulado Ribeiro",
+        "pagador_documento": "93412861235",
+        "local_pagamento": "Cidade Fictícia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "00193797754527910486807681999699516670000362297",
+        "codigo_barras": "00195166700003622973797745279104860768199969",
+        "fator": "1667",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiário do Título\nAlfa Fictícia Comércio Ltda\nCNPJ do BeneficiÃ¡rio: 88.218.589/0001-40\nPagador do Título\nBruno Simulado Ribeiro\nCPF/CNPJ do Pagador: 93412861235\nBanco\n001-1\nData de Vencimento\n21/12/2026\nValor Nominal\n3.622,97\nNosso Número\n97858611531\nNúmero do Documento\n89793493\nData do Documento\n18/12/2026\nLocal de Pagamento\nCidade Fictícia\nCarteira\nSR\nAgência/Código do Beneficiário\n2841/403823-8\nMulta\n2,00%\nJuros\n1,00% ao mês\nLinha Digitável\n00193797754527910486807681999699516670000362297",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00006_native.pdf",
+          "sha256": "1d9775ee3d302a520c1f4b1394bff08f5320cd23579299c330302aabfcc029a2"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00007",
+      "seed": 9089,
+      "doc_kind": "boleto",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "077",
+        "moeda": "9",
+        "carteira": "109",
+        "campo_livre": "0181463492385024452242822",
+        "nosso_numero": "39067243868",
+        "numero_documento": "03690719",
+        "agencia_codigo_beneficiario": "7365/829973-1",
+        "valor_nominal": "3473.95",
+        "valor_codificado": "3473.95",
+        "data_vencimento": "2026-12-18",
+        "data_documento": "2026-12-13",
+        "beneficiario": "Omega Inventada Consultoria S.A.",
+        "beneficiario_cnpj": "35574712000107",
+        "pagador": "Diego Ficticio Martinez",
+        "pagador_documento": "70708309470",
+        "local_pagamento": "Ciudad Ficticia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "07790181426349238502444522428224416640000347395",
+        "codigo_barras": "07794166400003473950181463492385024452242822",
+        "fator": "1664",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiario del Titulo: Omega Inventada Consultoria S.A.\nCNPJ do BeneficiÃ¡rio: 35.574.712/0001-07\nPagador del Titulo: Diego Ficticio Martinez\nCPF/CNPJ do Pagador: 70708309470\nBanco: 077-1\nFecha de vencimiento: 18/12/2026\nValor Nominal del Titulo: 3.473,95\nNuestro numero: 39067243868\nNumero del documento: 03690719\nFecha del documento: 13/12/2026\nLugar de pago: Ciudad Ficticia\nCartera: 109\nAgencia/Codigo del beneficiario: 7365/829973-1\nMulta: 2,00%\nIntereses de mora: 1,00% ao mês\nLinea digitable: 07790181426349238502444522428224416640000347395",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00007_native.pdf",
+          "sha256": "9ae5415708f7b8b1fe2d5f9af586477436a623a75ceb07a7b4b65e60b6281ece"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00008",
+      "seed": 10098,
+      "doc_kind": "boleto",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "260",
+        "moeda": "9",
+        "carteira": "109",
+        "campo_livre": "0391056830151130191809875",
+        "nosso_numero": "80035664791",
+        "numero_documento": "43293912",
+        "agencia_codigo_beneficiario": "2693/010853-2",
+        "valor_nominal": "2220.95",
+        "valor_codificado": "2220.95",
+        "data_vencimento": "2027-01-26",
+        "data_documento": "2026-12-29",
+        "beneficiario": "Alpha Fictional Trading Inc.",
+        "beneficiario_cnpj": "05045348000119",
+        "pagador": "Bruno Simulated Rivers",
+        "pagador_documento": "69160389931",
+        "local_pagamento": "Fictional City",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "26090391085683015113201918098755317030000222095",
+        "codigo_barras": "26093170300002220950391056830151130191809875",
+        "fator": "1703",
+        "number_style": "us"
+      },
+      "page_text": "Beneficiary Name: Alpha Fictional Trading Inc.\nCNPJ do BeneficiÃ¡rio: 05.045.348/0001-19\nPayer Name: Bruno Simulated Rivers\nCPF/CNPJ do Pagador: 69160389931\nBank Code: 260-1\nDue Date: 01/26/2027\nDocument Amount: 2,220.95\nOur Number: 80035664791\nDocument Number: 43293912\nDocument Date: 12/29/2026\nPlace of Payment: Fictional City\nWallet: 109\nAgency/Beneficiary Code: 2693/010853-2\nFine: 2,00%\nLate Interest: 1,00% ao mês\nDigitable Line: 26090391085683015113201918098755317030000222095",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00008_native.pdf",
+          "sha256": "df90009634d685f3be29d526582ce40a56d27d4569554963acfb45fc9c7ccef3"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00009",
+      "seed": 11107,
+      "doc_kind": "contracheque",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Zeta Simulada Indústria S.A.",
+        "cnpj_empregador": "65715390000121",
+        "nome_funcionario": "Marina Fictícia Alves",
+        "cpf_funcionario": "48693039652",
+        "cargo": "Coordenador Hipotético",
+        "cbo": "690278",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "1",
+        "proventos_adicionais": "1210.60",
+        "number_style": "br",
+        "salario_base": "6113.10",
+        "salario_bruto": "7323.70",
+        "total_descontos": "1769.10",
+        "salario_liquido": "5554.60",
+        "inss": "826.84",
+        "irrf": "822.26",
+        "fgts": "585.90",
+        "base_inss": "7323.70",
+        "base_irrf": "7323.70",
+        "base_fgts": "7323.70"
+      },
+      "page_text": "Empregador\nZeta Simulada Indústria S.A.\nCNPJ do Empregador: 65.715.390/0001-21\nNome do Funcionário\nMarina Fictícia Alves\nCPF: 486.930.396-52\nCargo\nCoordenador Hipotético\nCBO\n690278\nCompetência\n10/2026\nData de Admissão\n22/10/2026\nSalário Base\n6.113,10\nINSS\n826,84\nIRRF\n822,26\nFGTS\n585,90\nTotal de Proventos\n7.323,70\nTotal de Descontos\n1.769,10\nLíquido a Receber\n5.554,60\nBase de Cálculo INSS\n7.323,70\nBase IRRF\n7.323,70\nBase FGTS\n7.323,70\nDependentes\n1",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00009_native.pdf",
+          "sha256": "ae00f95fee5543a8a7a3a4494544f23c16b5b0ac4953e4c7c36b10ae35f52580"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00010",
+      "seed": 12116,
+      "doc_kind": "contracheque",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Sigma Ficticia Alimentos S.A.",
+        "cnpj_empregador": "66291541000124",
+        "nome_funcionario": "Bruno Simulado Rivas",
+        "cpf_funcionario": "75722414174",
+        "cargo": "Analista Ficticio",
+        "cbo": "802070",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "3",
+        "proventos_adicionais": "399.92",
+        "number_style": "br",
+        "salario_base": "6692.61",
+        "salario_bruto": "7092.53",
+        "total_descontos": "1477.00",
+        "salario_liquido": "5615.53",
+        "inss": "794.47",
+        "irrf": "632.53",
+        "fgts": "567.40",
+        "base_inss": "7092.53",
+        "base_irrf": "7092.53",
+        "base_fgts": "7092.53"
+      },
+      "page_text": "Empleador: Sigma Ficticia Alimentos S.A.\nCNPJ do Empregador: 66.291.541/0001-24\nTrabajador: Bruno Simulado Rivas\nCPF: 757.224.141-74\nCargo: Analista Ficticio\nCBO: 802070\nPeríodo: 10/2026\nFecha de ingreso: 22/10/2026\nSalario base: 6.692,61\nINSS: 794,47\nIRRF: 632,53\nFGTS: 567,40\nTotal haberes: 7.092,53\nTotal descuentos: 1.477,00\nNeto a pagar: 5.615,53\nBase de cálculo INSS: 7.092,53\nBase IRRF: 7.092,53\nBase FGTS: 7.092,53\nDependientes: 3",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00010_native.pdf",
+          "sha256": "ea391a824c0a15cc8123515d52c5387b60b0f23373ff011efda22dedba133b5f"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00011",
+      "seed": 13125,
+      "doc_kind": "contracheque",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Sigma Fictional Foods Inc.",
+        "cnpj_empregador": "47051768000158",
+        "nome_funcionario": "Bruno Simulated Rivers",
+        "cpf_funcionario": "60841535930",
+        "cargo": "Invented Assistant",
+        "cbo": "633618",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "1",
+        "proventos_adicionais": "831.42",
+        "number_style": "us",
+        "salario_base": "7050.40",
+        "salario_bruto": "7881.82",
+        "total_descontos": "1912.74",
+        "salario_liquido": "5969.08",
+        "inss": "904.97",
+        "irrf": "957.77",
+        "fgts": "630.55",
+        "base_inss": "7881.82",
+        "base_irrf": "7881.82",
+        "base_fgts": "7881.82"
+      },
+      "page_text": "Employer: Sigma Fictional Foods Inc.\nCNPJ do Empregador: 47.051.768/0001-58\nEmployee Name: Bruno Simulated Rivers\nCPF: 608.415.359-30\nPosition: Invented Assistant\nCBO: 633618\nPay Period: 10/2026\nHire Date: 10/22/2026\nBase Salary: 7,050.40\n0010 INSS 11,00 904.97\n0020 IRRF 11,00 957.77\n0030 FGTS 11,00 630.55\nTotal Earnings: 7,881.82\nTotal Deductions: 1,912.74\nNet Pay: 5,969.08\nINSS Base: 7,881.82\nIRRF Base: 7,881.82\nFGTS Base: 7,881.82\nDependents: 1",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00011_native.pdf",
+          "sha256": "5ac0fccec04df67efc1cec8b052bb98cb42d2faa3266f58c0f0bc5841b4d867c"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00012",
+      "seed": 14134,
+      "doc_kind": "contracheque",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Gama Imaginária Participações Ltda",
+        "cnpj_empregador": "51199758000131",
+        "nome_funcionario": "Diego Fictício Martins",
+        "cpf_funcionario": "77033861540",
+        "cargo": "Assistente Inventado",
+        "cbo": "731463",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "2",
+        "proventos_adicionais": "457.22",
+        "number_style": "br",
+        "salario_base": "7592.03",
+        "salario_bruto": "8049.25",
+        "total_descontos": "1993.64",
+        "salario_liquido": "6055.61",
+        "inss": "928.41",
+        "irrf": "945.23",
+        "fgts": "643.94",
+        "base_inss": "8049.25",
+        "base_irrf": "8049.25",
+        "base_fgts": "8049.25"
+      },
+      "page_text": "Empregador\nGama Imaginária Participações Ltda\nCNPJ do Empregador: 51.199.758/0001-31\nNome do Funcionário\nDiego Fictício Martins\nCPF: 770.338.615-40\nCargo\nAssistente Inventado\nCBO\n731463\nCompetência\n10/2026\nData de Admissão\n22/10/2026\nSalário Base\n7.592,03\nINSS\n928,41\nIRRF\n945,23\nFGTS\n643,94\nTotal de Proventos\n8.049,25\nTotal de Descontos\n1.993,64\nLíquido a Receber\n6.055,61\nBase de Cálculo INSS\n8.049,25\nBase IRRF\n8.049,25\nBase FGTS\n8.049,25\nDependentes\n2",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00012_native.pdf",
+          "sha256": "5d756fd90a5932fbafef8d690a54d5914d3899a1fa007d9163d21d9f507deadd"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00013",
+      "seed": 15143,
+      "doc_kind": "contracheque",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Epsilon Ficticia Tecnologia S.A.",
+        "cnpj_empregador": "57657677000114",
+        "nome_funcionario": "Bruno Simulado Rivas",
+        "cpf_funcionario": "51211156443",
+        "cargo": "Asistente Inventado",
+        "cbo": "442092",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "1",
+        "proventos_adicionais": "1331.17",
+        "number_style": "br",
+        "salario_base": "7747.78",
+        "salario_bruto": "9078.95",
+        "total_descontos": "2372.21",
+        "salario_liquido": "6706.74",
+        "inss": "988.09",
+        "irrf": "1264.12",
+        "fgts": "726.32",
+        "base_inss": "9078.95",
+        "base_irrf": "9078.95",
+        "base_fgts": "9078.95"
+      },
+      "page_text": "Empleador: Epsilon Ficticia Tecnologia S.A.\nCNPJ do Empregador: 57.657.677/0001-14\nTrabajador: Bruno Simulado Rivas\nCPF: 512.111.564-43\nCargo: Asistente Inventado\nCBO: 442092\nPeríodo: 10/2026\nFecha de ingreso: 22/10/2026\nSalario base: 7.747,78\nINSS: 988,09\nIRRF: 1.264,12\nFGTS: 726,32\nTotal haberes: 9.078,95\nTotal descuentos: 2.372,21\nNeto a pagar: 6.706,74\nBase de cálculo INSS: 9.078,95\nBase IRRF: 9.078,95\nBase FGTS: 9.078,95\nDependientes: 1",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00013_native.pdf",
+          "sha256": "4972a0cdc1b51788939c015dffa34ddf7c58f2fdb07c531e80d4a8fc7e8c0fc9"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00014",
+      "seed": 16152,
+      "doc_kind": "contracheque",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Zeta Simulated Manufacturing Inc.",
+        "cnpj_empregador": "56054421000150",
+        "nome_funcionario": "Diego Fictional Martin",
+        "cpf_funcionario": "35288100411",
+        "cargo": "Hypothetical Coordinator",
+        "cbo": "301532",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "3",
+        "proventos_adicionais": "1286.53",
+        "number_style": "br",
+        "salario_base": "6335.16",
+        "salario_bruto": "7621.69",
+        "total_descontos": "1660.53",
+        "salario_liquido": "5961.16",
+        "inss": "868.56",
+        "irrf": "791.97",
+        "fgts": "609.74",
+        "base_inss": "7621.69",
+        "base_irrf": "7621.69",
+        "base_fgts": "7621.69"
+      },
+      "page_text": "Employer: Zeta Simulated Manufacturing Inc.\nCNPJ do Empregador: 56.054.421/0001-50\nEmployee Name: Diego Fictional Martin\nCPF: 352.881.004-11\nPosition: Hypothetical Coordinator\nCBO: 301532\nPay Period: 10/2026\nHire Date: 10/22/2026\nBase Salary: 6335.16\n0010 INSS 11,00 868.56\n0020 IRRF 11,00 791.97\n0030 FGTS 11,00 609.74\nTotal Earnings: 7621.69\nTotal Deductions: 1660.53\nNet Pay: 5961.16\nINSS Base: 7621.69\nIRRF Base: 7621.69\nFGTS Base: 7621.69\nDependents: 3",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00014_native.pdf",
+          "sha256": "d17f3a12740502f84c9a287f8e6c2c23c28460e26b85bf92b0892adfbb810b1c"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00015",
+      "seed": 17161,
+      "doc_kind": "contracheque",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Alfa Fictícia Comércio Ltda",
+        "cnpj_empregador": "70368638000165",
+        "nome_funcionario": "Diego Fictício Martins",
+        "cpf_funcionario": "78841305649",
+        "cargo": "Assistente Inventado",
+        "cbo": "373873",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "0",
+        "proventos_adicionais": "1269.27",
+        "number_style": "br",
+        "salario_base": "7299.95",
+        "salario_bruto": "8569.22",
+        "total_descontos": "2164.18",
+        "salario_liquido": "6405.04",
+        "inss": "988.10",
+        "irrf": "1176.08",
+        "fgts": "685.54",
+        "base_inss": "8569.22",
+        "base_irrf": "8569.22",
+        "base_fgts": "8569.22"
+      },
+      "page_text": "Empregador\nAlfa Fictícia Comércio Ltda\nCNPJ do Empregador: 70.368.638/0001-65\nNome do Funcionário\nDiego Fictício Martins\nCPF: 788.413.056-49\nCargo\nAssistente Inventado\nCBO\n373873\nCompetência\n10/2026\nData de Admissão\n22/10/2026\nSalário Base\n7.299,95\nINSS\n988,10\nIRRF\n1.176,08\nFGTS\n685,54\nTotal de Proventos\n8.569,22\nTotal de Descontos\n2.164,18\nLíquido a Receber\n6.405,04\nBase de Cálculo INSS\n8.569,22\nBase IRRF\n8.569,22\nBase FGTS\n8.569,22\nDependentes\n0",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00015_native.pdf",
+          "sha256": "f5a62435367c8e18d7cee5e7f238e441ebecb6ee325666d9000434e9d04a4cb4"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00016",
+      "seed": 18170,
+      "doc_kind": "contracheque",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Gama Imaginaria Participaciones S.A.",
+        "cnpj_empregador": "58325823000177",
+        "nome_funcionario": "Clara Imaginaria Nunez",
+        "cpf_funcionario": "13352284032",
+        "cargo": "Coordinador Hipotetico",
+        "cbo": "702840",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "3",
+        "proventos_adicionais": "502.60",
+        "number_style": "br",
+        "salario_base": "6293.71",
+        "salario_bruto": "6796.31",
+        "total_descontos": "1396.04",
+        "salario_liquido": "5400.27",
+        "inss": "753.00",
+        "irrf": "523.04",
+        "fgts": "543.70",
+        "base_inss": "6796.31",
+        "base_irrf": "6796.31",
+        "base_fgts": "6796.31"
+      },
+      "page_text": "Empleador: Gama Imaginaria Participaciones S.A.\nCNPJ do Empregador: 58.325.823/0001-77\nTrabajador: Clara Imaginaria Nunez\nCPF: 133.522.840-32\nCargo: Coordinador Hipotetico\nCBO: 702840\nPeríodo: 10/2026\nFecha de ingreso: 22/10/2026\nSalario base: 6.293,71\nINSS: 753,00\nIRRF: 523,04\nFGTS: 543,70\nTotal haberes: 6.796,31\nTotal descuentos: 1.396,04\nNeto a pagar: 5.400,27\nBase de cálculo INSS: 6.796,31\nBase IRRF: 6.796,31\nBase FGTS: 6.796,31\nDependientes: 3",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00016_native.pdf",
+          "sha256": "d62e2b94387c330fb1d2a3cb199441c3807cf881ddd88eed3080608ffc052442"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00017",
+      "seed": 19179,
+      "doc_kind": "contracheque",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": false,
+      "tamper_types": [],
+      "sophistication": "legitimate",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Delta Hypothetical Logistics Inc.",
+        "cnpj_empregador": "85506704000193",
+        "nome_funcionario": "Helena Hypothetical Smith",
+        "cpf_funcionario": "51858480140",
+        "cargo": "Invented Assistant",
+        "cbo": "931801",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "2",
+        "proventos_adicionais": "437.62",
+        "number_style": "br",
+        "salario_base": "6151.99",
+        "salario_bruto": "6589.61",
+        "total_descontos": "1222.84",
+        "salario_liquido": "5366.77",
+        "inss": "724.07",
+        "irrf": "498.77",
+        "fgts": "527.17",
+        "base_inss": "6589.61",
+        "base_irrf": "6589.61",
+        "base_fgts": "6589.61"
+      },
+      "page_text": "Employer: Delta Hypothetical Logistics Inc.\nCNPJ do Empregador: 85.506.704/0001-93\nEmployee Name: Helena Hypothetical Smith\nCPF: 518.584.801-40\nPosition: Invented Assistant\nCBO: 931801\nPay Period: 10/2026\nHire Date: 10/22/2026\nBase Salary: 6151.99\n0010 INSS 11,00 724.07\n0020 IRRF 11,00 498.77\n0030 FGTS 11,00 527.17\nTotal Earnings: 6589.61\nTotal Deductions: 1222.84\nNet Pay: 5366.77\nINSS Base: 6589.61\nIRRF Base: 6589.61\nFGTS Base: 6589.61\nDependents: 2",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "legitimate/syn-2026-00017_native.pdf",
+          "sha256": "bf4d6fc65e27ad18a29ce89c766e14c97d0765501ab4522f91e4e49607511495"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00100",
+      "seed": 102926,
+      "doc_kind": "boleto",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "B1"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "BOLETO_AMOUNT_MISMATCH"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "codigo_banco": "237",
+        "moeda": "9",
+        "carteira": "17",
+        "campo_livre": "8279727098210854830153407",
+        "nosso_numero": "54909844710",
+        "numero_documento": "49002261",
+        "agencia_codigo_beneficiario": "3222/639254-3",
+        "valor_nominal": "952.77",
+        "valor_codificado": "887.77",
+        "data_vencimento": "2027-01-17",
+        "data_documento": "2026-12-23",
+        "beneficiario": "Omega Inventada Consultoria Ltda",
+        "beneficiario_cnpj": "84327125000110",
+        "pagador": "Clara Imaginária Nunes",
+        "pagador_documento": "74406109706",
+        "local_pagamento": "Cidade Fictícia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "23798279712709821085248301534078116940000088777",
+        "codigo_barras": "23791169400000887778279727098210854830153407",
+        "fator": "1694",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiário do Título\nOmega Inventada Consultoria Ltda\nCNPJ do BeneficiÃ¡rio: 84.327.125/0001-10\nPagador do Título\nClara Imaginária Nunes\nCPF/CNPJ do Pagador: 74406109706\nBanco\n237-1\nData de Vencimento\n17/01/2027\nValor Nominal\n952,77\nNosso Número\n54909844710\nNúmero do Documento\n49002261\nData do Documento\n23/12/2026\nLocal de Pagamento\nCidade Fictícia\nCarteira\n17\nAgência/Código do Beneficiário\n3222/639254-3\nMulta\n2,00%\nJuros\n1,00% ao mês\nLinha Digitável\n23798279712709821085248301534078116940000088777",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00100_native.pdf",
+          "sha256": "89b3b7f006a37ef4fe74ea959a1560e52ab56eb4f0979afc5b198562797316ac"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00101",
+      "seed": 103935,
+      "doc_kind": "boleto",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "B2"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "BOLETO_DUE_DATE_MISMATCH"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "codigo_banco": "260",
+        "moeda": "9",
+        "carteira": "109",
+        "campo_livre": "7854144573042938252411142",
+        "nosso_numero": "08186326472",
+        "numero_documento": "45376353",
+        "agencia_codigo_beneficiario": "5340/283421-6",
+        "valor_nominal": "2660.15",
+        "valor_codificado": "2660.15",
+        "data_vencimento": "2026-12-21",
+        "data_documento": "2026-11-25",
+        "beneficiario": "Gama Imaginaria Participaciones S.A.",
+        "beneficiario_cnpj": "02628950000190",
+        "pagador": "Helena Hipotetica Suarez",
+        "pagador_documento": "04491402965",
+        "local_pagamento": "Ciudad Ficticia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "26097854114457304293282524111422116620000266015",
+        "codigo_barras": "26091166200002660157854144573042938252411142",
+        "fator": "1662",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiario del Titulo: Gama Imaginaria Participaciones S.A.\nCNPJ do BeneficiÃ¡rio: 02.628.950/0001-90\nPagador del Titulo: Helena Hipotetica Suarez\nCPF/CNPJ do Pagador: 04491402965\nBanco: 260-1\nFecha de vencimiento: 21/12/2026\nValor Nominal del Titulo: 2.660,15\nNuestro numero: 08186326472\nNumero del documento: 45376353\nFecha del documento: 25/11/2026\nLugar de pago: Ciudad Ficticia\nCartera: 109\nAgencia/Codigo del beneficiario: 5340/283421-6\nMulta: 2,00%\nIntereses de mora: 1,00% ao mês\nLinea digitable: 26097854114457304293282524111422116620000266015",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00101_native.pdf",
+          "sha256": "fc6dfc55aa41202439d8dceca6a5e11f0c0af8a96d19ae073cc4446e9800fd93"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00102",
+      "seed": 104944,
+      "doc_kind": "boleto",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "B3"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "BANCO_INVALIDO",
+        "BOLETO_BANK_MISMATCH"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "codigo_banco": "999",
+        "moeda": "9",
+        "carteira": "SR",
+        "campo_livre": "5053182117119463578374163",
+        "nosso_numero": "34601270709",
+        "numero_documento": "70242853",
+        "agencia_codigo_beneficiario": "4789/667149-3",
+        "valor_nominal": "441.27",
+        "valor_codificado": "441.27",
+        "data_vencimento": "2026-12-16",
+        "data_documento": "2026-11-16",
+        "beneficiario": "Sigma Fictional Foods Inc.",
+        "beneficiario_cnpj": "18009146000163",
+        "pagador": "Helena Hypothetical Smith",
+        "pagador_documento": "72288551593",
+        "local_pagamento": "Fictional City",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "26095053148211711946935783741636616620000044127",
+        "codigo_barras": "26096166200000441275053182117119463578374163",
+        "fator": "1662",
+        "number_style": "us"
+      },
+      "page_text": "Beneficiary Name: Sigma Fictional Foods Inc.\nCNPJ do BeneficiÃ¡rio: 18.009.146/0001-63\nPayer Name: Helena Hypothetical Smith\nCPF/CNPJ do Pagador: 72288551593\nBank Code: 999-1\nDue Date: 12/16/2026\nDocument Amount: 441.27\nOur Number: 34601270709\nDocument Number: 70242853\nDocument Date: 11/16/2026\nPlace of Payment: Fictional City\nWallet: SR\nAgency/Beneficiary Code: 4789/667149-3\nFine: 2,00%\nLate Interest: 1,00% ao mês\nDigitable Line: 26095053148211711946935783741636616620000044127\nBanco: 999-1",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00102_native.pdf",
+          "sha256": "a914e755e5f96203672b1947a7d157f3d3c78080b0d0945345b4d186b9a16541"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00103",
+      "seed": 105953,
+      "doc_kind": "boleto",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "B4"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "BOLETO_GENERAL_DV_INVALID"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "codigo_banco": "077",
+        "moeda": "9",
+        "carteira": "SR",
+        "campo_livre": "1707151889057694472001198",
+        "nosso_numero": "20090225883",
+        "numero_documento": "41565345",
+        "agencia_codigo_beneficiario": "7919/303165-3",
+        "valor_nominal": "2481.74",
+        "valor_codificado": "2481.74",
+        "data_vencimento": "2027-03-01",
+        "data_documento": "2027-02-07",
+        "beneficiario": "Épsilon Fictícia Tecnologia Ltda",
+        "beneficiario_cnpj": "13696509000162",
+        "pagador": "Helena Hipotética Souza",
+        "pagador_documento": "06893429851",
+        "local_pagamento": "Cidade Fictícia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "07791707115188905769444720011988917370000248174",
+        "codigo_barras": "07798173700002481741707151889057694472001198",
+        "fator": "1737",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiário do Título\nÉpsilon Fictícia Tecnologia Ltda\nCNPJ do BeneficiÃ¡rio: 13.696.509/0001-62\nPagador do Título\nHelena Hipotética Souza\nCPF/CNPJ do Pagador: 06893429851\nBanco\n077-1\nData de Vencimento\n01/03/2027\nValor Nominal\n2.481,74\nNosso Número\n20090225883\nNúmero do Documento\n41565345\nData do Documento\n07/02/2027\nLocal de Pagamento\nCidade Fictícia\nCarteira\nSR\nAgência/Código do Beneficiário\n7919/303165-3\nMulta\n2,00%\nJuros\n1,00% ao mês\nLinha Digitável\n07791707115188905769444720011988917370000248174",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00103_native.pdf",
+          "sha256": "cb8709d85f231939f18e0ff17b691d33cdf231f31ac99be9593811a0c4e950fb"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00104",
+      "seed": 106962,
+      "doc_kind": "boleto",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "B5"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "BOLETO_AMOUNT_MISMATCH",
+        "BOLETO_GENERAL_DV_INVALID"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "codigo_banco": "077",
+        "moeda": "9",
+        "carteira": "109",
+        "campo_livre": "6878651384430827280389288",
+        "nosso_numero": "37742882173",
+        "numero_documento": "80041683",
+        "agencia_codigo_beneficiario": "8479/522726-8",
+        "valor_nominal": "4391.4",
+        "valor_codificado": "4391.4",
+        "data_vencimento": "2026-12-20",
+        "data_documento": "2026-11-27",
+        "beneficiario": "Sigma Ficticia Alimentos S.A.",
+        "beneficiario_cnpj": "08501935000163",
+        "pagador": "Marina Ficticia Alvarez",
+        "pagador_documento": "82537857550",
+        "local_pagamento": "Ciudad Ficticia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "07796878625138443082672803892883316660000053914",
+        "codigo_barras": "07793166600004391406878651384430827280389288",
+        "fator": "1666",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiario del Titulo: Sigma Ficticia Alimentos S.A.\nCNPJ do BeneficiÃ¡rio: 08.501.935/0001-63\nPagador del Titulo: Marina Ficticia Alvarez\nCPF/CNPJ do Pagador: 82537857550\nBanco: 077-1\nFecha de vencimiento: 20/12/2026\nValor Nominal del Titulo: 4.391,40\nNuestro numero: 37742882173\nNumero del documento: 80041683\nFecha del documento: 27/11/2026\nLugar de pago: Ciudad Ficticia\nCartera: 109\nAgencia/Codigo del beneficiario: 8479/522726-8\nMulta: 2,00%\nIntereses de mora: 1,00% ao mês\nLinea digitable: 07796878625138443082672803892883316660000053914",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00104_native.pdf",
+          "sha256": "0487d3d4b651c3052423f6ad630e0c7b723cf7646bc5f45fb835e87c990bcc65"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00105",
+      "seed": 107971,
+      "doc_kind": "boleto",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "B6"
+      ],
+      "sophistication": "expert",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "001",
+        "moeda": "9",
+        "carteira": "17",
+        "campo_livre": "9502814912365801562494049",
+        "nosso_numero": "22848506908",
+        "numero_documento": "05666392",
+        "agencia_codigo_beneficiario": "2579/746256-7",
+        "valor_nominal": "4470.33",
+        "valor_codificado": "4470.33",
+        "data_vencimento": "2026-12-12",
+        "data_documento": "2026-11-25",
+        "beneficiario": "Zeta Simulated Manufacturing Inc.",
+        "beneficiario_cnpj": "60694480000160",
+        "pagador": "Rafael Invented Costa",
+        "pagador_documento": "05757645113",
+        "local_pagamento": "Fictional City",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "00199502861491236580715624940498116580000447033",
+        "codigo_barras": "00191165800004470339502814912365801562494049",
+        "fator": "1658",
+        "number_style": "us"
+      },
+      "page_text": "Beneficiary Name: Zeta Simulated Manufacturing Inc.\nCNPJ do BeneficiÃ¡rio: 60.694.480/0001-60\nPayer Name: Rafael Invented Costa\nCPF/CNPJ do Pagador: 05757645113\nBank Code: 001-1\nDue Date: December 12, 2026\nDocument Amount: 4,470.33\nOur Number: 22848506908\nDocument Number: 05666392\nDocument Date: 11/25/2026\nPlace of Payment: Fictional City\nWallet: 17\nAgency/Beneficiary Code: 2579/746256-7\nFine: 2,00%\nLate Interest: 1,00% ao mês\nDigitable Line: 00199502861491236580715624940498116580000447033",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00105_native.pdf",
+          "sha256": "a0d4eab3949e4e14fac6de21bd1f9ce55bc96944ffd2b6a709a20c529480c052"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00106",
+      "seed": 108980,
+      "doc_kind": "boleto",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "B7"
+      ],
+      "sophistication": "expert",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "codigo_banco": "001",
+        "moeda": "9",
+        "carteira": "17",
+        "campo_livre": "4172264389567007723567875",
+        "nosso_numero": "99434400104",
+        "numero_documento": "49371359",
+        "agencia_codigo_beneficiario": "2400/502043-0",
+        "valor_nominal": "4200.06",
+        "valor_codificado": "4200.06",
+        "data_vencimento": "2027-02-05",
+        "data_documento": "2027-01-20",
+        "beneficiario": "Zeta Simulada Indústria S.A.",
+        "beneficiario_cnpj": "30132443000105",
+        "pagador": "Marina Fictícia Alves",
+        "pagador_documento": "21578781221",
+        "local_pagamento": "Cidade Fictícia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "00194172296438956700577235678750117130000420006",
+        "codigo_barras": "00191171300004200064172264389567007723567875",
+        "fator": "1713",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiário do Título\nZeta Simulada Indústria S.A.\nCNPJ do BeneficiÃ¡rio: 30.132.443/0001-05\nPagador do Título\nMarina Fictícia Alves\nCPF/CNPJ do Pagador: 21578781221\nBanco\n001-1\nData de Vencimento\n05/02/2027\nValor Nominal\n4.200,06\nNosso Número\n99434400104\nNúmero do Documento\n49371359\nData do Documento\n20/01/2027\nLocal de Pagamento\nCidade Fictícia\nCarteira\n17\nAgência/Código do Beneficiário\n2400/502043-0\nMulta\n2,00%\nJuros\n1,00% ao mês\nLinha Digitável\n00194172296438956700577235678750117130000420006",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00106_native.pdf",
+          "sha256": "7b4f97ef88fdd75dd150ff11d630714832ceb125983e32ad398acc53d027d98d"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00107",
+      "seed": 109989,
+      "doc_kind": "boleto",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "B8"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "BOLETO_AMOUNT_MISMATCH"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "codigo_banco": "260",
+        "moeda": "9",
+        "carteira": "109",
+        "campo_livre": "8508143826686943659843871",
+        "nosso_numero": "75573945332",
+        "numero_documento": "65452693",
+        "agencia_codigo_beneficiario": "2165/183864-0",
+        "valor_nominal": "2258.80",
+        "valor_codificado": "2193.8",
+        "data_vencimento": "2027-01-11",
+        "data_documento": "2026-12-19",
+        "beneficiario": "Alfa Ficticia Comercio S.A.",
+        "beneficiario_cnpj": "20650294000104",
+        "pagador": "Marina Ficticia Alvarez",
+        "pagador_documento": "92187409031",
+        "local_pagamento": "Ciudad Ficticia",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "26098508194382668694136598438715516880000219380",
+        "codigo_barras": "26095168800002193808508143826686943659843871",
+        "fator": "1688",
+        "number_style": "br"
+      },
+      "page_text": "Beneficiario del Titulo: Alfa Ficticia Comercio S.A.\nCNPJ do BeneficiÃ¡rio: 20.650.294/0001-04\nPagador del Titulo: Marina Ficticia Alvarez\nCPF/CNPJ do Pagador: 92187409031\nBanco: 260-1\nFecha de vencimiento: 11/01/2027\nValor Nominal del Titulo: 2.258,80\nNuestro numero: 75573945332\nNumero del documento: 65452693\nFecha del documento: 19/12/2026\nLugar de pago: Ciudad Ficticia\nCartera: 109\nAgencia/Codigo del beneficiario: 2165/183864-0\nMulta: 2,00%\nIntereses de mora: 1,00% ao mês\nLinea digitable: 26098508194382668694136598438715516880000219380",
+      "pdf_edit": {
+        "field": "valor_nominal",
+        "before": "2193.8",
+        "after": "2258.80",
+        "before_text": "2.193,80",
+        "after_text": "2.258,80"
+      },
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00107_native.pdf",
+          "sha256": "5d10298608eea42c9fff14302bcf8b0ee541cc38e92ed0a69d35163916b1cf8a"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00108",
+      "seed": 110998,
+      "doc_kind": "contracheque",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "P1"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "PAYSLIP_NET_MISMATCH"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "razao_social": "Zeta Simulated Manufacturing Inc.",
+        "cnpj_empregador": "81708008000109",
+        "nome_funcionario": "Helena Hypothetical Smith",
+        "cpf_funcionario": "50993955622",
+        "cargo": "Invented Assistant",
+        "cbo": "694471",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "0",
+        "proventos_adicionais": "725.90",
+        "number_style": "us",
+        "salario_base": "7220.22",
+        "salario_bruto": "7946.12",
+        "total_descontos": "2139.08",
+        "salario_liquido": "6307.04",
+        "inss": "913.97",
+        "irrf": "1025.11",
+        "fgts": "635.69",
+        "base_inss": "7946.12",
+        "base_irrf": "7946.12",
+        "base_fgts": "7946.12"
+      },
+      "page_text": "Employer: Zeta Simulated Manufacturing Inc.\nCNPJ do Empregador: 81.708.008/0001-09\nEmployee Name: Helena Hypothetical Smith\nCPF: 509.939.556-22\nPosition: Invented Assistant\nCBO: 694471\nPay Period: 10/2026\nHire Date: 10/22/2026\nBase Salary: 7,220.22\n0010 INSS 11,00 913.97\n0020 IRRF 11,00 1,025.11\n0030 FGTS 11,00 635.69\nTotal Earnings: 7,946.12\nTotal Deductions: 2,139.08\nNet Pay: 6,307.04\nINSS Base: 7,946.12\nIRRF Base: 7,946.12\nFGTS Base: 7,946.12\nDependents: 0",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00108_native.pdf",
+          "sha256": "1b78cec9f965e978481a2630514ef6d2ef6ba632b6874e454a6a64a74bcfb1d0"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00109",
+      "seed": 112007,
+      "doc_kind": "contracheque",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "P2"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "PAYSLIP_INSS_MISMATCH"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "razao_social": "Omega Inventada Consultoria Ltda",
+        "cnpj_empregador": "02228213000109",
+        "nome_funcionario": "Rafael Inventado Costa",
+        "cpf_funcionario": "78113404961",
+        "cargo": "Analista Fictício",
+        "cbo": "942318",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "1",
+        "proventos_adicionais": "370.74",
+        "number_style": "br",
+        "salario_base": "7822.66",
+        "salario_bruto": "8193.40",
+        "total_descontos": "1790.33",
+        "salario_liquido": "6403.07",
+        "inss": "758.87",
+        "irrf": "1031.46",
+        "fgts": "655.47",
+        "base_inss": "8193.40",
+        "base_irrf": "8193.40",
+        "base_fgts": "8193.40"
+      },
+      "page_text": "Empregador\nOmega Inventada Consultoria Ltda\nCNPJ do Empregador: 02.228.213/0001-09\nNome do Funcionário\nRafael Inventado Costa\nCPF: 781.134.049-61\nCargo\nAnalista Fictício\nCBO\n942318\nCompetência\n10/2026\nData de Admissão\n22/10/2026\nSalário Base\n7.822,66\nINSS\n758,87\nIRRF\n1.031,46\nFGTS\n655,47\nTotal de Proventos\n8.193,40\nTotal de Descontos\n1.790,33\nLíquido a Receber\n6.403,07\nBase de Cálculo INSS\n8.193,40\nBase IRRF\n8.193,40\nBase FGTS\n8.193,40\nDependentes\n1",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00109_native.pdf",
+          "sha256": "e18dedb6c0683627c715499b2ad303a96ee8381d3a3000e27173ea70de9e065c"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00110",
+      "seed": 113016,
+      "doc_kind": "contracheque",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "P3"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "PAYSLIP_IRRF_MISMATCH"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "razao_social": "Omega Inventada Consultoria S.A.",
+        "cnpj_empregador": "49061313000149",
+        "nome_funcionario": "Rafael Inventado Costa",
+        "cpf_funcionario": "19286899815",
+        "cargo": "Analista Ficticio",
+        "cbo": "687168",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "3",
+        "proventos_adicionais": "1455.93",
+        "number_style": "br",
+        "salario_base": "7253.19",
+        "salario_bruto": "8709.12",
+        "total_descontos": "3234.34",
+        "salario_liquido": "5474.78",
+        "inss": "988.10",
+        "irrf": "0.00",
+        "fgts": "696.73",
+        "base_inss": "8709.12",
+        "base_irrf": "8709.12",
+        "base_fgts": "8709.12"
+      },
+      "page_text": "Empleador: Omega Inventada Consultoria S.A.\nCNPJ do Empregador: 49.061.313/0001-49\nTrabajador: Rafael Inventado Costa\nCPF: 192.868.998-15\nCargo: Analista Ficticio\nCBO: 687168\nPeríodo: 10/2026\nFecha de ingreso: 22/10/2026\nSalario base: 7.253,19\nINSS: 988,10\nIRRF: 0,00\nFGTS: 696,73\nTotal haberes: 8.709,12\nTotal descuentos: 3.234,34\nNeto a pagar: 5.474,78\nBase de cálculo INSS: 8.709,12\nBase IRRF: 8.709,12\nBase FGTS: 8.709,12\nDependientes: 3",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00110_native.pdf",
+          "sha256": "81277d989c98fc540748102bb795c0cb1f5868483c4aee65e97b0fab577bf663"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00111",
+      "seed": 114025,
+      "doc_kind": "contracheque",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "P4"
+      ],
+      "sophistication": "expert",
+      "detectable_by": "none",
+      "expected_codes_any_of": [],
+      "intended_band": "LOW",
+      "fields": {
+        "razao_social": "Epsilon Fictional Technology Inc.",
+        "cnpj_empregador": "69098497000129",
+        "nome_funcionario": "Bruno Simulated Rivers",
+        "cpf_funcionario": "26633973004",
+        "cargo": "Invented Assistant",
+        "cbo": "955976",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "3",
+        "proventos_adicionais": "819.11",
+        "number_style": "br",
+        "salario_base": "9505.82",
+        "salario_bruto": "10324.93",
+        "total_descontos": "2490.58",
+        "salario_liquido": "7834.35",
+        "inss": "988.09",
+        "irrf": "1502.49",
+        "fgts": "825.99",
+        "base_inss": "10324.93",
+        "base_irrf": "10324.93",
+        "base_fgts": "10324.93"
+      },
+      "page_text": "Employer: Epsilon Fictional Technology Inc.\nCNPJ do Empregador: 69.098.497/0001-29\nEmployee Name: Bruno Simulated Rivers\nCPF: 266.339.730-04\nPosition: Invented Assistant\nCBO: 955976\nPay Period: 10/2026\nHire Date: 10/22/2026\nBase Salary: 9505.82\n0010 INSS 11,00 988.09\n0020 IRRF 11,00 1502.49\n0030 FGTS 11,00 825.99\nTotal Earnings: 10324.93\nTotal Deductions: 2490.58\nNet Pay: 7834.35\nINSS Base: 10324.93\nIRRF Base: 10324.93\nFGTS Base: 10324.93\nDependents: 3",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00111_native.pdf",
+          "sha256": "9fd018c9b1e24141e22493909c1f2193b39d66606be11a013ebd9979bc299f98"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00112",
+      "seed": 115034,
+      "doc_kind": "contracheque",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "P5"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "PAYSLIP_CPF_INVALID"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "razao_social": "Gama Imaginária Participações Ltda",
+        "cnpj_empregador": "97116015000151",
+        "nome_funcionario": "Rafael Inventado Costa",
+        "cpf_funcionario": "11111111111",
+        "cargo": "Assistente Inventado",
+        "cbo": "927609",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "1",
+        "proventos_adicionais": "283.91",
+        "number_style": "br",
+        "salario_base": "7406.15",
+        "salario_bruto": "7690.06",
+        "total_descontos": "1990.54",
+        "salario_liquido": "5699.52",
+        "inss": "878.13",
+        "irrf": "912.41",
+        "fgts": "615.20",
+        "base_inss": "7690.06",
+        "base_irrf": "7690.06",
+        "base_fgts": "7690.06"
+      },
+      "page_text": "Empregador\nGama Imaginária Participações Ltda\nCNPJ do Empregador: 97.116.015/0001-51\nNome do Funcionário\nRafael Inventado Costa\nCPF: 111.111.111-11\nCargo\nAssistente Inventado\nCBO\n927609\nCompetência\n10/2026\nData de Admissão\n22/10/2026\nSalário Base\n7.406,15\nINSS\n878,13\nIRRF\n912,41\nFGTS\n615,20\nTotal de Proventos\n7.690,06\nTotal de Descontos\n1.990,54\nLíquido a Receber\n5.699,52\nBase de Cálculo INSS\n7.690,06\nBase IRRF\n7.690,06\nBase FGTS\n7.690,06\nDependentes\n1",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00112_native.pdf",
+          "sha256": "231a9413dbf8d39a33ada05a539b579a7796c62727aa525785c815e4d90b28ae"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00113",
+      "seed": 116043,
+      "doc_kind": "contracheque",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "P6"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "PAYSLIP_PERIOD_FUTURE"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "razao_social": "Alfa Ficticia Comercio S.A.",
+        "cnpj_empregador": "20535057000100",
+        "nome_funcionario": "Bruno Simulado Rivas",
+        "cpf_funcionario": "14096888443",
+        "cargo": "Asistente Inventado",
+        "cbo": "417421",
+        "periodo": "12/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "2",
+        "proventos_adicionais": "195.59",
+        "number_style": "br",
+        "salario_base": "7833.25",
+        "salario_bruto": "8028.84",
+        "total_descontos": "1985.96",
+        "salario_liquido": "6042.88",
+        "inss": "925.56",
+        "irrf": "940.40",
+        "fgts": "642.31",
+        "base_inss": "8028.84",
+        "base_irrf": "8028.84",
+        "base_fgts": "8028.84"
+      },
+      "page_text": "Empleador: Alfa Ficticia Comercio S.A.\nCNPJ do Empregador: 20.535.057/0001-00\nTrabajador: Bruno Simulado Rivas\nCPF: 140.968.884-43\nCargo: Asistente Inventado\nCBO: 417421\nPeríodo: 12/2026\nFecha de ingreso: 22/10/2026\nSalario base: 7.833,25\nINSS: 925,56\nIRRF: 940,40\nFGTS: 642,31\nTotal haberes: 8.028,84\nTotal descuentos: 1.985,96\nNeto a pagar: 6.042,88\nBase de cálculo INSS: 8.028,84\nBase IRRF: 8.028,84\nBase FGTS: 8.028,84\nDependientes: 2",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00113_native.pdf",
+          "sha256": "25af741ba00a50bc3dabae4d224a2cdc3d1b41a95f5cae05ab89dedcbf70ae21"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00114",
+      "seed": 117052,
+      "doc_kind": "contracheque",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "P7"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "PAYSLIP_FGTS_MISMATCH"
+      ],
+      "intended_band": "MEDIUM",
+      "fields": {
+        "razao_social": "Zeta Simulated Manufacturing Inc.",
+        "cnpj_empregador": "78414434000125",
+        "nome_funcionario": "Diego Fictional Martin",
+        "cpf_funcionario": "94085469380",
+        "cargo": "Fictional Analyst",
+        "cbo": "260706",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "3",
+        "proventos_adicionais": "402.26",
+        "number_style": "us",
+        "salario_base": "7064.51",
+        "salario_bruto": "7466.77",
+        "total_descontos": "1652.20",
+        "salario_liquido": "5814.57",
+        "inss": "846.87",
+        "irrf": "755.33",
+        "fgts": "697.34",
+        "base_inss": "7466.77",
+        "base_irrf": "7466.77",
+        "base_fgts": "7466.77"
+      },
+      "page_text": "Employer: Zeta Simulated Manufacturing Inc.\nCNPJ do Empregador: 78.414.434/0001-25\nEmployee Name: Diego Fictional Martin\nCPF: 940.854.693-80\nPosition: Fictional Analyst\nCBO: 260706\nPay Period: 10/2026\nHire Date: 10/22/2026\nBase Salary: 7,064.51\n0010 INSS 11,00 846.87\n0020 IRRF 11,00 755.33\n0030 FGTS 11,00 697.34\nTotal Earnings: 7,466.77\nTotal Deductions: 1,652.20\nNet Pay: 5,814.57\nINSS Base: 7,466.77\nIRRF Base: 7,466.77\nFGTS Base: 7,466.77\nDependents: 3",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00114_native.pdf",
+          "sha256": "d8f0ff870b1b10302c967b92682a541ffd17713c5efd6bc62ec131f6521a14eb"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00115",
+      "seed": 118061,
+      "doc_kind": "contracheque",
+      "language": "pt",
+      "layout": "A",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "P8"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "PAYSLIP_DEDUCTIONS_INCONSISTENT"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "razao_social": "Alfa Fictícia Comércio Ltda",
+        "cnpj_empregador": "05196140000109",
+        "nome_funcionario": "Marina Fictícia Alves",
+        "cpf_funcionario": "80143177427",
+        "cargo": "Analista Fictício",
+        "cbo": "200855",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "2",
+        "proventos_adicionais": "1394.58",
+        "number_style": "br",
+        "salario_base": "7581.13",
+        "salario_bruto": "8975.71",
+        "total_descontos": "2161.68",
+        "salario_liquido": "6814.03",
+        "inss": "988.09",
+        "irrf": "1183.59",
+        "fgts": "718.06",
+        "base_inss": "8975.71",
+        "base_irrf": "8975.71",
+        "base_fgts": "8975.71"
+      },
+      "page_text": "Empregador\nAlfa Fictícia Comércio Ltda\nCNPJ do Empregador: 05.196.140/0001-09\nNome do Funcionário\nMarina Fictícia Alves\nCPF: 801.431.774-27\nCargo\nAnalista Fictício\nCBO\n200855\nCompetência\n10/2026\nData de Admissão\n22/10/2026\nSalário Base\n7.581,13\nINSS\n988,09\nIRRF\n1.183,59\nFGTS\n718,06\nTotal de Proventos\n8.975,71\nTotal de Descontos\n2.161,68\nLíquido a Receber\n6.814,03\nBase de Cálculo INSS\n8.975,71\nBase IRRF\n8.975,71\nBase FGTS\n8.975,71\nDependentes\n2",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00115_native.pdf",
+          "sha256": "ac862401e60c167586de824c57b8a385c4c1e6f1e98c3f85d95944def469dff3"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00116",
+      "seed": 119070,
+      "doc_kind": "contracheque",
+      "language": "es",
+      "layout": "B",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "P9"
+      ],
+      "sophistication": "naive",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "PAYSLIP_NET_MISMATCH"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "razao_social": "Alfa Ficticia Comercio S.A.",
+        "cnpj_empregador": "06500093000108",
+        "nome_funcionario": "Diego Ficticio Martinez",
+        "cpf_funcionario": "21215221584",
+        "cargo": "Analista Ficticio",
+        "cbo": "498062",
+        "periodo": "10/2026",
+        "data_admissao": "2026-10-22",
+        "dependentes": "2",
+        "proventos_adicionais": "769.41",
+        "number_style": "br",
+        "salario_base": "7867.69",
+        "salario_bruto": "8637.10",
+        "total_descontos": "2128.56",
+        "salario_liquido": "7008.54",
+        "inss": "988.09",
+        "irrf": "1090.47",
+        "fgts": "690.97",
+        "base_inss": "8637.10",
+        "base_irrf": "8637.10",
+        "base_fgts": "8637.10"
+      },
+      "page_text": "Empleador: Alfa Ficticia Comercio S.A.\nCNPJ do Empregador: 06.500.093/0001-08\nTrabajador: Diego Ficticio Martinez\nCPF: 212.152.215-84\nCargo: Analista Ficticio\nCBO: 498062\nPeríodo: 10/2026\nFecha de ingreso: 22/10/2026\nSalario base: 7.867,69\nINSS: 988,09\nIRRF: 1.090,47\nFGTS: 690,97\nTotal haberes: 8.637,10\nTotal descuentos: 2.128,56\nNeto a pagar: 7.008,54\nBase de cálculo INSS: 8.637,10\nBase IRRF: 8.637,10\nBase FGTS: 8.637,10\nDependientes: 2",
+      "pdf_edit": {
+        "field": "salario_liquido",
+        "before": "6508.54",
+        "after": "7008.54",
+        "before_text": "6.508,54",
+        "after_text": "7.008,54"
+      },
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00116_native.pdf",
+          "sha256": "c5e1bc0085cacb906c9a9f08435a21431ed259a9ae1fa51554052ed7905cdd14"
+        }
+      }
+    },
+    {
+      "id": "syn-2026-00117",
+      "seed": 120079,
+      "doc_kind": "boleto",
+      "language": "en",
+      "layout": "C",
+      "label_set": "set1",
+      "split": "golden",
+      "is_fraud": true,
+      "tamper_types": [
+        "B1",
+        "B2"
+      ],
+      "sophistication": "multi",
+      "detectable_by": "arithmetic_rules",
+      "expected_codes_any_of": [
+        "BOLETO_AMOUNT_MISMATCH",
+        "BOLETO_DUE_DATE_MISMATCH"
+      ],
+      "intended_band": "HIGH",
+      "fields": {
+        "codigo_banco": "237",
+        "moeda": "9",
+        "carteira": "109",
+        "campo_livre": "3474796374055327324374592",
+        "nosso_numero": "97520085492",
+        "numero_documento": "78974567",
+        "agencia_codigo_beneficiario": "6455/543357-4",
+        "valor_nominal": "3178.36",
+        "valor_codificado": "3113.36",
+        "data_vencimento": "2027-01-29",
+        "data_documento": "2027-01-16",
+        "beneficiario": "Zeta Simulated Manufacturing Inc.",
+        "beneficiario_cnpj": "17763661000171",
+        "pagador": "Clara Imaginary Nunes",
+        "pagador_documento": "70549845607",
+        "local_pagamento": "Fictional City",
+        "multa": "2,00%",
+        "juros": "1,00% ao mês",
+        "linha_digitavel": "23793474759637405532373243745921717010000311336",
+        "codigo_barras": "23797170100003113363474796374055327324374592",
+        "fator": "1701",
+        "number_style": "us"
+      },
+      "page_text": "Beneficiary Name: Zeta Simulated Manufacturing Inc.\nCNPJ do BeneficiÃ¡rio: 17.763.661/0001-71\nPayer Name: Clara Imaginary Nunes\nCPF/CNPJ do Pagador: 70549845607\nBank Code: 237-1\nDue Date: 01/29/2027\nDocument Amount: 3,178.36\nOur Number: 97520085492\nDocument Number: 78974567\nDocument Date: 01/16/2027\nPlace of Payment: Fictional City\nWallet: 109\nAgency/Beneficiary Code: 6455/543357-4\nFine: 2,00%\nLate Interest: 1,00% ao mês\nDigitable Line: 23793474759637405532373243745921717010000311336",
+      "pdf_edit": null,
+      "files": {
+        "native": {
+          "path": "fraudulent/syn-2026-00117_native.pdf",
+          "sha256": "27c68cb9f61621101fada2d7ed66fce9c8539e27abeeb92768462d697fa70a99"
+        }
+      }
+    }
+  ]
+}

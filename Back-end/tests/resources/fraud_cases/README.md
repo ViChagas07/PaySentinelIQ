@@ -1,56 +1,45 @@
-# PaySentinelIQ — Golden Dataset
+# Golden set sintético — PaySentinelIQ
 
-## Purpose
-This directory contains curated test documents used for regression testing
-the fraud detection pipeline. Every time the pipeline is modified, these
-documents MUST be analyzed and the results compared against expected outcomes.
+Documentos 100% fictícios, gerados por `app/synthetic`.
+Cada item possui a variante `native`; um item possui `scanned_clean`.
 
-## Structure
+| ID | Tipo | Idioma | Layout | Adulteração | Esperado | Banda |
+|---|---|---|---|---|---|---|
+| syn-2026-00000 | boleto | pt | A | nenhuma | nenhum | LOW |
+| syn-2026-00001 | boleto | es | B | nenhuma | nenhum | LOW |
+| syn-2026-00002 | boleto | en | C | nenhuma | nenhum | LOW |
+| syn-2026-00003 | boleto | pt | A | nenhuma | nenhum | LOW |
+| syn-2026-00004 | boleto | es | B | nenhuma | nenhum | LOW |
+| syn-2026-00005 | boleto | en | C | nenhuma | nenhum | LOW |
+| syn-2026-00006 | boleto | pt | A | nenhuma | nenhum | LOW |
+| syn-2026-00007 | boleto | es | B | nenhuma | nenhum | LOW |
+| syn-2026-00008 | boleto | en | C | nenhuma | nenhum | LOW |
+| syn-2026-00009 | contracheque | pt | A | nenhuma | nenhum | LOW |
+| syn-2026-00010 | contracheque | es | B | nenhuma | nenhum | LOW |
+| syn-2026-00011 | contracheque | en | C | nenhuma | nenhum | LOW |
+| syn-2026-00012 | contracheque | pt | A | nenhuma | nenhum | LOW |
+| syn-2026-00013 | contracheque | es | B | nenhuma | nenhum | LOW |
+| syn-2026-00014 | contracheque | en | C | nenhuma | nenhum | LOW |
+| syn-2026-00015 | contracheque | pt | A | nenhuma | nenhum | LOW |
+| syn-2026-00016 | contracheque | es | B | nenhuma | nenhum | LOW |
+| syn-2026-00017 | contracheque | en | C | nenhuma | nenhum | LOW |
+| syn-2026-00100 | boleto | pt | A | B1 | BOLETO_AMOUNT_MISMATCH | HIGH |
+| syn-2026-00101 | boleto | es | B | B2 | BOLETO_DUE_DATE_MISMATCH | HIGH |
+| syn-2026-00102 | boleto | en | C | B3 | BANCO_INVALIDO, BOLETO_BANK_MISMATCH | HIGH |
+| syn-2026-00103 | boleto | pt | A | B4 | BOLETO_GENERAL_DV_INVALID | HIGH |
+| syn-2026-00104 | boleto | es | B | B5 | BOLETO_AMOUNT_MISMATCH, BOLETO_GENERAL_DV_INVALID | HIGH |
+| syn-2026-00105 | boleto | en | C | B6 | nenhum | LOW |
+| syn-2026-00106 | boleto | pt | A | B7 | nenhum | LOW |
+| syn-2026-00107 | boleto | es | B | B8 | BOLETO_AMOUNT_MISMATCH | HIGH |
+| syn-2026-00108 | contracheque | en | C | P1 | PAYSLIP_NET_MISMATCH | HIGH |
+| syn-2026-00109 | contracheque | pt | A | P2 | PAYSLIP_INSS_MISMATCH | HIGH |
+| syn-2026-00110 | contracheque | es | B | P3 | PAYSLIP_IRRF_MISMATCH | HIGH |
+| syn-2026-00111 | contracheque | en | C | P4 | nenhum | LOW |
+| syn-2026-00112 | contracheque | pt | A | P5 | PAYSLIP_CPF_INVALID | HIGH |
+| syn-2026-00113 | contracheque | es | B | P6 | PAYSLIP_PERIOD_FUTURE | HIGH |
+| syn-2026-00114 | contracheque | en | C | P7 | PAYSLIP_FGTS_MISMATCH | MEDIUM |
+| syn-2026-00115 | contracheque | pt | A | P8 | PAYSLIP_DEDUCTIONS_INCONSISTENT | HIGH |
+| syn-2026-00116 | contracheque | es | B | P9 | PAYSLIP_NET_MISMATCH | HIGH |
+| syn-2026-00117 | boleto | en | C | B1, B2 | BOLETO_AMOUNT_MISMATCH, BOLETO_DUE_DATE_MISMATCH | HIGH |
 
-```
-fraud_cases/
-├── legitimate/
-│   ├── boleto_bb_real.pdf        # Real boleto from Banco do Brasil
-│   ├── boleto_itau_real.pdf      # Real boleto from Itaú
-│   ├── contracheque_real.pdf     # Real payslip
-│   └── ...
-├── fraudulent/
-│   ├── boleto_banco_invalido.pdf # Bank code 999 (not in BACEN)
-│   ├── boleto_cnpj_falso.pdf     # CNPJ 00.000.000/0001-99
-│   ├── boleto_multa_ilegal.pdf   # Late fee 5% per day
-│   ├── boleto_vencido_2anos.pdf  # Due date 2 years ago
-│   ├── boleto_todos_indicadores.pdf # All fraud indicators
-│   ├── contracheque_inss_falso.pdf  # INSS calculation mismatch
-│   └── ...
-└── README.md
-```
-
-## Expected Outcomes
-
-| Document | Expected Score | Expected Level | Min Indicators |
-|----------|---------------|----------------|----------------|
-| Legitimate boleto | < 40 | LOW | 0 |
-| Banco inválido | ≥ 70 | HIGH | ≥ 1 (CRITICAL) |
-| CNPJ falso | ≥ 70 | HIGH | ≥ 1 (CRITICAL) |
-| Multa ilegal | ≥ 70 | HIGH | ≥ 1 (CRITICAL) |
-| Vencido 2 anos | ≥ 70 | HIGH | ≥ 1 (CRITICAL) |
-| Todos indicadores | ≥ 85 | HIGH | ≥ 5 |
-
-## Usage with pytest
-
-```python
-import pytest
-from pathlib import Path
-
-FRAUD_CASES = Path(__file__).parent
-
-@pytest.mark.parametrize("pdf_path,expected_min_score", [
-    (FRAUD_CASES / "fraudulent" / "boleto_banco_invalido.pdf", 70),
-    (FRAUD_CASES / "fraudulent" / "boleto_cnpj_falso.pdf", 70),
-])
-def test_fraudulent_boleto(pdf_path, expected_min_score):
-    pdf_bytes = pdf_path.read_bytes()
-    context = PipelineContext(file_bytes=pdf_bytes, document_type="boleto")
-    result = CanonicalPipeline().execute(context)
-    assert result.risk_score >= expected_min_score
-```
+Arquivos em `legitimate/` e `fraudulent/`; hashes em `manifest.json`.
