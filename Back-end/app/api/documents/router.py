@@ -181,10 +181,14 @@ async def _persist_analysis(
             doc = DocumentModel(
                 id=_uuid.UUID(document_id),
                 tenant_id=_uuid.UUID(tenant_id),
-                filename=ctx.filename or "document.pdf",
-                file_type=ctx.mime_type or "application/pdf",
-                file_size=len(ctx.file_bytes),
+                uploaded_by=_uuid.UUID(user_id),
                 document_type=ctx.document_type,
+                file_name=ctx.filename or "document.pdf",
+                file_size_bytes=len(ctx.file_bytes),
+                s3_key="",
+                s3_bucket="",
+                ocr_confidence=ctx.ocr_confidence,
+                extracted_fields=ctx.extracted_fields or None,
             )
             db.add(doc)
             await db.flush()
@@ -252,8 +256,12 @@ async def _persist_analysis(
                 logger.info("Fraud alert created: doc=%s score=%.0f level=%s", document_id[:8], result.risk_score, result.risk_level)
 
             await db.commit()
-    except Exception as e:
-        logger.warning("Failed to persist fraud alert (non-fatal): %s", e)
+    except Exception:
+        logger.exception(
+            "Failed to persist document/fraud alert (non-fatal): document_id=%s tenant_id=%s",
+            document_id,
+            tenant_id,
+        )
 
 
 def _build_extracted_metadata(ctx) -> dict:
