@@ -295,6 +295,9 @@ class Settings(BaseSettings):
     OCR_PADDLE_LANG: str = "latin"
     OCR_MAX_PAGES: int = Field(default=10, gt=0)
     OCR_NATIVE_TEXT_MIN_CHARS: int = Field(default=50, ge=0)
+    OCR_SERVICE_URL: str = ""
+    OCR_SERVICE_TIMEOUT: float = Field(default=120.0, gt=0)
+    OCR_SERVICE_API_KEY: SecretStr | None = None
 
     # ── Business ──
     MAX_UPLOAD_SIZE_MB: int = 50

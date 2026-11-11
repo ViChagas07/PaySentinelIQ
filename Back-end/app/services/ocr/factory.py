@@ -59,11 +59,10 @@ class OCRFactory:
                 temp_dir=kwargs.get("temp_dir"),
             )
 
-        elif provider_type in ("paddleocr", "auto"):
+        elif provider_type in ("paddleocr", "auto", "remote"):
             from app.services.ocr.native_text_provider import (
                 NativeTextFirstOCRProvider,
             )
-            from app.services.ocr.paddle_provider import PaddleOCRProvider
 
             settings = _get_ocr_settings()
             dpi = kwargs.get("dpi", settings.OCR_DPI)
@@ -72,32 +71,52 @@ class OCRFactory:
                 "min_native_chars",
                 settings.OCR_NATIVE_TEXT_MIN_CHARS,
             )
-            primary = PaddleOCRProvider(
-                language=kwargs.get(
-                    "language",
-                    settings.OCR_PADDLE_LANG,
-                ),
-                dpi=dpi,
-                max_pages=max_pages,
-            )
 
-            if provider_type == "paddleocr":
+            use_remote = provider_type == "remote" or (
+                provider_type == "auto" and bool(settings.OCR_SERVICE_URL)
+            )
+            if use_remote:
+                from app.services.ocr.remote_provider import RemoteOCRProvider
+
+                api_key = (
+                    settings.OCR_SERVICE_API_KEY.get_secret_value()
+                    if settings.OCR_SERVICE_API_KEY
+                    else None
+                )
+                primary: OCRProvider = RemoteOCRProvider(
+                    url=settings.OCR_SERVICE_URL,
+                    timeout=settings.OCR_SERVICE_TIMEOUT,
+                    api_key=api_key,
+                )
+            else:
+                from app.services.ocr.paddle_provider import PaddleOCRProvider
+
+                primary = PaddleOCRProvider(
+                    language=kwargs.get(
+                        "language",
+                        settings.OCR_PADDLE_LANG,
+                    ),
+                    dpi=dpi,
+                    max_pages=max_pages,
+                )
+
+            if provider_type == "auto":
+                def _tesseract_fallback() -> OCRProvider:
+                    return TesseractOCRProvider(
+                        language=settings.OCR_LANGUAGE,
+                        preprocess=settings.OCR_PREPROCESS,
+                    )
+
                 return NativeTextFirstOCRProvider(
                     primary=primary,
+                    fallback_factory=_tesseract_fallback,
                     dpi=dpi,
                     max_pages=max_pages,
                     min_native_chars=min_native_chars,
                 )
 
-            def _tesseract_fallback() -> OCRProvider:
-                return TesseractOCRProvider(
-                    language=settings.OCR_LANGUAGE,
-                    preprocess=settings.OCR_PREPROCESS,
-                )
-
             return NativeTextFirstOCRProvider(
                 primary=primary,
-                fallback_factory=_tesseract_fallback,
                 dpi=dpi,
                 max_pages=max_pages,
                 min_native_chars=min_native_chars,
@@ -117,7 +136,7 @@ class OCRFactory:
         else:
             raise OCRException(
                 f"Unknown OCR provider: '{provider_type}'. Supported: "
-                "tesseract, paddleocr, auto"
+                "tesseract, paddleocr, auto, remote"
             )
 
 
