@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+import asyncio
 from datetime import date
 from decimal import Decimal
 import json
@@ -7,9 +8,12 @@ from pathlib import Path
 import random
 
 import fitz
+import pytest
 
 from app.core.contracts.pipeline_context import PipelineContext
+from app.services.ocr.base import OCRPageResult, OCRResult
 from app.services.validation.febraban import decode_linha_digitavel
+from app.shared.settings import Settings
 from app.services.validation.payslip_rules import _cnpj_valid, _cpf_valid
 from app.synthetic.dataset import build_dataset
 from app.synthetic.febraban_builder import build_linha_digitavel
@@ -181,6 +185,57 @@ def test_split_has_no_company_cnpj_leakage(tmp_path):
     assert not (train & tests)
 
 
+def test_golden_includes_policy_cases():
+    root = Path(__file__).resolve().parents[1] / "resources" / "fraud_cases"
+    manifest = json.loads(
+        (root / "manifest.json").read_text(encoding="utf-8")
+    )
+    legit = [item for item in manifest["documents"] if not item["is_fraud"]]
+    today = date(2026, 11, 11)
+    past_due = [
+        item
+        for item in legit
+        if item["doc_kind"] == "boleto"
+        and date.fromisoformat(item["fields"]["data_vencimento"]) < today
+    ]
+    banks = {item["fields"].get("codigo_banco") for item in legit}
+    variants: dict[str, int] = {}
+    for item in manifest["documents"]:
+        for variant in item["files"]:
+            if variant.startswith("scanned"):
+                variants[variant] = variants.get(variant, 0) + 1
+
+    assert len(past_due) >= 4
+    assert any(
+        (today - date.fromisoformat(item["fields"]["data_vencimento"])).days
+        > 365
+        for item in past_due
+    )
+    assert {"260", "077"} <= banks
+    assert variants.get("scanned_clean", 0) >= 4
+    assert variants.get("scanned_rot", 0) >= 2
+    assert (
+        sum(
+            (root / path).stat().st_size
+            for path in root.rglob("*")
+            if path.is_file()
+        )
+        < 4 * 1024 * 1024
+    )
+
+
+def _assert_golden_result(item, ctx, result):
+    codes = {evidence.code for evidence in ctx.evidences}
+    if not item["is_fraud"]:
+        assert result.risk_score < 70
+        assert not any(
+            evidence.severity.value == "critical"
+            for evidence in ctx.evidences
+        )
+    elif item["sophistication"] in {"naive", "multi"}:
+        assert codes & set(item["expected_codes_any_of"])
+
+
 def test_golden_native_expectations(monkeypatch):
     root = Path(__file__).resolve().parents[1] / "resources" / "fraud_cases"
     manifest = json.loads(
@@ -202,14 +257,69 @@ def test_golden_native_expectations(monkeypatch):
             mime_type="application/pdf",
         )
         result = pipeline.execute(ctx)
-        codes = {evidence.code for evidence in ctx.evidences}
-        if not item["is_fraud"]:
-            assert result.risk_score < 70
-            assert not any(
-                evidence.severity.value == "critical"
-                for evidence in ctx.evidences
+        _assert_golden_result(item, ctx, result)
+
+
+@pytest.mark.asyncio
+async def test_golden_ocr_expectations(monkeypatch):
+    root = Path(__file__).resolve().parents[1] / "resources" / "fraud_cases"
+    manifest = json.loads(
+        (root / "manifest.json").read_text(encoding="utf-8")
+    )
+    monkeypatch.setattr(
+        "app.services.pipeline.stages.crewai_stage.CrewAIStage._execute",
+        lambda self, ctx: None,
+    )
+    monkeypatch.setattr(
+        "app.shared.settings.get_settings",
+        lambda: Settings(
+            _env_file=None,
+            ENABLE_OCR=True,
+            ENABLE_CANONICAL_EXTRACTION=True,
+        ),
+    )
+    from app.services.extraction.prelude import run_ocr_prelude
+    from app.services.pipeline.canonical_pipeline import CanonicalPipeline
+
+    class FakeOCRProvider:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+        async def extract_text(self, file_path: str) -> OCRResult:
+            return OCRResult(
+                text=self.text,
+                pages=[
+                    OCRPageResult(
+                        page_number=1,
+                        text=self.text,
+                        confidence=1.0,
+                    )
+                ],
+                confidence=1.0,
+                provider="fake",
+                processing_time_seconds=0.0,
             )
-        elif item["sophistication"] in {"naive", "multi"}:
-            assert codes & set(item["expected_codes_any_of"])
+
+        async def health_check(self) -> bool:
+            return True
+
+        def get_info(self) -> dict[str, str]:
+            return {"provider": "fake"}
+
+    pipeline = CanonicalPipeline()
+    for item in manifest["documents"]:
+        native = root / item["files"]["native"]["path"]
+        ctx = PipelineContext(
+            document_type=item["doc_kind"],
+            file_bytes=native.read_bytes(),
+            filename=native.name,
+            mime_type="application/pdf",
+        )
+        await run_ocr_prelude(
+            ctx,
+            provider=FakeOCRProvider(item["page_text"]),
+        )
+        result = await asyncio.to_thread(pipeline.execute, ctx)
+        _assert_golden_result(item, ctx, result)
 
 

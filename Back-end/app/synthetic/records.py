@@ -364,9 +364,11 @@ def _make_boleto(
     bank_pool: tuple[str, ...],
     company_pool: tuple[str, ...],
     person_pool: tuple[str, ...],
+    bank_override: str | None = None,
+    due_date_override: date | None = None,
 ) -> None:
     language = document.language
-    bank = rng.choice(bank_pool)
+    bank = bank_override or rng.choice(bank_pool)
     currency = "9"
     carteira = rng.choice(("17", "109", "SR"))
     free_field = "".join(str(rng.randrange(10)) for _ in range(25))
@@ -382,7 +384,7 @@ def _make_boleto(
     due_offset = rng.randint(-200, 120)
     if document.split == "golden":
         due_offset = rng.randint(30, 120)
-    due_date = today + timedelta(days=due_offset)
+    due_date = due_date_override or (today + timedelta(days=due_offset))
     document_date = due_date - timedelta(days=rng.randint(1, 30))
     beneficiary = rng.choice(company_pool)
     beneficiary_cnpj = generate_cnpj(rng)
@@ -662,6 +664,8 @@ def build_document(
     tamper_types: list[str],
     today: date,
     shift: bool = False,
+    bank: str | None = None,
+    due_date: date | None = None,
 ) -> SyntheticDocument:
     seed = base_seed + index * 1009
     rng = random.Random(seed)
@@ -693,6 +697,8 @@ def build_document(
             bank_pool,
             company_pool,
             PEOPLE[language],
+            bank_override=bank,
+            due_date_override=due_date,
         )
     else:
         _make_payslip(rng, document, today, company_pool, PEOPLE[language])

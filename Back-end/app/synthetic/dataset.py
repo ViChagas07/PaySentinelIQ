@@ -1,6 +1,6 @@
 ﻿from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -218,6 +218,46 @@ def build_golden(
         )
         legitimate.append(record)
 
+    past_due_specs = (
+        (200, "pt", "A", today - timedelta(days=45)),
+        (201, "es", "B", today - timedelta(days=90)),
+        (202, "en", "C", today - timedelta(days=180)),
+        (203, "pt", "A", today - timedelta(days=420)),
+    )
+    for index, language, layout, due_date in past_due_specs:
+        legitimate.append(
+            build_document(
+                index=index,
+                base_seed=seed,
+                doc_kind="boleto",
+                language=language,
+                layout=layout,
+                label_set="set1",
+                split="golden",
+                tamper_types=[],
+                today=today,
+                due_date=due_date,
+            )
+        )
+    for index, language, layout, bank in (
+        (204, "pt", "B", "260"),
+        (205, "es", "C", "077"),
+    ):
+        legitimate.append(
+            build_document(
+                index=index,
+                base_seed=seed,
+                doc_kind="boleto",
+                language=language,
+                layout=layout,
+                label_set="set1",
+                split="golden",
+                tamper_types=[],
+                today=today,
+                bank=bank,
+            )
+        )
+
     fraud_types = [
         ["B1"],
         ["B2"],
@@ -255,15 +295,21 @@ def build_golden(
         fraudulent.append(record)
 
     documents: list[dict[str, Any]] = []
-    scanned_sample_id = legitimate[0].id
+    scanned_variants = {
+        legitimate[0].id: ["scanned_clean"],
+        legitimate[9].id: ["scanned_clean"],
+        legitimate[11].id: ["scanned_clean"],
+        legitimate[10].id: ["scanned_rot"],
+        legitimate[18].id: ["scanned_clean"],
+        legitimate[19].id: ["scanned_clean"],
+        legitimate[20].id: ["scanned_rot"],
+    }
     for record, target in [
         *((item, legitimate_dir) for item in legitimate),
         *((item, fraudulent_dir) for item in fraudulent),
     ]:
         files = {}
-        variants = ["native"]
-        if record.id == scanned_sample_id:
-            variants.append("scanned_clean")
+        variants = ["native", *scanned_variants.get(record.id, [])]
         for variant in variants:
             suffix = ".pdf"
             path = target / f"{record.id}_{variant}{suffix}"
@@ -297,7 +343,8 @@ def _write_golden_readme(
         "# Golden set sintÃ©tico â€” PaySentinelIQ",
         "",
         "Documentos 100% fictÃ­cios, gerados por `app/synthetic`.",
-        "Cada item possui a variante `native`; um item possui `scanned_clean`.",
+        "Cada item possui a variante `native`; itens legÃ­timos possuem tambÃ©m "
+        "`scanned_clean` ou `scanned_rot`.",
         "",
         "| ID | Tipo | Idioma | Layout | AdulteraÃ§Ã£o | Esperado | Banda |",
         "|---|---|---|---|---|---|---|",

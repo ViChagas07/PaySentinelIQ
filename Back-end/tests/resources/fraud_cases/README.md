@@ -1,9 +1,9 @@
-# Golden set sintético — PaySentinelIQ
+# Golden set sintÃ©tico â€” PaySentinelIQ
 
-Documentos 100% fictícios, gerados por `app/synthetic`.
-Cada item possui a variante `native`; um item possui `scanned_clean`.
+Documentos 100% fictÃ­cios, gerados por `app/synthetic`.
+Cada item possui a variante `native`; itens legÃ­timos possuem tambÃ©m `scanned_clean` ou `scanned_rot`.
 
-| ID | Tipo | Idioma | Layout | Adulteração | Esperado | Banda |
+| ID | Tipo | Idioma | Layout | AdulteraÃ§Ã£o | Esperado | Banda |
 |---|---|---|---|---|---|---|
 | syn-2026-00000 | boleto | pt | A | nenhuma | nenhum | LOW |
 | syn-2026-00001 | boleto | es | B | nenhuma | nenhum | LOW |
@@ -23,6 +23,12 @@ Cada item possui a variante `native`; um item possui `scanned_clean`.
 | syn-2026-00015 | contracheque | pt | A | nenhuma | nenhum | LOW |
 | syn-2026-00016 | contracheque | es | B | nenhuma | nenhum | LOW |
 | syn-2026-00017 | contracheque | en | C | nenhuma | nenhum | LOW |
+| syn-2026-00200 | boleto | pt | A | nenhuma | nenhum | LOW |
+| syn-2026-00201 | boleto | es | B | nenhuma | nenhum | LOW |
+| syn-2026-00202 | boleto | en | C | nenhuma | nenhum | LOW |
+| syn-2026-00203 | boleto | pt | A | nenhuma | nenhum | LOW |
+| syn-2026-00204 | boleto | pt | B | nenhuma | nenhum | LOW |
+| syn-2026-00205 | boleto | es | C | nenhuma | nenhum | LOW |
 | syn-2026-00100 | boleto | pt | A | B1 | BOLETO_AMOUNT_MISMATCH | HIGH |
 | syn-2026-00101 | boleto | es | B | B2 | BOLETO_DUE_DATE_MISMATCH | HIGH |
 | syn-2026-00102 | boleto | en | C | B3 | BANCO_INVALIDO, BOLETO_BANK_MISMATCH | HIGH |
