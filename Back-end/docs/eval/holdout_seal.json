@@ -1,0 +1,111 @@
+{
+  "status": "sealed",
+  "phase": "6B",
+  "sealed_at": "2026-11-11T21:57:00.565341+00:00",
+  "policy": "holdout generated and structurally checked only; no model inference, scores, metrics or confusion matrices were computed before this seal",
+  "dataset": {
+    "version": "holdout-v3",
+    "generator_version": "v3",
+    "path": "..\\data\\holdout\\v3_seed2027",
+    "seed": 2027,
+    "n_total": 1000,
+    "composition": {
+      "legit": 660,
+      "supervised_fraud": 280,
+      "expert_fraud": 60,
+      "total_fraud": 340
+    },
+    "tamper_types": {
+      "B1": 20,
+      "B2": 20,
+      "B3": 20,
+      "B4": 20,
+      "B5": 20,
+      "B6": 20,
+      "B7": 20,
+      "B8": 20,
+      "P1": 20,
+      "P2": 20,
+      "P3": 20,
+      "P4": 20,
+      "P5": 20,
+      "P6": 20,
+      "P7": 20,
+      "P8": 20,
+      "P9": 20
+    },
+    "records_sha256": "5e12668a6322ea2852145395a3e84f9868759b691665f1e929bb3f667f6f96da",
+    "manifest_sha256": "9f2c0f3bad1543375c59af14c1c4f160c32e77e784f6a1d8f66ae48c974f8dac",
+    "files_sha256": "dea2c3fe4d495f254632f4692b4f5dd361c94acfe9d02b26acca8319cf42a5ea",
+    "lineage_hashes_sha256": "e820f6a40e4bb15f572ffad275746c33e32f3500e8d18bd0e6210c1711c97427",
+    "intersection": {
+      "old_ids": 0,
+      "old_entities": 0
+    },
+    "split": "holdout"
+  },
+  "ocr": {
+    "selection_rule": "top 8 by sha256(id:type:ocr) per type; 16 legit per language by sha256(id:language:legit:ocr)",
+    "variants": [
+      "scanned_clean",
+      "scanned_rot"
+    ],
+    "sample": 184,
+    "primary": 160,
+    "experts": 24,
+    "primary_ids_sha256": "658494d5ef2b8d3beae12287ec9d6f57bb144e62c9e1e3c6cf5f06aaad9aff77",
+    "sample_ids_sha256": "00795b4e4ec9ab885a81bd4ca90a1571254294b0d07b09ce93005c82c8d26564"
+  },
+  "artifact": {
+    "path": "data/ml/frozen/logistic_v2_1_d4100dc5.joblib",
+    "sha256": "d4100dc572d6238a9f819b078cca0ef50bb8ad04e046bd62bd8dd1325abea33e",
+    "size_bytes": 6369,
+    "model": "LogisticRegression",
+    "C": 0.01,
+    "threshold": 0.809,
+    "class_weight": "balanced",
+    "preprocessing": [
+      "SimpleImputer(median)",
+      "StandardScaler"
+    ]
+  },
+  "features": {
+    "count": 119,
+    "names_sha256": "a240323638b438875ca94492b4d89e3bb7ebd410edde5f19dc059811d64070a4",
+    "implementation_sha256": "b14920d258e55014c1fafd07f66041218f6ddf61910c30545664a9a71753a708"
+  },
+  "baselines": {
+    "deterministic_threshold": 0.5,
+    "fusion_threshold": 0.4,
+    "logistic_threshold": 0.809,
+    "evaluator_sha256": "b6fbfa84065ece0ca8c2925c4c8fec324447db3dfd76b1720b7b3ae8d417068d"
+  },
+  "commits": {
+    "generator": "9ada588",
+    "evaluator": "9ada588",
+    "protocol": "84b6ca0",
+    "extractor": "ba79eaaca24271c5dc1e7d8a844e44a048ccd1e4",
+    "model_code": "7d0fb416d26e51569ef415c12fb35d7829a180fb"
+  },
+  "implementation_hashes": {
+    "generator_sha256": "8b7bfec4ccee5d2d9712533eb490f4eef9f264493dd77fa82e850dd3d160a1fa",
+    "protocol_sha256": "5d04bce3853e81f31d04e03f274dcd327b000fef07d75264ac323e9bec58b0d2"
+  },
+  "environment": {
+    "python": "3.11.9",
+    "scikit_learn": "1.9.0",
+    "numpy": "2.4.6",
+    "pymupdf": "1.27.2.3",
+    "pillow": "12.2.0",
+    "joblib": "1.5.3"
+  },
+  "criteria_reference": "docs/eval/holdout_protocol.md",
+  "acceptance_caps": {
+    "native_fp_wilson_upper": 0.05,
+    "ocr_clean_fp_wilson_upper": 0.1,
+    "ocr_degraded_fp_wilson_upper": 0.15,
+    "min_positives_per_cohort": 30,
+    "min_negatives_per_cohort": 30,
+    "non_inferiority_margin": 0.05
+  }
+}
