@@ -7,7 +7,11 @@ não extrai texto nativo de PDF; essa etapa continua no backend.
 ## Endpoints
 
 - `GET /health` — 200 enquanto o processo estiver de pé; não carrega modelos.
-- `GET /ready` — 200 somente depois que o PaddleOCR foi inicializado; 503 antes disso.
+- `GET /ready` — JSON `{"tesseract": bool, "paddle": bool, "default_engine": "..."}`.
+  Tesseract é considerado pronto quando o binário existe e os idiomas `por`,
+  `spa` e `eng` estão instalados. Paddle é considerado pronto depois da
+  inicialização. HTTP 200 se ao menos um motor estiver pronto; 503 se nenhum.
+  `default_engine` é `auto`, ou `tesseract` quando `OCR_SERVICE_FORCE_FALLBACK=1`.
 - `POST /ocr` — multipart `file` (PDF/PNG/JPEG), `dpi`, `max_pages` e `engine`
   opcionais. `engine` aceita `auto` (padrão), `paddle` (sem fallback) ou `tesseract`
   (não inicializa o Paddle). Retorna `text`, `pages[]`, `confidence`, `provider`,

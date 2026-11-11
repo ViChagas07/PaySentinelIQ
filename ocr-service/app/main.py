@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import secrets
+import shutil
+import subprocess
 import uuid
 from typing import Annotated
 
@@ -56,6 +58,41 @@ def _check_api_key(x_ocr_key: str | None) -> None:
         raise HTTPException(status_code=401, detail="Invalid OCR API key")
 
 
+REQUIRED_TESSERACT_LANGS = {"por", "spa", "eng"}
+
+
+def _tesseract_languages(binary: str) -> set[str]:
+    try:
+        completed = subprocess.run(
+            [binary, "--list-langs"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    if completed.returncode != 0:
+        return set()
+    output = f"{completed.stdout}\n{completed.stderr}"
+    return {
+        line.strip()
+        for line in output.splitlines()
+        if line.strip() and " " not in line.strip()
+    }
+
+
+def tesseract_ready() -> bool:
+    binary = shutil.which("tesseract")
+    if binary is None:
+        return False
+    return REQUIRED_TESSERACT_LANGS <= _tesseract_languages(binary)
+
+
+def _default_engine() -> str:
+    return "tesseract" if settings.force_fallback else "auto"
+
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -63,9 +100,15 @@ async def health() -> dict[str, str]:
 
 @app.get("/ready")
 async def ready() -> JSONResponse:
-    if engine.is_ready():
-        return JSONResponse(status_code=200, content={"status": "ready"})
-    return JSONResponse(status_code=503, content={"status": "not_ready"})
+    tesseract = tesseract_ready()
+    paddle = bool(engine.paddle_ready)
+    payload = {
+        "tesseract": tesseract,
+        "paddle": paddle,
+        "default_engine": _default_engine(),
+    }
+    status_code = 200 if (tesseract or paddle) else 503
+    return JSONResponse(status_code=status_code, content=payload)
 
 
 @app.post("/ocr")

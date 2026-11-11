@@ -29,12 +29,12 @@ class FakeEngine:
     def __init__(self, result=None, error=None, ready=False):
         self.result = result or RESULT
         self.error = error
-        self.ready = ready
+        self.paddle_ready = ready
         self.calls = 0
         self.kwargs = {}
 
     def is_ready(self):
-        return self.ready
+        return self.paddle_ready
 
     def extract(self, *args, **kwargs):
         self.calls += 1
@@ -70,13 +70,65 @@ def test_health_does_not_load_engine(client):
     assert fake.calls == 0
 
 
-def test_ready_reflects_paddle_state(client, monkeypatch):
+def test_ready_reports_engines_and_default(client, monkeypatch):
     http_client, fake = client
+    monkeypatch.setattr(main_module, "tesseract_ready", lambda: False)
 
-    assert http_client.get("/ready").status_code == 503
+    response = http_client.get("/ready")
 
-    fake.ready = True
-    assert http_client.get("/ready").status_code == 200
+    assert response.status_code == 503
+    assert response.json() == {
+        "tesseract": False,
+        "paddle": False,
+        "default_engine": "auto",
+    }
+
+    fake.paddle_ready = True
+    response = http_client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "tesseract": False,
+        "paddle": True,
+        "default_engine": "auto",
+    }
+
+
+def test_ready_uses_tesseract_when_paddle_is_not_initialized(client, monkeypatch):
+    http_client, fake = client
+    monkeypatch.setattr(main_module, "tesseract_ready", lambda: True)
+    monkeypatch.setattr(main_module.settings, "force_fallback", True)
+
+    response = http_client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "tesseract": True,
+        "paddle": False,
+        "default_engine": "tesseract",
+    }
+
+
+def test_tesseract_ready_requires_binary_and_languages(monkeypatch):
+    monkeypatch.setattr(main_module.shutil, "which", lambda name: None)
+    assert main_module.tesseract_ready() is False
+
+    monkeypatch.setattr(
+        main_module.shutil, "which", lambda name: "/usr/bin/tesseract"
+    )
+    monkeypatch.setattr(
+        main_module,
+        "_tesseract_languages",
+        lambda binary: {"por", "spa", "eng", "osd"},
+    )
+    assert main_module.tesseract_ready() is True
+
+    monkeypatch.setattr(
+        main_module,
+        "_tesseract_languages",
+        lambda binary: {"por", "eng"},
+    )
+    assert main_module.tesseract_ready() is False
 
 
 def test_rejects_invalid_magic_bytes(client):
