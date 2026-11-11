@@ -228,10 +228,10 @@ def test_provider_engine_comes_from_settings(monkeypatch):
     assert provider.get_info()["engine"] == "tesseract"
 
 
-def test_ocr_service_engine_setting_defaults_to_auto():
+def test_ocr_service_engine_setting_defaults_to_tesseract():
     settings = Settings(_env_file=None)
 
-    assert settings.OCR_SERVICE_ENGINE == "auto"
+    assert settings.OCR_SERVICE_ENGINE == "tesseract"
     assert Settings(
         _env_file=None,
         OCR_SERVICE_ENGINE="paddle",
