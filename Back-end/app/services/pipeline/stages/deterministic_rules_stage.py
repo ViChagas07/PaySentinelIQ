@@ -48,6 +48,12 @@ class DeterministicRulesStage(BaseStage):
                 "skipped_rules": ["unsupported_document_type"],
             }
 
+        from app.services.validation.ocr_provenance import (
+            apply_ocr_uncertainty,
+        )
+
+        apply_ocr_uncertainty(context)
+
     def _validate_boleto(self, context: PipelineContext) -> None:
         from app.services.validation.febraban import validate_boleto
 

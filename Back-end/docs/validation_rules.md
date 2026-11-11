@@ -39,6 +39,18 @@ arredondado com `ROUND_HALF_UP` a duas casas no fim. Nos componentes do IRRF
 (tabela e redução), o arredondamento a duas casas usa `ROUND_HALF_EVEN` para reproduzir
 os valores oficiais dos exemplos; o resultado final é subtraído já em duas casas.
 
+## Mitigação provisória de proveniência do OCR
+
+Quando `metadata.ocr.status == "completed"` e o provider não é `native_text`,
+o `DeterministicRulesStage` reduz em um nível a severidade das evidências
+dependentes de leitura de dígitos/nomes listadas em
+`OCR_SENSITIVE_CODES` (`app/services/validation/ocr_provenance.py`):
+`critical→high`, `high→medium`, `medium→low`, `low→info`. A confiança não muda;
+`metadata.ocr_uncertain = true` e `metadata.original_severity` registram a
+decisão. A lista cobre códigos de boleto, linha digitável, banco, contracheque e
+`CNPJ_INVALID_PATTERN`. É uma mitigação provisória até a corroboração por segunda
+leitura.
+
 ## Banco
 
 - Quando existe linha digitável (47 dígitos) ou código de barras (44), a
