@@ -71,5 +71,6 @@ neste checkpoint.
 | **Total** | **+9** |
 
 A 6A.2R acrescenta mais 4 testes de revisão (data ambígua sem fallback legado,
-inconsistência de locale, vencimento nativo válido e P3 não no-op), que serão
-contabilizados no total final do checkpoint.
+inconsistência de locale, vencimento nativo válido e P3 não no-op). A 6A.4
+acrescenta 5 testes de política. Total final do checkpoint: **736 passed,
+2 failed, 11 skipped** (727 + 4 + 5).
