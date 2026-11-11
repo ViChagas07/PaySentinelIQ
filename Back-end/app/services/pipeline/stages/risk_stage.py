@@ -34,7 +34,7 @@ class RiskStage(BaseStage):
             ocr_confidence: float | None = context.ocr_confidence
             if isinstance(ocr_metadata, dict) and ocr_metadata.get(
                 "status"
-            ) in {"failed", "empty"}:
+            ) in {"failed", "empty", "not_needed"}:
                 ocr_confidence = None
             risk_ctx = {
                 "document_type": context.document_type,

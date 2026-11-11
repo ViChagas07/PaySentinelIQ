@@ -4,6 +4,21 @@ Todas as regras abaixo são determinísticas, não usam LLM nem rede e são aval
 `DeterministicRulesStage`, entre `ValidateStage` e `RiskStage`. Ausência de um campo
 necessário faz a regra ser pulada e registrada em `metadata.validation.skipped_rules`.
 
+## Status de OCR
+
+| Status | Origem | Efeito no score |
+|---|---|---|
+| `completed` | OCR executado (Tesseract, Paddle ou serviço remoto) | usa `ocr_confidence` |
+| `not_needed` | texto veio da camada nativa do PDF | nenhuma evidência `OCR_VERY_LOW`; confiança tratada como ausente |
+| `empty` | OCR não encontrou texto útil | confiança tratada como ausente |
+| `failed` | OCR indisponível | confiança tratada como ausente |
+
+Quando `ExtractStage` lê texto nativo (`pymupdf`, `pdfplumber`, `pypdf` ou
+`native_text`) e ainda não existe bloco `ocr`, grava
+`metadata.ocr = {"status": "not_needed", "provider": "native_text"}`. O `RiskStage`
+trata `failed`, `empty` e `not_needed` passando `ocr_confidence=None`, portanto
+não emite `OCR_VERY_LOW` nem `OCR_MODERATE` para PDFs nativos ou sem OCR.
+
 ## Tabelas
 
 | Tabela | Vigência | Fonte |

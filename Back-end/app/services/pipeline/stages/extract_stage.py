@@ -10,6 +10,8 @@ from __future__ import annotations
 from app.services.pipeline.stages.base import BaseStage
 from app.core.contracts.pipeline_context import PipelineContext
 
+NATIVE_TEXT_METHODS = {"native_text", "pymupdf", "pdfplumber", "pypdf"}
+
 
 class ExtractStage(BaseStage):
     """Stage 2: Extract text and structured data from the document.
@@ -40,6 +42,15 @@ class ExtractStage(BaseStage):
                 context.page_count = extraction.get("pages", extraction.get("all_attempts", [{}])[0].get("pages", 1))
             except Exception as e:
                 context.add_warning(f"Text extraction failed: {e}")
+
+        if (
+            context.extraction_method in NATIVE_TEXT_METHODS
+            and "ocr" not in context.metadata
+        ):
+            context.metadata["ocr"] = {
+                "status": "not_needed",
+                "provider": "native_text",
+            }
 
         # ── Structured field extraction ──
         if context.extracted_text:
