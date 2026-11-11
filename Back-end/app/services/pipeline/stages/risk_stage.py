@@ -48,11 +48,15 @@ class RiskStage(BaseStage):
 
             # Convert RiskAnalyzer flags to Evidence
             for flag in assessment.flags:
+                try:
+                    flag_severity = Severity(str(flag.severity).lower())
+                except ValueError:
+                    flag_severity = Severity.MEDIUM
                 context.add_evidence(
                     __import__("app.core.contracts.evidence", fromlist=["Evidence", "Severity", "EvidenceSource"]).Evidence(
                         code=flag.code,
                         description=flag.description,
-                        severity=Severity(flag.severity) if hasattr(Severity, flag.severity) else Severity.MEDIUM,
+                        severity=flag_severity,
                         source=__import__("app.core.contracts.evidence", fromlist=["EvidenceSource"]).EvidenceSource.DETERMINISTIC,
                         confidence=1.0,
                         category=flag.category,

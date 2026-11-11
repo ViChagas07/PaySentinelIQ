@@ -32,6 +32,24 @@ arredondado com `ROUND_HALF_UP` a duas casas no fim. Nos componentes do IRRF
 (tabela e redução), o arredondamento a duas casas usa `ROUND_HALF_EVEN` para reproduzir
 os valores oficiais dos exemplos; o resultado final é subtraído já em duas casas.
 
+## Política temporal e valor redondo
+
+| Código | Severidade | Regra |
+|---|---|---|
+| `BOLETO_OVERDUE` | info | Vencimento entre 31 e 365 dias atrás |
+| `BOLETO_VENCIDO` | info | Mesma janela, emitido pela varredura de texto do `boleto_analyzer` |
+| `BOLETO_SEVERELY_OVERDUE` | low | Vencimento há mais de 365 dias |
+| `DOCUMENT_EXPIRED` | info | Data de vencimento no passado (`RiskAnalyzer`) |
+| `VALOR_REDONDO_SUSPEITO` | low | Valor múltiplo de R$ 100 na varredura de texto |
+| `BOLETO_ROUND_AMOUNT` | low | Valor múltiplo de R$ 100 (`RiskAnalyzer`) |
+| `ROUND_AMOUNT_SUSPICIOUS` | low | Valor múltiplo de R$ 100 (`ValidateStage`) |
+
+Os limiares de detecção (30 e 365 dias; valor >= R$ 100 e múltiplo de 100) não
+mudam. Para boleto, a data usada nas regras de atraso é o campo extraído
+`data_vencimento` (ou `due_date`) quando existe; a varredura de datas do texto é
+fallback apenas quando o campo está ausente. Contracheques, holerites e payslips
+não geram `BOLETO_*` nem `DOCUMENT_EXPIRED` por vencimento.
+
 ## Boleto
 
 | Código | Documento | Severidade | Descrição | Base / tolerância |

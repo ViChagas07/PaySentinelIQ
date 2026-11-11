@@ -80,6 +80,24 @@ BANCOS_VALIDOS: set[str] = {
 }
 
 
+def _parse_due_date(value: Any | None) -> date | None:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text[:10])
+    except ValueError:
+        pass
+    try:
+        return datetime.strptime(text[:10], "%d/%m/%Y").date()
+    except ValueError:
+        return None
+
+
 def _validate_mod10(digits: str) -> bool:
     """Validate FEBRABAN modulo 10 check digit.
 
@@ -102,11 +120,18 @@ def _validate_mod10(digits: str) -> bool:
 # STAGE 1: Deterministic Structural Validation
 # ────────────────────────────────────────────────────────────
 
-def _stage1_structural_validation(pdf_text: str) -> tuple[list[str], float]:
+def _stage1_structural_validation(
+    pdf_text: str,
+    due_date: Any | None = None,
+) -> tuple[list[str], float]:
     """Deterministic boleto validation rules — NO LLM, pure Python.
 
     Checks bank code, overdue dates, illegal fees, invalid CNPJ patterns.
     These are mathematical/regulatory certainties that don't need AI.
+
+    When ``due_date`` is provided (extracted field), only it is used for the
+    overdue rules; the text date scan is a fallback for documents without a
+    structured due date.
     """
     structural_flags: list[str] = []
     score = 0.0
@@ -138,26 +163,36 @@ def _stage1_structural_validation(pdf_text: str) -> tuple[list[str], float]:
                 score += 35
 
     # ── 1b. Overdue detection ──
-    date_patterns = re.findall(r"\b(\d{2})/(\d{2})/(\d{4})\b", pdf_text)
     today = date.today()
-    for d, m, y in date_patterns:
-        try:
-            doc_date = date(int(y), int(m), int(d))
-            days_overdue = (today - doc_date).days
-            if days_overdue > 365:
-                structural_flags.append(
-                    f"BOLETO_VENCIDO: vencimento {d}/{m}/{y} "
-                    f"({days_overdue} dias atrás — mais de 1 ano)"
-                )
-                score += 30
-            elif days_overdue > 30:
-                structural_flags.append(
-                    f"BOLETO_VENCIDO: vencimento {d}/{m}/{y} "
-                    f"({days_overdue} dias atrás)"
-                )
-                score += 20
-        except ValueError:
-            pass
+    parsed_due = _parse_due_date(due_date)
+    if parsed_due is not None:
+        date_candidates = [parsed_due]
+    else:
+        date_candidates = []
+        for d, m, y in re.findall(
+            r"\b(\d{2})/(\d{2})/(\d{4})\b",
+            pdf_text,
+        ):
+            try:
+                date_candidates.append(date(int(y), int(m), int(d)))
+            except ValueError:
+                continue
+    for doc_date in date_candidates:
+        days_overdue = (today - doc_date).days
+        if days_overdue > 365:
+            structural_flags.append(
+                f"BOLETO_VENCIDO: vencimento "
+                f"{doc_date.strftime('%d/%m/%Y')} "
+                f"({days_overdue} dias atrás — mais de 1 ano)"
+            )
+            score += 30
+        elif days_overdue > 30:
+            structural_flags.append(
+                f"BOLETO_VENCIDO: vencimento "
+                f"{doc_date.strftime('%d/%m/%Y')} "
+                f"({days_overdue} dias atrás)"
+            )
+            score += 20
 
     # ── 1c. Illegal fees ──
     # Multa > 2% ao dia (legal limit: 2% total)

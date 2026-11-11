@@ -8,9 +8,46 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime
+
 from app.services.pipeline.stages.base import BaseStage
 from app.core.contracts.evidence import Evidence, Severity, EvidenceSource
 from app.core.contracts.pipeline_context import PipelineContext
+
+PAYSLIP_TYPES = {"contracheque", "holerite", "payroll", "payslip"}
+
+
+def _parse_date_value(value) -> date | None:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text[:10])
+    except ValueError:
+        pass
+    try:
+        return datetime.strptime(text[:10], "%d/%m/%Y").date()
+    except ValueError:
+        return None
+
+
+def _structural_severity(code: str, flag_text: str) -> Severity:
+    if code == "BOLETO_VENCIDO":
+        return Severity.INFO
+    if code == "VALOR_REDONDO_SUSPEITO":
+        return Severity.LOW
+    if code in {
+        "BANCO_INVALIDO",
+        "CNPJ_INVALIDO",
+        "MULTA_ILEGAL",
+        "JUROS_ABUSIVOS",
+    }:
+        return Severity.CRITICAL
+    return Severity.HIGH
 
 
 class ValidateStage(BaseStage):
@@ -37,20 +74,37 @@ class ValidateStage(BaseStage):
         """Run all validation suites. Each produces Evidence[] added to context."""
         text = context.extracted_text
         fields = context.extracted_fields
-        doc_type = context.document_type
+        doc_type = self._effective_document_type(context)
 
         # ── Boleto-specific validations ──
-        if doc_type == "boleto" or self._looks_like_boleto(text, fields):
+        if doc_type == "boleto" or (
+            doc_type not in PAYSLIP_TYPES
+            and self._looks_like_boleto(text, fields)
+        ):
             self._validate_boleto(context, text, fields)
 
         # ── Contracheque-specific validations ──
-        if doc_type in ("contracheque", "holerite", "payroll"):
+        if doc_type in PAYSLIP_TYPES:
             self._validate_contracheque(context, fields)
 
         # ── Universal validations (both doc types) ──
         self._validate_cnpj(context, fields)
-        self._validate_dates(context, text, fields)
+        self._validate_dates(context, text, fields, doc_type)
         self._validate_amounts(context, fields)
+
+    @staticmethod
+    def _effective_document_type(context: PipelineContext) -> str:
+        doc_type = (context.document_type or "").lower()
+        if doc_type in PAYSLIP_TYPES or doc_type == "boleto":
+            return doc_type
+        extraction_metadata = context.metadata.get("extraction", {})
+        if isinstance(extraction_metadata, dict):
+            inferred = str(
+                extraction_metadata.get("document_type_inferred") or ""
+            ).lower()
+            if inferred:
+                return inferred
+        return doc_type
 
     def _looks_like_boleto(self, text: str, fields: dict) -> bool:
         # Always check structured fields first (they work even without OCR text)
@@ -74,17 +128,20 @@ class ValidateStage(BaseStage):
 
             # ── Raw text path (most complete) ──
             if text and len(text) > 50:
-                structural_flags, _ = _stage1_structural_validation(text)
+                due_date = fields.get("data_vencimento") or fields.get(
+                    "due_date"
+                )
+                structural_flags, _ = _stage1_structural_validation(
+                    text,
+                    due_date=due_date,
+                )
                 linha_flags, _ = _stage3_linha_digitavel_validation(text)
 
                 for flag_text in structural_flags:
-                    sev = Severity.CRITICAL if any(
-                        kw in flag_text.upper()
-                        for kw in ["BANCO_INVALIDO", "CNPJ_INVALIDO",
-                                     "MULTA_ILEGAL", "JUROS_ABUSIVOS"]
-                    ) else Severity.HIGH
+                    code = flag_text.split(":")[0].strip().replace(" ", "_")
+                    sev = _structural_severity(code, flag_text)
                     ctx.add_evidence(Evidence(
-                        code=flag_text.split(":")[0].strip().replace(" ", "_"),
+                        code=code,
                         description=flag_text,
                         severity=sev,
                         source=EvidenceSource.DETERMINISTIC,
@@ -226,41 +283,66 @@ class ValidateStage(BaseStage):
                 confidence=1.0, category="entity", rule_reference="Modulo 11 CNPJ — checksum impossivel",
             ))
 
-    def _validate_dates(self, ctx: PipelineContext, text: str, fields: dict) -> None:
+    def _validate_dates(
+        self,
+        ctx: PipelineContext,
+        text: str,
+        fields: dict,
+        doc_type: str,
+    ) -> None:
         """Date consistency checks."""
         import re as re_dates
         from datetime import date
 
-        if not text:
+        if doc_type in PAYSLIP_TYPES:
             return
-        date_patterns = re_dates.findall(r"\b(\d{2})/(\d{2})/(\d{4})\b", text)
+
+        due_raw = fields.get("data_vencimento") or fields.get("due_date")
+        due_date = _parse_date_value(due_raw)
+        if due_date is not None:
+            candidates = [due_date]
+        else:
+            if not text:
+                return
+            candidates = []
+            for d, m, y in re_dates.findall(
+                r"\b(\d{2})/(\d{2})/(\d{4})\b",
+                text,
+            )[:5]:
+                try:
+                    candidates.append(date(int(y), int(m), int(d)))
+                except ValueError:
+                    continue
+
         today = date.today()
-        for d, m, y in date_patterns[:5]:  # max 5 dates
-            try:
-                doc_date = date(int(y), int(m), int(d))
-                days_overdue = (today - doc_date).days
-                if days_overdue > 365:
-                    ctx.add_evidence(Evidence(
-                        code="BOLETO_SEVERELY_OVERDUE",
-                        description=f"Documento vencido há {days_overdue} dias ({d}/{m}/{y})",
-                        severity=Severity.CRITICAL,
-                        source=EvidenceSource.DETERMINISTIC,
-                        confidence=1.0,
-                        category="temporal",
-                        rule_reference="FEBRABAN fator de vencimento",
-                    ))
-                elif days_overdue > 30:
-                    ctx.add_evidence(Evidence(
-                        code="BOLETO_OVERDUE",
-                        description=f"Documento vencido há {days_overdue} dias ({d}/{m}/{y})",
-                        severity=Severity.HIGH,
-                        source=EvidenceSource.DETERMINISTIC,
-                        confidence=1.0,
-                        category="temporal",
-                        rule_reference="FEBRABAN fator de vencimento",
-                    ))
-            except ValueError:
-                pass
+        for doc_date in candidates:
+            days_overdue = (today - doc_date).days
+            if days_overdue > 365:
+                ctx.add_evidence(Evidence(
+                    code="BOLETO_SEVERELY_OVERDUE",
+                    description=(
+                        f"Documento vencido há {days_overdue} dias "
+                        f"({doc_date.strftime('%d/%m/%Y')})"
+                    ),
+                    severity=Severity.LOW,
+                    source=EvidenceSource.DETERMINISTIC,
+                    confidence=1.0,
+                    category="temporal",
+                    rule_reference="FEBRABAN fator de vencimento",
+                ))
+            elif days_overdue > 30:
+                ctx.add_evidence(Evidence(
+                    code="BOLETO_OVERDUE",
+                    description=(
+                        f"Documento vencido há {days_overdue} dias "
+                        f"({doc_date.strftime('%d/%m/%Y')})"
+                    ),
+                    severity=Severity.INFO,
+                    source=EvidenceSource.DETERMINISTIC,
+                    confidence=1.0,
+                    category="temporal",
+                    rule_reference="FEBRABAN fator de vencimento",
+                ))
 
     def _validate_amounts(self, ctx: PipelineContext, fields: dict) -> None:
         """Value consistency checks."""
@@ -269,7 +351,7 @@ class ValidateStage(BaseStage):
             ctx.add_evidence(Evidence(
                 code="ROUND_AMOUNT_SUSPICIOUS",
                 description=f"Valor redondo R$ {valor:,.2f} — possível boleto fraudulento sem serviço discriminado",
-                severity=Severity.MEDIUM,
+                severity=Severity.LOW,
                 source=EvidenceSource.HEURISTIC,
                 confidence=0.7,
                 category="financial",

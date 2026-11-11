@@ -288,6 +288,9 @@ class RiskAnalyzer:
 
     def _check_dates(self, ctx: dict[str, Any]) -> list[RiskFlag]:
         flags = []
+        doc_type = str(ctx.get("document_type", "")).lower()
+        if doc_type in {"contracheque", "holerite", "payroll", "payslip"}:
+            return flags
         try:
             from datetime import datetime, timezone
 
@@ -302,7 +305,7 @@ class RiskAnalyzer:
                     flags.append(RiskFlag(
                         code="DOCUMENT_EXPIRED",
                         description=f"Document due date {due_str} is in the past.",
-                        severity="low",
+                        severity="info",
                         category="date",
                         evidence=f"Due date: {due_str}, current date: {now.date().isoformat()}.",
                     ))
@@ -385,7 +388,7 @@ class RiskAnalyzer:
                                 f"Boleto vencido há mais de 1 ano "
                                 f"({days_overdue} dias). Altamente suspeito."
                             ),
-                            severity="critical",
+                            severity="low",
                             category="date",
                             evidence=(
                                 f"Due date: {due_date_str}, "
@@ -399,7 +402,7 @@ class RiskAnalyzer:
                                 f"Boleto vencido há {days_overdue} dias. "
                                 "Verificar legitimidade."
                             ),
-                            severity="high",
+                            severity="info",
                             category="date",
                             evidence=(
                                 f"Due date: {due_date_str}, "
@@ -418,7 +421,7 @@ class RiskAnalyzer:
                         f"Valor do boleto (R$ {amount:,.2f}) é redondo — "
                         "comum em boletos fraudulentos sem serviço discriminado."
                     ),
-                    severity="medium",
+                    severity="low",
                     category="financial",
                     evidence=f"Amount: R$ {amount:,.2f}",
                 ))
