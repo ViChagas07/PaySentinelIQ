@@ -25,7 +25,7 @@
       "fraud": 27
     }
   },
-  "code_commit": "75b12321ce73d8cb1c0d1668abf4826088d4f4c8",
+  "code_commit": "7d0fb416d26e51569ef415c12fb35d7829a180fb",
   "sklearn_version": "1.9.0",
   "feature_names": [
     "document_type_boleto",
