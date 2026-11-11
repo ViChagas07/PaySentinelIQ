@@ -87,6 +87,7 @@ class OCRFactory:
                     url=settings.OCR_SERVICE_URL,
                     timeout=settings.OCR_SERVICE_TIMEOUT,
                     api_key=api_key,
+                    engine=settings.OCR_SERVICE_ENGINE,
                 )
             else:
                 from app.services.ocr.paddle_provider import PaddleOCRProvider

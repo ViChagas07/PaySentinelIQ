@@ -298,6 +298,10 @@ class Settings(BaseSettings):
     OCR_SERVICE_URL: str = ""
     OCR_SERVICE_TIMEOUT: float = Field(default=120.0, gt=0)
     OCR_SERVICE_API_KEY: SecretStr | None = None
+    OCR_SERVICE_ENGINE: str = Field(
+        default="auto",
+        pattern="^(auto|paddle|tesseract)$",
+    )
 
     # ── Business ──
     MAX_UPLOAD_SIZE_MB: int = 50

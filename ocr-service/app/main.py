@@ -14,6 +14,7 @@ from app.engine import (
     OCREngine,
     OCRServiceError,
     PageLimitError,
+    PaddleOCRError,
     UnsupportedFileError,
 )
 
@@ -31,6 +32,8 @@ engine = OCREngine(
 )
 
 app = FastAPI(title="PaySentinelIQ OCR Service", version="1.0.0")
+
+VALID_ENGINES = {"auto", "paddle", "tesseract"}
 
 
 def _detect_type(data: bytes) -> str | None:
@@ -70,12 +73,23 @@ async def ocr(
     file: Annotated[UploadFile, File()],
     dpi: Annotated[int | None, Form()] = None,
     max_pages: Annotated[int | None, Form()] = None,
+    engine_name: Annotated[
+        str | None,
+        Form(alias="engine"),
+    ] = None,
     x_ocr_key: Annotated[
         str | None,
         Header(alias="X-OCR-Key"),
     ] = None,
 ) -> dict[str, object]:
     _check_api_key(x_ocr_key)
+
+    selected_engine = (engine_name or "auto").lower()
+    if selected_engine not in VALID_ENGINES:
+        raise HTTPException(
+            status_code=422,
+            detail="engine must be auto, paddle or tesseract",
+        )
 
     request_id = uuid.uuid4().hex[:8]
     max_bytes = int(settings.max_mb * 1024 * 1024)
@@ -110,12 +124,14 @@ async def ocr(
         )
 
     logger.info(
-        "ocr request id=%s started size=%d type=%s dpi=%d max_pages=%d",
+        "ocr request id=%s started size=%d type=%s dpi=%d max_pages=%d "
+        "engine=%s",
         request_id,
         len(data),
         file_type,
         effective_dpi,
         effective_max_pages,
+        selected_engine,
     )
 
     try:
@@ -125,7 +141,15 @@ async def ocr(
             f"upload.{file_type}",
             effective_dpi,
             effective_max_pages,
+            engine=selected_engine,
         )
+    except PaddleOCRError as exc:
+        logger.error(
+            "ocr request id=%s paddle_failed error=%s",
+            request_id,
+            type(exc).__name__,
+        )
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     except PageLimitError as exc:
         logger.warning(
             "ocr request id=%s page_limit pages=%d max=%d",

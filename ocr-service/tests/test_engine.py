@@ -92,6 +92,52 @@ def test_paddle_failure_falls_back(monkeypatch):
     assert result["text"] == "recovered"
 
 
+def test_paddle_engine_does_not_fallback(monkeypatch):
+    engine = OCREngine()
+    tesseract_calls = {"count": 0}
+
+    def failing_paddle(pages):
+        raise OCRServiceError("paddle failed")
+
+    def fake_tesseract(pages):
+        tesseract_calls["count"] += 1
+        return []
+
+    monkeypatch.setattr(engine, "_run_paddle", failing_paddle)
+    monkeypatch.setattr(engine, "_run_tesseract", fake_tesseract)
+
+    with pytest.raises(OCRServiceError, match="PaddleOCR failed"):
+        engine.extract(_png_bytes(), "doc.png", engine="paddle")
+
+    assert tesseract_calls["count"] == 0
+
+
+def test_tesseract_engine_never_calls_paddle(monkeypatch):
+    engine = OCREngine()
+
+    def fake_paddle(pages):
+        raise AssertionError("Paddle must not be called")
+
+    def fake_tesseract(pages):
+        return [
+            {
+                "page_number": 1,
+                "text": "tesseract",
+                "confidence": 0.9,
+                "width": 20,
+                "height": 30,
+            }
+        ]
+
+    monkeypatch.setattr(engine, "_run_paddle", fake_paddle)
+    monkeypatch.setattr(engine, "_run_tesseract", fake_tesseract)
+
+    result = engine.extract(_png_bytes(), "doc.png", engine="tesseract")
+
+    assert result["provider"] == "tesseract"
+    assert result["text"] == "tesseract"
+
+
 def test_ready_is_false_before_paddle_init():
     engine = OCREngine()
 

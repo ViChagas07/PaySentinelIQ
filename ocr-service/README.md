@@ -8,9 +8,10 @@ não extrai texto nativo de PDF; essa etapa continua no backend.
 
 - `GET /health` — 200 enquanto o processo estiver de pé; não carrega modelos.
 - `GET /ready` — 200 somente depois que o PaddleOCR foi inicializado; 503 antes disso.
-- `POST /ocr` — multipart `file` (PDF/PNG/JPEG), `dpi` e `max_pages` opcionais.
-  Retorna `text`, `pages[]`, `confidence`, `provider`, `processing_time_seconds` e
-  `metadata` com valores string.
+- `POST /ocr` — multipart `file` (PDF/PNG/JPEG), `dpi`, `max_pages` e `engine`
+  opcionais. `engine` aceita `auto` (padrão), `paddle` (sem fallback) ou `tesseract`
+  (não inicializa o Paddle). Retorna `text`, `pages[]`, `confidence`, `provider`,
+  `processing_time_seconds` e `metadata` com valores string.
 
 Se `OCR_SERVICE_API_KEY` estiver definida, envie o header `X-OCR-Key`.
 

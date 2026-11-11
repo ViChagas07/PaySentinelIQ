@@ -21,11 +21,13 @@ class RemoteOCRProvider(OCRProvider):
         url: str,
         timeout: float = 120.0,
         api_key: str | None = None,
+        engine: str = "auto",
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._url = url.rstrip("/")
         self._timeout = timeout
         self._api_key = api_key
+        self._engine = engine
         self._transport = transport
 
     async def extract_text(self, file_path: str) -> OCRResult:
@@ -59,6 +61,7 @@ class RemoteOCRProvider(OCRProvider):
                     response = await client.post(
                         f"{self._url}/ocr",
                         files={"file": (path.name, data, mime_type)},
+                        data={"engine": self._engine},
                         headers=headers,
                     )
                 break
@@ -164,4 +167,5 @@ class RemoteOCRProvider(OCRProvider):
             "provider": "remote",
             "url": self._url,
             "timeout": str(self._timeout),
+            "engine": self._engine,
         }

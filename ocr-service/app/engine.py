@@ -18,6 +18,10 @@ class OCRServiceError(Exception):
     pass
 
 
+class PaddleOCRError(OCRServiceError):
+    pass
+
+
 class PageLimitError(OCRServiceError):
     def __init__(self, page_count: int, max_pages: int) -> None:
         self.page_count = page_count
@@ -138,11 +142,17 @@ class OCREngine:
         dpi: int | None = None,
         max_pages: int | None = None,
         force_fallback: bool | None = None,
+        engine: str | None = None,
     ) -> dict[str, Any]:
         with self._ocr_lock:
             start_time = time.monotonic()
             effective_dpi = dpi or self._default_dpi
             effective_max_pages = max_pages or self._max_pages
+            selected_engine = (engine or "auto").lower()
+            if selected_engine not in {"auto", "paddle", "tesseract"}:
+                raise OCRServiceError(
+                    f"Unsupported OCR engine: {selected_engine}"
+                )
             pages = self._load_pages(
                 file_bytes,
                 filename,
@@ -150,7 +160,7 @@ class OCREngine:
                 effective_max_pages,
             )
 
-            use_fallback = (
+            force_fallback = (
                 self._force_fallback
                 if force_fallback is None
                 else force_fallback
@@ -158,7 +168,20 @@ class OCREngine:
             provider = "tesseract"
             used_fallback = True
 
-            if not use_fallback:
+            if selected_engine == "tesseract" or (
+                selected_engine == "auto" and force_fallback
+            ):
+                page_results = self._run_tesseract(pages)
+            elif selected_engine == "paddle":
+                try:
+                    page_results = self._run_paddle(pages)
+                    provider = "paddleocr"
+                    used_fallback = False
+                except Exception as exc:
+                    raise PaddleOCRError(
+                        f"PaddleOCR failed: {type(exc).__name__}"
+                    ) from exc
+            else:
                 try:
                     page_results = self._run_paddle(pages)
                     provider = "paddleocr"
@@ -169,8 +192,6 @@ class OCREngine:
                         type(exc).__name__,
                     )
                     page_results = self._run_tesseract(pages)
-            else:
-                page_results = self._run_tesseract(pages)
 
             duration_ms = int((time.monotonic() - start_time) * 1000)
             confidence = (

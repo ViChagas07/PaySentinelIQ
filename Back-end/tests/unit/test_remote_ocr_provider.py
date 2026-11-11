@@ -71,6 +71,28 @@ async def test_maps_remote_json(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_engine_field_is_sent(tmp_path):
+    file_path = tmp_path / "doc.pdf"
+    _write_file(file_path)
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, json=PAYLOAD)
+
+    provider = RemoteOCRProvider(
+        url="http://ocr.test:8010",
+        timeout=30,
+        engine="tesseract",
+        transport=httpx.MockTransport(handler),
+    )
+    await provider.extract_text(str(file_path))
+
+    assert b'name="engine"' in requests[0].content
+    assert b"tesseract" in requests[0].content
+
+
+@pytest.mark.asyncio
 async def test_key_header_only_when_configured(tmp_path):
     file_path = tmp_path / "doc.pdf"
     _write_file(file_path)
@@ -184,6 +206,7 @@ def test_factory_remote_get_info():
     provider = RemoteOCRProvider(
         url="http://ocr.test:8010",
         timeout=30,
+        engine="paddle",
     )
 
     info = provider.get_info()
@@ -191,3 +214,14 @@ def test_factory_remote_get_info():
     assert info["provider"] == "remote"
     assert info["url"] == "http://ocr.test:8010"
     assert info["timeout"] == "30"
+    assert info["engine"] == "paddle"
+
+
+def test_ocr_service_engine_setting_defaults_to_auto():
+    settings = Settings(_env_file=None)
+
+    assert settings.OCR_SERVICE_ENGINE == "auto"
+    assert Settings(
+        _env_file=None,
+        OCR_SERVICE_ENGINE="paddle",
+    ).OCR_SERVICE_ENGINE == "paddle"

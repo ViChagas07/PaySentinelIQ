@@ -31,12 +31,14 @@ class FakeEngine:
         self.error = error
         self.ready = ready
         self.calls = 0
+        self.kwargs = {}
 
     def is_ready(self):
         return self.ready
 
     def extract(self, *args, **kwargs):
         self.calls += 1
+        self.kwargs = kwargs
         if self.error is not None:
             raise self.error
         return self.result
@@ -158,6 +160,32 @@ def test_ocr_returns_expected_json(client):
     assert body["provider"] == "paddleocr"
     assert body["pages"][0]["page_number"] == 1
     assert fake.calls == 1
+
+
+def test_engine_field_is_forwarded(client):
+    http_client, fake = client
+
+    response = http_client.post(
+        "/ocr",
+        data={"engine": "tesseract"},
+        files={"file": ("doc.png", _png_bytes(), "image/png")},
+    )
+
+    assert response.status_code == 200
+    assert fake.kwargs["engine"] == "tesseract"
+
+
+def test_invalid_engine_returns_422(client):
+    http_client, fake = client
+
+    response = http_client.post(
+        "/ocr",
+        data={"engine": "invalid"},
+        files={"file": ("doc.png", _png_bytes(), "image/png")},
+    )
+
+    assert response.status_code == 422
+    assert fake.calls == 0
 
 
 def test_invalid_page_form_returns_422(client):
