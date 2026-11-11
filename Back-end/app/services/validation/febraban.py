@@ -176,18 +176,21 @@ def _printed_decimal(value: Decimal | int | float | str | None) -> Decimal | Non
 
 def _bank_candidates(
     text: str,
-    codigo_banco: str | None,
+    codigo_banco: str | None = None,
 ) -> list[str]:
-    candidates: list[str] = []
-    for line in text.splitlines()[:15]:
-        candidates.extend(
-            match.group(1)
-            for match in re.finditer(r"\b(\d{3})\s*-\s*\d\b", line)
+    header = "\n".join(text.splitlines()[:15])
+    candidates: list[str] = [
+        match.group(1)
+        for match in re.finditer(r"\b(\d{3})\s*-\s*\d\b", header)
+    ]
+    candidates.extend(
+        match.group(1)
+        for match in re.finditer(
+            r"(?:banco|c[oó]digo\s*(?:do\s*)?banco)\s*:?\s*(\d{3})",
+            header,
+            re.IGNORECASE,
         )
-    if codigo_banco:
-        digits = _digits(codigo_banco)
-        if len(digits) >= 3:
-            candidates.append(digits[:3])
+    )
     return sorted(set(candidates))
 
 

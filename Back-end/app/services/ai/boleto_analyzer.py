@@ -28,7 +28,14 @@ logger = logging.getLogger(__name__)
 # ────────────────────────────────────────────────────────────
 BANCOS_VALIDOS: set[str] = {
     "001",  # Banco do Brasil
+    "003",  # Banco da Amazonia
+    "004",  # Banco do Nordeste
     "033",  # Santander
+    "041",  # Banrisul
+    "070",  # BRB
+    "085",  # Cecred/Ailos
+    "136",  # Unicred
+    "218",  # Banco BS2
     "104",  # Caixa Econômica Federal
     "237",  # Bradesco
     "341",  # Itaú
@@ -46,6 +53,7 @@ BANCOS_VALIDOS: set[str] = {
     "212",  # Banco Original
     "290",  # PagSeguro
     "318",  # Banco BMG
+    "323",  # Mercado Pago
     "336",  # Banco C6
     "380",  # PicPay
     "383",  # Banco BS2
@@ -78,6 +86,10 @@ BANCOS_VALIDOS: set[str] = {
     "611",  # Banco Paulista
     "613",  # Banco Opportunity
 }
+
+
+def _digits(value: str | None) -> str:
+    return "".join(char for char in (value or "") if char.isdigit())
 
 
 def _parse_due_date(value: Any | None) -> date | None:
@@ -123,6 +135,7 @@ def _validate_mod10(digits: str) -> bool:
 def _stage1_structural_validation(
     pdf_text: str,
     due_date: Any | None = None,
+    codigo_banco: str | None = None,
 ) -> tuple[list[str], float]:
     """Deterministic boleto validation rules — NO LLM, pure Python.
 
@@ -137,30 +150,46 @@ def _stage1_structural_validation(
     score = 0.0
 
     # ── 1a. Bank code validation ──
-    # Look for the first 3 digits of a linha digitavel pattern
-    banco_match = re.search(r"\b(\d{3})\d\.", pdf_text)
-    if banco_match:
-        codigo_banco = banco_match.group(1)
-        if codigo_banco not in BANCOS_VALIDOS:
+    # When the linha digitavel exists, its encoded bank is authoritative and
+    # the text is not read for bank candidates. Text reading is a fallback.
+    canonical_bank = _digits(codigo_banco)[:3] if codigo_banco else ""
+    if len(canonical_bank) == 3:
+        if canonical_bank not in BANCOS_VALIDOS:
             structural_flags.append(
-                f"BANCO_INVALIDO: código {codigo_banco} não existe no BACEN"
+                f"BANCO_INVALIDO: código {canonical_bank} não existe no BACEN"
             )
             score += 35  # CRITICAL weight
-            logger.warning("Invalid bank code detected: %s", codigo_banco)
+            logger.warning("Invalid bank code detected: %s", canonical_bank)
+    else:
+        # Look for the first 3 digits of a linha digitavel pattern
+        banco_match = re.search(r"\b(\d{3})\d\.", pdf_text)
+        if banco_match:
+            codigo_texto = banco_match.group(1)
+            if codigo_texto not in BANCOS_VALIDOS:
+                structural_flags.append(
+                    f"BANCO_INVALIDO: código {codigo_texto} não existe no BACEN"
+                )
+                score += 35  # CRITICAL weight
+                logger.warning(
+                    "Invalid bank code detected: %s", codigo_texto
+                )
 
-    # Also try looking for "Banco" label near a 3-digit code
-    banco_label_match = re.search(
-        r"(?:banco|c[oó]digo\s*(?:do\s*)?banco)\s*:?\s*(\d{3})",
-        pdf_text,
-        re.IGNORECASE,
-    )
-    if banco_label_match:
-        codigo_label = banco_label_match.group(1)
-        if codigo_label not in BANCOS_VALIDOS:
-            flag = f"BANCO_INVALIDO: código {codigo_label} rotulado não existe no BACEN"
-            if flag not in structural_flags:
-                structural_flags.append(flag)
-                score += 35
+        # Also try looking for "Banco" label near a 3-digit code
+        banco_label_match = re.search(
+            r"(?:banco|c[oó]digo\s*(?:do\s*)?banco)\s*:?\s*(\d{3})",
+            pdf_text,
+            re.IGNORECASE,
+        )
+        if banco_label_match:
+            codigo_label = banco_label_match.group(1)
+            if codigo_label not in BANCOS_VALIDOS:
+                flag = (
+                    f"BANCO_INVALIDO: código {codigo_label} rotulado "
+                    "não existe no BACEN"
+                )
+                if flag not in structural_flags:
+                    structural_flags.append(flag)
+                    score += 35
 
     # ── 1b. Overdue detection ──
     today = date.today()

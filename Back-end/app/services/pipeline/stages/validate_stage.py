@@ -35,13 +35,38 @@ def _parse_date_value(value) -> date | None:
         return None
 
 
+def _canonical_bank(fields: dict) -> str | None:
+    line = fields.get("linha_digitavel") or fields.get("codigo_barras")
+    digits = "".join(char for char in str(line or "") if char.isdigit())
+    if len(digits) in {44, 47}:
+        return digits[:3]
+    return None
+
+
+def _bank_code_from_text(flag_text: str) -> str:
+    import re
+
+    match = re.search(r"\b(\d{3})\b", flag_text)
+    return match.group(1) if match else ""
+
+
+def _bank_invalid_severity(flag_text: str) -> Severity:
+    code = _bank_code_from_text(flag_text)
+    if len(code) != 3:
+        return Severity.HIGH
+    if code in {"000", "999"}:
+        return Severity.CRITICAL
+    return Severity.MEDIUM
+
+
 def _structural_severity(code: str, flag_text: str) -> Severity:
     if code == "BOLETO_VENCIDO":
         return Severity.INFO
     if code == "VALOR_REDONDO_SUSPEITO":
         return Severity.LOW
+    if code == "BANCO_INVALIDO":
+        return _bank_invalid_severity(flag_text)
     if code in {
-        "BANCO_INVALIDO",
         "CNPJ_INVALIDO",
         "MULTA_ILEGAL",
         "JUROS_ABUSIVOS",
@@ -134,6 +159,7 @@ class ValidateStage(BaseStage):
                 structural_flags, _ = _stage1_structural_validation(
                     text,
                     due_date=due_date,
+                    codigo_banco=_canonical_bank(fields),
                 )
                 linha_flags, _ = _stage3_linha_digitavel_validation(text)
 
@@ -172,7 +198,7 @@ class ValidateStage(BaseStage):
                             ctx.add_evidence(Evidence(
                                 code="BANCO_INVALIDO",
                                 description=f"Codigo de banco {bank_code} nao existe no BACEN ISPB",
-                                severity=Severity.CRITICAL,
+                                severity=_bank_invalid_severity(bank_code),
                                 source=EvidenceSource.DETERMINISTIC,
                                 confidence=1.0,
                                 category="structural",

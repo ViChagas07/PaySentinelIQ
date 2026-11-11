@@ -92,7 +92,7 @@ def test_amount_due_date_and_bank_mismatches():
     )
     assert "BOLETO_DUE_DATE_MISMATCH" in {e.code for e in date_evidences}
 
-    bank_evidences, _, _ = _validate(line, codigo_banco="341")
+    bank_evidences, _, _ = _validate(line, text="Banco: 341-1")
     assert "BOLETO_BANK_MISMATCH" in {e.code for e in bank_evidences}
 
 

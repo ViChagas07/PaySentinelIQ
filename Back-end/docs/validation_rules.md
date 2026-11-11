@@ -32,6 +32,21 @@ arredondado com `ROUND_HALF_UP` a duas casas no fim. Nos componentes do IRRF
 (tabela e redução), o arredondamento a duas casas usa `ROUND_HALF_EVEN` para reproduzir
 os valores oficiais dos exemplos; o resultado final é subtraído já em duas casas.
 
+## Banco
+
+- Quando existe linha digitável (47 dígitos) ou código de barras (44), a
+  validade do banco usa os três primeiros dígitos codificados. O código lido do
+  texto só é usado na ausência da linha.
+- `BANCO_INVALIDO`: `critical` apenas para `000` e `999`; `medium` para código
+  numérico de três dígitos fora da lista; `high` para código não numérico.
+- `BOLETO_BANK_MISMATCH` compara o banco codificado com candidatos impressos
+  obtidos apenas pelo cabeçalho `\b(\d{3})\s*-\s*\d\b` (primeiras 15 linhas) e
+  pelo rótulo de banco do texto. O código canônico derivado da linha nunca entra
+  como candidato impresso. Sem candidato impresso, a regra é pulada e registrada
+  como `missing_banco_impresso`.
+- A lista `BANCOS_VALIDOS` foi completada com `003`, `004`, `041`, `070`, `085`,
+  `136`, `218` e `323`.
+
 ## Política temporal e valor redondo
 
 | Código | Severidade | Regra |
