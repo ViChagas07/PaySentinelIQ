@@ -1,0 +1,38 @@
+{
+  "phase": "6B",
+  "holdout": "v4",
+  "status": "official_execution_failed",
+  "official_result": false,
+  "promoted": false,
+  "preflight": {
+    "passed": true,
+    "checked_at": "2026-11-11T23:01:37.041538+00:00",
+    "head": "f3c3a6008ced331028e8c20b379ccb1e0c16f301",
+    "seal_sha256": "12977cde4cb67bb2453355b883516ecb9c3f4ca6ae55e8e2f86c55b611579cd4",
+    "preflight_sha256": "54c27e7964b3a7d64deadb53e314778f9620a5eec788314c39d662130ef7c166",
+    "model_loaded": false
+  },
+  "measurement": {
+    "exit_code": 0,
+    "observations": 1368,
+    "native": 1000,
+    "ocr_calls": 368,
+    "dump_sha256": "e423343db717e89ea491337cf2820bdd8c8ecf1b61a575e25959f44761dea6a7"
+  },
+  "official_evaluator": {
+    "exit_code": 1,
+    "error": "KeyError: 'threshold'",
+    "location": "app/ml/evaluate_holdout.py:494",
+    "model_loaded": true,
+    "predict_proba_called": false,
+    "metrics_computed": false,
+    "confusion_matrix_computed": false,
+    "log_sha256": "daabf82defb11f57551fbc26276c564cdfd3888e103637784fb9f777b3c5912b"
+  },
+  "single_official_attempt": true,
+  "retry_performed": false,
+  "sealed_components_altered": false,
+  "production_altered": false,
+  "artifact_sha256": "d4100dc572d6238a9f819b078cca0ef50bb8ad04e046bd62bd8dd1325abea33e",
+  "next_action": "human review; new protocol and new holdout required for any retry"
+}

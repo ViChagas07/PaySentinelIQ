@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-11-11T23:01:37.041538+00:00",
+  "head": "f3c3a6008ced331028e8c20b379ccb1e0c16f301",
+  "seal_sha256": "12977cde4cb67bb2453355b883516ecb9c3f4ca6ae55e8e2f86c55b611579cd4",
+  "checks": {
+    "schema_sha256": true,
+    "evaluator_sha256": true,
+    "contract_sha256": true,
+    "generator_sha256": true,
+    "protocol_sha256": true,
+    "records_sha256": true,
+    "manifest_sha256": true,
+    "files_present": true,
+    "files_hashes": true,
+    "files_sha256": true,
+    "lineage_hashes": true,
+    "sample_ids": true,
+    "primary_ids": true,
+    "intersection_zero": true,
+    "no_previous_result": true,
+    "environment": true
+  },
+  "missing_files": [],
+  "mismatched_files": [],
+  "verifier_error": null,
+  "score_or_prediction_computed": false,
+  "passed": true
+}
