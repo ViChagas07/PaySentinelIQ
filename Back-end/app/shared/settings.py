@@ -6,7 +6,7 @@
 from functools import lru_cache
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
-from pydantic import Field, SecretStr, computed_field
+from pydantic import Field, SecretStr, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -219,8 +219,18 @@ class Settings(BaseSettings):
     #   production → gemini (requires GEMINI_API_KEY)
     LLM_PROVIDER: str = Field(
         default="",
-        pattern="^(ollama|openai|anthropic|bedrock|groq|gemini|mock)?$",
+        pattern="^(ollama|openai|anthropic|bedrock|groq|gemini|mock|openai_compatible|lmstudio)?$",
     )
+
+    # ── OpenAI-compatible LLM (LM Studio local / cloud) ──
+    LLM_PROFILE: str = Field(default="", pattern="^(local|cloud)?$")
+    LLM_BASE_URL: str = ""
+    LLM_API_KEY: SecretStr | None = None
+    LLM_MODEL: str = ""
+    LLM_TIMEOUT: float | None = Field(default=None, gt=0)
+    LLM_MAX_RETRIES: int = Field(default=3, ge=0)
+    LLM_REASONING_EFFORT: str = "none"
+    LLM_MAX_CONCURRENCY: int | None = Field(default=None, gt=0)
 
     # ── Shared LLM Settings ──
     AI_TEMPERATURE: float = 0.1
@@ -309,11 +319,30 @@ class Settings(BaseSettings):
     BREACH_AFFECTED_THRESHOLD: int = 50  # Notify all subjects if affected > this number
     BREACH_AUTO_NOTIFY_ANPD: bool = True  # Auto-trigger notification task on registration
 
+    @model_validator(mode="after")
+    def _apply_llm_profile_defaults(self) -> "Settings":
+        """Fill profile-specific defaults only when the variable was not informed."""
+        if self.LLM_PROFILE == "local":
+            if not self.LLM_BASE_URL:
+                self.LLM_BASE_URL = "http://localhost:1234/v1"
+            if self.LLM_TIMEOUT is None:
+                self.LLM_TIMEOUT = 180.0
+            if self.LLM_MAX_CONCURRENCY is None:
+                self.LLM_MAX_CONCURRENCY = 1
+        elif self.LLM_PROFILE == "cloud":
+            if self.LLM_TIMEOUT is None:
+                self.LLM_TIMEOUT = 60.0
+            if self.LLM_MAX_CONCURRENCY is None:
+                self.LLM_MAX_CONCURRENCY = 4
+        return self
+
     # ── Environment-based computed defaults ──
     @computed_field
     @property
     def effective_llm_provider(self) -> str:
-        """Determine effective LLM provider based on ENVIRONMENT."""
+        """Determine effective LLM provider based on LLM_PROFILE or ENVIRONMENT."""
+        if self.LLM_PROFILE:
+            return "openai_compatible"
         if self.ENVIRONMENT == "demo":
             return "ollama"  # Local Ollama with Qwen3 1.7B for demo
         if self.ENVIRONMENT == "development":
