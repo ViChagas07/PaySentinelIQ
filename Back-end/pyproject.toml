@@ -66,6 +66,14 @@ aiosqlite = "^0.20.0"
 aio-pika = "^10.0.0"
 
 
+[tool.poetry.group.ocr-paddle]
+optional = true
+
+[tool.poetry.group.ocr-paddle.dependencies]
+paddlepaddle = "^3.0"
+paddleocr = "2.10.0"
+
+
 [tool.poetry]
 package-mode = false
 
@@ -90,6 +98,9 @@ explicit_package_bases = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "ocr: integration tests that require the optional ocr-paddle group",
+]
 pythonpath = ["."]
 filterwarnings = [
     # Suppress third-party deprecation warnings (sentry-sdk, langchain)
