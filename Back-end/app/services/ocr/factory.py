@@ -59,6 +59,50 @@ class OCRFactory:
                 temp_dir=kwargs.get("temp_dir"),
             )
 
+        elif provider_type in ("paddleocr", "auto"):
+            from app.services.ocr.native_text_provider import (
+                NativeTextFirstOCRProvider,
+            )
+            from app.services.ocr.paddle_provider import PaddleOCRProvider
+
+            settings = _get_ocr_settings()
+            dpi = kwargs.get("dpi", settings.OCR_DPI)
+            max_pages = kwargs.get("max_pages", settings.OCR_MAX_PAGES)
+            min_native_chars = kwargs.get(
+                "min_native_chars",
+                settings.OCR_NATIVE_TEXT_MIN_CHARS,
+            )
+            primary = PaddleOCRProvider(
+                language=kwargs.get(
+                    "language",
+                    settings.OCR_PADDLE_LANG,
+                ),
+                dpi=dpi,
+                max_pages=max_pages,
+            )
+
+            if provider_type == "paddleocr":
+                return NativeTextFirstOCRProvider(
+                    primary=primary,
+                    dpi=dpi,
+                    max_pages=max_pages,
+                    min_native_chars=min_native_chars,
+                )
+
+            def _tesseract_fallback() -> OCRProvider:
+                return TesseractOCRProvider(
+                    language=settings.OCR_LANGUAGE,
+                    preprocess=settings.OCR_PREPROCESS,
+                )
+
+            return NativeTextFirstOCRProvider(
+                primary=primary,
+                fallback_factory=_tesseract_fallback,
+                dpi=dpi,
+                max_pages=max_pages,
+                min_native_chars=min_native_chars,
+            )
+
         elif provider_type == "textract":
             # Future: AWS Textract integration
             # from app.services.ocr.textract_provider import TextractOCRProvider
@@ -72,8 +116,15 @@ class OCRFactory:
 
         else:
             raise OCRException(
-                f"Unknown OCR provider: '{provider_type}'. Supported: tesseract"
+                f"Unknown OCR provider: '{provider_type}'. Supported: "
+                "tesseract, paddleocr, auto"
             )
+
+
+def _get_ocr_settings() -> Any:
+    from app.shared.settings import get_settings
+
+    return get_settings()
 
 
 def _get_ocr_provider_type() -> str:

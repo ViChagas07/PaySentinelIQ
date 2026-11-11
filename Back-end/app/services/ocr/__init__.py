@@ -13,6 +13,8 @@ from app.services.ocr.exceptions import (
     PDFConversionException,
 )
 from app.services.ocr.tesseract_provider import TesseractOCRProvider
+from app.services.ocr.paddle_provider import PaddleOCRProvider
+from app.services.ocr.native_text_provider import NativeTextFirstOCRProvider
 from app.services.ocr.factory import OCRFactory, get_ocr_provider
 from app.services.ocr.extraction_service import DocumentExtractionService
 from app.services.ocr.pdf_text_extractor import (
@@ -32,6 +34,8 @@ __all__ = [
     "OCRProcessingException",
     "PDFConversionException",
     "TesseractOCRProvider",
+    "PaddleOCRProvider",
+    "NativeTextFirstOCRProvider",
     "OCRFactory",
     "get_ocr_provider",
     "DocumentExtractionService",

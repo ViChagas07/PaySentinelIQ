@@ -288,10 +288,13 @@ class Settings(BaseSettings):
     ENABLE_BENCHMARK: bool = False               # Performance benchmark mode
 
     # ── OCR ──
-    OCR_PROVIDER: str = "tesseract"  # "tesseract" (today) or "textract" (future)
+    OCR_PROVIDER: str = "tesseract"  # tesseract | paddleocr | auto
     OCR_LANGUAGE: str = "por+eng"    # Tesseract language codes
     OCR_PREPROCESS: bool = True      # Enable image preprocessing
     OCR_DPI: int = 300               # DPI for PDF-to-image conversion
+    OCR_PADDLE_LANG: str = "latin"
+    OCR_MAX_PAGES: int = Field(default=10, gt=0)
+    OCR_NATIVE_TEXT_MIN_CHARS: int = Field(default=50, ge=0)
 
     # ── Business ──
     MAX_UPLOAD_SIZE_MB: int = 50
