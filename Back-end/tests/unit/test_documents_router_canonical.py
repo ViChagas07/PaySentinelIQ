@@ -335,7 +335,9 @@ async def test_router_exposes_validation_and_changes_risk(
     assert consistent["metadata"]["validation"]["findings"] == {}
 
     adulterated = await run_document(BOLETO_ADULTERATED)
-    assert adulterated["risk_score"] >= 70
+    # OCR provenance mitigation (5B.6) downgrades the critical amount mismatch
+    # by one level, so the OCR path lands in MEDIUM instead of HIGH.
+    assert adulterated["risk_score"] >= 40
     assert (
         "BOLETO_AMOUNT_MISMATCH"
         in adulterated["metadata"]["validation"]["findings"]

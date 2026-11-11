@@ -204,7 +204,6 @@ def _capture_evidence_stages(
 ) -> dict[str, str]:
     stages: dict[str, str] = {}
     original_single = context.add_evidence
-    original_many = context.add_evidences
 
     def add_single(evidence) -> None:
         had = any(item.code == evidence.code for item in context.evidences)

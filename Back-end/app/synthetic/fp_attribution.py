@@ -96,7 +96,7 @@ def _severity(value: str) -> Severity:
         return Severity.INFO
 
 
-def _evidence(item: dict) -> Evidence:
+def _evidence(item: dict[str, Any]) -> Evidence:
     return Evidence(
         code=item.get("code", "UNKNOWN"),
         description=item.get("description", ""),
@@ -145,7 +145,7 @@ def _decisive_set(
     fusion = FusionEngine()
     contributions = fusion._calculate_contributions(current)
     ranked = sorted(
-        zip(current, contributions),
+        zip(current, contributions, strict=True),
         key=lambda pair: pair[1].contribution,
         reverse=True,
     )
@@ -179,7 +179,7 @@ def _normalized(value: Any, kind: str) -> str:
 
 def _cause(
     code: str,
-    item: dict,
+    item: dict[str, Any],
 ) -> tuple[str, str, str]:
     mapping = FIELD_BY_CODE.get(code)
     if mapping is None:
@@ -228,8 +228,8 @@ def _bank_candidates(text: str) -> set[str]:
     return candidates
 
 
-def _legit_by_path(dump: list[dict]) -> dict[str, list[dict]]:
-    grouped: dict[str, list[dict]] = defaultdict(list)
+def _legit_by_path(dump: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in dump:
         if not item["is_fraud"]:
             grouped[item["path"]].append(item)
@@ -237,7 +237,7 @@ def _legit_by_path(dump: list[dict]) -> dict[str, list[dict]]:
 
 
 def _table_codes(
-    legit: dict[str, list[dict]],
+    legit: dict[str, list[dict[str, Any]]],
 ) -> list[str]:
     lines = [
         "## a) Códigos de evidência disparados em documentos legítimos",
@@ -256,8 +256,9 @@ def _table_codes(
                 code = evidence["code"]
                 code_docs[code] += 1
                 severity = evidence.get("severity", "info")
+                code_severity.setdefault(code, severity)
                 if SEVERITY_ORDER.index(severity) > SEVERITY_ORDER.index(
-                    code_severity.get(code, "info")
+                    code_severity[code]
                 ):
                     code_severity[code] = severity
                 code_stage.setdefault(code, evidence.get("stage", "unknown"))
@@ -274,7 +275,7 @@ def _table_codes(
 
 
 def _table_decisive(
-    legit: dict[str, list[dict]],
+    legit: dict[str, list[dict[str, Any]]],
 ) -> list[str]:
     lines = [
         "## b) Conjunto decisivo dos legítimos com score >= 70",
@@ -336,7 +337,7 @@ def _table_decisive(
 
 
 def _table_new_rules(
-    legit: dict[str, list[dict]],
+    legit: dict[str, list[dict[str, Any]]],
 ) -> list[str]:
     lines = [
         "## c) Causa das evidências BOLETO_* e PAYSLIP_* em legítimos",
@@ -375,7 +376,7 @@ def _table_new_rules(
 
 
 def _bank_coverage(
-    legit: dict[str, list[dict]],
+    legit: dict[str, list[dict[str, Any]]],
 ) -> list[str]:
     lines = [
         "## d) Cobertura do código de banco impresso em boletos legítimos",

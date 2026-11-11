@@ -112,7 +112,7 @@ def _summary(dump: list[dict[str, Any]]) -> list[str]:
         "Recall multi >= 70 |",
         "|---|---|---:|---:|---:|---:|---:|---:|",
     ]
-    confusion: dict[tuple[str, str, str], int] = Counter()
+    confusion: dict[tuple[str, str, str, str], int] = Counter()
     for variant in VARIANTS:
         for path_name in sorted(by_path):
             items = by_path[path_name]

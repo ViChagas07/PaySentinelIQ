@@ -17,7 +17,7 @@ from app.core.contracts.pipeline_context import PipelineContext
 PAYSLIP_TYPES = {"contracheque", "holerite", "payroll", "payslip"}
 
 
-def _parse_date_value(value) -> date | None:
+def _parse_date_value(value: object) -> date | None:
     if isinstance(value, datetime):
         return value.date()
     if isinstance(value, date):
@@ -35,7 +35,7 @@ def _parse_date_value(value) -> date | None:
         return None
 
 
-def _canonical_bank(fields: dict) -> str | None:
+def _canonical_bank(fields: dict[str, object]) -> str | None:
     line = fields.get("linha_digitavel") or fields.get("codigo_barras")
     digits = "".join(char for char in str(line or "") if char.isdigit())
     if len(digits) in {44, 47}:
