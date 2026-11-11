@@ -1,8 +1,31 @@
 {
   "phase": "6B",
+  "command": "poetry run python -m app.ml.train",
+  "seed": 42,
+  "evaluation_role": "desenvolvimento/avaliação; não holdout intocado",
   "dataset_version": "v2.1",
+  "dataset_generator_version": "v2.1",
+  "dataset_generated_on": "2026-11-11",
   "dataset_records_sha256": "2a8f71d078d4a91efd2a86918991f82a41470601001f9b68d991d7f70e742663",
-  "code_commit": "86893d36b1a900ab586856df207045b99ef8029c",
+  "n_by_split": {
+    "train": {
+      "legit": 416,
+      "fraud": 162
+    },
+    "val": {
+      "legit": 100,
+      "fraud": 40
+    },
+    "test_iid": {
+      "legit": 109,
+      "fraud": 39
+    },
+    "test_shift": {
+      "legit": 69,
+      "fraud": 27
+    }
+  },
+  "code_commit": "75b12321ce73d8cb1c0d1668abf4826088d4f4c8",
   "sklearn_version": "1.9.0",
   "feature_names": [
     "document_type_boleto",
