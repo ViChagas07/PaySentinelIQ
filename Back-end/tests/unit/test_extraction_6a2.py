@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from app.core.contracts.pipeline_context import PipelineContext
 from app.services.extraction.adapter import to_pipeline_fields
@@ -7,6 +8,8 @@ from app.services.extraction.dates import parse_date
 from app.services.extraction.payslip_extractor import extract_payslip_fields
 from app.services.pipeline.stages.validate_stage import ValidateStage
 from app.services.validation.payslip_rules import validate_payslip
+from app.synthetic.payslip_calc import irrf
+from app.synthetic.records import build_document
 
 
 def test_english_month_name_due_date_is_parsed_after_label():
@@ -103,3 +106,104 @@ def test_english_ambiguous_date_keeps_month_first_display_value():
 
     assert parsed.value == date(2026, 1, 2)
     assert parsed.ambiguous is True
+
+
+def test_ambiguous_english_date_is_not_resurrected_by_legacy_fields():
+    fields = extract_boleto_fields(
+        "Due Date: 01/02/2026\n"
+        "Document Amount: 1,234.56\n"
+        "Digitable Line: 00191234567890123456789012345678901234567890\n"
+    )
+    adapted = to_pipeline_fields(fields, "boleto")
+    context = PipelineContext(
+        document_type="boleto",
+        extracted_fields={
+            "data_vencimento": "01/02/2026",
+            "due_date": "2026-02-01T00:00:00+00:00",
+        },
+        extracted_text="Boleto vencido em 01/02/2020. " * 3,
+    )
+    context.extracted_fields.update(adapted)
+
+    assert context.extracted_fields["data_vencimento"] is None
+    assert context.extracted_fields["due_date"] is None
+    assert context.extracted_fields["data_vencimento_ambiguous"] is True
+
+    ValidateStage().execute(context)
+    codes = {evidence.code for evidence in context.evidences}
+    assert "BOLETO_OVERDUE" not in codes
+    assert "BOLETO_SEVERELY_OVERDUE" not in codes
+    assert "BOLETO_VENCIDO" not in codes
+
+
+def test_locale_inconsistent_date_does_not_feed_due_rules():
+    fields = extract_boleto_fields(
+        "Beneficiário do Título: ACME Fictícia Ltda\n"
+        "Data de Vencimento: 02/13/2026\n"
+        "Valor Nominal: 1.234,56\n"
+        "Linha Digitável: 00191234567890123456789012345678901234567890\n"
+    )
+    output = to_pipeline_fields(fields, "boleto")
+
+    assert output["data_vencimento"] is None
+    assert output["data_vencimento_locale_inconsistent"] is True
+
+    context = PipelineContext(
+        document_type="boleto",
+        extracted_fields=output,
+        extracted_text="Boleto vencido em 01/02/2020. " * 3,
+    )
+    ValidateStage().execute(context)
+
+    codes = {evidence.code for evidence in context.evidences}
+    assert "BOLETO_OVERDUE" not in codes
+    assert "BOLETO_SEVERELY_OVERDUE" not in codes
+    assert "BOLETO_VENCIDO" not in codes
+
+
+def test_valid_native_due_date_still_feeds_rules():
+    fields = extract_boleto_fields(
+        "Beneficiário do Título: ACME Fictícia Ltda\n"
+        "Data de Vencimento: 20/01/2027\n"
+        "Valor Nominal: 1.234,56\n"
+        "Linha Digitável: 00191234567890123456789012345678901234567890\n"
+    )
+    output = to_pipeline_fields(fields, "boleto")
+
+    assert output["data_vencimento"] == "20/01/2027"
+    assert output.get("data_vencimento_ambiguous") is None
+
+    context = PipelineContext(
+        document_type="boleto",
+        extracted_fields=output,
+        extracted_text="Boleto com vencimento futuro. " * 3,
+    )
+    ValidateStage().execute(context)
+
+    codes = {evidence.code for evidence in context.evidences}
+    assert "BOLETO_OVERDUE" not in codes
+    assert "BOLETO_SEVERELY_OVERDUE" not in codes
+
+
+def test_p3_tamper_never_uses_a_zero_irrf_base():
+    for index in range(4):
+        document = build_document(
+            index=7000 + index,
+            base_seed=42,
+            doc_kind="contracheque",
+            language="pt",
+            layout="A",
+            label_set="set1",
+            split="train",
+            tamper_types=["P3"],
+            today=date(2026, 11, 11),
+        )
+        fields = document.fields
+        original_irrf = irrf(
+            Decimal(fields["salario_bruto"]),
+            Decimal(fields["inss"]),
+            int(fields["dependentes"]),
+        )
+
+        assert original_irrf > 0
+        assert Decimal(fields["irrf"]) == Decimal("0.00")

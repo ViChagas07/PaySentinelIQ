@@ -533,6 +533,27 @@ def _make_payslip(
         other_deductions=other,
         mode=mode,
     )
+    if "P3" in document.tamper_types:
+        # P3 means "IRRF zerado". A base document with IRRF already zero
+        # would make the tamper a no-op, so regenerate the salary inputs
+        # until the original IRRF is material.
+        attempts = 0
+        while Decimal(values["irrf"]) <= 0 and attempts < 100:
+            attempts += 1
+            base_salary = Decimal(rng.randrange(300000, 800000)) / Decimal("100")
+            additional = Decimal(rng.randrange(0, 150000)) / Decimal("100")
+            dependents = rng.randrange(0, 4)
+            other = Decimal(rng.choice(("0.00", "50.00", "120.00", "200.00")))
+            mode = rng.choice(("end", "truncate", "per_bracket"))
+            values = calculate_payslip(
+                base_salary=base_salary,
+                additional=additional,
+                dependents=dependents,
+                other_deductions=other,
+                mode=mode,
+            )
+        if Decimal(values["irrf"]) <= 0:
+            raise RuntimeError("P3 tamper could not find a base with IRRF > 0")
     if document.split == "golden":
         period = "10/2026"
         admission = today - timedelta(days=20)
@@ -591,16 +612,11 @@ def _make_payslip(
             )
         elif tamper == "P3":
             original_irrf = Decimal(fields["irrf"])
-            # A no-op tamper cannot be detected. When the original IRRF is
-            # already zero, move it by a material delta instead.
-            new_irrf = (
-                Decimal("0.00")
-                if original_irrf > 0
-                else Decimal("123.45")
-            )
-            fields["irrf"] = str(new_irrf)
+            if original_irrf <= 0:
+                raise RuntimeError("P3 tamper would be a no-op")
+            fields["irrf"] = "0.00"
             fields["total_descontos"] = str(
-                Decimal(fields["total_descontos"]) + new_irrf - original_irrf
+                Decimal(fields["total_descontos"]) - original_irrf
             )
             fields["salario_liquido"] = str(
                 Decimal(fields["salario_bruto"])

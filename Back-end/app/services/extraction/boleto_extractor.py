@@ -200,6 +200,11 @@ def _extract_labeled(
                         f"{field}: ambiguous date {parsed_date.raw!r}"
                     )
                     confidence = 0.6
+                if parsed_date.locale_inconsistent:
+                    fields.warnings.append(
+                        f"{field}: locale inconsistency {parsed_date.raw!r}"
+                    )
+                    confidence = 0.6
                 _assign(
                     fields,
                     field,

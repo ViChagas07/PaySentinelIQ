@@ -81,6 +81,7 @@ def test_parse_date_rejects_invalid_and_resolves_only_valid_month_first():
     parsed = parse_date("02/13/2026", "pt")
     assert parsed.value == date(2026, 2, 13)
     assert parsed.ambiguous is False
+    assert parsed.locale_inconsistent is True
 
 
 @pytest.mark.parametrize(

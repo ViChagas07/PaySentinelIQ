@@ -10,8 +10,8 @@ from typing import Any
 from app.synthetic.records import SyntheticDocument, build_document
 from app.synthetic.render import render_all, render_variant
 
-GENERATOR_VERSION = "v2"
-DEFAULT_DATASET_VERSION = "v2"
+GENERATOR_VERSION = "v2.1"
+DEFAULT_DATASET_VERSION = "v2.1"
 LANGUAGES = ("pt", "es", "en")
 LAYOUTS = ("A", "B", "C")
 BOLETO_NAIVE = ("B1", "B2", "B3", "B4", "B5", "B8")

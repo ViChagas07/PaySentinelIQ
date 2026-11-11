@@ -155,6 +155,7 @@ class ValidateStage(BaseStage):
             if text and len(text) > 50:
                 ambiguous_due = bool(
                     fields.get("data_vencimento_ambiguous")
+                    or fields.get("data_vencimento_locale_inconsistent")
                 )
                 due_date = (
                     None
@@ -329,7 +330,9 @@ class ValidateStage(BaseStage):
 
         if doc_type in PAYSLIP_TYPES:
             return
-        if fields.get("data_vencimento_ambiguous"):
+        if fields.get("data_vencimento_ambiguous") or fields.get(
+            "data_vencimento_locale_inconsistent"
+        ):
             return
 
         due_raw = fields.get("data_vencimento") or fields.get("due_date")

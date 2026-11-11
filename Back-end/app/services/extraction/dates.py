@@ -70,6 +70,7 @@ class NormalizedDate:
     value: date
     raw: str
     ambiguous: bool
+    locale_inconsistent: bool = False
 
 
 def _month_from_name(name: str) -> int | None:
@@ -84,12 +85,24 @@ def _expand_year(raw_year: str) -> int:
     return year
 
 
-def _make_date(year: int, month: int, day: int, raw: str, ambiguous: bool) -> NormalizedDate:
+def _make_date(
+    year: int,
+    month: int,
+    day: int,
+    raw: str,
+    ambiguous: bool,
+    locale_inconsistent: bool = False,
+) -> NormalizedDate:
     try:
         value = date(year, month, day)
     except ValueError as exc:
         raise ValueError(f"Invalid date: {raw!r}") from exc
-    return NormalizedDate(value=value, raw=raw, ambiguous=ambiguous)
+    return NormalizedDate(
+        value=value,
+        raw=raw,
+        ambiguous=ambiguous,
+        locale_inconsistent=locale_inconsistent,
+    )
 
 
 def parse_date(
@@ -118,12 +131,21 @@ def parse_date(
         second_int = int(second)
         year = _expand_year(year_text)
 
+        lang = (lang_hint or "").strip().lower()
         if first_int > 12:
             return _make_date(year, second_int, first_int, raw, False)
         if second_int > 12:
-            # Only month-first can be valid here, regardless of locale.
-            return _make_date(year, first_int, second_int, raw, False)
-        lang = (lang_hint or "").strip().lower()
+            # Only month-first can be valid, but pt/es documents are expected
+            # to use dd/mm. Record the locale inconsistency so the field does
+            # not feed deterministic due-date rules silently.
+            return _make_date(
+                year,
+                first_int,
+                second_int,
+                raw,
+                False,
+                locale_inconsistent=lang in {"pt", "es"},
+            )
         if lang in {"pt", "es"}:
             # The locale defines day-first; this is a documented convention,
             # not a numeric guess.

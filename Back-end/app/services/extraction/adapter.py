@@ -45,9 +45,13 @@ def _int_value(value: Any) -> int | None:
         return None
 
 
-def _ambiguous_date(fields: CanonicalFields, name: str) -> bool:
-    prefix = f"{name}: ambiguous date"
+def _date_flag(fields: CanonicalFields, name: str, reason: str) -> bool:
+    prefix = f"{name}: {reason}"
     return any(warning.startswith(prefix) for warning in fields.warnings)
+
+
+def _ambiguous_date(fields: CanonicalFields, name: str) -> bool:
+    return _date_flag(fields, name, "ambiguous date")
 
 
 def _detail(field: ExtractedValue) -> dict[str, Any]:
@@ -90,10 +94,19 @@ def _map_boleto(output: dict[str, Any], fields: CanonicalFields) -> None:
     if due is not None and due.confidence >= _CONFIDENCE_THRESHOLD:
         due_date = _date_value(due.value)
         if due_date is not None:
-            if _ambiguous_date(fields, "data_vencimento"):
+            ambiguous = _ambiguous_date(fields, "data_vencimento")
+            inconsistent = _date_flag(
+                fields,
+                "data_vencimento",
+                "locale inconsistency",
+            )
+            if ambiguous or inconsistent:
                 output["data_vencimento"] = None
                 output["due_date"] = None
-                output["data_vencimento_ambiguous"] = True
+                if ambiguous:
+                    output["data_vencimento_ambiguous"] = True
+                if inconsistent:
+                    output["data_vencimento_locale_inconsistent"] = True
                 output["data_vencimento_raw"] = due.raw
             else:
                 output["data_vencimento"] = due_date.strftime("%d/%m/%Y")
