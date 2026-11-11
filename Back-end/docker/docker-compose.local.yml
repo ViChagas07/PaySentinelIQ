@@ -50,6 +50,27 @@ services:
     command: >
       sh -c "ollama serve & sleep 10 && ollama pull $${OLLAMA_MODEL} && wait"
 
+  ocr:
+    build:
+      context: ../../ocr-service
+      dockerfile: Dockerfile
+    mem_limit: 4g
+    ports:
+      - "8010:8010"
+    environment:
+      - OCR_SERVICE_MAX_MB=${OCR_SERVICE_MAX_MB:-25}
+      - OCR_SERVICE_MAX_PAGES=${OCR_SERVICE_MAX_PAGES:-10}
+      - OCR_SERVICE_DPI=${OCR_SERVICE_DPI:-300}
+      - OCR_SERVICE_API_KEY=${OCR_SERVICE_API_KEY:-}
+      - OCR_SERVICE_FORCE_FALLBACK=${OCR_SERVICE_FORCE_FALLBACK:-0}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+
   # ── API (local dev) ──
   api:
     build:
@@ -76,12 +97,16 @@ services:
       - LLM_MAX_RETRIES=${LLM_MAX_RETRIES:-3}
       - LLM_REASONING_EFFORT=${LLM_REASONING_EFFORT:-none}
       - LLM_MAX_CONCURRENCY=${LLM_MAX_CONCURRENCY:-1}
+      - OCR_PROVIDER=auto
+      - OCR_SERVICE_URL=http://ocr:8010
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
       ollama:
+        condition: service_started
+      ocr:
         condition: service_started
     volumes:
       - ..:/app
