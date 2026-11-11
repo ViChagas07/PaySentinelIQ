@@ -21,14 +21,24 @@ class RemoteOCRProvider(OCRProvider):
         url: str,
         timeout: float = 120.0,
         api_key: str | None = None,
-        engine: str = "auto",
+        engine: str | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._url = url.rstrip("/")
         self._timeout = timeout
         self._api_key = api_key
-        self._engine = engine
+        self._engine_override = engine
         self._transport = transport
+
+    def _configured_engine(self) -> str:
+        if self._engine_override is not None:
+            return self._engine_override
+        try:
+            from app.shared.settings import get_settings
+
+            return get_settings().OCR_SERVICE_ENGINE
+        except Exception:
+            return "auto"
 
     async def extract_text(self, file_path: str) -> OCRResult:
         if not self._url:
@@ -61,7 +71,7 @@ class RemoteOCRProvider(OCRProvider):
                     response = await client.post(
                         f"{self._url}/ocr",
                         files={"file": (path.name, data, mime_type)},
-                        data={"engine": self._engine},
+                        data={"engine": self._configured_engine()},
                         headers=headers,
                     )
                 break
@@ -167,5 +177,5 @@ class RemoteOCRProvider(OCRProvider):
             "provider": "remote",
             "url": self._url,
             "timeout": str(self._timeout),
-            "engine": self._engine,
+            "engine": self._configured_engine(),
         }

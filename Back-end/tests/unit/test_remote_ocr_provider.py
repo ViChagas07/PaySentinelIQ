@@ -217,6 +217,17 @@ def test_factory_remote_get_info():
     assert info["engine"] == "paddle"
 
 
+def test_provider_engine_comes_from_settings(monkeypatch):
+    settings = Settings(
+        _env_file=None,
+        OCR_SERVICE_ENGINE="tesseract",
+    )
+    monkeypatch.setattr("app.shared.settings.get_settings", lambda: settings)
+    provider = RemoteOCRProvider(url="http://ocr.test:8010")
+
+    assert provider.get_info()["engine"] == "tesseract"
+
+
 def test_ocr_service_engine_setting_defaults_to_auto():
     settings = Settings(_env_file=None)
 
