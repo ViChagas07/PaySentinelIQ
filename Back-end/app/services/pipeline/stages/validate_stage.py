@@ -153,13 +153,20 @@ class ValidateStage(BaseStage):
 
             # ── Raw text path (most complete) ──
             if text and len(text) > 50:
-                due_date = fields.get("data_vencimento") or fields.get(
-                    "due_date"
+                ambiguous_due = bool(
+                    fields.get("data_vencimento_ambiguous")
+                )
+                due_date = (
+                    None
+                    if ambiguous_due
+                    else fields.get("data_vencimento")
+                    or fields.get("due_date")
                 )
                 structural_flags, _ = _stage1_structural_validation(
                     text,
                     due_date=due_date,
                     codigo_banco=_canonical_bank(fields),
+                    skip_due_date=ambiguous_due,
                 )
                 linha_flags, _ = _stage3_linha_digitavel_validation(text)
 
@@ -321,6 +328,8 @@ class ValidateStage(BaseStage):
         from datetime import date
 
         if doc_type in PAYSLIP_TYPES:
+            return
+        if fields.get("data_vencimento_ambiguous"):
             return
 
         due_raw = fields.get("data_vencimento") or fields.get("due_date")

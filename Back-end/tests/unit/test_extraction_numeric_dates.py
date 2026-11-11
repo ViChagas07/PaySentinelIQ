@@ -53,7 +53,8 @@ def test_parse_amount_rejects_invalid_values():
         ("20.01.2026", "pt", date(2026, 1, 20), False),
         ("20/01/26", "pt", date(2026, 1, 20), False),
         ("2026-01-20", "en", date(2026, 1, 20), False),
-        ("01/02/2026", "pt", date(2026, 2, 1), True),
+        ("01/02/2026", "pt", date(2026, 2, 1), False),
+        ("01/02/2026", "en", date(2026, 1, 2), True),
         ("13/02/2026", "pt", date(2026, 2, 13), False),
         ("02/13/2026", "en", date(2026, 2, 13), False),
         ("15 de janeiro de 2026", "pt", date(2026, 1, 15), False),
@@ -73,12 +74,13 @@ def test_parse_date(raw, lang, value, ambiguous):
     assert parsed.ambiguous is ambiguous
 
 
-def test_parse_date_rejects_invalid_or_month_first_without_en():
+def test_parse_date_rejects_invalid_and_resolves_only_valid_month_first():
     with pytest.raises(ValueError):
         parse_date("31/02/2026", "pt")
 
-    with pytest.raises(ValueError):
-        parse_date("02/13/2026", "pt")
+    parsed = parse_date("02/13/2026", "pt")
+    assert parsed.value == date(2026, 2, 13)
+    assert parsed.ambiguous is False
 
 
 @pytest.mark.parametrize(

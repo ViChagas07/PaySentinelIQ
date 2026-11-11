@@ -45,6 +45,11 @@ def _int_value(value: Any) -> int | None:
         return None
 
 
+def _ambiguous_date(fields: CanonicalFields, name: str) -> bool:
+    prefix = f"{name}: ambiguous date"
+    return any(warning.startswith(prefix) for warning in fields.warnings)
+
+
 def _detail(field: ExtractedValue) -> dict[str, Any]:
     if isinstance(field.value, Decimal):
         value = str(field.value)
@@ -85,12 +90,18 @@ def _map_boleto(output: dict[str, Any], fields: CanonicalFields) -> None:
     if due is not None and due.confidence >= _CONFIDENCE_THRESHOLD:
         due_date = _date_value(due.value)
         if due_date is not None:
-            output["data_vencimento"] = due_date.strftime("%d/%m/%Y")
-            output["due_date"] = datetime.combine(
-                due_date,
-                time.min,
-                tzinfo=timezone.utc,
-            ).isoformat()
+            if _ambiguous_date(fields, "data_vencimento"):
+                output["data_vencimento"] = None
+                output["due_date"] = None
+                output["data_vencimento_ambiguous"] = True
+                output["data_vencimento_raw"] = due.raw
+            else:
+                output["data_vencimento"] = due_date.strftime("%d/%m/%Y")
+                output["due_date"] = datetime.combine(
+                    due_date,
+                    time.min,
+                    tzinfo=timezone.utc,
+                ).isoformat()
 
     issued = fields.data_documento
     if issued is not None and issued.confidence >= _CONFIDENCE_THRESHOLD:

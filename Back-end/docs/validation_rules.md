@@ -4,6 +4,35 @@ Todas as regras abaixo são determinísticas, não usam LLM nem rede e são aval
 `DeterministicRulesStage`, entre `ValidateStage` e `RiskStage`. Ausência de um campo
 necessário faz a regra ser pulada e registrada em `metadata.validation.skipped_rules`.
 
+## Datas, locale e ambiguidade
+
+- Datas numéricas com dia > 12 são dia/mês em qualquer locale.
+- Datas numéricas com segundo componente > 12 são mês/dia; só existe uma
+  interpretação válida.
+- Em `pt`/`es`, `dd/mm` é a convenção do locale e resolve datas com ambos os
+  componentes <= 12.
+- Em `en`, data numérica com ambos os componentes <= 12 é ambígua. O valor
+  pode ser exibido, mas o campo recebe `data_vencimento_ambiguous=true` e
+  `data_vencimento`/`due_date` não são exportados para as regras.
+- `ValidateStage` não usa data ambígua em `BOLETO_VENCIDO`,
+  `BOLETO_OVERDUE`, `BOLETO_SEVERELY_OVERDUE` nem em comparações de
+  vencimento. `RiskAnalyzer` também não recebe `due_date` nesse caso.
+- Datas por nome de mês (`December 04, 2026`, `15 de janeiro de 2026`) não são
+  ambíguas e passaram a ser lidas após o rótulo com separador `:`.
+
+## Aliases de extração usados por regras
+
+Foram adicionados apenas aliases necessários aos campos de validação:
+
+- Boleto: `Data Limite de Pagamento`, `Fecha Limite de Pago`,
+  `Payment Deadline`, `Montante do Título`, `Importe del Titulo`,
+  `Face Amount`, `Data de Emissão`, `Fecha de Emision`, `Issue Date`.
+- Contracheque: rótulos de `set2` para INSS, IRRF, FGTS, proventos,
+  descontos, líquido, bases INSS/IRRF/FGTS, dependentes, competência,
+  admissão e salário base (ex.: `Previdência`, `Abatimentos`,
+  `Base Previdenciária`, `Base Fiscal`, `Fundo de Garantia`,
+  `Número de Dependentes`, `Reference Month`).
+
 ## Extração de texto de PDF
 
 O extrator central guarda `doc.page_count` antes de fechar o documento do

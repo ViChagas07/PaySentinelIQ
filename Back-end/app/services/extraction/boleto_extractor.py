@@ -152,11 +152,13 @@ def _extract_labeled(
             ):
                 raw_value = ""
 
+            raw_value = _clean_text(raw_value)
             if not raw_value:
                 next_value = _next_line(lines, index)
                 if next_value is None:
                     continue
                 raw_value, value_line = next_value
+                raw_value = _clean_text(raw_value)
                 method = "label_next_line"
 
             confidence = 0.9 if method == "label_same_line" else 0.75

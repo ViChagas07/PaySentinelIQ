@@ -17,9 +17,18 @@ CANONICAL_LABELS: dict[str, dict[str, tuple[str, ...]]] = {
         "en": ("Payer", "Payer Name"),
     },
     "data_vencimento": {
-        "pt": ("Vencimento", "Data de Vencimento", "Data Vencimento"),
-        "es": ("Vencimiento", "Fecha de vencimiento"),
-        "en": ("Due Date", "Payment Due Date"),
+        "pt": (
+            "Vencimento",
+            "Data de Vencimento",
+            "Data Vencimento",
+            "Data Limite de Pagamento",
+        ),
+        "es": (
+            "Vencimiento",
+            "Fecha de vencimiento",
+            "Fecha Limite de Pago",
+        ),
+        "en": ("Due Date", "Payment Due Date", "Payment Deadline"),
     },
     "valor_nominal": {
         "pt": (
@@ -27,9 +36,23 @@ CANONICAL_LABELS: dict[str, dict[str, tuple[str, ...]]] = {
             "Valor Nominal",
             "Valor Documento",
             "Valor do Título",
+            "Montante do Título",
+            "Montante do Titulo",
         ),
-        "es": ("Valor del documento", "Importe del documento"),
-        "en": ("Document Amount", "Face Value", "Amount Due"),
+        "es": (
+            "Valor del documento",
+            "Importe del documento",
+            "Valor Nominal del Titulo",
+            "Valor Nominal del Título",
+            "Importe del Titulo",
+            "Importe del Título",
+        ),
+        "en": (
+            "Document Amount",
+            "Face Value",
+            "Amount Due",
+            "Face Amount",
+        ),
     },
     "valor_cobrado": {
         "pt": ("Valor Cobrado",),
@@ -52,9 +75,18 @@ CANONICAL_LABELS: dict[str, dict[str, tuple[str, ...]]] = {
         "en": ("Document Number",),
     },
     "data_documento": {
-        "pt": ("Data do Documento", "Data Documento"),
-        "es": ("Fecha del documento",),
-        "en": ("Document Date",),
+        "pt": (
+            "Data do Documento",
+            "Data Documento",
+            "Data de Emissão",
+            "Data de Emissao",
+        ),
+        "es": (
+            "Fecha del documento",
+            "Fecha de Emision",
+            "Fecha de Emisión",
+        ),
+        "en": ("Document Date", "Issue Date"),
     },
     "local_pagamento": {
         "pt": ("Local de Pagamento", "Local Pagamento"),
@@ -144,18 +176,40 @@ CANONICAL_LABELS: dict[str, dict[str, tuple[str, ...]]] = {
             "Competencia/Mes",
             "Mês de Referência",
         ),
-        "es": ("Período", "Periodo", "Mes/Año"),
-        "en": ("Pay Period", "Period", "Reference"),
+        "es": ("Período", "Periodo", "Mes/Año", "Mes de Referencia"),
+        "en": ("Pay Period", "Period", "Reference", "Reference Month"),
     },
     "data_admissao": {
-        "pt": ("Admissão", "Data de Admissão", "Data Admissão"),
-        "es": ("Fecha de ingreso", "Fecha de admisión"),
-        "en": ("Hire Date", "Admission Date"),
+        "pt": (
+            "Admissão",
+            "Data de Admissão",
+            "Data Admissão",
+            "Data de Contratação",
+            "Data de Contratacao",
+        ),
+        "es": (
+            "Fecha de ingreso",
+            "Fecha de admisión",
+            "Fecha de Contratación",
+            "Fecha de Contratacion",
+        ),
+        "en": ("Hire Date", "Admission Date", "Employment Date"),
     },
     "salario_base": {
-        "pt": ("Salário Base", "Salário Contratual", "Salário Básico"),
-        "es": ("Salario base", "Sueldo base"),
-        "en": ("Base Salary", "Basic Salary"),
+        "pt": (
+            "Salário Base",
+            "Salário Contratual",
+            "Salário Básico",
+            "Remuneração Base",
+            "Remuneracao Base",
+        ),
+        "es": (
+            "Salario base",
+            "Sueldo base",
+            "Remuneración Base",
+            "Remuneracion Base",
+        ),
+        "en": ("Base Salary", "Basic Salary", "Base Remuneration"),
     },
     "salario_bruto": {
         "pt": (
@@ -164,13 +218,18 @@ CANONICAL_LABELS: dict[str, dict[str, tuple[str, ...]]] = {
             "Total de Vencimentos",
             "Proventos",
         ),
-        "es": ("Total haberes", "Total devengado"),
-        "en": ("Total Earnings", "Gross Pay", "Gross Salary"),
+        "es": ("Total haberes", "Total devengado", "Total de Devengos"),
+        "en": (
+            "Total Earnings",
+            "Gross Pay",
+            "Gross Salary",
+            "Gross Compensation",
+        ),
     },
     "total_descontos": {
-        "pt": ("Total de Descontos", "Total Descontos"),
-        "es": ("Total descuentos", "Total de deducciones"),
-        "en": ("Total Deductions",),
+        "pt": ("Total de Descontos", "Total Descontos", "Abatimentos"),
+        "es": ("Total descuentos", "Total de deducciones", "Deducciones"),
+        "en": ("Total Deductions", "Withholdings"),
     },
     "salario_liquido": {
         "pt": (
@@ -180,23 +239,43 @@ CANONICAL_LABELS: dict[str, dict[str, tuple[str, ...]]] = {
             "Líquido",
             "Salário Líquido",
         ),
-        "es": ("Neto a pagar", "Líquido a recibir", "Total neto"),
-        "en": ("Net Pay", "Net Salary", "Take-home Pay"),
+        "es": (
+            "Neto a pagar",
+            "Líquido a recibir",
+            "Total neto",
+            "Importe Neto",
+        ),
+        "en": ("Net Pay", "Net Salary", "Take-home Pay", "Net Amount"),
     },
     "inss": {
-        "pt": ("INSS", "Previdência Social", "Desconto INSS", "Contribuição INSS"),
-        "es": ("INSS", "Seguridad social"),
-        "en": ("INSS", "Social Security"),
+        "pt": (
+            "INSS",
+            "Previdência Social",
+            "Desconto INSS",
+            "Contribuição INSS",
+            "Previdência",
+        ),
+        "es": ("INSS", "Seguridad social", "Seguridad Social"),
+        "en": ("INSS", "Social Security", "Social Insurance"),
     },
     "irrf": {
         "pt": ("IRRF", "Imposto de Renda", "IR Retido", "Desconto IRRF"),
-        "es": ("IRRF", "Impuesto a la renta"),
+        "es": (
+            "IRRF",
+            "Impuesto a la renta",
+            "Impuesto sobre la Renta",
+        ),
         "en": ("IRRF", "Income Tax", "Withholding Tax"),
     },
     "fgts": {
-        "pt": ("FGTS", "Depósito FGTS", "FGTS do Mês"),
-        "es": ("FGTS",),
-        "en": ("FGTS",),
+        "pt": (
+            "FGTS",
+            "Depósito FGTS",
+            "FGTS do Mês",
+            "Fundo de Garantia",
+        ),
+        "es": ("FGTS", "Fondo de Garantía", "Fondo de Garantia"),
+        "en": ("FGTS", "Severance Fund"),
     },
     "base_inss": {
         "pt": (
@@ -205,9 +284,15 @@ CANONICAL_LABELS: dict[str, dict[str, tuple[str, ...]]] = {
             "Sal. Contr. INSS",
             "Base Calculo INSS",
             "Base Contribuição INSS",
+            "Base Previdenciária",
+            "Base Previdenciaria",
         ),
-        "es": ("Base de cálculo INSS", "Base calculo INSS"),
-        "en": ("INSS Base", "INSS Calculation Base"),
+        "es": (
+            "Base de cálculo INSS",
+            "Base calculo INSS",
+            "Base Previsional",
+        ),
+        "en": ("INSS Base", "INSS Calculation Base", "Social Insurance Base"),
     },
     "base_irrf": {
         "pt": (
@@ -215,9 +300,10 @@ CANONICAL_LABELS: dict[str, dict[str, tuple[str, ...]]] = {
             "Base IRRF",
             "Base Calculo IRRF",
             "Base Contribuição IRRF",
+            "Base Fiscal",
         ),
-        "es": ("Base de cálculo IRRF", "Base calculo IRRF"),
-        "en": ("IRRF Base", "IRRF Calculation Base"),
+        "es": ("Base de cálculo IRRF", "Base calculo IRRF", "Base Fiscal"),
+        "en": ("IRRF Base", "IRRF Calculation Base", "Tax Base"),
     },
     "base_fgts": {
         "pt": (
@@ -225,14 +311,29 @@ CANONICAL_LABELS: dict[str, dict[str, tuple[str, ...]]] = {
             "Base FGTS",
             "Base Calculo FGTS",
             "Base Contribuição FGTS",
+            "Base do Fundo",
         ),
-        "es": ("Base de cálculo FGTS", "Base calculo FGTS"),
-        "en": ("FGTS Base", "FGTS Calculation Base"),
+        "es": (
+            "Base de cálculo FGTS",
+            "Base calculo FGTS",
+            "Base del Fondo",
+        ),
+        "en": ("FGTS Base", "FGTS Calculation Base", "Fund Base"),
     },
     "dependentes": {
-        "pt": ("Dependentes", "Dep. IRRF", "Nº Dependentes"),
-        "es": ("Dependientes",),
-        "en": ("Dependents",),
+        "pt": (
+            "Dependentes",
+            "Dep. IRRF",
+            "Nº Dependentes",
+            "Número de Dependentes",
+            "Numero de Dependentes",
+        ),
+        "es": (
+            "Dependientes",
+            "Número de Dependientes",
+            "Numero de Dependientes",
+        ),
+        "en": ("Dependents", "Number of Dependents"),
     },
 }
 

@@ -117,16 +117,22 @@ def parse_date(
         first_int = int(first)
         second_int = int(second)
         year = _expand_year(year_text)
-        lang = (lang_hint or "").strip().lower()
 
         if first_int > 12:
             return _make_date(year, second_int, first_int, raw, False)
         if second_int > 12:
-            if lang != "en":
-                raise ValueError(
-                    f"Ambiguous date interpreted as month-first: {raw!r}"
-                )
+            # Only month-first can be valid here, regardless of locale.
             return _make_date(year, first_int, second_int, raw, False)
+        lang = (lang_hint or "").strip().lower()
+        if lang in {"pt", "es"}:
+            # The locale defines day-first; this is a documented convention,
+            # not a numeric guess.
+            return _make_date(year, second_int, first_int, raw, False)
+        if lang == "en":
+            # English locale suggests month-first, but both components are
+            # valid months: mark ambiguous and do not use in comparisons.
+            return _make_date(year, first_int, second_int, raw, True)
+        # Unknown locale: ambiguous, keep day-first value for display only.
         return _make_date(year, second_int, first_int, raw, True)
 
     folded = fold(text).replace("º", "").replace("ª", "")

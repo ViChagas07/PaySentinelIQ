@@ -136,6 +136,7 @@ def _stage1_structural_validation(
     pdf_text: str,
     due_date: Any | None = None,
     codigo_banco: str | None = None,
+    skip_due_date: bool = False,
 ) -> tuple[list[str], float]:
     """Deterministic boleto validation rules — NO LLM, pure Python.
 
@@ -194,7 +195,9 @@ def _stage1_structural_validation(
     # ── 1b. Overdue detection ──
     today = date.today()
     parsed_due = _parse_due_date(due_date)
-    if parsed_due is not None:
+    if skip_due_date:
+        date_candidates = []
+    elif parsed_due is not None:
         date_candidates = [parsed_due]
     else:
         date_candidates = []

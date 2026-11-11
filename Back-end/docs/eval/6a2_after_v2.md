@@ -1,0 +1,214 @@
+# 6A.2 depois — dataset v2
+
+Dataset seed **42**, 1000 documentos, 60 renderizados; native avaliado em 1000.
+
+Todos os documentos são fictícios. Nenhum limiar de aprovação foi usado.
+
+## Precisão de extração por caminho (campos comparados)
+
+| Caminho | Acertos |
+|---|---:|
+| A_native | 7598/8016 (94.8%) |
+| B_ocr_clean | 892/944 (94.5%) |
+| C_ocr_degraded | 825/944 (87.4%) |
+
+### Por campo
+
+| Caminho | Campo | Acertos |
+|---|---|---:|
+| A_native | beneficiario | 115/496 (23.2%) |
+| A_native | cnpj | 1000/1000 (100.0%) |
+| A_native | codigo_banco | 469/496 (94.6%) |
+| A_native | cpf | 504/504 (100.0%) |
+| A_native | data_vencimento | 496/496 (100.0%) |
+| A_native | fgts | 504/504 (100.0%) |
+| A_native | inss | 504/504 (100.0%) |
+| A_native | irrf | 504/504 (100.0%) |
+| A_native | linha_digitavel | 496/496 (100.0%) |
+| A_native | nome_funcionario | 494/504 (98.0%) |
+| A_native | periodo | 504/504 (100.0%) |
+| A_native | salario_bruto | 504/504 (100.0%) |
+| A_native | salario_liquido | 504/504 (100.0%) |
+| A_native | total_descontos | 504/504 (100.0%) |
+| A_native | valor_nominal | 496/496 (100.0%) |
+| B_ocr_clean | beneficiario | 16/64 (25.0%) |
+| B_ocr_clean | cnpj | 120/120 (100.0%) |
+| B_ocr_clean | codigo_banco | 64/64 (100.0%) |
+| B_ocr_clean | cpf | 56/56 (100.0%) |
+| B_ocr_clean | data_vencimento | 64/64 (100.0%) |
+| B_ocr_clean | fgts | 56/56 (100.0%) |
+| B_ocr_clean | inss | 56/56 (100.0%) |
+| B_ocr_clean | irrf | 56/56 (100.0%) |
+| B_ocr_clean | linha_digitavel | 62/64 (96.9%) |
+| B_ocr_clean | nome_funcionario | 54/56 (96.4%) |
+| B_ocr_clean | periodo | 56/56 (100.0%) |
+| B_ocr_clean | salario_bruto | 56/56 (100.0%) |
+| B_ocr_clean | salario_liquido | 56/56 (100.0%) |
+| B_ocr_clean | total_descontos | 56/56 (100.0%) |
+| B_ocr_clean | valor_nominal | 64/64 (100.0%) |
+| C_ocr_degraded | beneficiario | 16/64 (25.0%) |
+| C_ocr_degraded | cnpj | 103/120 (85.8%) |
+| C_ocr_degraded | codigo_banco | 55/64 (85.9%) |
+| C_ocr_degraded | cpf | 55/56 (98.2%) |
+| C_ocr_degraded | data_vencimento | 62/64 (96.9%) |
+| C_ocr_degraded | fgts | 56/56 (100.0%) |
+| C_ocr_degraded | inss | 56/56 (100.0%) |
+| C_ocr_degraded | irrf | 55/56 (98.2%) |
+| C_ocr_degraded | linha_digitavel | 30/64 (46.9%) |
+| C_ocr_degraded | nome_funcionario | 54/56 (96.4%) |
+| C_ocr_degraded | periodo | 56/56 (100.0%) |
+| C_ocr_degraded | salario_bruto | 55/56 (98.2%) |
+| C_ocr_degraded | salario_liquido | 56/56 (100.0%) |
+| C_ocr_degraded | total_descontos | 56/56 (100.0%) |
+| C_ocr_degraded | valor_nominal | 60/64 (93.8%) |
+
+### Por idioma
+
+| Caminho | Idioma | Acertos |
+|---|---|---:|
+| A_native | en | 2075/2100 (98.8%) |
+| A_native | es | 2034/2172 (93.6%) |
+| A_native | pt | 3489/3744 (93.2%) |
+| B_ocr_clean | en | 244/248 (98.4%) |
+| B_ocr_clean | es | 260/280 (92.9%) |
+| B_ocr_clean | pt | 388/416 (93.3%) |
+| C_ocr_degraded | en | 220/248 (88.7%) |
+| C_ocr_degraded | es | 240/280 (85.7%) |
+| C_ocr_degraded | pt | 365/416 (87.7%) |
+
+### Por layout
+
+| Caminho | Layout | Acertos |
+|---|---|---:|
+| A_native | A | 2277/2394 (95.1%) |
+| A_native | B | 2298/2432 (94.5%) |
+| A_native | C | 2245/2358 (95.2%) |
+| A_native | D | 778/832 (93.5%) |
+| B_ocr_clean | A | 161/172 (93.6%) |
+| B_ocr_clean | B | 341/364 (93.7%) |
+| B_ocr_clean | C | 342/356 (96.1%) |
+| B_ocr_clean | D | 48/52 (92.3%) |
+| C_ocr_degraded | A | 150/172 (87.2%) |
+| C_ocr_degraded | B | 306/364 (84.1%) |
+| C_ocr_degraded | C | 324/356 (91.0%) |
+| C_ocr_degraded | D | 45/52 (86.5%) |
+
+### Por tipo de documento
+
+| Caminho | Tipo | Acertos |
+|---|---|---:|
+| A_native | boleto | 2568/2976 (86.3%) |
+| A_native | contracheque | 5030/5040 (99.8%) |
+| B_ocr_clean | boleto | 334/384 (87.0%) |
+| B_ocr_clean | contracheque | 558/560 (99.6%) |
+| C_ocr_degraded | boleto | 279/384 (72.7%) |
+| C_ocr_degraded | contracheque | 546/560 (97.5%) |
+
+### Dígitos vs texto em OCR
+
+| Caminho | Classe | Acertos |
+|---|---|---:|
+| A_native | digits | 6989/7016 (99.6%) |
+| A_native | text | 609/1000 (60.9%) |
+| B_ocr_clean | digits | 822/824 (99.8%) |
+| B_ocr_clean | text | 70/120 (58.3%) |
+| C_ocr_degraded | digits | 755/824 (91.6%) |
+| C_ocr_degraded | text | 70/120 (58.3%) |
+
+## Falsos positivos em legítimos
+
+| Caminho | Legítimos | Score >= 70 | Score >= 40 | Top códigos | Críticos |
+|---|---:|---:|---:|---|---|
+| A_native | 694 | 0 | 0 | DOCUMENT_EXPIRED:222, BOLETO_VENCIDO:182, BOLETO_OVERDUE:182, ROUND_AMOUNT_SUSPICIOUS:32, BOLETO_ROUND_AMOUNT:32 | - |
+| B_ocr_clean | 90 | 0 | 0 | BOLETO_VENCIDO:32, BOLETO_OVERDUE:32, DOCUMENT_EXPIRED:32, VALOR_REDONDO_SUSPEITO:4, ROUND_AMOUNT_SUSPICIOUS:4 | - |
+| C_ocr_degraded | 90 | 0 | 4 | BOLETO_VENCIDO:32, BOLETO_OVERDUE:32, DOCUMENT_EXPIRED:32, LINHA_DIGITAVEL_FORMATO_INCORRETO:29, BANCO_INVALIDO:5 | - |
+
+## Detecção por adulteração
+
+| Caminho | Tipo | Detectado |
+|---|---|---:|
+| A_native | B1 | 27/27 (100.0%) |
+| A_native | B2 | 23/23 (100.0%) |
+| A_native | B3 | 27/27 (100.0%) |
+| A_native | B4 | 21/21 (100.0%) |
+| A_native | B5 | 23/23 (100.0%) |
+| A_native | B6 | 0/7 (0.0%) |
+| A_native | B7 | 0/12 (0.0%) |
+| A_native | B8 | 23/23 (100.0%) |
+| A_native | P1 | 24/24 (100.0%) |
+| A_native | P2 | 28/28 (100.0%) |
+| A_native | P3 | 13/13 (100.0%) |
+| A_native | P4 | 0/19 (0.0%) |
+| A_native | P5 | 29/29 (100.0%) |
+| A_native | P6 | 22/22 (100.0%) |
+| A_native | P7 | 27/27 (100.0%) |
+| A_native | P8 | 17/17 (100.0%) |
+| A_native | P9 | 24/24 (100.0%) |
+| B_ocr_clean | B1 | 2/2 (100.0%) |
+| B_ocr_clean | B2 | 2/2 (100.0%) |
+| B_ocr_clean | B4 | 4/4 (100.0%) |
+| B_ocr_clean | B6 | 0/2 (0.0%) |
+| B_ocr_clean | P2 | 2/2 (100.0%) |
+| B_ocr_clean | P4 | 0/6 (0.0%) |
+| B_ocr_clean | P5 | 10/10 (100.0%) |
+| B_ocr_clean | P6 | 2/2 (100.0%) |
+| B_ocr_clean | P9 | 4/4 (100.0%) |
+| C_ocr_degraded | B1 | 1/2 (50.0%) |
+| C_ocr_degraded | B2 | 1/2 (50.0%) |
+| C_ocr_degraded | B4 | 2/4 (50.0%) |
+| C_ocr_degraded | B6 | 0/2 (0.0%) |
+| C_ocr_degraded | P2 | 2/2 (100.0%) |
+| C_ocr_degraded | P4 | 0/6 (0.0%) |
+| C_ocr_degraded | P5 | 9/10 (90.0%) |
+| C_ocr_degraded | P6 | 2/2 (100.0%) |
+| C_ocr_degraded | P9 | 4/4 (100.0%) |
+
+## Matriz de confusão da banda final
+
+| Caminho | Intenção | LOW | MEDIUM | HIGH |
+|---|---|---:|---:|---:|
+| A_native | LOW | 38 | 0 | 0 |
+| A_native | MEDIUM | 17 | 3 | 1 |
+| A_native | HIGH | 75 | 26 | 146 |
+| B_ocr_clean | LOW | 8 | 0 | 0 |
+| B_ocr_clean | MEDIUM | 0 | 0 | 0 |
+| B_ocr_clean | HIGH | 16 | 2 | 4 |
+| C_ocr_degraded | LOW | 8 | 0 | 0 |
+| C_ocr_degraded | MEDIUM | 0 | 0 | 0 |
+| C_ocr_degraded | HIGH | 15 | 3 | 4 |
+
+## Expert — cobertura atual (esperado próximo de zero)
+
+| Caminho | Tipo | Detectado |
+|---|---|---:|
+| A_native | B6 | 0/7 (0.0%) |
+| A_native | B7 | 0/12 (0.0%) |
+| A_native | P4 | 0/19 (0.0%) |
+| B_ocr_clean | B6 | 0/2 (0.0%) |
+| B_ocr_clean | P4 | 0/6 (0.0%) |
+| C_ocr_degraded | B6 | 0/2 (0.0%) |
+| C_ocr_degraded | P4 | 0/6 (0.0%) |
+
+## PDF editado (B8/P9) — sinais forenses
+
+| Caminho | PDFs editados | Sinal forense |
+|---|---:|---:|
+| A_native | 47 | 0 |
+| B_ocr_clean | 4 | 0 |
+| C_ocr_degraded | 4 | 0 |
+
+## Tempo médio por documento
+
+| Caminho | Segundos/documento |
+|---|---:|
+| A_native | 0.017 |
+| B_ocr_clean | 1.125 |
+| C_ocr_degraded | 1.361 |
+
+## Limitações
+
+- Os documentos legítimos são consistentes por construção: o gerador usa as mesmas fórmulas econômicas do domínio, portanto a taxa de falso positivo mede principalmente o ruído das regras sobre dados sintéticos.
+- Os resultados valem para este golden set sintético; não são uma estimativa de produção.
+- O caminho A executa a mesma sequência do router: `run_ocr_prelude` com provider nativo-primeiro e `pipeline.execute` em thread; agentes de IA são desligados localmente no script.
+- B6/B7/P4 são ataques especializados; a ausência de detecção é esperada.
+- B8/P9 não têm detector forense dedicado nesta fase.

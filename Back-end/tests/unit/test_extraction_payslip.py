@@ -211,11 +211,11 @@ def test_label_and_value_on_separate_lines():
 
 def test_ambiguous_admission_date_produces_warning():
     fields = extract_payslip_fields(
-        "Empregador: ACME\nAdmissão: 10/01/2020\n"
+        "Employer: ACME\nHire Date: 10/01/2020\n"
     )
 
     assert fields.data_admissao is not None
-    assert fields.data_admissao.value == date(2020, 1, 10)
+    assert fields.data_admissao.value == date(2020, 10, 1)
     assert fields.warnings
 
 
