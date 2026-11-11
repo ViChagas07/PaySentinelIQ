@@ -78,11 +78,11 @@
     "deterministic_threshold": 0.5,
     "fusion_threshold": 0.4,
     "logistic_threshold": 0.809,
-    "evaluator_sha256": "b6fbfa84065ece0ca8c2925c4c8fec324447db3dfd76b1720b7b3ae8d417068d"
+    "evaluator_sha256": "3e5602c8cb5732c58d023755af3889971c905670438ff81f3fc87d72a3831dc2"
   },
   "commits": {
     "generator": "9ada588",
-    "evaluator": "9ada588",
+    "evaluator": "de9a7ef",
     "protocol": "84b6ca0",
     "extractor": "ba79eaaca24271c5dc1e7d8a844e44a048ccd1e4",
     "model_code": "7d0fb416d26e51569ef415c12fb35d7829a180fb"
