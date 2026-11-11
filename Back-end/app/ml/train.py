@@ -464,8 +464,22 @@ def main() -> None:
 
     manifest = {
         "phase": "6B",
+        "command": "poetry run python -m app.ml.train",
+        "seed": 42,
+        "evaluation_role": "desenvolvimento/avaliação; não holdout intocado",
         "dataset_version": dataset_manifest["dataset_version"],
+        "dataset_generator_version": dataset_manifest.get(
+            "generator_version"
+        ),
+        "dataset_generated_on": dataset_manifest.get("generated_on"),
         "dataset_records_sha256": dataset_manifest["records_sha256"],
+        "n_by_split": {
+            split: {
+                "legit": int((native.split(split).y == 0).sum()),
+                "fraud": int((native.split(split).y == 1).sum()),
+            }
+            for split in ("train", "val", "test_iid", "test_shift")
+        },
         "code_commit": _git_commit(),
         "sklearn_version": __import__("sklearn").__version__,
         "feature_names": list(FEATURE_NAMES),
