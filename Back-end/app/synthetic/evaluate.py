@@ -11,8 +11,12 @@ import json
 from pathlib import Path
 import time
 import unicodedata
+from typing import Any
 
 from app.core.contracts.pipeline_context import PipelineContext
+from app.services.extraction.prelude import run_ocr_prelude
+from app.services.ocr.base import OCRProvider, OCRResult
+from app.services.ocr.native_text_provider import NativeTextFirstOCRProvider
 from app.services.ocr.remote_provider import RemoteOCRProvider
 from app.services.pipeline.canonical_pipeline import CanonicalPipeline
 from app.services.pipeline.stages.crewai_stage import CrewAIStage
@@ -49,6 +53,23 @@ class Observation:
     result: object
     context: PipelineContext
     seconds: float
+    evidence_stages: dict[str, str]
+    extracted_text: str
+
+
+class _ForbiddenOCRProvider(OCRProvider):
+    """Provider used by path A: OCR must never be called for native PDFs."""
+
+    async def extract_text(self, file_path: str) -> OCRResult:
+        raise AssertionError(
+            "OCR was invoked on a native-text PDF; the native layer must win"
+        )
+
+    async def health_check(self) -> bool:
+        return False
+
+    def get_info(self) -> dict[str, str]:
+        return {"provider": "forbidden"}
 
 
 def _fold(value: str) -> str:
@@ -152,10 +173,102 @@ def _to_document(item: dict) -> SyntheticDocument:
     )
 
 
-def _native_observation(
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
+def _instrument_stages(pipeline: CanonicalPipeline) -> dict[str, str]:
+    holder = {"stage": "unknown"}
+    for stage in pipeline._stages:
+        original = stage.execute
+
+        def wrapped(context, _stage=stage, _original=original):
+            holder["stage"] = _stage.name
+            return _original(context)
+
+        stage.execute = wrapped  # type: ignore[method-assign]
+    return holder
+
+
+def _capture_evidence_stages(
+    context: PipelineContext,
+    holder: dict[str, str],
+) -> dict[str, str]:
+    stages: dict[str, str] = {}
+    original_single = context.add_evidence
+    original_many = context.add_evidences
+
+    def add_single(evidence) -> None:
+        had = any(item.code == evidence.code for item in context.evidences)
+        original_single(evidence)
+        if not had and any(
+            item.code == evidence.code for item in context.evidences
+        ):
+            stages.setdefault(evidence.code, holder["stage"])
+
+    def add_many(evidences) -> None:
+        for evidence in evidences:
+            add_single(evidence)
+
+    context.add_evidence = add_single  # type: ignore[method-assign]
+    context.add_evidences = add_many  # type: ignore[method-assign]
+    return stages
+
+
+def _evidence_dump(
+    observation: Observation,
+) -> dict[str, Any]:
+    item = observation.item
+    ctx = observation.context
+    result = observation.result
+    return {
+        "document_id": item["id"],
+        "path": observation.path,
+        "variant": observation.variant,
+        "document_type": item["doc_kind"],
+        "language": item["language"],
+        "layout": item["layout"],
+        "split": item["split"],
+        "is_fraud": item["is_fraud"],
+        "tamper_types": item["tamper_types"],
+        "sophistication": item["sophistication"],
+        "intended_band": item["intended_band"],
+        "expected_codes_any_of": item["expected_codes_any_of"],
+        "gabarito_fields": _json_safe(item["fields"]),
+        "extracted_fields": _json_safe(ctx.extracted_fields),
+        "extracted_text": observation.extracted_text,
+        "evidences": [
+            {
+                **evidence.to_dict(),
+                "metadata": _json_safe(evidence.metadata),
+                "stage": observation.evidence_stages.get(
+                    evidence.code, "unknown"
+                ),
+            }
+            for evidence in ctx.evidences
+        ],
+        "score": float(result.risk_score),
+        "risk_level": str(result.risk_level),
+        "warnings": list(ctx.warnings),
+        "errors": list(ctx.errors),
+        "seconds": observation.seconds,
+    }
+
+
+async def _native_observation(
     item: dict,
     pipeline: CanonicalPipeline,
+    provider: OCRProvider,
     temp_dir: Path,
+    holder: dict[str, str],
 ) -> Observation:
     document = _to_document(item)
     path = temp_dir / f"{item['id']}_native.pdf"
@@ -167,7 +280,9 @@ def _native_observation(
         filename=path.name,
         mime_type="application/pdf",
     )
-    result = pipeline.execute(ctx)
+    stages = _capture_evidence_stages(ctx, holder)
+    await run_ocr_prelude(ctx, provider=provider)
+    result = await asyncio.to_thread(pipeline.execute, ctx)
     return Observation(
         path="A_native",
         variant="native",
@@ -175,6 +290,8 @@ def _native_observation(
         result=result,
         context=ctx,
         seconds=time.perf_counter() - started,
+        evidence_stages=stages,
+        extracted_text=ctx.extracted_text,
     )
 
 
@@ -185,6 +302,7 @@ async def _ocr_observation(
     pipeline: CanonicalPipeline,
     provider: RemoteOCRProvider,
     group: str,
+    holder: dict[str, str],
 ) -> Observation:
     started = time.perf_counter()
     ocr_result = await provider.extract_text(str(path))
@@ -207,7 +325,8 @@ async def _ocr_observation(
             "ocr_prelude": True,
         },
     )
-    result = pipeline.execute(ctx)
+    stages = _capture_evidence_stages(ctx, holder)
+    result = await asyncio.to_thread(pipeline.execute, ctx)
     return Observation(
         path=group,
         variant=variant,
@@ -215,6 +334,8 @@ async def _ocr_observation(
         result=result,
         context=ctx,
         seconds=time.perf_counter() - started,
+        evidence_stages=stages,
+        extracted_text=ctx.extracted_text,
     )
 
 
@@ -329,16 +450,17 @@ def _write_report(
     manifest: dict,
     aggregate: dict,
     native_count: int,
+    title: str,
 ) -> None:
     lines = [
-        "# Baseline sintÃ©tico â€” extraÃ§Ã£o, regras e score",
+        f"# {title}",
         "",
         f"Dataset seed **{manifest['seed']}**, {manifest['n_total']} documentos, "
         f"{manifest['render']} renderizados; native avaliado em {native_count}.",
         "",
-        "Todos os documentos sÃ£o fictÃ­cios. Nenhum limiar de aprovaÃ§Ã£o foi usado.",
+        "Todos os documentos são fictícios. Nenhum limiar de aprovação foi usado.",
         "",
-        "## PrecisÃ£o de extraÃ§Ã£o por caminho (campos comparados)",
+        "## Precisão de extração por caminho (campos comparados)",
         "",
         "| Caminho | Acertos |",
         "|---|---:|",
@@ -410,7 +532,7 @@ def _write_report(
     lines.extend(
         [
             "",
-            "### DÃ­gitos vs texto em OCR",
+            "### Dígitos vs texto em OCR",
             "",
             "| Caminho | Classe | Acertos |",
             "|---|---|---:|",
@@ -422,9 +544,9 @@ def _write_report(
     lines.extend(
         [
             "",
-            "## Falsos positivos em legÃ­timos",
+            "## Falsos positivos em legítimos",
             "",
-            "| Caminho | LegÃ­timos | Score >= 70 | Score >= 40 | Top cÃ³digos | CrÃ­ticos |",
+            "| Caminho | Legítimos | Score >= 70 | Score >= 40 | Top códigos | Críticos |",
             "|---|---:|---:|---:|---|---|",
         ]
     )
@@ -443,7 +565,7 @@ def _write_report(
     lines.extend(
         [
             "",
-            "## DetecÃ§Ã£o por adulteraÃ§Ã£o",
+            "## Detecção por adulteração",
             "",
             "| Caminho | Tipo | Detectado |",
             "|---|---|---:|",
@@ -457,9 +579,9 @@ def _write_report(
     lines.extend(
         [
             "",
-            "## Matriz de confusÃ£o da banda final",
+            "## Matriz de confusão da banda final",
             "",
-            "| Caminho | IntenÃ§Ã£o | LOW | MEDIUM | HIGH |",
+            "| Caminho | Intenção | LOW | MEDIUM | HIGH |",
             "|---|---|---:|---:|---:|",
         ]
     )
@@ -476,7 +598,7 @@ def _write_report(
     lines.extend(
         [
             "",
-            "## Expert â€” cobertura atual (esperado prÃ³ximo de zero)",
+            "## Expert — cobertura atual (esperado próximo de zero)",
             "",
             "| Caminho | Tipo | Detectado |",
             "|---|---|---:|",
@@ -487,7 +609,7 @@ def _write_report(
     lines.extend(
         [
             "",
-            "## PDF editado (B8/P9) â€” sinais forenses",
+            "## PDF editado (B8/P9) — sinais forenses",
             "",
             "| Caminho | PDFs editados | Sinal forense |",
             "|---|---:|---:|",
@@ -498,7 +620,7 @@ def _write_report(
     lines.extend(
         [
             "",
-            "## Tempo mÃ©dio por documento",
+            "## Tempo médio por documento",
             "",
             "| Caminho | Segundos/documento |",
             "|---|---:|",
@@ -511,17 +633,18 @@ def _write_report(
     lines.extend(
         [
             "",
-            "## LimitaÃ§Ãµes",
+            "## Limitações",
             "",
-            "- Os documentos legÃ­timos sÃ£o consistentes por construÃ§Ã£o: o gerador usa as "
-            "mesmas fÃ³rmulas econÃ´micas do domÃ­nio, portanto a taxa de falso positivo mede "
-            "principalmente o ruÃ­do das regras sobre dados sintÃ©ticos.",
-            "- Os resultados valem para este golden set sintÃ©tico; nÃ£o sÃ£o uma estimativa "
-            "de produÃ§Ã£o.",
-            "- A extraÃ§Ã£o nativa pode usar pdfplumber/pypdf quando o PyMuPDF falha; o "
-            "warning de documento fechado Ã© do extrator existente e foi preservado.",
-            "- B6/B7/P4 sÃ£o ataques especializados; a ausÃªncia de detecÃ§Ã£o Ã© esperada.",
-            "- B8/P9 nÃ£o tÃªm detector forense dedicado nesta fase.",
+            "- Os documentos legítimos são consistentes por construção: o gerador usa as "
+            "mesmas fórmulas econômicas do domínio, portanto a taxa de falso positivo mede "
+            "principalmente o ruído das regras sobre dados sintéticos.",
+            "- Os resultados valem para este golden set sintético; não são uma estimativa "
+            "de produção.",
+            "- O caminho A executa a mesma sequência do router: `run_ocr_prelude` com "
+            "provider nativo-primeiro e `pipeline.execute` em thread; agentes de IA são "
+            "desligados localmente no script.",
+            "- B6/B7/P4 são ataques especializados; a ausência de detecção é esperada.",
+            "- B8/P9 não têm detector forense dedicado nesta fase.",
             "",
         ]
     )
@@ -532,17 +655,7 @@ def _write_report(
     )
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--out", default="../data/synthetic")
-    parser.add_argument("--report", default="docs/eval/synthetic_baseline.md")
-    parser.add_argument("--native-limit", type=int, default=1000)
-    parser.add_argument("--ocr-limit", type=int, default=60)
-    parser.add_argument(
-        "--service-url",
-        default="http://127.0.0.1:8010",
-    )
-    args = parser.parse_args()
+async def _evaluate(args: argparse.Namespace) -> None:
     root = Path(args.out)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
     records = [
@@ -554,14 +667,27 @@ def main() -> None:
     ]
     CrewAIStage._execute = lambda self, ctx: None
     pipeline = CanonicalPipeline()
+    holder = _instrument_stages(pipeline)
     observations: list[Observation] = []
 
+    native_provider = NativeTextFirstOCRProvider(
+        primary=_ForbiddenOCRProvider(),
+        dpi=200,
+        max_pages=10,
+        min_native_chars=50,
+    )
+
+    selected_native = records[: args.native_limit]
     with __import__("tempfile").TemporaryDirectory(prefix="psi_eval_native_") as temp:
         temp_dir = Path(temp)
-        for index, item in enumerate(records[: args.native_limit]):
-            observations.append(_native_observation(item, pipeline, temp_dir))
+        for index, item in enumerate(selected_native):
+            observations.append(
+                await _native_observation(
+                    item, pipeline, native_provider, temp_dir, holder
+                )
+            )
             if index and index % 100 == 0:
-                print(f"native {index}/{len(records[:args.native_limit])}")
+                print(f"native {index}/{len(selected_native)}")
 
     rendered = manifest.get("files", {})
     selected = [
@@ -576,32 +702,43 @@ def main() -> None:
             engine="tesseract",
         )
 
-        async def run_ocr() -> None:
-            for item in selected:
-                variants = rendered[item["id"]]
-                for group, names in (
-                    ("B_ocr_clean", ("scanned_clean", "image_png")),
-                    ("C_ocr_degraded", ("scanned_rot", "scanned_blur")),
-                ):
-                    for variant in names:
-                        file_info = variants.get(variant)
-                        if not file_info:
-                            continue
-                        observations.append(
-                            await _ocr_observation(
-                                item,
-                                variant,
-                                Path(file_info),
-                                pipeline,
-                                provider,
-                                group,
-                            )
+        for item in selected:
+            variants = rendered[item["id"]]
+            for group, names in (
+                ("B_ocr_clean", ("scanned_clean", "image_png")),
+                ("C_ocr_degraded", ("scanned_rot", "scanned_blur")),
+            ):
+                for variant in names:
+                    file_info = variants.get(variant)
+                    if not file_info:
+                        continue
+                    observations.append(
+                        await _ocr_observation(
+                            item,
+                            variant,
+                            Path(file_info),
+                            pipeline,
+                            provider,
+                            group,
+                            holder,
                         )
+                    )
 
-        try:
-            asyncio.run(run_ocr())
-        except Exception as exc:
-            print(f"OCR evaluation unavailable: {type(exc).__name__}")
+    dump_path = (
+        Path(args.dump)
+        if args.dump
+        else root / "eval" / "evidence_dump.jsonl"
+    )
+    dump_path.parent.mkdir(parents=True, exist_ok=True)
+    with dump_path.open("w", encoding="utf-8", newline="\n") as handle:
+        for observation in observations:
+            handle.write(
+                json.dumps(
+                    _evidence_dump(observation),
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
 
     aggregate = _aggregate(observations)
     _write_report(
@@ -609,10 +746,35 @@ def main() -> None:
         manifest,
         aggregate,
         min(len(records), args.native_limit),
+        args.title,
     )
-    print(f"report={args.report} observations={len(observations)}")
+    print(
+        f"report={args.report} dump={dump_path} "
+        f"observations={len(observations)}"
+    )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--out", default="../data/synthetic")
+    parser.add_argument(
+        "--report",
+        default="docs/eval/synthetic_baseline.md",
+    )
+    parser.add_argument(
+        "--title",
+        default="Baseline sintético — extração, regras e score",
+    )
+    parser.add_argument("--dump", default="")
+    parser.add_argument("--native-limit", type=int, default=1000)
+    parser.add_argument("--ocr-limit", type=int, default=60)
+    parser.add_argument(
+        "--service-url",
+        default="http://127.0.0.1:8010",
+    )
+    args = parser.parse_args()
+    asyncio.run(_evaluate(args))
 
 
 if __name__ == "__main__":
     main()
-
