@@ -1,0 +1,2323 @@
+{
+  "phase": "6B",
+  "dataset_version": "v2.1",
+  "dataset_records_sha256": "2a8f71d078d4a91efd2a86918991f82a41470601001f9b68d991d7f70e742663",
+  "code_commit": "86893d36b1a900ab586856df207045b99ef8029c",
+  "sklearn_version": "1.9.0",
+  "feature_names": [
+    "document_type_boleto",
+    "document_type_payslip",
+    "path_is_ocr",
+    "path_is_degraded",
+    "extraction_confidence",
+    "field_present_count",
+    "field_coverage",
+    "field_missing_count",
+    "due_ambiguous",
+    "due_locale_inconsistent",
+    "warnings_count",
+    "has_linha_digitavel",
+    "has_codigo_barras",
+    "has_valor_nominal",
+    "has_data_vencimento",
+    "has_codigo_banco",
+    "has_cnpj",
+    "has_cpf",
+    "has_salario_bruto",
+    "has_salario_liquido",
+    "has_total_descontos",
+    "has_inss",
+    "has_irrf",
+    "has_fgts",
+    "has_base_inss",
+    "has_base_irrf",
+    "has_base_fgts",
+    "has_dependentes",
+    "has_periodo",
+    "has_beneficiario",
+    "has_nome_funcionario",
+    "inss_gross",
+    "irrf_gross",
+    "fgts_gross",
+    "deductions_gross",
+    "net_gross",
+    "net_residual",
+    "base_inss_gross",
+    "base_irrf_gross",
+    "base_fgts_gross",
+    "due_days_past_norm",
+    "due_days_future_norm",
+    "line_47",
+    "line_status_ok",
+    "line_dv_valid",
+    "line_bank_valid",
+    "amount_line_delta_norm",
+    "due_line_delta_days_norm",
+    "bank_matches_line",
+    "barcode_matches_line",
+    "evidence_total",
+    "evidence_confidence_mean",
+    "evidence_confidence_max",
+    "evidence_info",
+    "evidence_low",
+    "evidence_medium",
+    "evidence_high",
+    "evidence_critical",
+    "evidence_confirmed",
+    "evidence_uncertain",
+    "evidence_confirmed_material",
+    "evidence_confirmed_critical",
+    "evidence_uncertain_material",
+    "source_deterministic",
+    "source_heuristic",
+    "source_knowledge_base",
+    "source_brasilapi",
+    "source_ocr",
+    "source_crewai",
+    "source_user",
+    "source_other",
+    "group_amount_count",
+    "group_amount_max_severity",
+    "group_amount_confirmed_material",
+    "group_amount_uncertain_material",
+    "group_bank_count",
+    "group_bank_max_severity",
+    "group_bank_confirmed_material",
+    "group_bank_uncertain_material",
+    "group_barcode_count",
+    "group_barcode_max_severity",
+    "group_barcode_confirmed_material",
+    "group_barcode_uncertain_material",
+    "group_beneficiary_count",
+    "group_beneficiary_max_severity",
+    "group_beneficiary_confirmed_material",
+    "group_beneficiary_uncertain_material",
+    "group_linha_count",
+    "group_linha_max_severity",
+    "group_linha_confirmed_material",
+    "group_linha_uncertain_material",
+    "group_payslip_deductions_count",
+    "group_payslip_deductions_max_severity",
+    "group_payslip_deductions_confirmed_material",
+    "group_payslip_deductions_uncertain_material",
+    "group_payslip_fgts_count",
+    "group_payslip_fgts_max_severity",
+    "group_payslip_fgts_confirmed_material",
+    "group_payslip_fgts_uncertain_material",
+    "group_payslip_inss_count",
+    "group_payslip_inss_max_severity",
+    "group_payslip_inss_confirmed_material",
+    "group_payslip_inss_uncertain_material",
+    "group_payslip_irrf_count",
+    "group_payslip_irrf_max_severity",
+    "group_payslip_irrf_confirmed_material",
+    "group_payslip_irrf_uncertain_material",
+    "group_payslip_net_count",
+    "group_payslip_net_max_severity",
+    "group_payslip_net_confirmed_material",
+    "group_payslip_net_uncertain_material",
+    "group_period_count",
+    "group_period_max_severity",
+    "group_period_confirmed_material",
+    "group_period_uncertain_material",
+    "group_temporal_count",
+    "group_temporal_max_severity",
+    "group_temporal_confirmed_material",
+    "group_temporal_uncertain_material"
+  ],
+  "feature_types": [
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64",
+    "float64"
+  ],
+  "forbidden_tokens_absent": [
+    "tamper",
+    "sophistication",
+    "intended_band",
+    "gabarito",
+    "seed",
+    "document_id",
+    "page_text",
+    "raw_text",
+    "beneficiario_nome",
+    "company_name",
+    "expected"
+  ],
+  "model": "LogisticRegression",
+  "model_params": {
+    "C": 0.01,
+    "class_weight": "balanced",
+    "max_iter": 2000,
+    "random_state": 42,
+    "preprocessing": [
+      "SimpleImputer(median)",
+      "StandardScaler"
+    ]
+  },
+  "calibration": "none (raw logistic probabilities)",
+  "decision_threshold": 0.8094,
+  "trained_on": "train native only",
+  "trained_at": "2026-11-11",
+  "metrics": {
+    "train": {
+      "Dummy": {
+        "n": 578,
+        "positives": 162,
+        "negatives": 416,
+        "threshold": 0.5,
+        "pr_auc": 0.28027681660899656,
+        "roc_auc": 0.5,
+        "brier": 0.2017217226805235,
+        "precision_pos": 0.0,
+        "recall_pos": 0.0,
+        "f1_pos": 0.0,
+        "precision_neg": 0.7197231833910035,
+        "recall_neg": 1.0,
+        "f1_neg": 0.8370221327967807,
+        "confusion": [
+          [
+            416,
+            0
+          ],
+          [
+            162,
+            0
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 416,
+            "fp": 0,
+            "fraud": 162,
+            "detected": 0
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 131,
+            "detected": 0
+          },
+          "multi": {
+            "total": 31,
+            "detected": 0
+          }
+        },
+        "by_group": {
+          "language": {
+            "pt": {
+              "detected": 0,
+              "total": 84,
+              "recall": 0.0
+            },
+            "en": {
+              "detected": 0,
+              "total": 45,
+              "recall": 0.0
+            },
+            "es": {
+              "detected": 0,
+              "total": 33,
+              "recall": 0.0
+            }
+          },
+          "layout": {
+            "B": {
+              "detected": 0,
+              "total": 62,
+              "recall": 0.0
+            },
+            "C": {
+              "detected": 0,
+              "total": 47,
+              "recall": 0.0
+            },
+            "A": {
+              "detected": 0,
+              "total": 53,
+              "recall": 0.0
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 0,
+              "total": 85,
+              "recall": 0.0
+            },
+            "boleto": {
+              "detected": 0,
+              "total": 77,
+              "recall": 0.0
+            }
+          }
+        }
+      },
+      "Deterministic": {
+        "n": 578,
+        "positives": 162,
+        "negatives": 416,
+        "threshold": 0.5,
+        "pr_auc": 0.9555726430005553,
+        "roc_auc": 0.9691358024691358,
+        "brier": 0.01730103806228374,
+        "precision_pos": 1.0,
+        "recall_pos": 0.9382716049382716,
+        "f1_pos": 0.9681528662420382,
+        "precision_neg": 0.9765258215962441,
+        "recall_neg": 1.0,
+        "f1_neg": 0.9881235154394299,
+        "confusion": [
+          [
+            416,
+            0
+          ],
+          [
+            10,
+            152
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 416,
+            "fp": 0,
+            "fraud": 162,
+            "detected": 152
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 131,
+            "detected": 121
+          },
+          "multi": {
+            "total": 31,
+            "detected": 31
+          }
+        },
+        "by_group": {
+          "language": {
+            "pt": {
+              "detected": 81,
+              "total": 84,
+              "recall": 0.9642857142857143
+            },
+            "en": {
+              "detected": 40,
+              "total": 45,
+              "recall": 0.8888888888888888
+            },
+            "es": {
+              "detected": 31,
+              "total": 33,
+              "recall": 0.9393939393939394
+            }
+          },
+          "layout": {
+            "B": {
+              "detected": 59,
+              "total": 62,
+              "recall": 0.9516129032258065
+            },
+            "C": {
+              "detected": 43,
+              "total": 47,
+              "recall": 0.9148936170212766
+            },
+            "A": {
+              "detected": 50,
+              "total": 53,
+              "recall": 0.9433962264150944
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 75,
+              "total": 85,
+              "recall": 0.8823529411764706
+            },
+            "boleto": {
+              "detected": 77,
+              "total": 77,
+              "recall": 1.0
+            }
+          }
+        }
+      },
+      "Fusion": {
+        "n": 578,
+        "positives": 162,
+        "negatives": 416,
+        "threshold": 0.4,
+        "pr_auc": 0.9944513802191706,
+        "roc_auc": 0.9976258309591644,
+        "brier": 0.06931967993079585,
+        "precision_pos": 1.0,
+        "recall_pos": 0.654320987654321,
+        "f1_pos": 0.7910447761194029,
+        "precision_neg": 0.8813559322033898,
+        "recall_neg": 1.0,
+        "f1_neg": 0.9369369369369369,
+        "confusion": [
+          [
+            416,
+            0
+          ],
+          [
+            56,
+            106
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 416,
+            "fp": 0,
+            "fraud": 162,
+            "detected": 106
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 131,
+            "detected": 76
+          },
+          "multi": {
+            "total": 31,
+            "detected": 30
+          }
+        },
+        "by_group": {
+          "language": {
+            "pt": {
+              "detected": 59,
+              "total": 84,
+              "recall": 0.7023809523809523
+            },
+            "en": {
+              "detected": 28,
+              "total": 45,
+              "recall": 0.6222222222222222
+            },
+            "es": {
+              "detected": 19,
+              "total": 33,
+              "recall": 0.5757575757575758
+            }
+          },
+          "layout": {
+            "B": {
+              "detected": 42,
+              "total": 62,
+              "recall": 0.6774193548387096
+            },
+            "C": {
+              "detected": 29,
+              "total": 47,
+              "recall": 0.6170212765957447
+            },
+            "A": {
+              "detected": 35,
+              "total": 53,
+              "recall": 0.660377358490566
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 41,
+              "total": 85,
+              "recall": 0.4823529411764706
+            },
+            "boleto": {
+              "detected": 65,
+              "total": 77,
+              "recall": 0.8441558441558441
+            }
+          }
+        }
+      },
+      "Logistic": {
+        "n": 578,
+        "positives": 162,
+        "negatives": 416,
+        "threshold": 0.8094,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0,
+        "brier": 0.008590671987483655,
+        "precision_pos": 1.0,
+        "recall_pos": 1.0,
+        "f1_pos": 1.0,
+        "precision_neg": 1.0,
+        "recall_neg": 1.0,
+        "f1_neg": 1.0,
+        "confusion": [
+          [
+            416,
+            0
+          ],
+          [
+            0,
+            162
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 416,
+            "fp": 0,
+            "fraud": 162,
+            "detected": 162
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 131,
+            "detected": 131
+          },
+          "multi": {
+            "total": 31,
+            "detected": 31
+          }
+        },
+        "by_group": {
+          "language": {
+            "pt": {
+              "detected": 84,
+              "total": 84,
+              "recall": 1.0
+            },
+            "en": {
+              "detected": 45,
+              "total": 45,
+              "recall": 1.0
+            },
+            "es": {
+              "detected": 33,
+              "total": 33,
+              "recall": 1.0
+            }
+          },
+          "layout": {
+            "B": {
+              "detected": 62,
+              "total": 62,
+              "recall": 1.0
+            },
+            "C": {
+              "detected": 47,
+              "total": 47,
+              "recall": 1.0
+            },
+            "A": {
+              "detected": 53,
+              "total": 53,
+              "recall": 1.0
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 85,
+              "total": 85,
+              "recall": 1.0
+            },
+            "boleto": {
+              "detected": 77,
+              "total": 77,
+              "recall": 1.0
+            }
+          }
+        }
+      }
+    },
+    "val": {
+      "Dummy": {
+        "n": 140,
+        "positives": 40,
+        "negatives": 100,
+        "threshold": 0.5,
+        "pr_auc": 0.2857142857142857,
+        "roc_auc": 0.5,
+        "brier": 0.20411119872333225,
+        "precision_pos": 0.0,
+        "recall_pos": 0.0,
+        "f1_pos": 0.0,
+        "precision_neg": 0.7142857142857143,
+        "recall_neg": 1.0,
+        "f1_neg": 0.8333333333333334,
+        "confusion": [
+          [
+            100,
+            0
+          ],
+          [
+            40,
+            0
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 100,
+            "fp": 0,
+            "fraud": 40,
+            "detected": 0
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 29,
+            "detected": 0
+          },
+          "multi": {
+            "total": 11,
+            "detected": 0
+          }
+        },
+        "by_group": {
+          "language": {
+            "pt": {
+              "detected": 0,
+              "total": 23,
+              "recall": 0.0
+            },
+            "es": {
+              "detected": 0,
+              "total": 9,
+              "recall": 0.0
+            },
+            "en": {
+              "detected": 0,
+              "total": 8,
+              "recall": 0.0
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 0,
+              "total": 8,
+              "recall": 0.0
+            },
+            "A": {
+              "detected": 0,
+              "total": 22,
+              "recall": 0.0
+            },
+            "B": {
+              "detected": 0,
+              "total": 10,
+              "recall": 0.0
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 0,
+              "total": 21,
+              "recall": 0.0
+            },
+            "boleto": {
+              "detected": 0,
+              "total": 19,
+              "recall": 0.0
+            }
+          }
+        }
+      },
+      "Deterministic": {
+        "n": 140,
+        "positives": 40,
+        "negatives": 100,
+        "threshold": 0.5,
+        "pr_auc": 0.9642857142857143,
+        "roc_auc": 0.975,
+        "brier": 0.014285714285714285,
+        "precision_pos": 1.0,
+        "recall_pos": 0.95,
+        "f1_pos": 0.9743589743589743,
+        "precision_neg": 0.9803921568627451,
+        "recall_neg": 1.0,
+        "f1_neg": 0.9900990099009901,
+        "confusion": [
+          [
+            100,
+            0
+          ],
+          [
+            2,
+            38
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 100,
+            "fp": 0,
+            "fraud": 40,
+            "detected": 38
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 29,
+            "detected": 27
+          },
+          "multi": {
+            "total": 11,
+            "detected": 11
+          }
+        },
+        "by_group": {
+          "language": {
+            "pt": {
+              "detected": 22,
+              "total": 23,
+              "recall": 0.9565217391304348
+            },
+            "es": {
+              "detected": 9,
+              "total": 9,
+              "recall": 1.0
+            },
+            "en": {
+              "detected": 7,
+              "total": 8,
+              "recall": 0.875
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 8,
+              "total": 8,
+              "recall": 1.0
+            },
+            "A": {
+              "detected": 21,
+              "total": 22,
+              "recall": 0.9545454545454546
+            },
+            "B": {
+              "detected": 9,
+              "total": 10,
+              "recall": 0.9
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 19,
+              "total": 21,
+              "recall": 0.9047619047619048
+            },
+            "boleto": {
+              "detected": 19,
+              "total": 19,
+              "recall": 1.0
+            }
+          }
+        }
+      },
+      "Fusion": {
+        "n": 140,
+        "positives": 40,
+        "negatives": 100,
+        "threshold": 0.4,
+        "pr_auc": 0.9976190476190477,
+        "roc_auc": 0.9989999999999999,
+        "brier": 0.05937428571428571,
+        "precision_pos": 1.0,
+        "recall_pos": 0.775,
+        "f1_pos": 0.8732394366197183,
+        "precision_neg": 0.9174311926605505,
+        "recall_neg": 1.0,
+        "f1_neg": 0.9569377990430622,
+        "confusion": [
+          [
+            100,
+            0
+          ],
+          [
+            9,
+            31
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 100,
+            "fp": 0,
+            "fraud": 40,
+            "detected": 31
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 29,
+            "detected": 20
+          },
+          "multi": {
+            "total": 11,
+            "detected": 11
+          }
+        },
+        "by_group": {
+          "language": {
+            "pt": {
+              "detected": 20,
+              "total": 23,
+              "recall": 0.8695652173913043
+            },
+            "es": {
+              "detected": 7,
+              "total": 9,
+              "recall": 0.7777777777777778
+            },
+            "en": {
+              "detected": 4,
+              "total": 8,
+              "recall": 0.5
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 7,
+              "total": 8,
+              "recall": 0.875
+            },
+            "A": {
+              "detected": 17,
+              "total": 22,
+              "recall": 0.7727272727272727
+            },
+            "B": {
+              "detected": 7,
+              "total": 10,
+              "recall": 0.7
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 13,
+              "total": 21,
+              "recall": 0.6190476190476191
+            },
+            "boleto": {
+              "detected": 18,
+              "total": 19,
+              "recall": 0.9473684210526315
+            }
+          }
+        }
+      },
+      "Logistic": {
+        "n": 140,
+        "positives": 40,
+        "negatives": 100,
+        "threshold": 0.8094,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0,
+        "brier": 0.008499272393513675,
+        "precision_pos": 1.0,
+        "recall_pos": 1.0,
+        "f1_pos": 1.0,
+        "precision_neg": 1.0,
+        "recall_neg": 1.0,
+        "f1_neg": 1.0,
+        "confusion": [
+          [
+            100,
+            0
+          ],
+          [
+            0,
+            40
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 100,
+            "fp": 0,
+            "fraud": 40,
+            "detected": 40
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 29,
+            "detected": 29
+          },
+          "multi": {
+            "total": 11,
+            "detected": 11
+          }
+        },
+        "by_group": {
+          "language": {
+            "pt": {
+              "detected": 23,
+              "total": 23,
+              "recall": 1.0
+            },
+            "es": {
+              "detected": 9,
+              "total": 9,
+              "recall": 1.0
+            },
+            "en": {
+              "detected": 8,
+              "total": 8,
+              "recall": 1.0
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 8,
+              "total": 8,
+              "recall": 1.0
+            },
+            "A": {
+              "detected": 22,
+              "total": 22,
+              "recall": 1.0
+            },
+            "B": {
+              "detected": 10,
+              "total": 10,
+              "recall": 1.0
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 21,
+              "total": 21,
+              "recall": 1.0
+            },
+            "boleto": {
+              "detected": 19,
+              "total": 19,
+              "recall": 1.0
+            }
+          }
+        }
+      }
+    },
+    "test_iid": {
+      "Dummy": {
+        "n": 148,
+        "positives": 39,
+        "negatives": 109,
+        "threshold": 0.5,
+        "pr_auc": 0.2635135135135135,
+        "roc_auc": 0.5,
+        "brier": 0.19435515003994788,
+        "precision_pos": 0.0,
+        "recall_pos": 0.0,
+        "f1_pos": 0.0,
+        "precision_neg": 0.7364864864864865,
+        "recall_neg": 1.0,
+        "f1_neg": 0.8482490272373541,
+        "confusion": [
+          [
+            109,
+            0
+          ],
+          [
+            39,
+            0
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 109,
+            "fp": 0,
+            "fraud": 39,
+            "detected": 0
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 26,
+            "detected": 0
+          },
+          "multi": {
+            "total": 13,
+            "detected": 0
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 0,
+              "total": 15,
+              "recall": 0.0
+            },
+            "en": {
+              "detected": 0,
+              "total": 10,
+              "recall": 0.0
+            },
+            "pt": {
+              "detected": 0,
+              "total": 14,
+              "recall": 0.0
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 0,
+              "total": 19,
+              "recall": 0.0
+            },
+            "B": {
+              "detected": 0,
+              "total": 12,
+              "recall": 0.0
+            },
+            "A": {
+              "detected": 0,
+              "total": 8,
+              "recall": 0.0
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 0,
+              "total": 16,
+              "recall": 0.0
+            },
+            "contracheque": {
+              "detected": 0,
+              "total": 23,
+              "recall": 0.0
+            }
+          }
+        }
+      },
+      "Deterministic": {
+        "n": 148,
+        "positives": 39,
+        "negatives": 109,
+        "threshold": 0.5,
+        "pr_auc": 0.9622314622314622,
+        "roc_auc": 0.9743589743589743,
+        "brier": 0.013513513513513514,
+        "precision_pos": 1.0,
+        "recall_pos": 0.9487179487179487,
+        "f1_pos": 0.9736842105263158,
+        "precision_neg": 0.9819819819819819,
+        "recall_neg": 1.0,
+        "f1_neg": 0.990909090909091,
+        "confusion": [
+          [
+            109,
+            0
+          ],
+          [
+            2,
+            37
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 109,
+            "fp": 0,
+            "fraud": 39,
+            "detected": 37
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 26,
+            "detected": 24
+          },
+          "multi": {
+            "total": 13,
+            "detected": 13
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 15,
+              "total": 15,
+              "recall": 1.0
+            },
+            "en": {
+              "detected": 10,
+              "total": 10,
+              "recall": 1.0
+            },
+            "pt": {
+              "detected": 12,
+              "total": 14,
+              "recall": 0.8571428571428571
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 18,
+              "total": 19,
+              "recall": 0.9473684210526315
+            },
+            "B": {
+              "detected": 12,
+              "total": 12,
+              "recall": 1.0
+            },
+            "A": {
+              "detected": 7,
+              "total": 8,
+              "recall": 0.875
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 16,
+              "total": 16,
+              "recall": 1.0
+            },
+            "contracheque": {
+              "detected": 21,
+              "total": 23,
+              "recall": 0.9130434782608695
+            }
+          }
+        }
+      },
+      "Fusion": {
+        "n": 148,
+        "positives": 39,
+        "negatives": 109,
+        "threshold": 0.4,
+        "pr_auc": 0.9931623931623932,
+        "roc_auc": 0.9971771347918137,
+        "brier": 0.06591402027027027,
+        "precision_pos": 1.0,
+        "recall_pos": 0.6666666666666666,
+        "f1_pos": 0.8,
+        "precision_neg": 0.8934426229508197,
+        "recall_neg": 1.0,
+        "f1_neg": 0.9437229437229437,
+        "confusion": [
+          [
+            109,
+            0
+          ],
+          [
+            13,
+            26
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 109,
+            "fp": 0,
+            "fraud": 39,
+            "detected": 26
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 26,
+            "detected": 14
+          },
+          "multi": {
+            "total": 13,
+            "detected": 12
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 11,
+              "total": 15,
+              "recall": 0.7333333333333333
+            },
+            "en": {
+              "detected": 6,
+              "total": 10,
+              "recall": 0.6
+            },
+            "pt": {
+              "detected": 9,
+              "total": 14,
+              "recall": 0.6428571428571429
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 10,
+              "total": 19,
+              "recall": 0.5263157894736842
+            },
+            "B": {
+              "detected": 9,
+              "total": 12,
+              "recall": 0.75
+            },
+            "A": {
+              "detected": 7,
+              "total": 8,
+              "recall": 0.875
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 13,
+              "total": 16,
+              "recall": 0.8125
+            },
+            "contracheque": {
+              "detected": 13,
+              "total": 23,
+              "recall": 0.5652173913043478
+            }
+          }
+        }
+      },
+      "Logistic": {
+        "n": 148,
+        "positives": 39,
+        "negatives": 109,
+        "threshold": 0.8094,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0,
+        "brier": 0.008928195861072206,
+        "precision_pos": 1.0,
+        "recall_pos": 0.9743589743589743,
+        "f1_pos": 0.987012987012987,
+        "precision_neg": 0.990909090909091,
+        "recall_neg": 1.0,
+        "f1_neg": 0.9954337899543378,
+        "confusion": [
+          [
+            109,
+            0
+          ],
+          [
+            1,
+            38
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 109,
+            "fp": 0,
+            "fraud": 39,
+            "detected": 38
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 26,
+            "detected": 25
+          },
+          "multi": {
+            "total": 13,
+            "detected": 13
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 15,
+              "total": 15,
+              "recall": 1.0
+            },
+            "en": {
+              "detected": 10,
+              "total": 10,
+              "recall": 1.0
+            },
+            "pt": {
+              "detected": 13,
+              "total": 14,
+              "recall": 0.9285714285714286
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 19,
+              "total": 19,
+              "recall": 1.0
+            },
+            "B": {
+              "detected": 12,
+              "total": 12,
+              "recall": 1.0
+            },
+            "A": {
+              "detected": 7,
+              "total": 8,
+              "recall": 0.875
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 16,
+              "total": 16,
+              "recall": 1.0
+            },
+            "contracheque": {
+              "detected": 22,
+              "total": 23,
+              "recall": 0.9565217391304348
+            }
+          }
+        }
+      }
+    },
+    "test_shift": {
+      "Dummy": {
+        "n": 96,
+        "positives": 27,
+        "negatives": 69,
+        "threshold": 0.5,
+        "pr_auc": 0.28125,
+        "roc_auc": 0.5,
+        "brier": 0.20214938458591256,
+        "precision_pos": 0.0,
+        "recall_pos": 0.0,
+        "f1_pos": 0.0,
+        "precision_neg": 0.71875,
+        "recall_neg": 1.0,
+        "f1_neg": 0.8363636363636363,
+        "confusion": [
+          [
+            69,
+            0
+          ],
+          [
+            27,
+            0
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 69,
+            "fp": 0,
+            "fraud": 27,
+            "detected": 0
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 22,
+            "detected": 0
+          },
+          "multi": {
+            "total": 5,
+            "detected": 0
+          }
+        },
+        "by_group": {
+          "language": {
+            "en": {
+              "detected": 0,
+              "total": 6,
+              "recall": 0.0
+            },
+            "pt": {
+              "detected": 0,
+              "total": 14,
+              "recall": 0.0
+            },
+            "es": {
+              "detected": 0,
+              "total": 7,
+              "recall": 0.0
+            }
+          },
+          "layout": {
+            "D": {
+              "detected": 0,
+              "total": 27,
+              "recall": 0.0
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 0,
+              "total": 22,
+              "recall": 0.0
+            },
+            "boleto": {
+              "detected": 0,
+              "total": 5,
+              "recall": 0.0
+            }
+          }
+        }
+      },
+      "Deterministic": {
+        "n": 96,
+        "positives": 27,
+        "negatives": 69,
+        "threshold": 0.5,
+        "pr_auc": 0.8668981481481481,
+        "roc_auc": 0.9074074074074074,
+        "brier": 0.052083333333333336,
+        "precision_pos": 1.0,
+        "recall_pos": 0.8148148148148148,
+        "f1_pos": 0.8979591836734694,
+        "precision_neg": 0.9324324324324325,
+        "recall_neg": 1.0,
+        "f1_neg": 0.965034965034965,
+        "confusion": [
+          [
+            69,
+            0
+          ],
+          [
+            5,
+            22
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 69,
+            "fp": 0,
+            "fraud": 27,
+            "detected": 22
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 22,
+            "detected": 17
+          },
+          "multi": {
+            "total": 5,
+            "detected": 5
+          }
+        },
+        "by_group": {
+          "language": {
+            "en": {
+              "detected": 5,
+              "total": 6,
+              "recall": 0.8333333333333334
+            },
+            "pt": {
+              "detected": 11,
+              "total": 14,
+              "recall": 0.7857142857142857
+            },
+            "es": {
+              "detected": 6,
+              "total": 7,
+              "recall": 0.8571428571428571
+            }
+          },
+          "layout": {
+            "D": {
+              "detected": 22,
+              "total": 27,
+              "recall": 0.8148148148148148
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 17,
+              "total": 22,
+              "recall": 0.7727272727272727
+            },
+            "boleto": {
+              "detected": 5,
+              "total": 5,
+              "recall": 1.0
+            }
+          }
+        }
+      },
+      "Fusion": {
+        "n": 96,
+        "positives": 27,
+        "negatives": 69,
+        "threshold": 0.4,
+        "pr_auc": 0.9814814814814814,
+        "roc_auc": 0.9919484702093398,
+        "brier": 0.09719244791666666,
+        "precision_pos": 1.0,
+        "recall_pos": 0.48148148148148145,
+        "f1_pos": 0.65,
+        "precision_neg": 0.8313253012048193,
+        "recall_neg": 1.0,
+        "f1_neg": 0.9078947368421053,
+        "confusion": [
+          [
+            69,
+            0
+          ],
+          [
+            14,
+            13
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 69,
+            "fp": 0,
+            "fraud": 27,
+            "detected": 13
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 22,
+            "detected": 8
+          },
+          "multi": {
+            "total": 5,
+            "detected": 5
+          }
+        },
+        "by_group": {
+          "language": {
+            "en": {
+              "detected": 3,
+              "total": 6,
+              "recall": 0.5
+            },
+            "pt": {
+              "detected": 6,
+              "total": 14,
+              "recall": 0.42857142857142855
+            },
+            "es": {
+              "detected": 4,
+              "total": 7,
+              "recall": 0.5714285714285714
+            }
+          },
+          "layout": {
+            "D": {
+              "detected": 13,
+              "total": 27,
+              "recall": 0.48148148148148145
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 8,
+              "total": 22,
+              "recall": 0.36363636363636365
+            },
+            "boleto": {
+              "detected": 5,
+              "total": 5,
+              "recall": 1.0
+            }
+          }
+        }
+      },
+      "Logistic": {
+        "n": 96,
+        "positives": 27,
+        "negatives": 69,
+        "threshold": 0.8094,
+        "pr_auc": 0.9999999999999998,
+        "roc_auc": 1.0,
+        "brier": 0.010127699173853168,
+        "precision_pos": 1.0,
+        "recall_pos": 0.9259259259259259,
+        "f1_pos": 0.9615384615384616,
+        "precision_neg": 0.971830985915493,
+        "recall_neg": 1.0,
+        "f1_neg": 0.9857142857142858,
+        "confusion": [
+          [
+            69,
+            0
+          ],
+          [
+            2,
+            25
+          ]
+        ],
+        "fp_by_path": {
+          "A_native": {
+            "legit": 69,
+            "fp": 0,
+            "fraud": 27,
+            "detected": 25
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 22,
+            "detected": 20
+          },
+          "multi": {
+            "total": 5,
+            "detected": 5
+          }
+        },
+        "by_group": {
+          "language": {
+            "en": {
+              "detected": 5,
+              "total": 6,
+              "recall": 0.8333333333333334
+            },
+            "pt": {
+              "detected": 13,
+              "total": 14,
+              "recall": 0.9285714285714286
+            },
+            "es": {
+              "detected": 7,
+              "total": 7,
+              "recall": 1.0
+            }
+          },
+          "layout": {
+            "D": {
+              "detected": 25,
+              "total": 27,
+              "recall": 0.9259259259259259
+            }
+          },
+          "document_type": {
+            "contracheque": {
+              "detected": 20,
+              "total": 22,
+              "recall": 0.9090909090909091
+            },
+            "boleto": {
+              "detected": 5,
+              "total": 5,
+              "recall": 1.0
+            }
+          }
+        }
+      }
+    }
+  },
+  "external_ocr": {
+    "B_ocr_clean": {
+      "logistic": {
+        "n": 106,
+        "positives": 66,
+        "negatives": 40,
+        "threshold": 0.8094,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0,
+        "brier": 0.08470793400914736,
+        "precision_pos": 1.0,
+        "recall_pos": 0.3939393939393939,
+        "f1_pos": 0.5652173913043478,
+        "precision_neg": 0.5,
+        "recall_neg": 1.0,
+        "f1_neg": 0.6666666666666666,
+        "confusion": [
+          [
+            40,
+            0
+          ],
+          [
+            40,
+            26
+          ]
+        ],
+        "fp_by_path": {
+          "B_ocr_clean": {
+            "legit": 40,
+            "fp": 0,
+            "fraud": 66,
+            "detected": 26
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 48,
+            "detected": 9
+          },
+          "multi": {
+            "total": 18,
+            "detected": 17
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 12,
+              "total": 22,
+              "recall": 0.5454545454545454
+            },
+            "en": {
+              "detected": 5,
+              "total": 16,
+              "recall": 0.3125
+            },
+            "pt": {
+              "detected": 9,
+              "total": 28,
+              "recall": 0.32142857142857145
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 7,
+              "total": 19,
+              "recall": 0.3684210526315789
+            },
+            "B": {
+              "detected": 6,
+              "total": 12,
+              "recall": 0.5
+            },
+            "A": {
+              "detected": 3,
+              "total": 8,
+              "recall": 0.375
+            },
+            "D": {
+              "detected": 10,
+              "total": 27,
+              "recall": 0.37037037037037035
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 9,
+              "total": 21,
+              "recall": 0.42857142857142855
+            },
+            "contracheque": {
+              "detected": 17,
+              "total": 45,
+              "recall": 0.37777777777777777
+            }
+          }
+        }
+      },
+      "deterministic": {
+        "n": 106,
+        "positives": 66,
+        "negatives": 40,
+        "threshold": 0.5,
+        "pr_auc": 0.6683819325328759,
+        "roc_auc": 0.5606060606060606,
+        "brier": 0.5471698113207547,
+        "precision_pos": 1.0,
+        "recall_pos": 0.12121212121212122,
+        "f1_pos": 0.21621621621621623,
+        "precision_neg": 0.40816326530612246,
+        "recall_neg": 1.0,
+        "f1_neg": 0.5797101449275363,
+        "confusion": [
+          [
+            40,
+            0
+          ],
+          [
+            58,
+            8
+          ]
+        ],
+        "fp_by_path": {
+          "B_ocr_clean": {
+            "legit": 40,
+            "fp": 0,
+            "fraud": 66,
+            "detected": 8
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 48,
+            "detected": 5
+          },
+          "multi": {
+            "total": 18,
+            "detected": 3
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 1,
+              "total": 22,
+              "recall": 0.045454545454545456
+            },
+            "en": {
+              "detected": 2,
+              "total": 16,
+              "recall": 0.125
+            },
+            "pt": {
+              "detected": 5,
+              "total": 28,
+              "recall": 0.17857142857142858
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 3,
+              "total": 19,
+              "recall": 0.15789473684210525
+            },
+            "B": {
+              "detected": 1,
+              "total": 12,
+              "recall": 0.08333333333333333
+            },
+            "A": {
+              "detected": 0,
+              "total": 8,
+              "recall": 0.0
+            },
+            "D": {
+              "detected": 4,
+              "total": 27,
+              "recall": 0.14814814814814814
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 0,
+              "total": 21,
+              "recall": 0.0
+            },
+            "contracheque": {
+              "detected": 8,
+              "total": 45,
+              "recall": 0.17777777777777778
+            }
+          }
+        }
+      },
+      "fusion": {
+        "n": 106,
+        "positives": 66,
+        "negatives": 40,
+        "threshold": 0.4,
+        "pr_auc": 0.912003381445081,
+        "roc_auc": 0.9001893939393939,
+        "brier": 0.3183316037735849,
+        "precision_pos": 0.9333333333333333,
+        "recall_pos": 0.21212121212121213,
+        "f1_pos": 0.345679012345679,
+        "precision_neg": 0.42857142857142855,
+        "recall_neg": 0.975,
+        "f1_neg": 0.5954198473282443,
+        "confusion": [
+          [
+            39,
+            1
+          ],
+          [
+            52,
+            14
+          ]
+        ],
+        "fp_by_path": {
+          "B_ocr_clean": {
+            "legit": 40,
+            "fp": 1,
+            "fraud": 66,
+            "detected": 14
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 48,
+            "detected": 6
+          },
+          "multi": {
+            "total": 18,
+            "detected": 8
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 8,
+              "total": 22,
+              "recall": 0.36363636363636365
+            },
+            "en": {
+              "detected": 3,
+              "total": 16,
+              "recall": 0.1875
+            },
+            "pt": {
+              "detected": 3,
+              "total": 28,
+              "recall": 0.10714285714285714
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 2,
+              "total": 19,
+              "recall": 0.10526315789473684
+            },
+            "B": {
+              "detected": 5,
+              "total": 12,
+              "recall": 0.4166666666666667
+            },
+            "A": {
+              "detected": 2,
+              "total": 8,
+              "recall": 0.25
+            },
+            "D": {
+              "detected": 5,
+              "total": 27,
+              "recall": 0.18518518518518517
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 11,
+              "total": 21,
+              "recall": 0.5238095238095238
+            },
+            "contracheque": {
+              "detected": 3,
+              "total": 45,
+              "recall": 0.06666666666666667
+            }
+          }
+        }
+      }
+    },
+    "C_ocr_degraded": {
+      "logistic": {
+        "n": 106,
+        "positives": 66,
+        "negatives": 40,
+        "threshold": 0.8094,
+        "pr_auc": 0.9816125732052314,
+        "roc_auc": 0.9696969696969697,
+        "brier": 0.09978889368917088,
+        "precision_pos": 1.0,
+        "recall_pos": 0.4090909090909091,
+        "f1_pos": 0.5806451612903226,
+        "precision_neg": 0.5063291139240507,
+        "recall_neg": 1.0,
+        "f1_neg": 0.6722689075630253,
+        "confusion": [
+          [
+            40,
+            0
+          ],
+          [
+            39,
+            27
+          ]
+        ],
+        "fp_by_path": {
+          "C_ocr_degraded": {
+            "legit": 40,
+            "fp": 0,
+            "fraud": 66,
+            "detected": 27
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 48,
+            "detected": 12
+          },
+          "multi": {
+            "total": 18,
+            "detected": 15
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 11,
+              "total": 22,
+              "recall": 0.5
+            },
+            "en": {
+              "detected": 6,
+              "total": 16,
+              "recall": 0.375
+            },
+            "pt": {
+              "detected": 10,
+              "total": 28,
+              "recall": 0.35714285714285715
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 7,
+              "total": 19,
+              "recall": 0.3684210526315789
+            },
+            "B": {
+              "detected": 5,
+              "total": 12,
+              "recall": 0.4166666666666667
+            },
+            "A": {
+              "detected": 3,
+              "total": 8,
+              "recall": 0.375
+            },
+            "D": {
+              "detected": 12,
+              "total": 27,
+              "recall": 0.4444444444444444
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 7,
+              "total": 21,
+              "recall": 0.3333333333333333
+            },
+            "contracheque": {
+              "detected": 20,
+              "total": 45,
+              "recall": 0.4444444444444444
+            }
+          }
+        }
+      },
+      "deterministic": {
+        "n": 106,
+        "positives": 66,
+        "negatives": 40,
+        "threshold": 0.5,
+        "pr_auc": 0.6683819325328759,
+        "roc_auc": 0.5606060606060606,
+        "brier": 0.5471698113207547,
+        "precision_pos": 1.0,
+        "recall_pos": 0.12121212121212122,
+        "f1_pos": 0.21621621621621623,
+        "precision_neg": 0.40816326530612246,
+        "recall_neg": 1.0,
+        "f1_neg": 0.5797101449275363,
+        "confusion": [
+          [
+            40,
+            0
+          ],
+          [
+            58,
+            8
+          ]
+        ],
+        "fp_by_path": {
+          "C_ocr_degraded": {
+            "legit": 40,
+            "fp": 0,
+            "fraud": 66,
+            "detected": 8
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 48,
+            "detected": 5
+          },
+          "multi": {
+            "total": 18,
+            "detected": 3
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 1,
+              "total": 22,
+              "recall": 0.045454545454545456
+            },
+            "en": {
+              "detected": 2,
+              "total": 16,
+              "recall": 0.125
+            },
+            "pt": {
+              "detected": 5,
+              "total": 28,
+              "recall": 0.17857142857142858
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 3,
+              "total": 19,
+              "recall": 0.15789473684210525
+            },
+            "B": {
+              "detected": 1,
+              "total": 12,
+              "recall": 0.08333333333333333
+            },
+            "A": {
+              "detected": 0,
+              "total": 8,
+              "recall": 0.0
+            },
+            "D": {
+              "detected": 4,
+              "total": 27,
+              "recall": 0.14814814814814814
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 0,
+              "total": 21,
+              "recall": 0.0
+            },
+            "contracheque": {
+              "detected": 8,
+              "total": 45,
+              "recall": 0.17777777777777778
+            }
+          }
+        }
+      },
+      "fusion": {
+        "n": 106,
+        "positives": 66,
+        "negatives": 40,
+        "threshold": 0.4,
+        "pr_auc": 0.8103212947919624,
+        "roc_auc": 0.7340909090909091,
+        "brier": 0.3058929245283018,
+        "precision_pos": 0.9130434782608695,
+        "recall_pos": 0.3181818181818182,
+        "f1_pos": 0.47191011235955055,
+        "precision_neg": 0.4578313253012048,
+        "recall_neg": 0.95,
+        "f1_neg": 0.6178861788617886,
+        "confusion": [
+          [
+            38,
+            2
+          ],
+          [
+            45,
+            21
+          ]
+        ],
+        "fp_by_path": {
+          "C_ocr_degraded": {
+            "legit": 40,
+            "fp": 2,
+            "fraud": 66,
+            "detected": 21
+          }
+        },
+        "recall_by_class": {
+          "naive": {
+            "total": 48,
+            "detected": 12
+          },
+          "multi": {
+            "total": 18,
+            "detected": 9
+          }
+        },
+        "by_group": {
+          "language": {
+            "es": {
+              "detected": 10,
+              "total": 22,
+              "recall": 0.45454545454545453
+            },
+            "en": {
+              "detected": 7,
+              "total": 16,
+              "recall": 0.4375
+            },
+            "pt": {
+              "detected": 4,
+              "total": 28,
+              "recall": 0.14285714285714285
+            }
+          },
+          "layout": {
+            "C": {
+              "detected": 3,
+              "total": 19,
+              "recall": 0.15789473684210525
+            },
+            "B": {
+              "detected": 6,
+              "total": 12,
+              "recall": 0.5
+            },
+            "A": {
+              "detected": 3,
+              "total": 8,
+              "recall": 0.375
+            },
+            "D": {
+              "detected": 9,
+              "total": 27,
+              "recall": 0.3333333333333333
+            }
+          },
+          "document_type": {
+            "boleto": {
+              "detected": 15,
+              "total": 21,
+              "recall": 0.7142857142857143
+            },
+            "contracheque": {
+              "detected": 6,
+              "total": 45,
+              "recall": 0.13333333333333333
+            }
+          }
+        }
+      }
+    }
+  },
+  "isolation_forest": {
+    "train_legit": 416,
+    "contamination": "auto",
+    "random_state": 42,
+    "val": {
+      "n": 140,
+      "positives": 40,
+      "roc_auc": 0.8265,
+      "pr_auc": 0.520430393789142,
+      "legit_mean": 0.495783428331009,
+      "fraud_mean": 0.5608775118307431
+    },
+    "val_threshold_p95_legit": 0.6397358388448257,
+    "test_iid": {
+      "n": 148,
+      "positives": 39,
+      "roc_auc": 0.7871089155492825,
+      "pr_auc": 0.4353843946227784,
+      "legit_mean": 0.4998989508364693,
+      "fraud_mean": 0.5509609646134117,
+      "recall_at_p95": 0.07692307692307693,
+      "fp_rate_at_p95": 0.10091743119266056,
+      "logistic_missed": 1,
+      "anomaly_flags_among_missed": 0
+    },
+    "test_shift": {
+      "n": 96,
+      "positives": 27,
+      "roc_auc": 0.7004830917874396,
+      "pr_auc": 0.39433771916253946,
+      "legit_mean": 0.5014726125512425,
+      "fraud_mean": 0.5316647418314593,
+      "recall_at_p95": 0.037037037037037035,
+      "fp_rate_at_p95": 0.07246376811594203
+    }
+  },
+  "model_path": "..\\data\\ml\\logistic_v2_1.joblib",
+  "policy": "evaluation only; not connected to API or FusionEngine"
+}
