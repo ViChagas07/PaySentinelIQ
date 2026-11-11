@@ -74,7 +74,7 @@ services:
       ollama:
         condition: service_started
     volumes:
-      - ../Back-end:/app/Back-end
+      - ..:/app
     restart: unless-stopped
 
 volumes:

@@ -156,7 +156,7 @@ services:
       target: ${DOCKER_TARGET:-production}
     command: python -m app.workers.audit_worker
     env_file:
-      - ../ .env
+      - ../.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://psi:psi_secret@postgres:5432/paysentineliq
       - REDIS_URL=redis://redis:6379/0
