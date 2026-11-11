@@ -4,6 +4,13 @@ Todas as regras abaixo são determinísticas, não usam LLM nem rede e são aval
 `DeterministicRulesStage`, entre `ValidateStage` e `RiskStage`. Ausência de um campo
 necessário faz a regra ser pulada e registrada em `metadata.validation.skipped_rules`.
 
+## Extração de texto de PDF
+
+O extrator central guarda `doc.page_count` antes de fechar o documento do
+PyMuPDF. Um PDF válido não gera mais o warning `document closed` nem cai para os
+métodos de fallback por causa desse erro; a cascata só avança quando o método
+realmente falha.
+
 ## Status de OCR
 
 | Status | Origem | Efeito no score |

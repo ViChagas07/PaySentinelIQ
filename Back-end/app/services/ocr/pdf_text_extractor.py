@@ -72,12 +72,13 @@ def extract_text_robust(pdf_bytes: bytes, document_type: str = "UNKNOWN") -> dic
                         page_content.append(line_text)
             pages_text.append("\n".join(page_content))
         full_text = "\n\n".join(pages_text)
+        page_count = doc.page_count
         doc.close()
         attempts.append({
             "method": "pymupdf",
             "text": full_text.strip(),
             "char_count": len(full_text.strip()),
-            "pages": len(doc),
+            "pages": page_count,
         })
     except Exception as e:
         logger.warning("[%s] PyMuPDF failed: %s", document_type, e)
