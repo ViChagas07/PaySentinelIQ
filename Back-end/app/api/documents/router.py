@@ -111,10 +111,12 @@ async def _run_canonical(
     file_name: str, mime_type: str, tenant_id: str, user_id: str, observations: str,
 ) -> dict[str, Any]:
     """Run CanonicalPipeline and return backward-compatible response."""
+    import asyncio
     import time
     from app.core.contracts.pipeline_context import PipelineContext
     from app.services.pipeline.canonical_pipeline import CanonicalPipeline
 
+    settings = get_settings()
     ctx = PipelineContext(
         document_id=document_id,
         tenant_id=tenant_id,
@@ -126,9 +128,14 @@ async def _run_canonical(
     if observations:
         ctx.metadata["observations"] = observations
 
+    if getattr(settings, "ENABLE_OCR", False):
+        from app.services.extraction.prelude import run_ocr_prelude
+
+        await run_ocr_prelude(ctx)
+
     t0 = time.monotonic()
     pipeline = CanonicalPipeline()
-    result = pipeline.execute(ctx)
+    result = await asyncio.to_thread(pipeline.execute, ctx)
     elapsed = time.monotonic() - t0
 
     # ── Persist document + fraud alert (if HIGH risk) ──
@@ -138,7 +145,6 @@ async def _run_canonical(
     await _send_analysis_notification(ctx, result, document_id, tenant_id, user_id)
 
     # ── Shadow mode ──
-    settings = get_settings()
     if getattr(settings, "ENABLE_SHADOW_PIPELINE", False):
         try:
             from app.services.pipeline.shadow_runner import ShadowRunner
@@ -160,6 +166,20 @@ async def _run_canonical(
     response["document_id"] = document_id
     response["processing_time_seconds"] = round(elapsed, 2)
     response["extracted_metadata"] = _build_extracted_metadata(ctx)
+
+    extraction_metadata = ctx.metadata.get("extraction", {})
+    ocr_metadata = ctx.metadata.get("ocr", {})
+    response["extraction"] = {
+        "language": extraction_metadata.get("language"),
+        "method": ctx.extraction_method or extraction_metadata.get("method"),
+        "ocr_confidence": ctx.ocr_confidence,
+        "page_count": ctx.page_count,
+        "ocr_status": ocr_metadata.get("status"),
+        "ocr_seconds": ocr_metadata.get("duration_s"),
+        "warnings": extraction_metadata.get("warnings", []),
+        "corrections": extraction_metadata.get("corrections", []),
+        "fields": extraction_metadata.get("fields", {}),
+    }
     return response
 
 
