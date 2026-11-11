@@ -21,7 +21,7 @@ from sklearn.metrics import (
 
 from app.ml.dataset import Dataset, is_expert
 from app.ml.features import FEATURE_NAMES, vectorize
-from app.ml.holdout_contract import preflight_and_load
+from app.ml.holdout_contract import HoldoutConfig, preflight_and_load
 
 PRIMARY_PATHS = ("A_native", "B_ocr_clean", "C_ocr_degraded")
 FP_CAPS = {
@@ -223,9 +223,10 @@ def evaluate(
     native_rows: list[dict[str, Any]],
     ocr_rows: list[dict[str, Any]],
     model,
-    reference_date: date,
-    threshold: float,
+    config: HoldoutConfig,
 ) -> dict[str, Any]:
+    reference_date = date.fromisoformat(config.reference_date)
+    threshold = config.artifact_threshold
     native = _dataset_from_rows(
         [row for row in native_rows if row["path"] == "A_native"],
         reference_date,
@@ -245,12 +246,12 @@ def evaluate(
         deterministic = _metrics(
             dataset.y,
             _material_scores(dataset),
-            DETERMINISTIC_THRESHOLD,
+            config.deterministic_threshold,
         )
         fusion = _metrics(
             dataset.y,
             _fusion_scores(dataset),
-            FUSION_THRESHOLD,
+            config.fusion_threshold,
         )
         logistic = _metrics(dataset.y, scores, threshold)
         naive_tp, naive_n = _recall_category(
@@ -375,11 +376,12 @@ def evaluate(
     return {"cohorts": results, "criteria": criteria}
 
 
-def build_report(result: dict[str, Any], seal: dict[str, Any]) -> str:
+def build_report(result: dict[str, Any], config: HoldoutConfig) -> str:
     lines = [
-        "# Resultado do holdout v4 — avaliação oficial",
+        "# Resultado do holdout — avaliação oficial",
         "",
-        f"Artefato: `{seal['artifact_sha256']}`; threshold: {seal['threshold']}.",
+        f"Artefato: `{config.artifact_sha256}`; "
+        f"threshold: {config.artifact_threshold}.",
         "",
         "| Path | N | Pos | Neg | PR-AUC | ROC-AUC | F1 | Recall | TP | FN | FP | TN | FP Wilson 95% |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
@@ -459,44 +461,84 @@ def build_report(result: dict[str, Any], seal: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--dump", required=True)
-    parser.add_argument("--seal", default="../docs/eval/holdout_seal_v4.json")
-    parser.add_argument("--model", required=True)
-    parser.add_argument("--out", default="../docs/eval/holdout_result_v4.md")
-    args = parser.parse_args()
-    seal = json.loads(Path(args.seal).read_text(encoding="utf-8"))
-    model_path = Path(args.model)
-    dataset_manifest = (
-        Path(seal.get("dataset", {}).get("path", ".")) / "manifest.json"
-    )
-    verified, model = preflight_and_load(
-        seal,
+def run_evaluation(
+    dump_path: str | Path,
+    seal_path: str | Path,
+    model_path: str | Path,
+    out_path: str | Path,
+    *,
+    json_out: str | Path | None = None,
+    loader=joblib.load,
+    check_commits: bool = True,
+) -> dict[str, Any]:
+    """Official CLI path: preflight, load, evaluate, write MD and JSON."""
+    config, model = preflight_and_load(
+        seal_path,
         model_path,
-        dataset_manifest,
-        loader=joblib.load,
-        check_commits=True,
+        loader=loader,
+        check_commits=check_commits,
     )
     rows = [
         json.loads(line)
-        for line in Path(args.dump).read_text(encoding="utf-8").splitlines()
+        for line in Path(dump_path).read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
-    reference_date = date.fromisoformat(
-        verified["dataset"]["reference_date"]
-    )
     result = evaluate(
         [row for row in rows if row["path"] == "A_native"],
         [row for row in rows if row["path"] != "A_native"],
         model,
-        reference_date,
-        seal["threshold"],
+        config,
     )
-    out = Path(args.out)
+    out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(build_report(result, verified), encoding="utf-8")
-    print(f"report={out}")
+    out.write_text(build_report(result, config), encoding="utf-8")
+    structured = {
+        "threshold": config.artifact_threshold,
+        "schema_version": config.schema_version,
+        "artifact_sha256": config.artifact_sha256,
+        "dataset_version": config.dataset_version,
+        "dataset_records_sha256": config.dataset_records_sha256,
+        "dataset_manifest_sha256": config.dataset_manifest_sha256,
+        "seal_path": str(seal_path),
+        "dump_path": str(dump_path),
+        "cohorts": result["cohorts"],
+        "criteria": result["criteria"],
+    }
+    json_path = (
+        Path(json_out)
+        if json_out
+        else out.with_suffix(".json")
+    )
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(structured, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return structured
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dump", required=True)
+    parser.add_argument(
+        "--seal",
+        default="../docs/eval/holdout_seal_v5.json",
+    )
+    parser.add_argument("--model", required=True)
+    parser.add_argument(
+        "--out",
+        default="../docs/eval/holdout_result_v5.md",
+    )
+    parser.add_argument("--json-out", default=None)
+    args = parser.parse_args()
+    run_evaluation(
+        args.dump,
+        args.seal,
+        args.model,
+        args.out,
+        json_out=args.json_out,
+    )
+    print(f"report={args.out}")
 
 
 if __name__ == "__main__":

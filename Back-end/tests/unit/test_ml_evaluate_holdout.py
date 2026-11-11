@@ -1,7 +1,18 @@
+from types import SimpleNamespace
+
 import numpy as np
 
 from app.ml.evaluate_holdout import evaluate, wilson_upper
 from app.ml.features import FEATURE_NAMES
+
+
+def _config():
+    return SimpleNamespace(
+        reference_date="2026-11-11",
+        artifact_threshold=0.809,
+        deterministic_threshold=0.5,
+        fusion_threshold=0.4,
+    )
 
 
 class ToyModel:
@@ -60,13 +71,7 @@ def test_small_stratum_is_inconclusive():
         _row("f", "C_ocr_degraded", True, critical=True, score=80),
     ]
 
-    result = evaluate(
-        rows,
-        ocr_rows,
-        ToyModel(),
-        __import__("datetime").date(2026, 11, 11),
-        0.809,
-    )
+    result = evaluate(rows, ocr_rows, ToyModel(), _config())
 
     assert result["criteria"]["A_native"]["checks"]["sample_size"] is False
     assert result["criteria"]["A_native"]["passed"] is False

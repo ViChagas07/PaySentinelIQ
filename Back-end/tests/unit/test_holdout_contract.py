@@ -97,11 +97,14 @@ def _fixture(tmp_path: Path):
     artifact.write_bytes(b"frozen")
     manifest = tmp_path / "manifest.json"
     manifest.write_text("{}", encoding="utf-8")
-    return _seal(tmp_path, artifact=artifact, manifest=manifest), artifact, manifest
+    seal = _seal(tmp_path, artifact=artifact, manifest=manifest)
+    seal_path = tmp_path / "seal.json"
+    seal_path.write_text(json.dumps(seal), encoding="utf-8")
+    return seal, artifact, manifest, seal_path
 
 
 def test_valid_canonical_seal_is_accepted_without_model_loading(tmp_path):
-    seal, artifact, manifest = _fixture(tmp_path)
+    seal, artifact, manifest, seal_path = _fixture(tmp_path)
     called = {"loader": False}
 
     def loader(_path):
@@ -109,13 +112,12 @@ def test_valid_canonical_seal_is_accepted_without_model_loading(tmp_path):
         return object()
 
     view, model = preflight_and_load(
-        seal,
+        seal_path,
         artifact,
-        manifest,
         loader=loader,
     )
 
-    assert view["schema_version"] == SCHEMA_VERSION
+    assert view.schema_version == SCHEMA_VERSION
     assert called["loader"] is True
     assert model is not None
 
@@ -126,7 +128,7 @@ def test_old_flat_schema_is_rejected_controlled():
 
 
 def test_missing_and_wrong_type_fields_are_rejected(tmp_path):
-    seal, artifact, manifest = _fixture(tmp_path)
+    seal, artifact, manifest, _seal_path = _fixture(tmp_path)
     missing = copy.deepcopy(seal)
     del missing["artifact"]["sha256"]
     with pytest.raises(SealValidationError, match="artifact.sha256"):
@@ -139,29 +141,30 @@ def test_missing_and_wrong_type_fields_are_rejected(tmp_path):
 
 
 def test_hash_and_threshold_divergences_are_rejected(tmp_path):
-    seal, artifact, manifest = _fixture(tmp_path)
+    seal, artifact, manifest, _seal_path = _fixture(tmp_path)
     artifact.write_bytes(b"changed")
     with pytest.raises(SealVerificationError, match="artefato"):
         verify_seal(seal, artifact, manifest)
 
     second = tmp_path / "second"
     second.mkdir()
-    seal, artifact, manifest = _fixture(second)
+    seal, artifact, manifest, _seal_path = _fixture(second)
     seal["artifact"]["threshold"] = 0.8
     with pytest.raises(SealVerificationError, match="threshold"):
         verify_seal(seal, artifact, manifest)
 
 
 def test_commit_divergence_is_rejected_without_model(tmp_path):
-    seal, _artifact, _manifest = _fixture(tmp_path)
+    seal, _artifact, _manifest, _seal_path = _fixture(tmp_path)
 
     with pytest.raises(SealVerificationError, match="commit"):
-        verify_commits(seal, repo_root=tmp_path)
+        verify_commits(validate_seal(seal), repo_root=tmp_path)
 
 
 def test_preflight_failure_never_calls_loader(tmp_path):
-    seal, artifact, manifest = _fixture(tmp_path)
+    seal, artifact, manifest, seal_path = _fixture(tmp_path)
     seal["artifact"]["sha256"] = "0" * 64
+    seal_path.write_text(json.dumps(seal), encoding="utf-8")
     called = {"loader": False}
 
     def loader(_path):
@@ -170,9 +173,8 @@ def test_preflight_failure_never_calls_loader(tmp_path):
 
     with pytest.raises(SealVerificationError):
         preflight_and_load(
-            seal,
+            seal_path,
             artifact,
-            manifest,
             loader=loader,
         )
     assert called["loader"] is False
