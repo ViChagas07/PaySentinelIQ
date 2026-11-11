@@ -68,3 +68,6 @@ data/synthetic/
 # ML artifacts (large binaries stay out of Git)
 data/ml/
 *.joblib
+
+# Sealed holdout (large data stays out of Git; seal manifest is versioned)
+data/holdout/

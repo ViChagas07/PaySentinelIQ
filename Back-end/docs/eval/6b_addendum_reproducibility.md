@@ -114,6 +114,26 @@ Recall por classe OCR:
 | C_ocr_degraded | legítimo | 40 | 0,199 | 0,139 | 0,068 | 0,081 | 0,182 | 0,287 | 0,655 |
 | C_ocr_degraded | fraudado | 66 | 0,714 | 0,207 | 0,267 | 0,572 | 0,723 | 0,907 | 0,991 |
 
+### Reconciliação dos denominadores OCR
+
+| Item | N |
+|---|---:|
+| Amostra 6A.3 total | 112 |
+| Fraudados na amostra | 72 |
+| Legítimos na amostra | 40 |
+| Especialistas removidos do conjunto supervisionado | 6 |
+| — B6 | 1 |
+| — B7 | 2 |
+| — P4 | 3 |
+| **Avaliação externa 6B (não-especialistas)** | **106** |
+| — fraudados | 66 |
+| — legítimos | 40 |
+
+Os 106 IDs externos têm **0 interseção com train/val** e **106/106** vêm de
+`test_iid`/`test_shift`. Cada documento tem 4 variantes OCR, mas a unidade é o
+documento: as variantes foram agregadas e não contam como observações
+independentes. Por isso a avaliação externa tem N=106, não 112 e não 424.
+
 Uma recalibração ou mudança de threshold no OCR exigiria uma validação OCR
 separada e outro teste independente; não foi feita.
 
