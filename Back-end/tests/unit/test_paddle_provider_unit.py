@@ -137,7 +137,14 @@ async def test_paddle_extract_raises_when_library_missing(
 ):
     image_path = tmp_path / "image.png"
     _write_image(image_path)
-    monkeypatch.setitem(sys.modules, "paddleocr", None)
+    real_find_spec = importlib.util.find_spec
+
+    def fake_find_spec(name):
+        if name == "paddleocr":
+            return None
+        return real_find_spec(name)
+
+    monkeypatch.setattr(importlib.util, "find_spec", fake_find_spec)
     provider = PaddleOCRProvider()
 
     with pytest.raises(OCRProcessingException, match="not installed"):

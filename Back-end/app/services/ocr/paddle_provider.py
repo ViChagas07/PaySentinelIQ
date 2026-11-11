@@ -48,6 +48,12 @@ def _get_engine(language: str) -> tuple[Any, str]:
         if _ENGINE is not None and _ENGINE_LANGUAGE == language:
             return _ENGINE, _ENGINE_VERSION or ""
 
+        if importlib.util.find_spec("paddleocr") is None:
+            raise OCRProcessingException(
+                "PaddleOCR is not installed. Run: poetry install --with ocr-paddle",
+                provider="paddleocr",
+            )
+
         _preload_torch()
 
         try:
