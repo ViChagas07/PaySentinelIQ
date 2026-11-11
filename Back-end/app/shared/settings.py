@@ -227,6 +227,7 @@ class Settings(BaseSettings):
     LLM_BASE_URL: str = ""
     LLM_API_KEY: SecretStr | None = None
     LLM_MODEL: str = ""
+    LLM_TEMPERATURE: float | None = Field(default=None, ge=0.0)
     LLM_TIMEOUT: float | None = Field(default=None, gt=0)
     LLM_MAX_RETRIES: int = Field(default=3, ge=0)
     LLM_REASONING_EFFORT: str = "none"
@@ -325,13 +326,23 @@ class Settings(BaseSettings):
         if self.LLM_PROFILE == "local":
             if not self.LLM_BASE_URL:
                 self.LLM_BASE_URL = "http://localhost:1234/v1"
+            if not self.LLM_MODEL:
+                self.LLM_MODEL = "qwen3.5-4b@q4_k_m"
             if self.LLM_TIMEOUT is None:
                 self.LLM_TIMEOUT = 180.0
+            if "LLM_MAX_RETRIES" not in self.model_fields_set:
+                self.LLM_MAX_RETRIES = 1
             if self.LLM_MAX_CONCURRENCY is None:
                 self.LLM_MAX_CONCURRENCY = 1
         elif self.LLM_PROFILE == "cloud":
+            if not self.LLM_MODEL:
+                raise ValueError(
+                    "LLM_MODEL is required when LLM_PROFILE=cloud"
+                )
             if self.LLM_TIMEOUT is None:
                 self.LLM_TIMEOUT = 60.0
+            if "LLM_MAX_RETRIES" not in self.model_fields_set:
+                self.LLM_MAX_RETRIES = 3
             if self.LLM_MAX_CONCURRENCY is None:
                 self.LLM_MAX_CONCURRENCY = 4
         return self
@@ -368,6 +379,8 @@ class Settings(BaseSettings):
     @property
     def effective_ai_temperature(self) -> float:
         """Lower temperature for demo/development for more deterministic output."""
+        if self.LLM_PROFILE and self.LLM_TEMPERATURE is not None:
+            return self.LLM_TEMPERATURE
         if self.ENVIRONMENT in ("demo", "development"):
             return 0.2
         return self.AI_TEMPERATURE

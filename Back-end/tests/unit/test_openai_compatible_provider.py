@@ -1,12 +1,20 @@
 import asyncio
 import json
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 import pytest
 
 from app.providers.base import LLMConfig
-from app.providers.factory import LLMProviderFactory, ProviderType
+from app.providers.factory import (
+    LLMProviderFactory,
+    ProviderType,
+    _resolve_llm_config,
+)
 from app.providers.openai_compatible import OpenAICompatibleProvider
+from app.shared.settings import Settings
 
 
 def _make_provider(
@@ -207,6 +215,57 @@ async def test_semaphore_serializes_when_max_concurrency_is_one():
     )
 
     assert max_active == 1
+
+
+def test_global_semaphore_serializes_across_threads_and_loops():
+    active = 0
+    max_active = 0
+    state_lock = threading.Lock()
+
+    def handler(request):
+        nonlocal active, max_active
+        with state_lock:
+            active += 1
+            max_active = max(max_active, active)
+        time.sleep(0.1)
+        with state_lock:
+            active -= 1
+        return _completion("ok")
+
+    provider = _make_provider(handler, max_concurrency=1)
+    model = provider.get_chat_model()
+
+    def invoke_once():
+        return model.invoke([{"role": "user", "content": "hello"}])
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(lambda _: invoke_once(), range(2)))
+
+    assert max_active == 1
+    assert all(result.content == "ok" for result in results)
+
+
+def test_resolved_config_uses_llm_temperature(monkeypatch):
+    settings = Settings(
+        _env_file=None,
+        ENVIRONMENT="production",
+        LLM_PROFILE="local",
+        LLM_TEMPERATURE=0.33,
+        LLM_BASE_URL="",
+        LLM_MODEL="",
+        LLM_API_KEY=None,
+        LLM_TIMEOUT=None,
+        LLM_MAX_CONCURRENCY=None,
+        LLM_REASONING_EFFORT="none",
+    )
+    monkeypatch.setattr(
+        "app.shared.settings.get_settings",
+        lambda: settings,
+    )
+
+    config = _resolve_llm_config()
+
+    assert config.temperature == 0.33
 
 
 def test_chat_model_adapter_invoke_returns_content():

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import threading
 from dataclasses import dataclass
 from typing import Any
 
@@ -107,8 +108,9 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         )
         self._transport = transport
         self._retry_wait = retry_wait
-        self._semaphore: asyncio.Semaphore | None = None
-        self._semaphore_loop: asyncio.AbstractEventLoop | None = None
+        self._concurrency_guard = threading.BoundedSemaphore(
+            self.max_concurrency
+        )
 
     @staticmethod
     def _looks_local(url: str) -> bool:
@@ -163,11 +165,14 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             max_tokens=max_tokens,
         )
 
-        async with self._semaphore_for_loop():
+        await asyncio.to_thread(self._concurrency_guard.acquire)
+        try:
             retrying = self._build_retryer()
             async for attempt in retrying:
                 with attempt:
                     return await self._chat_once(payload, timeout=timeout)
+        finally:
+            self._concurrency_guard.release()
 
         raise LLMServiceError("LLM request failed without a response")
 
@@ -215,13 +220,6 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             before_sleep=DEFAULT_RETRY_CONFIG.before_sleep,
             reraise=True,
         )
-
-    def _semaphore_for_loop(self) -> asyncio.Semaphore:
-        loop = asyncio.get_running_loop()
-        if self._semaphore is None or self._semaphore_loop is not loop:
-            self._semaphore = asyncio.Semaphore(self.max_concurrency)
-            self._semaphore_loop = loop
-        return self._semaphore
 
     async def _chat_once(
         self,

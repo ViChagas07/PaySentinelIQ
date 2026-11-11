@@ -11,8 +11,8 @@ def _settings(**overrides):
         "LLM_BASE_URL": "",
         "LLM_API_KEY": None,
         "LLM_MODEL": "",
+        "LLM_TEMPERATURE": None,
         "LLM_TIMEOUT": None,
-        "LLM_MAX_RETRIES": 3,
         "LLM_REASONING_EFFORT": "none",
         "LLM_MAX_CONCURRENCY": None,
     }
@@ -46,6 +46,75 @@ def test_cloud_profile_uses_cloud_defaults():
     assert settings.LLM_MODEL == "cloud-model"
     assert settings.LLM_API_KEY is not None
     assert settings.LLM_API_KEY.get_secret_value() == "cloud-secret"
+
+
+def test_local_profile_defaults_model_and_retries():
+    settings = _settings(ENVIRONMENT="production", LLM_PROFILE="local")
+
+    assert settings.LLM_MODEL == "qwen3.5-4b@q4_k_m"
+    assert settings.LLM_MAX_RETRIES == 1
+
+
+def test_local_profile_preserves_explicit_model_and_retries():
+    settings = _settings(
+        ENVIRONMENT="production",
+        LLM_PROFILE="local",
+        LLM_MODEL="custom-model",
+        LLM_MAX_RETRIES=5,
+    )
+
+    assert settings.LLM_MODEL == "custom-model"
+    assert settings.LLM_MAX_RETRIES == 5
+
+
+def test_cloud_profile_defaults_retries_and_requires_model():
+    with pytest.raises(ValueError, match="LLM_MODEL"):
+        _settings(
+            ENVIRONMENT="production",
+            LLM_PROFILE="cloud",
+            LLM_BASE_URL="https://llm.example.com/v1",
+        )
+
+    settings = _settings(
+        ENVIRONMENT="production",
+        LLM_PROFILE="cloud",
+        LLM_BASE_URL="https://llm.example.com/v1",
+        LLM_MODEL="cloud-model",
+    )
+    assert settings.LLM_MAX_RETRIES == 3
+
+    explicit = _settings(
+        ENVIRONMENT="production",
+        LLM_PROFILE="cloud",
+        LLM_BASE_URL="https://llm.example.com/v1",
+        LLM_MODEL="cloud-model",
+        LLM_MAX_RETRIES=2,
+    )
+    assert explicit.LLM_MAX_RETRIES == 2
+
+
+def test_temperature_override_applies_only_with_profile():
+    local = _settings(
+        ENVIRONMENT="production",
+        LLM_PROFILE="local",
+        LLM_TEMPERATURE=0.0,
+    )
+    cloud = _settings(
+        ENVIRONMENT="production",
+        LLM_PROFILE="cloud",
+        LLM_BASE_URL="https://llm.example.com/v1",
+        LLM_MODEL="cloud-model",
+        LLM_TEMPERATURE=0.75,
+    )
+    no_profile = _settings(
+        ENVIRONMENT="production",
+        LLM_PROFILE="",
+        LLM_TEMPERATURE=0.75,
+    )
+
+    assert local.effective_ai_temperature == 0.0
+    assert cloud.effective_ai_temperature == 0.75
+    assert no_profile.effective_ai_temperature == 0.1
 
 
 def test_profile_explicit_values_are_preserved():
@@ -99,6 +168,7 @@ def test_profile_does_not_change_shared_generation_settings():
         ENVIRONMENT="production",
         LLM_PROFILE="cloud",
         LLM_BASE_URL="https://llm.example.com/v1",
+        LLM_MODEL="cloud-model",
         LLM_API_KEY="cloud-secret",
     )
 
