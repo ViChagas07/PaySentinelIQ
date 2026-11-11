@@ -64,3 +64,7 @@ __pycache__/
 
 # Synthetic dataset output
 data/synthetic/
+
+# ML artifacts (large binaries stay out of Git)
+data/ml/
+*.joblib
