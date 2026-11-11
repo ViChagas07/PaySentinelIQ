@@ -24,6 +24,8 @@ class ProviderType(str, Enum):
     OPENAI = "openai"
     GEMINI = "gemini"
     MOCK = "mock"
+    OPENAI_COMPATIBLE = "openai_compatible"
+    LMSTUDIO = "lmstudio"
     # Reserved for future providers
     ANTHROPIC = "anthropic"
     BEDROCK = "bedrock"
@@ -83,6 +85,19 @@ class LLMProviderFactory:
         if provider_type == ProviderType.MOCK:
             return MockLLMProvider(config=config, scenario=kwargs.get("scenario", "auto"))
 
+        if provider_type in (
+            ProviderType.OPENAI_COMPATIBLE,
+            ProviderType.LMSTUDIO,
+        ):
+            from app.providers.openai_compatible import OpenAICompatibleProvider
+            return OpenAICompatibleProvider(
+                config=config,
+                base_url=kwargs.get("base_url") or "http://localhost:1234/v1",
+                api_key=kwargs.get("api_key"),
+                reasoning_effort=kwargs.get("reasoning_effort", "none"),
+                max_concurrency=kwargs.get("max_concurrency", 1),
+            )
+
         # Reserved for future providers
         if provider_type in (
             ProviderType.ANTHROPIC,
@@ -107,18 +122,25 @@ def _resolve_llm_config() -> LLMConfig:
 
     # Use environment-aware computed fields
     provider = settings.effective_llm_provider
-    model = settings.effective_ollama_model if provider == "ollama" else (
-        settings.GEMINI_MODEL if provider == "gemini" else
-        settings.OPENAI_MODEL if provider == "openai" else
-        "mock"
-    )
+    if provider in ("openai_compatible", "lmstudio"):
+        model = settings.LLM_MODEL or settings.effective_ollama_model
+        timeout = settings.LLM_TIMEOUT or 120.0
+        max_retries = settings.LLM_MAX_RETRIES
+    else:
+        model = settings.effective_ollama_model if provider == "ollama" else (
+            settings.GEMINI_MODEL if provider == "gemini" else
+            settings.OPENAI_MODEL if provider == "openai" else
+            "mock"
+        )
+        timeout = settings.OLLAMA_TIMEOUT
+        max_retries = settings.OLLAMA_MAX_RETRIES
 
     return LLMConfig(
         model=model,
         temperature=settings.effective_ai_temperature,
         max_tokens=settings.effective_ai_max_tokens,
-        timeout=settings.OLLAMA_TIMEOUT,
-        max_retries=settings.OLLAMA_MAX_RETRIES,
+        timeout=timeout,
+        max_retries=max_retries,
     )
 
 
@@ -163,6 +185,18 @@ def get_llm_provider() -> BaseLLMProvider:
         extra_kwargs["api_key"] = api_key
     elif provider_type == ProviderType.MOCK:
         extra_kwargs["scenario"] = "auto"
+    elif provider_type in (
+        ProviderType.OPENAI_COMPATIBLE,
+        ProviderType.LMSTUDIO,
+    ):
+        extra_kwargs["base_url"] = settings.LLM_BASE_URL
+        extra_kwargs["api_key"] = (
+            settings.LLM_API_KEY.get_secret_value()
+            if settings.LLM_API_KEY
+            else None
+        )
+        extra_kwargs["reasoning_effort"] = settings.LLM_REASONING_EFFORT
+        extra_kwargs["max_concurrency"] = settings.LLM_MAX_CONCURRENCY or 1
 
     provider = LLMProviderFactory.create(provider_type, config, **extra_kwargs)
     logger.info(
@@ -245,6 +279,25 @@ def get_crewai_llm() -> Any:
             model="mock/demo",
             temperature=settings.effective_ai_temperature,
             max_tokens=settings.effective_ai_max_tokens,
+        )
+
+    if provider_type in (
+        ProviderType.OPENAI_COMPATIBLE.value,
+        ProviderType.LMSTUDIO.value,
+    ):
+        api_key = (
+            settings.LLM_API_KEY.get_secret_value()
+            if settings.LLM_API_KEY
+            else "lm-studio"
+        )
+        model = settings.LLM_MODEL or settings.effective_ollama_model
+        return CrewAILLM(
+            model=f"openai/{model}",
+            base_url=settings.LLM_BASE_URL or "http://localhost:1234/v1",
+            api_key=api_key,
+            temperature=settings.effective_ai_temperature,
+            max_tokens=settings.effective_ai_max_tokens,
+            timeout=settings.LLM_TIMEOUT or 120.0,
         )
 
     logger.warning("Unsupported provider for CrewAI LLM: %s", provider_type)
