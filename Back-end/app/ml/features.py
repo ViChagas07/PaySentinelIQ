@@ -216,7 +216,10 @@ def _is_uncertain(evidence: dict[str, Any]) -> bool:
     return bool((evidence.get("metadata") or {}).get("ocr_uncertain"))
 
 
-def _line_features(extracted: dict[str, Any]) -> dict[str, float]:
+def _line_features(
+    extracted: dict[str, Any],
+    reference_date: date | None = None,
+) -> dict[str, float]:
     features = {
         "line_47": 0.0,
         "line_status_ok": 0.0,
@@ -230,7 +233,10 @@ def _line_features(extracted: dict[str, Any]) -> dict[str, float]:
     line = _digits(extracted.get("linha_digitavel"))
     if len(line) == 47:
         features["line_47"] = 1.0
-    decoded = decode_linha_digitavel(extracted.get("linha_digitavel") or "")
+    decoded = decode_linha_digitavel(
+        extracted.get("linha_digitavel") or "",
+        today=reference_date,
+    )
     if decoded.get("status") == "ok":
         features["line_status_ok"] = 1.0
         features["line_dv_valid"] = float(
@@ -327,7 +333,7 @@ def feature_row(
         features["due_days_past_norm"] = max(0, delta) / 365.0
         features["due_days_future_norm"] = max(0, -delta) / 365.0
 
-    features.update(_line_features(extracted))
+    features.update(_line_features(extracted, reference_date))
 
     severity_counts = {severity: 0 for severity in SEVERITY_ORDINAL}
     source_counts = {source: 0 for source in SOURCE_NAMES}
