@@ -23,6 +23,9 @@ from app.core.contracts.pipeline_status import PipelineStatus
 from app.services.pipeline.stages.ingest_stage import IngestStage
 from app.services.pipeline.stages.extract_stage import ExtractStage
 from app.services.pipeline.stages.validate_stage import ValidateStage
+from app.services.pipeline.stages.deterministic_rules_stage import (
+    DeterministicRulesStage,
+)
 from app.services.pipeline.stages.enrich_stage import EnrichStage
 from app.services.pipeline.stages.risk_stage import RiskStage
 from app.services.pipeline.stages.crewai_stage import CrewAIStage
@@ -57,11 +60,13 @@ class CanonicalPipeline:
         risk: RiskStage | None = None,
         crewai: CrewAIStage | None = None,
         event_bus: PipelineEventBus | None = None,
+        deterministic_rules: DeterministicRulesStage | None = None,
     ):
         self._stages: list[Any] = [
             ingest or IngestStage(),
             extract or ExtractStage(),
             validate or ValidateStage(),
+            deterministic_rules or DeterministicRulesStage(),
             enrich or EnrichStage(),
             risk or RiskStage(),
             crewai or CrewAIStage(),

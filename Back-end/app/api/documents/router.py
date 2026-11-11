@@ -180,6 +180,9 @@ async def _run_canonical(
         "corrections": extraction_metadata.get("corrections", []),
         "fields": extraction_metadata.get("fields", {}),
     }
+    response["metadata"] = {
+        "validation": ctx.metadata.get("validation", {}),
+    }
     return response
 
 

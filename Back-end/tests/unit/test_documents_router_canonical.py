@@ -11,6 +11,7 @@ from app.main import create_app
 from app.services.ocr.base import OCRPageResult, OCRResult
 from app.shared.orm_models import DocumentModel, TenantModel, UserModel
 from app.shared.settings import Settings
+from tests.unit._validation_helpers import build_linha_digitavel
 
 BOLETO_PT = """
 Beneficiário: ACME SERVIÇOS LTDA
@@ -223,5 +224,121 @@ async def test_router_canonical_with_ocr_prelude(
     assert document.extracted_fields["amount"] == 1234.56
     assert document.extracted_fields["canonical"]["beneficiario"]["value"]
     assert document.ocr_confidence == 90.0
+
+
+LINHA_VALID = build_linha_digitavel(factor=2000, value_cents=123456)
+
+BOLETO_VALID = f"""
+Beneficiário: ACME SERVIÇOS LTDA
+CNPJ: 12.345.678/0001-95
+Pagador: JOÃO DA SILVA
+Data de Vencimento: 19/11/2027
+Valor do Documento: R$ 1.234,56
+Linha Digitável: {LINHA_VALID}
+"""
+
+BOLETO_ADULTERATED = BOLETO_VALID.replace(
+    "R$ 1.234,56",
+    "R$ 1.300,00",
+)
+
+
+@pytest.mark.asyncio
+async def test_router_exposes_validation_and_changes_risk(
+    router_app,
+    db_session,
+    test_engine,
+    monkeypatch,
+):
+    settings = _settings()
+    monkeypatch.setattr("app.shared.settings.get_settings", lambda: settings)
+    monkeypatch.setattr(
+        "app.api.documents.router.get_settings",
+        lambda: settings,
+    )
+    monkeypatch.setattr(
+        "app.shared.database.get_engine",
+        lambda: test_engine,
+    )
+    monkeypatch.setattr(
+        "app.services.pipeline.stages.crewai_stage.CrewAIStage._execute",
+        lambda self, ctx: None,
+    )
+
+    async def no_event(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(
+        "app.api.documents.router._publish_analysis_event",
+        no_event,
+    )
+    monkeypatch.setattr(
+        "app.api.documents.router._send_analysis_notification",
+        no_event,
+    )
+
+    async def run_document(text: str) -> dict:
+        tenant_id = uuid.uuid4()
+        user_id = uuid.uuid4()
+        db_session.add(
+            TenantModel(
+                id=tenant_id,
+                name="Validation Tenant",
+                slug=f"validation-{tenant_id}",
+            )
+        )
+        db_session.add(
+            UserModel(
+                id=user_id,
+                tenant_id=tenant_id,
+                email=f"validation-{user_id}@example.com",
+                full_name="Validation User",
+                hashed_password="not-used",
+            )
+        )
+        await db_session.commit()
+        router_app.dependency_overrides[get_current_tenant_id] = (
+            lambda: str(tenant_id)
+        )
+        router_app.dependency_overrides[get_current_user_id] = (
+            lambda: str(user_id)
+        )
+        monkeypatch.setattr(
+            "app.services.ocr.factory.get_ocr_provider",
+            lambda *args, **kwargs: FakeOCRProvider(text),
+        )
+        async with AsyncClient(
+            transport=ASGITransport(app=router_app),
+            base_url="http://test",
+        ) as client:
+            response = await client.post(
+                "/api/documents/analyze",
+                data={"document_type": "boleto"},
+                files={
+                    "file": (
+                        "boleto.pdf",
+                        _pdf_bytes(),
+                        "application/pdf",
+                    )
+                },
+            )
+        assert response.status_code == 200
+        return response.json()
+
+    consistent = await run_document(BOLETO_VALID)
+    assert consistent["risk_score"] < 70
+    assert consistent["metadata"]["validation"]["document_type"] == "boleto"
+    assert (
+        consistent["metadata"]["validation"]["boleto_decoded"]["status"]
+        == "ok"
+    )
+    assert consistent["metadata"]["validation"]["findings"] == {}
+
+    adulterated = await run_document(BOLETO_ADULTERATED)
+    assert adulterated["risk_score"] >= 70
+    assert (
+        "BOLETO_AMOUNT_MISMATCH"
+        in adulterated["metadata"]["validation"]["findings"]
+    )
 
 
