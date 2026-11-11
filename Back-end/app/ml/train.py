@@ -89,6 +89,26 @@ def _baseline_results(
     return results
 
 
+def _confusion_table(
+    results: dict[str, dict[str, dict[str, Any]]],
+) -> list[str]:
+    lines = [
+        "### Matrizes de confusão",
+        "",
+        "| Split | Modelo | TN | FP | FN | TP |",
+        "|---|---|---:|---:|---:|---:|",
+    ]
+    for split in ("val", "test_iid", "test_shift"):
+        for model_name in ("Dummy", "Deterministic", "Fusion", "Logistic"):
+            matrix = results[split][model_name]["confusion"]
+            lines.append(
+                f"| {split} | {model_name} | {matrix[0][0]} | {matrix[0][1]} | "
+                f"{matrix[1][0]} | {matrix[1][1]} |"
+            )
+    lines.append("")
+    return lines
+
+
 def _fp_table(
     results: dict[str, dict[str, dict[str, Any]]],
     splits: tuple[str, ...],
@@ -291,6 +311,7 @@ def build_report(
                 _metrics_row(split, model_name, results[split][model_name])
             )
     lines.extend(["", "## Detalhamento"])
+    lines.extend(_confusion_table(results))
     lines.extend(_fp_table(results, ("val", "test_iid", "test_shift")))
     lines.extend(_recall_table(results))
     lines.extend(_group_table(results))
