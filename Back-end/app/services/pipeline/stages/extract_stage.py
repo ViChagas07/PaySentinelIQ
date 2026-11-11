@@ -7,9 +7,6 @@
 
 from __future__ import annotations
 
-import tempfile
-import os
-
 from app.services.pipeline.stages.base import BaseStage
 from app.core.contracts.pipeline_context import PipelineContext
 
@@ -33,15 +30,16 @@ class ExtractStage(BaseStage):
             return
 
         # ── OCR: Multi-method text extraction ──
-        try:
-            from app.services.ocr.pdf_text_extractor import extract_text_robust
+        if not context.metadata.get("ocr_prelude"):
+            try:
+                from app.services.ocr.pdf_text_extractor import extract_text_robust
 
-            extraction = extract_text_robust(context.file_bytes, document_type=context.document_type)
-            context.extracted_text = extraction["text"]
-            context.extraction_method = extraction["method"]
-            context.page_count = extraction.get("pages", extraction.get("all_attempts", [{}])[0].get("pages", 1))
-        except Exception as e:
-            context.add_warning(f"Text extraction failed: {e}")
+                extraction = extract_text_robust(context.file_bytes, document_type=context.document_type)
+                context.extracted_text = extraction["text"]
+                context.extraction_method = extraction["method"]
+                context.page_count = extraction.get("pages", extraction.get("all_attempts", [{}])[0].get("pages", 1))
+            except Exception as e:
+                context.add_warning(f"Text extraction failed: {e}")
 
         # ── Structured field extraction ──
         if context.extracted_text:
@@ -59,7 +57,7 @@ class ExtractStage(BaseStage):
             import fitz
             doc = fitz.open(stream=context.file_bytes, filetype="pdf")
             meta = doc.metadata
-            context.metadata = {
+            context.metadata.update({
                 "producer": meta.get("producer", ""),
                 "creator": meta.get("creator", ""),
                 "creation_date": meta.get("creationDate", ""),
@@ -67,7 +65,91 @@ class ExtractStage(BaseStage):
                 "format": meta.get("format", ""),
                 "page_count": doc.page_count,
                 "pdf_version": doc.metadata.get("format", ""),
-            }
+            })
             doc.close()
         except Exception:
             pass  # Not a PDF or no metadata available
+
+        # ── Canonical extraction (additive) ──
+        self._apply_canonical_extraction(context)
+
+    def _apply_canonical_extraction(self, context: PipelineContext) -> None:
+        from app.shared.settings import get_settings
+
+        if not getattr(get_settings(), "ENABLE_CANONICAL_EXTRACTION", True):
+            return
+        if not context.extracted_text:
+            return
+
+        try:
+            from app.services.extraction.adapter import to_pipeline_fields
+            from app.services.extraction.boleto_extractor import extract_boleto_fields
+            from app.services.extraction.fields import CanonicalFields
+            from app.services.extraction.payslip_extractor import extract_payslip_fields
+
+            doc_type = (context.document_type or "").lower()
+            chosen_kind: str | None = None
+            chosen_fields: CanonicalFields | None = None
+            inferred: str | None = None
+
+            if doc_type == "boleto":
+                chosen_kind = "boleto"
+                chosen_fields = extract_boleto_fields(context.extracted_text)
+            elif doc_type in {"contracheque", "holerite", "payslip", "payroll"}:
+                chosen_kind = "contracheque"
+                chosen_fields = extract_payslip_fields(context.extracted_text)
+            else:
+                boleto_fields = extract_boleto_fields(context.extracted_text)
+                payslip_fields = extract_payslip_fields(context.extracted_text)
+                boleto_count = self._count_filled_fields(boleto_fields)
+                payslip_count = self._count_filled_fields(payslip_fields)
+                if boleto_count > payslip_count:
+                    chosen_kind = "boleto"
+                    chosen_fields = boleto_fields
+                    inferred = "boleto"
+                elif payslip_count > boleto_count:
+                    chosen_kind = "contracheque"
+                    chosen_fields = payslip_fields
+                    inferred = "contracheque"
+                else:
+                    context.metadata["extraction"] = {
+                        "document_type_inferred": None,
+                    }
+
+            if chosen_kind is None or chosen_fields is None:
+                return
+
+            adapted = to_pipeline_fields(chosen_fields, chosen_kind)
+            canonical_block = adapted.pop("canonical", {})
+            context.extracted_fields.update(adapted)
+            if canonical_block:
+                context.extracted_fields["canonical"] = canonical_block
+
+            extraction_metadata: dict[str, object] = {
+                "language": canonical_block.get("language"),
+                "warnings": canonical_block.get("warnings", []),
+                "corrections": canonical_block.get("corrections", []),
+                "fields": canonical_block,
+            }
+            if inferred is not None:
+                extraction_metadata["document_type_inferred"] = inferred
+            context.metadata["extraction"] = extraction_metadata
+
+            for warning in canonical_block.get("warnings", []):
+                context.add_warning(f"extraction: {warning}")
+        except Exception as exc:
+            context.add_warning(
+                f"Canonical extraction failed: {type(exc).__name__}"
+            )
+
+    @staticmethod
+    def _count_filled_fields(fields: object) -> int:
+        from app.services.extraction.fields import CanonicalFields
+
+        count = 0
+        for name in CanonicalFields.model_fields:
+            if name in {"language", "warnings", "corrections"}:
+                continue
+            if getattr(fields, name, None) is not None:
+                count += 1
+        return count
