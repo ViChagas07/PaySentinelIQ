@@ -154,6 +154,83 @@ def wilson_upper(successes: int, n: int, z: float = 1.96) -> float:
     return float((centre + margin) / denominator)
 
 
+def bootstrap_ci(
+    y: np.ndarray,
+    scores: np.ndarray,
+    threshold: float,
+    iterations: int = 2000,
+    seed: int = 2026,
+) -> dict[str, list[float]]:
+    rng = np.random.default_rng(seed)
+    values: dict[str, list[float]] = {
+        "precision": [],
+        "recall": [],
+        "f1": [],
+        "pr_auc": [],
+        "roc_auc": [],
+    }
+    n = len(y)
+    for _ in range(iterations):
+        index = rng.integers(0, n, n)
+        yb, sb = y[index], scores[index]
+        if len(np.unique(yb)) < 2:
+            continue
+        pred = (sb >= threshold).astype(int)
+        values["precision"].append(
+            precision_score(yb, pred, zero_division=0)
+        )
+        values["recall"].append(recall_score(yb, pred, zero_division=0))
+        values["f1"].append(f1_score(yb, pred, zero_division=0))
+        values["pr_auc"].append(average_precision_score(yb, sb))
+        values["roc_auc"].append(roc_auc_score(yb, sb))
+    return {
+        name: [
+            float(np.quantile(items, 0.025)),
+            float(np.quantile(items, 0.975)),
+        ]
+        for name, items in values.items()
+        if items
+    }
+
+
+def _group_metrics(
+    dataset: Dataset,
+    predictions: np.ndarray,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    result: dict[str, dict[str, dict[str, Any]]] = {
+        "language": {},
+        "layout": {},
+        "document_type": {},
+    }
+    for dimension, key in (
+        ("language", "language"),
+        ("layout", "layout"),
+        ("document_type", "document_type"),
+    ):
+        for item, prediction in zip(
+            dataset.meta, predictions, strict=True
+        ):
+            group = str(item.get(key))
+            bucket = result[dimension].setdefault(
+                group,
+                {"tp": 0, "fn": 0, "fp": 0, "tn": 0},
+            )
+            if item["is_fraud"]:
+                bucket["tp" if prediction else "fn"] += 1
+            else:
+                bucket["fp" if prediction else "tn"] += 1
+        for bucket in result[dimension].values():
+            positives = bucket["tp"] + bucket["fn"]
+            negatives = bucket["fp"] + bucket["tn"]
+            bucket["recall"] = (
+                bucket["tp"] / positives if positives else float("nan")
+            )
+            bucket["indicative"] = (
+                positives < 10 or negatives < 10
+            )
+    return result
+
+
 def _recall_category(
     dataset: Dataset,
     predictions: np.ndarray,
@@ -267,6 +344,10 @@ def evaluate(
             "fp_wilson_upper": wilson_upper(
                 logistic["fp"], logistic["negatives"]
             ),
+            "ci": bootstrap_ci(dataset.y, scores, threshold),
+            "groups": _group_metrics(
+                dataset, logistic["predictions"]
+            ),
         }
 
     criteria: dict[str, Any] = {}
@@ -359,6 +440,41 @@ def build_report(result: dict[str, Any], seal: dict[str, Any]) -> str:
             f"| {path_name} | {criterion['passed']} | {checks} | "
             f"{'; '.join(criterion['reasons'])} |"
         )
+    lines.extend(
+        [
+            "",
+            "## ICs bootstrap por linhagem/documento",
+            "",
+            "| Path | Métrica | IC 95% |",
+            "|---|---|---|",
+        ]
+    )
+    for path_name in PRIMARY_PATHS:
+        for metric, interval in result["cohorts"][path_name]["ci"].items():
+            lines.append(
+                f"| {path_name} | {metric} | "
+                f"[{interval[0]:.3f}; {interval[1]:.3f}] |"
+            )
+    lines.extend(
+        [
+            "",
+            "## Grupos (N, TP/FN, FP/TN)",
+            "",
+            "| Path | Dimensão | Grupo | TP | FN | FP | TN | Recall | Indicativo |",
+            "|---|---|---|---:|---:|---:|---:|---:|---|",
+        ]
+    )
+    for path_name in PRIMARY_PATHS:
+        for dimension, groups in result["cohorts"][path_name][
+            "groups"
+        ].items():
+            for group, values in groups.items():
+                lines.append(
+                    f"| {path_name} | {dimension} | {group} | "
+                    f"{values['tp']} | {values['fn']} | {values['fp']} | "
+                    f"{values['tn']} | {values['recall']:.3f} | "
+                    f"{values['indicative']} |"
+                )
     lines.extend(
         [
             "",
