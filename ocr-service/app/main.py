@@ -74,7 +74,7 @@ async def ocr(
         str | None,
         Header(alias="X-OCR-Key"),
     ] = None,
-) -> dict:
+) -> dict[str, object]:
     _check_api_key(x_ocr_key)
 
     request_id = uuid.uuid4().hex[:8]
