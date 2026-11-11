@@ -516,6 +516,7 @@ def _make_payslip(
     today: date,
     company_pool: tuple[str, ...],
     person_pool: tuple[str, ...],
+    role_pool: tuple[str, ...] | None = None,
 ) -> None:
     language = document.language
     if document.split == "golden":
@@ -569,7 +570,7 @@ def _make_payslip(
         "cnpj_empregador": generate_cnpj(rng),
         "nome_funcionario": rng.choice(person_pool),
         "cpf_funcionario": generate_cpf(rng),
-        "cargo": rng.choice(ROLES[language]),
+        "cargo": rng.choice(role_pool or ROLES[language]),
         "cbo": f"{rng.randrange(100000, 999999)}",
         "periodo": period,
         "data_admissao": admission.isoformat(),
@@ -688,10 +689,16 @@ def build_document(
     shift: bool = False,
     bank: str | None = None,
     due_date: date | None = None,
+    company_pool: tuple[str, ...] | None = None,
+    person_pool: tuple[str, ...] | None = None,
+    role_pool: tuple[str, ...] | None = None,
 ) -> SyntheticDocument:
     seed = base_seed + index * 1009
     rng = random.Random(seed)
-    company_pool = SHIFT_COMPANIES[language] if shift else COMPANIES[language]
+    company_pool = company_pool or (
+        SHIFT_COMPANIES[language] if shift else COMPANIES[language]
+    )
+    person_pool = person_pool or PEOPLE[language]
     bank_pool = SHIFT_BANKS if shift else BOLETO_BANKS
     sophistication, detectable, expected, band = _tamper_meta(tamper_types)
     document = SyntheticDocument(
@@ -718,12 +725,19 @@ def build_document(
             today,
             bank_pool,
             company_pool,
-            PEOPLE[language],
+            person_pool,
             bank_override=bank,
             due_date_override=due_date,
         )
     else:
-        _make_payslip(rng, document, today, company_pool, PEOPLE[language])
+        _make_payslip(
+            rng,
+            document,
+            today,
+            company_pool,
+            person_pool,
+            role_pool=role_pool,
+        )
     return document
 
 
