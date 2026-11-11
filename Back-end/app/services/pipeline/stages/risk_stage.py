@@ -30,12 +30,18 @@ class RiskStage(BaseStage):
             from app.services.ai.risk_analyzer import RiskAnalyzer
 
             analyzer = RiskAnalyzer()
+            ocr_metadata = context.metadata.get("ocr")
+            ocr_confidence: float | None = context.ocr_confidence
+            if isinstance(ocr_metadata, dict) and ocr_metadata.get(
+                "status"
+            ) in {"failed", "empty"}:
+                ocr_confidence = None
             risk_ctx = {
                 "document_type": context.document_type,
                 "cnpj": context.extracted_fields.get("cnpj"),
                 "company_cnpj": context.extracted_fields.get("cnpj"),
                 "amount": context.extracted_fields.get("amount"),
-                "ocr_confidence": context.ocr_confidence,
+                "ocr_confidence": ocr_confidence,
                 **context.extracted_fields,
             }
             assessment = analyzer.analyze(risk_ctx)

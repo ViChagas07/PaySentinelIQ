@@ -58,9 +58,9 @@ def test_boleto_adapter_types_and_mapping():
     assert output["amount"] == 1234.56
     assert output["valor_cobrado"] == 1234.56
     assert output["data_vencimento"] == "20/01/2026"
-    assert output["due_date"] == "2026-01-20"
+    assert output["due_date"] == "2026-01-20T00:00:00+00:00"
     assert output["data_documento"] == "15/01/2026"
-    assert output["issue_date"] == "2026-01-15"
+    assert output["issue_date"] == "2026-01-15T00:00:00+00:00"
     assert output["beneficiario"] == "ACME SERVIÇOS LTDA"
     assert output["beneficiary_name"] == "ACME SERVIÇOS LTDA"
     assert output["codigo_banco"] == "001"

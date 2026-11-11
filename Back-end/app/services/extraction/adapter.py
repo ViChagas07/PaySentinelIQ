@@ -1,6 +1,6 @@
 ﻿from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, time, timezone
 from decimal import Decimal
 from typing import Any, Callable
 
@@ -86,14 +86,22 @@ def _map_boleto(output: dict[str, Any], fields: CanonicalFields) -> None:
         due_date = _date_value(due.value)
         if due_date is not None:
             output["data_vencimento"] = due_date.strftime("%d/%m/%Y")
-            output["due_date"] = due_date.isoformat()
+            output["due_date"] = datetime.combine(
+                due_date,
+                time.min,
+                tzinfo=timezone.utc,
+            ).isoformat()
 
     issued = fields.data_documento
     if issued is not None and issued.confidence >= _CONFIDENCE_THRESHOLD:
         issue_date = _date_value(issued.value)
         if issue_date is not None:
             output["data_documento"] = issue_date.strftime("%d/%m/%Y")
-            output["issue_date"] = issue_date.isoformat()
+            output["issue_date"] = datetime.combine(
+                issue_date,
+                time.min,
+                tzinfo=timezone.utc,
+            ).isoformat()
 
     _add_mapped(output, fields, "beneficiario", "beneficiario", _text_value)
     _add_mapped(

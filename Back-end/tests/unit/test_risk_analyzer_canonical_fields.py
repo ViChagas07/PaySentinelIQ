@@ -30,7 +30,7 @@ def test_risk_analyzer_receives_amount_due_date_and_bank_code():
         cnpj=_value("12.345.678/0001-90"),
     )
     mapped = to_pipeline_fields(fields, "boleto")
-    assert mapped["due_date"] == "2020-01-01"
+    assert mapped["due_date"] == "2020-01-01T00:00:00+00:00"
     risk_ctx = {
         "document_type": "boleto",
         **mapped,
@@ -43,5 +43,7 @@ def test_risk_analyzer_receives_amount_due_date_and_bank_code():
 
     assert "BOLETO_ROUND_AMOUNT" in codes
     assert "BANK_CODE_INVALID" in codes
-    assert "DATE_PARSE_ERROR" in codes
+    assert "BOLETO_SEVERELY_OVERDUE" in codes
+    assert "DOCUMENT_EXPIRED" in codes
+    assert "DATE_PARSE_ERROR" not in codes
     assert "OCR_VERY_LOW" not in codes

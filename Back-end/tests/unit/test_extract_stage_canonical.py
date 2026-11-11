@@ -74,7 +74,7 @@ def test_extract_stage_uses_ocr_prelude_and_keeps_metadata(monkeypatch):
     assert ctx.extracted_fields["beneficiario"] == "ACME SERVIÇOS LTDA"
     assert ctx.extracted_fields["valor_nominal"] == 1234.56
     assert ctx.extracted_fields["amount"] == 1234.56
-    assert ctx.extracted_fields["due_date"] == "2026-01-20"
+    assert ctx.extracted_fields["due_date"] == "2026-01-20T00:00:00+00:00"
     assert ctx.extracted_fields["bank_code"] == "001"
     assert "canonical" in ctx.extracted_fields
     assert ctx.extracted_fields["data_vencimento"] == "20/01/2026"
