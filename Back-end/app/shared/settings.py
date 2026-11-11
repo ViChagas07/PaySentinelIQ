@@ -269,6 +269,7 @@ class Settings(BaseSettings):
     # ── Feature Flags ──
     ENABLE_AI_AGENTS: bool = True
     ENABLE_OCR: bool = True
+    ENABLE_CANONICAL_EXTRACTION: bool = True
     ENABLE_COMPLIANCE_CHECKS: bool = True
 
     # ── Fase 3A Feature Flags ──
