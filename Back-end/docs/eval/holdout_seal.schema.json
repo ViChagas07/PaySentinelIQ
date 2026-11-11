@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paysentinel.example/schemas/holdout-seal/2.0.json",
+  "title": "PaySentinelIQ holdout seal",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "schema_sha256",
+    "status",
+    "sealed_at",
+    "artifact",
+    "dataset",
+    "ocr",
+    "features",
+    "baselines",
+    "commits",
+    "environment"
+  ],
+  "properties": {
+    "schema_version": { "const": "holdout-seal/2.0" },
+    "schema_sha256": { "$ref": "#/$defs/sha256" },
+    "status": { "const": "sealed" },
+    "sealed_at": { "type": "string", "minLength": 1 },
+    "artifact": {
+      "type": "object",
+      "required": ["path", "sha256", "threshold", "model", "C"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "threshold": { "type": "number" },
+        "model": { "type": "string", "minLength": 1 },
+        "C": { "type": "number" },
+        "class_weight": { "type": "string" },
+        "preprocessing": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "required": [
+        "path",
+        "version",
+        "reference_date",
+        "seed",
+        "n_total",
+        "composition",
+        "records_sha256",
+        "manifest_sha256",
+        "files_sha256",
+        "lineage_hashes_sha256",
+        "intersection"
+      ],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "reference_date": { "type": "string", "minLength": 10 },
+        "seed": { "type": "integer" },
+        "n_total": { "type": "integer" },
+        "composition": { "type": "object" },
+        "records_sha256": { "$ref": "#/$defs/sha256" },
+        "manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "files_sha256": { "$ref": "#/$defs/sha256" },
+        "lineage_hashes_sha256": { "$ref": "#/$defs/sha256" },
+        "intersection": {
+          "type": "object",
+          "required": ["old_ids", "old_entities"],
+          "properties": {
+            "old_ids": { "const": 0 },
+            "old_entities": { "const": 0 }
+          }
+        }
+      }
+    },
+    "ocr": {
+      "type": "object",
+      "required": ["sample", "primary", "experts", "variants"],
+      "properties": {
+        "sample": { "type": "integer" },
+        "primary": { "type": "integer" },
+        "experts": { "type": "integer" },
+        "variants": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "features": {
+      "type": "object",
+      "required": ["count", "names_sha256", "implementation_sha256"],
+      "properties": {
+        "count": { "type": "integer" },
+        "names_sha256": { "$ref": "#/$defs/sha256" },
+        "implementation_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "baselines": {
+      "type": "object",
+      "required": [
+        "deterministic_threshold",
+        "fusion_threshold",
+        "logistic_threshold",
+        "evaluator_sha256"
+      ],
+      "properties": {
+        "deterministic_threshold": { "type": "number" },
+        "fusion_threshold": { "type": "number" },
+        "logistic_threshold": { "type": "number" },
+        "evaluator_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "commits": {
+      "type": "object",
+      "required": ["generator", "evaluator", "protocol", "extractor", "model_code"],
+      "properties": {
+        "generator": { "type": "string", "minLength": 7 },
+        "evaluator": { "type": "string", "minLength": 7 },
+        "protocol": { "type": "string", "minLength": 7 },
+        "extractor": { "type": "string", "minLength": 7 },
+        "model_code": { "type": "string", "minLength": 7 }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["python", "scikit_learn", "numpy", "pymupdf", "pillow", "joblib"],
+      "properties": {
+        "python": { "type": "string" },
+        "scikit_learn": { "type": "string" },
+        "numpy": { "type": "string" },
+        "pymupdf": { "type": "string" },
+        "pillow": { "type": "string" },
+        "joblib": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

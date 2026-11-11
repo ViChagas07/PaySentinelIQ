@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 from datetime import date
-import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -22,6 +21,7 @@ from sklearn.metrics import (
 
 from app.ml.dataset import Dataset, is_expert
 from app.ml.features import FEATURE_NAMES, vectorize
+from app.ml.holdout_contract import preflight_and_load
 
 PRIMARY_PATHS = ("A_native", "B_ocr_clean", "C_ocr_degraded")
 FP_CAPS = {
@@ -34,33 +34,6 @@ MIN_NEGATIVES = 30
 NON_INFERIORITY_MARGIN = 0.05
 DETERMINISTIC_THRESHOLD = 0.5
 FUSION_THRESHOLD = 0.4
-
-
-def _hash_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def verify_seal(
-    seal: dict[str, Any],
-    model_path: Path,
-    dataset_manifest_path: Path,
-) -> None:
-    if seal.get("status") != "sealed":
-        raise ValueError("holdout seal is not marked sealed")
-    if _hash_file(model_path) != seal["artifact_sha256"]:
-        raise ValueError("artifact hash does not match the seal")
-    if (
-        _hash_file(dataset_manifest_path)
-        != seal["dataset_manifest_sha256"]
-    ):
-        raise ValueError("dataset manifest hash does not match the seal")
-    feature_hash = hashlib.sha256(
-        json.dumps(FEATURE_NAMES, ensure_ascii=False).encode()
-    ).hexdigest()
-    if feature_hash != seal["feature_names_sha256"]:
-        raise ValueError("feature list hash does not match the seal")
-    if seal["threshold"] != 0.809:
-        raise ValueError("unexpected threshold in seal")
 
 
 def _material_scores(dataset: Dataset) -> np.ndarray:
@@ -404,7 +377,7 @@ def evaluate(
 
 def build_report(result: dict[str, Any], seal: dict[str, Any]) -> str:
     lines = [
-        "# Resultado do holdout — NÃO EXECUTADO NESTE CHECKPOINT",
+        "# Resultado do holdout v4 — avaliação oficial",
         "",
         f"Artefato: `{seal['artifact_sha256']}`; threshold: {seal['threshold']}.",
         "",
@@ -489,20 +462,30 @@ def build_report(result: dict[str, Any], seal: dict[str, Any]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dump", required=True)
-    parser.add_argument("--seal", default="../docs/eval/holdout_seal.json")
+    parser.add_argument("--seal", default="../docs/eval/holdout_seal_v4.json")
     parser.add_argument("--model", required=True)
-    parser.add_argument("--out", default="../docs/eval/holdout_result.md")
+    parser.add_argument("--out", default="../docs/eval/holdout_result_v4.md")
     args = parser.parse_args()
     seal = json.loads(Path(args.seal).read_text(encoding="utf-8"))
     model_path = Path(args.model)
-    verify_seal(seal, model_path, Path(seal["dataset_manifest_path"]))
+    dataset_manifest = (
+        Path(seal.get("dataset", {}).get("path", ".")) / "manifest.json"
+    )
+    verified, model = preflight_and_load(
+        seal,
+        model_path,
+        dataset_manifest,
+        loader=joblib.load,
+        check_commits=True,
+    )
     rows = [
         json.loads(line)
         for line in Path(args.dump).read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
-    reference_date = date.fromisoformat(seal["reference_date"])
-    model = joblib.load(model_path)
+    reference_date = date.fromisoformat(
+        verified["dataset"]["reference_date"]
+    )
     result = evaluate(
         [row for row in rows if row["path"] == "A_native"],
         [row for row in rows if row["path"] != "A_native"],
@@ -512,7 +495,7 @@ def main() -> None:
     )
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(build_report(result, seal), encoding="utf-8")
+    out.write_text(build_report(result, verified), encoding="utf-8")
     print(f"report={out}")
 
 

@@ -1,15 +1,6 @@
-import hashlib
-import json
-
-import joblib
 import numpy as np
-import pytest
 
-from app.ml.evaluate_holdout import (
-    evaluate,
-    verify_seal,
-    wilson_upper,
-)
+from app.ml.evaluate_holdout import evaluate, wilson_upper
 from app.ml.features import FEATURE_NAMES
 
 
@@ -79,30 +70,14 @@ def test_small_stratum_is_inconclusive():
 
     assert result["criteria"]["A_native"]["checks"]["sample_size"] is False
     assert result["criteria"]["A_native"]["passed"] is False
+    for path_name in ("A_native", "B_ocr_clean", "C_ocr_degraded"):
+        cohort = result["cohorts"][path_name]
+        logistic = cohort["logistic"]
+        assert logistic["tp"] + logistic["fn"] == cohort["positives"]
+        assert logistic["fp"] + logistic["tn"] == cohort["negatives"]
 
 
 def test_wilson_upper_for_zero_events():
     value = wilson_upper(0, 178)
 
     assert 0 < value < 0.05
-
-
-def test_verify_seal_rejects_artifact_mismatch(tmp_path):
-    model_path = tmp_path / "model.joblib"
-    joblib.dump(ToyModel(), model_path)
-    dataset_manifest = tmp_path / "manifest.json"
-    dataset_manifest.write_text("{}", encoding="utf-8")
-    seal = {
-        "status": "sealed",
-        "artifact_sha256": "0" * 64,
-        "dataset_manifest_sha256": hashlib.sha256(
-            dataset_manifest.read_bytes()
-        ).hexdigest(),
-        "feature_names_sha256": hashlib.sha256(
-            json.dumps(FEATURE_NAMES, ensure_ascii=False).encode()
-        ).hexdigest(),
-        "threshold": 0.809,
-    }
-
-    with pytest.raises(ValueError, match="artifact hash"):
-        verify_seal(seal, model_path, dataset_manifest)
