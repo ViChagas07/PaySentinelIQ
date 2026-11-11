@@ -201,17 +201,17 @@ Sinal forense = `creator`/`producer` diferentes do gerador padrão no PDF nativo
 
 ## Políticas shadow V0 / V2 / V4 / V5
 
-| Variante | Caminho | N | FP >=70 | FP >=40 | Recall naive >=40 | Recall naive >=70 | Recall multi >=40 | Recall multi >=70 | needs_review |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| V0 | A_native | 1000 | 0 | 0 | 176 | 147 | 58 | 40 | 0 |
-| V0 | B_ocr_clean | 112 | 0 | 1 | 14 | 3 | 8 | 2 | 104 |
-| V0 | C_ocr_degraded | 112 | 0 | 2 | 21 | 4 | 9 | 3 | 104 |
-| V2 | A_native | 1000 | 0 | 0 | 249 | 157 | 60 | 50 | 0 |
-| V2 | B_ocr_clean | 112 | 1 | 5 | 36 | 9 | 9 | 5 | 104 |
-| V2 | C_ocr_degraded | 112 | 1 | 18 | 39 | 12 | 10 | 6 | 104 |
-| V4 | A_native | 1000 | 0 | 0 | 249 | 157 | 60 | 50 | 0 |
-| V4 | B_ocr_clean | 112 | 0 | 2 | 24 | 7 | 9 | 4 | 104 |
-| V4 | C_ocr_degraded | 112 | 0 | 8 | 26 | 10 | 10 | 5 | 104 |
+| Variante | Caminho | N | FP >=70 | FP >=40 | Recall naive >=40 | Recall naive >=70 | Recall multi >=40 | Recall multi >=70 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| V0 | A_native | 1000 | 0 | 0 | 176 | 147 | 58 | 40 |
+| V0 | B_ocr_clean | 112 | 0 | 1 | 14 | 3 | 8 | 2 |
+| V0 | C_ocr_degraded | 112 | 0 | 2 | 21 | 4 | 9 | 3 |
+| V2 | A_native | 1000 | 0 | 0 | 249 | 157 | 60 | 50 |
+| V2 | B_ocr_clean | 112 | 1 | 5 | 36 | 9 | 9 | 5 |
+| V2 | C_ocr_degraded | 112 | 1 | 18 | 39 | 12 | 10 | 6 |
+| V4 | A_native | 1000 | 0 | 0 | 249 | 157 | 60 | 50 |
+| V4 | B_ocr_clean | 112 | 0 | 2 | 24 | 7 | 9 | 4 |
+| V4 | C_ocr_degraded | 112 | 0 | 8 | 26 | 10 | 10 | 5 |
 
 ### V5 — decisão e revisão
 
@@ -220,6 +220,13 @@ Sinal forense = `creator`/`producer` diferentes do gerador padrão no PDF nativo
 | A_native | 1000 | 154 | 95 | 751 | 0 | 0 | 0 | 249 |
 | B_ocr_clean | 112 | 1 | 40 | 71 | 104 | 6 | 5 | 36 |
 | C_ocr_degraded | 112 | 1 | 60 | 51 | 104 | 34 | 18 | 39 |
+
+## Artefatos e reprodutibilidade
+
+- Manifestos pequenos versionados: `docs/eval/manifests/v1.json`, `v2.json`, `v2.1.json` e `6a3_sample.json`.
+- Datasets grandes permanecem fora do Git (`data/synthetic/v1`, `v2`, `v2.1`).
+- Dumps: `data/synthetic/v2.1/eval/evidence_dump.jsonl` e `data/synthetic/v2.1/eval_ocr/evidence_dump_6a3.jsonl`.
+- Commits de geração/avaliação estão nos manifestos.
 
 ## Trade-offs e limitações
 

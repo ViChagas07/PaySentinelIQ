@@ -1,0 +1,20 @@
+{
+  "dataset_version": "v1",
+  "generator_version": "v1-legacy",
+  "seed": 42,
+  "n_total": 1000,
+  "render": 60,
+  "splits": {
+    "train": 600,
+    "val": 150,
+    "test_iid": 150,
+    "test_shift": 100
+  },
+  "split_role": "desenvolvimento/avaliação (não holdout intocado)",
+  "records_sha256": "ba422a618832e257d05f17ab8dd5f9998c586a1b28484fab0229cab4029c88fc",
+  "path": "data/synthetic/v1/",
+  "generation_commit": "3b0973e",
+  "evaluation_commit": "3b0973e",
+  "command": "snapshot histórico congelado da medição 5B; não regenerar",
+  "note": "Dump histórico em data/synthetic/v1/eval/evidence_dump.jsonl."
+}

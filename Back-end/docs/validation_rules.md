@@ -14,6 +14,9 @@ necessário faz a regra ser pulada e registrada em `metadata.validation.skipped_
 - Em `en`, data numérica com ambos os componentes <= 12 é ambígua. O valor
   pode ser exibido, mas o campo recebe `data_vencimento_ambiguous=true` e
   `data_vencimento`/`due_date` não são exportados para as regras.
+- Em `pt`/`es`, uma data que só é válida como `MM/DD` (ex.: `02/13/2026`)
+  recebe `data_vencimento_locale_inconsistent=true`; o valor não é exportado
+  para as regras e não gera nova evidência nem altera score.
 - `ValidateStage` não usa data ambígua em `BOLETO_VENCIDO`,
   `BOLETO_OVERDUE`, `BOLETO_SEVERELY_OVERDUE` nem em comparações de
   vencimento. `RiskAnalyzer` também não recebe `due_date` nesse caso.

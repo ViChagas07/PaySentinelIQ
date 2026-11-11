@@ -1,0 +1,27 @@
+{
+  "dataset_version": "v2.1",
+  "generator_version": "v2.1",
+  "seed": 42,
+  "n_total": 1000,
+  "render": 60,
+  "splits": {
+    "train": 600,
+    "val": 150,
+    "test_iid": 150,
+    "test_shift": 100
+  },
+  "split_role": "desenvolvimento/avaliação (não holdout intocado)",
+  "records_sha256": "2a8f71d078d4a91efd2a86918991f82a41470601001f9b68d991d7f70e742663",
+  "split_hashes": {
+    "train": "cc04c4455b1473d9f76266d3f6a8996ca0831e75cca9a9b5f3927bce3e15e1b3",
+    "val": "e743ceb84a568d7abcda87d9cb2474f621fdea4ff3cd3f418ed1de080241099d",
+    "test_iid": "ef4f7a2930f41e487a4d3432c774107bcbe488488ee069227c33f448800b1883",
+    "test_shift": "0e07e2c48f42755c9ab7f098bc778ed0b70ed9a53e7a2f689ea5ca418185efad"
+  },
+  "path": "data/synthetic/v2.1/",
+  "generation_commit": "ba79eaa",
+  "evaluation_commit": "3f840e6",
+  "command": "poetry run python -m app.synthetic.build --out ../data/synthetic/v2.1 --seed 42 --n-total 1000 --render 60 --dataset-version v2.1 --generator-version v2.1",
+  "full_dump_sha256": "a65d441f26eb0c10bbaea8c9fce0317c49f52b683ac691cfa3ac140dc1e57e26",
+  "ocr_dump_sha256": "c19cfa6add361ebe12c0a47d557de432b6d3de9277bffdb54aacacecedc6d716"
+}

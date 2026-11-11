@@ -1,0 +1,29 @@
+{
+  "dataset_version": "v2",
+  "generator_version": "v2",
+  "seed": 42,
+  "n_total": 1000,
+  "render": 60,
+  "splits": {
+    "train": 600,
+    "val": 150,
+    "test_iid": 150,
+    "test_shift": 100
+  },
+  "split_role": "desenvolvimento/avaliação (não holdout intocado)",
+  "records_sha256": "e737753e1c7cc87c212cbc26ae3698db0def0b3ec4e54bf22fa69ba7ff1024f5",
+  "split_hashes": {
+    "train": "e04b54a939ac1bcee925f6504d281f6b8e6fa9c52ef32c9238cba96e41beeb08",
+    "val": "e743ceb84a568d7abcda87d9cb2474f621fdea4ff3cd3f418ed1de080241099d",
+    "test_iid": "d04a12635010784a4b666e100de188729c58e26f6d3102ef0d8b555348d829ff",
+    "test_shift": "ec39e6fe0f86fdfda6ccb86cd6182e35f959ee83a6e04b61ea0f63702d7e21f5"
+  },
+  "path": "data/synthetic/v2/",
+  "generation_commit": "5482f7f",
+  "evaluation_commit": "4b74650",
+  "command": "poetry run python -m app.synthetic.build --out ../data/synthetic/v2 --seed 42 --n-total 1000 --render 60 --dataset-version v2 --generator-version v2",
+  "dumps": [
+    "data/synthetic/v2/eval/evidence_dump_before_6a2.jsonl",
+    "data/synthetic/v2/eval/evidence_dump_after_6a2.jsonl"
+  ]
+}

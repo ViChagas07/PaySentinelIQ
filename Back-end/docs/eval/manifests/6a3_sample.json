@@ -1,0 +1,17 @@
+{
+  "phase": "6A.3",
+  "dataset_version": "v2.1",
+  "seed": 42,
+  "sample_documents": 112,
+  "fraudulent_documents": 72,
+  "legitimate_documents": 40,
+  "legitimate_per_split": 20,
+  "splits": ["test_iid", "test_shift"],
+  "selection_rule": "todos os fraudados de test_iid/test_shift + 20 legítimos por split ordenados por ID",
+  "sufficient_n": 5,
+  "clean_variants": ["scanned_clean", "image_png"],
+  "degraded_variants": ["scanned_rot", "scanned_blur"],
+  "document_ids_sha256": "16e7cfcd8e57e83a4255e649dce3d7ca8c6af7437f2f8a6724b10e55b5dad982",
+  "plan_commit": "3f840e6",
+  "command": "poetry run python -m app.synthetic.evaluate_ocr_6a3"
+}

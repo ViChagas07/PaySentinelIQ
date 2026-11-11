@@ -229,8 +229,8 @@ def _policy_table(rows: list[dict[str, Any]]) -> list[str]:
         "## Políticas shadow V0 / V2 / V4 / V5",
         "",
         "| Variante | Caminho | N | FP >=70 | FP >=40 | Recall naive >=40 | "
-        "Recall naive >=70 | Recall multi >=40 | Recall multi >=70 | needs_review |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "Recall naive >=70 | Recall multi >=40 | Recall multi >=70 |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for variant in ("V0", "V2", "V4"):
         for path_name in PATHS:
@@ -247,9 +247,6 @@ def _policy_table(rows: list[dict[str, Any]]) -> list[str]:
                 if item["is_fraud"] and item["sophistication"] == "multi"
             ]
             scores = {item["document_id"]: _score(item["evidences"], variant) for item in items}
-            need = sum(
-                v5_decision(item)["needs_review"] for item in items
-            )
             lines.append(
                 f"| {variant} | {path_name} | {len(items)} | "
                 f"{sum(scores[item['document_id']] >= 70 for item in legit)} | "
@@ -257,8 +254,7 @@ def _policy_table(rows: list[dict[str, Any]]) -> list[str]:
                 f"{sum(scores[item['document_id']] >= 40 for item in naive)} | "
                 f"{sum(scores[item['document_id']] >= 70 for item in naive)} | "
                 f"{sum(scores[item['document_id']] >= 40 for item in multi)} | "
-                f"{sum(scores[item['document_id']] >= 70 for item in multi)} | "
-                f"{need} |"
+                f"{sum(scores[item['document_id']] >= 70 for item in multi)} |"
             )
     lines.extend(
         [
@@ -371,6 +367,16 @@ def build_report(
     lines.extend(_policy_table(rows))
     lines.extend(
         [
+            "## Artefatos e reprodutibilidade",
+            "",
+            "- Manifestos pequenos versionados: `docs/eval/manifests/v1.json`, "
+            "`v2.json`, `v2.1.json` e `6a3_sample.json`.",
+            "- Datasets grandes permanecem fora do Git (`data/synthetic/v1`, "
+            "`v2`, `v2.1`).",
+            "- Dumps: `data/synthetic/v2.1/eval/evidence_dump.jsonl` e "
+            "`data/synthetic/v2.1/eval_ocr/evidence_dump_6a3.jsonl`.",
+            "- Commits de geração/avaliação estão nos manifestos.",
+            "",
             "## Trade-offs e limitações",
             "",
             "- O aumento de extração veio de aliases de layout D e datas; o "
