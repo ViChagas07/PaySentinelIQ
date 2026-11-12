@@ -2,7 +2,7 @@
   "schema_version": "holdout-seal/2.0",
   "schema_sha256": "8bd2b7b738849deb578529277c1fa5ec460e8a482c5e59976399d89a4d04f6fb",
   "status": "sealed",
-  "sealed_at": "2026-11-12T00:00:50.151470+00:00",
+  "sealed_at": "2026-11-12T00:05:00+00:00",
   "policy": "holdout generated and structurally checked only; no model inference, scores, metrics or confusion matrices were computed before this seal",
   "artifact": {
     "path": "data/ml/frozen/logistic_v2_1_d4100dc5.joblib",
@@ -97,9 +97,9 @@
   "smoke_test": {
     "test": "tests/unit/test_ml_holdout_cli.py::test_real_cli_end_to_end_on_fixture",
     "result": "1 passed",
-    "commit": "4cf4dee",
+    "commit": "647ffe4",
     "log_path": "docs/eval/holdout_v5_smoke_test.log",
-    "log_sha256": "93526c8d1d342569abfe54477bd730408bf1c1f01442adce349765f034eb3836"
+    "log_sha256": "1ca0cdf02d72c72e4a93998f456203625dae54510fbc9ec28f2aca8bb55bfc85"
   },
   "environment": {
     "python": "3.11.9",
