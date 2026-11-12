@@ -67,9 +67,7 @@ def _row(document_id, path, fraud, *, critical=False, score=0.0):
 
 def _rows():
     rows = []
-    for index, path_name in enumerate(
-        ("A_native", "B_ocr_clean", "C_ocr_degraded")
-    ):
+    for path_name in ("A_native", "B_ocr_clean", "C_ocr_degraded"):
         rows.append(
             _row(f"{path_name}-legit", path_name, False, score=0)
         )
@@ -235,7 +233,7 @@ def test_real_cli_end_to_end_on_fixture(tmp_path):
     assert out.exists() and json_out.exists()
     structured = json.loads(json_out.read_text(encoding="utf-8"))
     assert structured["threshold"] == 0.809
-    for path_name, values in structured["cohorts"].items():
+    for values in structured["cohorts"].values():
         logistic = values["logistic"]
         assert logistic["tp"] + logistic["fn"] == values["positives"]
         assert logistic["fp"] + logistic["tn"] == values["negatives"]
