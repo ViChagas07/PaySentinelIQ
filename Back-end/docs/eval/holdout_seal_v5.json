@@ -1,0 +1,121 @@
+{
+  "schema_version": "holdout-seal/2.0",
+  "schema_sha256": "8bd2b7b738849deb578529277c1fa5ec460e8a482c5e59976399d89a4d04f6fb",
+  "status": "sealed",
+  "sealed_at": "2026-11-12T00:00:50.151470+00:00",
+  "policy": "holdout generated and structurally checked only; no model inference, scores, metrics or confusion matrices were computed before this seal",
+  "artifact": {
+    "path": "data/ml/frozen/logistic_v2_1_d4100dc5.joblib",
+    "sha256": "d4100dc572d6238a9f819b078cca0ef50bb8ad04e046bd62bd8dd1325abea33e",
+    "size_bytes": 6369,
+    "model": "LogisticRegression",
+    "C": 0.01,
+    "threshold": 0.809,
+    "class_weight": "balanced",
+    "preprocessing": [
+      "SimpleImputer(median)",
+      "StandardScaler"
+    ]
+  },
+  "dataset": {
+    "version": "holdout-v5",
+    "generator_version": "v5",
+    "path": "../data/holdout/v5_seed2029",
+    "reference_date": "2026-11-11",
+    "seed": 2029,
+    "n_total": 1000,
+    "composition": {
+      "legit": 660,
+      "supervised_fraud": 280,
+      "expert_fraud": 60,
+      "total_fraud": 340
+    },
+    "tamper_types": {
+      "B1": 20,
+      "B2": 20,
+      "B3": 20,
+      "B4": 20,
+      "B5": 20,
+      "B6": 20,
+      "B7": 20,
+      "B8": 20,
+      "P1": 20,
+      "P2": 20,
+      "P3": 20,
+      "P4": 20,
+      "P5": 20,
+      "P6": 20,
+      "P7": 20,
+      "P8": 20,
+      "P9": 20
+    },
+    "records_sha256": "3e6843d42d1fece1f2f5bb0466d01f7d8782efe873ca67fe8ed82d752fc11440",
+    "manifest_sha256": "1bc3c0b81961894e8fae25be5d47c54dc2bdb0ff885d9de34d3a0f0112cf7cbf",
+    "files_sha256": "fc2d9ae825aad64092622703dd8e853b58d874fa8a315adfe66255f976177c6f",
+    "lineage_hashes_sha256": "eed5e69e649a3e80df4b37eafcdcea4e70bbd22e0adac4252aeeac3af6e7aea7",
+    "intersection": {
+      "old_ids": 0,
+      "old_entities": 0
+    },
+    "split": "holdout"
+  },
+  "ocr": {
+    "selection_rule": "top 8 by sha256(id:type:ocr) per type; 16 legit per language by sha256(id:language:legit:ocr)",
+    "variants": [
+      "scanned_clean",
+      "scanned_rot"
+    ],
+    "sample": 184,
+    "primary": 160,
+    "experts": 24,
+    "primary_ids_sha256": "d39868aaeb0ef95b1364a1ffbe4f540c63be6224934b9f3d93065ea88d7987ab",
+    "sample_ids_sha256": "f43b84a7fb803cfa64cbf0d8be0c97d01f7f85d63db86c39c4e599848d86cbbe"
+  },
+  "features": {
+    "count": 119,
+    "names_sha256": "a240323638b438875ca94492b4d89e3bb7ebd410edde5f19dc059811d64070a4",
+    "implementation_sha256": "b14920d258e55014c1fafd07f66041218f6ddf61910c30545664a9a71753a708"
+  },
+  "baselines": {
+    "deterministic_threshold": 0.5,
+    "fusion_threshold": 0.4,
+    "logistic_threshold": 0.809,
+    "evaluator_sha256": "4bc9989ecaa2763957063cf528fdc56e5e6e8d5ac1bd6804ee4f4a504da0e8b7"
+  },
+  "commits": {
+    "generator": "4cf4dee",
+    "evaluator": "4cf4dee",
+    "protocol": "b013010",
+    "extractor": "ba79eaaca24271c5dc1e7d8a844e44a048ccd1e4",
+    "model_code": "7d0fb416d26e51569ef415c12fb35d7829a180fb"
+  },
+  "implementation_hashes": {
+    "generator_sha256": "123d2975c7600e9482b5f20a9906e873cb2f04a71e15d756c9094a0056e8342e",
+    "contract_sha256": "547fb13ac6ff15764ec290f5bb515f15a465c98b1c03fff847927ff9a6d6852a",
+    "protocol_sha256": "d7067d076c9b31096031c763f9f7ac372a71606b82d4d0981122cc669dbb488d"
+  },
+  "smoke_test": {
+    "test": "tests/unit/test_ml_holdout_cli.py::test_real_cli_end_to_end_on_fixture",
+    "result": "1 passed",
+    "commit": "4cf4dee",
+    "log_path": "docs/eval/holdout_v5_smoke_test.log",
+    "log_sha256": "93526c8d1d342569abfe54477bd730408bf1c1f01442adce349765f034eb3836"
+  },
+  "environment": {
+    "python": "3.11.9",
+    "scikit_learn": "1.9.0",
+    "numpy": "2.4.6",
+    "pymupdf": "1.27.2.3",
+    "pillow": "12.2.0",
+    "joblib": "1.5.3"
+  },
+  "criteria_reference": "docs/eval/holdout_protocol_v5.md",
+  "acceptance_caps": {
+    "native_fp_wilson_upper": 0.05,
+    "ocr_clean_fp_wilson_upper": 0.1,
+    "ocr_degraded_fp_wilson_upper": 0.15,
+    "min_positives_per_cohort": 30,
+    "min_negatives_per_cohort": 30,
+    "non_inferiority_margin": 0.05
+  }
+}
