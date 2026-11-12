@@ -1,0 +1,12 @@
+{
+  "docs/eval/holdout_result_v5.md": "d257c648491a13896ba6b4d258881ce2c3c2e9b935695bd81c8127b77f898f10",
+  "docs/eval/holdout_result_v5.json": "9c2af9759ea988021f254014bd2561a385635fba60606ebfb4c4d10c2e8e34bf",
+  "docs/eval/holdout_result_v5_raw.md": "7f3c867ff24f41fb579f498470743d45bb4db702eeb77c61f192f68e0f0f019e",
+  "docs/eval/holdout_result_v5_raw.json": "4bb3b62f9299650256156069b7b6653d58ed9410d060219492c6f48740e8aecc",
+  "docs/eval/holdout_preflight_v5_official.json": "0eb4592e91df2f0f8e7d6afec2df1c810d448b021c24553f51dd5ef2e3425fb2",
+  "docs/eval/holdout_seal_v5.json": "aebfb54085bd8145c0effe98c20c2c05f3f59a8df7184bfceddc1d2d222e9715",
+  "docs/eval/holdout_v5_measurement.log": "8bd343358af2e2b1774d0ad886383634014e63bd952f9c2310a1a1c0f8decad3",
+  "docs/eval/holdout_v5_official_eval.log": "9276342821db0d4fc5dec46bb48beabac40dc8520b1e04bddd774b1cefa6a920",
+  "../data/holdout/v5_seed2029/eval_run/evidence_dump.jsonl": "3188c43c0b000dc7c02874cc37ac501807d9eea39c01414132fca13b943e1c7d",
+  "../data/holdout/v5_seed2029/eval_run/measurement.md": "de5cc0080f089e2703f85d782171418a5658cfa57d6e3965b7705b403cf60d48"
+}
