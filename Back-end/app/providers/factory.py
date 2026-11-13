@@ -217,6 +217,25 @@ def get_llm() -> Any:
     return provider.get_chat_model()
 
 
+def _create_crewai_llm(llm_cls: Any, **kwargs: Any) -> Any:
+    """Construct a CrewAI LLM, falling back to None when LiteLLM is absent.
+
+    ``crewai.llm.LLM`` imports LiteLLM lazily inside its constructor. When the
+    optional LiteLLM dependency is not installed, construction raises
+    ImportError instead of failing at module import time. CrewAI is an optional
+    integration, so callers must degrade to the deterministic pipeline rather
+    than crash the request.
+    """
+    try:
+        return llm_cls(**kwargs)
+    except ImportError:
+        logger.warning(
+            "CrewAI LLM backend unavailable (LiteLLM fallback not installed) "
+            "— using deterministic pipeline"
+        )
+        return None
+
+
 @lru_cache
 def get_crewai_llm() -> Any:
     """
@@ -226,7 +245,8 @@ def get_crewai_llm() -> Any:
     it requires a string model name (LiteLLM format) or a crewai.llm.LLM instance.
     This function wraps the provider configuration into the correct format.
 
-    Returns None if the provider cannot be resolved (graceful fallback).
+    Returns None if the provider cannot be resolved (graceful fallback),
+    including when CrewAI is installed without its LiteLLM backend.
     """
     try:
         from crewai.llm import LLM as CrewAILLM  # noqa: N811
@@ -240,7 +260,8 @@ def get_crewai_llm() -> Any:
     provider_type = settings.effective_llm_provider
 
     if provider_type == ProviderType.OLLAMA.value:
-        return CrewAILLM(
+        return _create_crewai_llm(
+            CrewAILLM,
             model=f"ollama/{settings.effective_ollama_model}",
             base_url=settings.OLLAMA_BASE_URL,
             temperature=settings.effective_ai_temperature,
@@ -253,7 +274,8 @@ def get_crewai_llm() -> Any:
         if not api_key:
             logger.warning("OPENAI_API_KEY not set — cannot create CrewAI LLM for OpenAI")
             return None
-        return CrewAILLM(
+        return _create_crewai_llm(
+            CrewAILLM,
             model=settings.OPENAI_MODEL,
             api_key=api_key,
             temperature=settings.effective_ai_temperature,
@@ -267,7 +289,8 @@ def get_crewai_llm() -> Any:
             return None
         # CrewAI LLM uses LiteLLM under the hood;
         # model format for Gemini is "gemini/<model_name>"
-        return CrewAILLM(
+        return _create_crewai_llm(
+            CrewAILLM,
             model=f"gemini/{settings.GEMINI_MODEL}",
             api_key=api_key,
             temperature=settings.effective_ai_temperature,
@@ -275,7 +298,8 @@ def get_crewai_llm() -> Any:
         )
 
     if provider_type == ProviderType.MOCK.value:
-        return CrewAILLM(
+        return _create_crewai_llm(
+            CrewAILLM,
             model="mock/demo",
             temperature=settings.effective_ai_temperature,
             max_tokens=settings.effective_ai_max_tokens,
@@ -291,7 +315,8 @@ def get_crewai_llm() -> Any:
             else "lm-studio"
         )
         model = settings.LLM_MODEL or settings.effective_ollama_model
-        return CrewAILLM(
+        return _create_crewai_llm(
+            CrewAILLM,
             model=f"openai/{model}",
             base_url=settings.LLM_BASE_URL or "http://localhost:1234/v1",
             api_key=api_key,

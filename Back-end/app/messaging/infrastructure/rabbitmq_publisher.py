@@ -108,10 +108,9 @@ class RabbitMQEventPublisher:
                     "user_id": event.user_id,
                     "duration_ms": round((time.monotonic() - t0) * 1000, 2),
                     "success": False,
-                    "error": str(exc),
+                    "error_type": type(exc).__name__,
                 },
             )
-            _capture_exception(exc)
             return False
 
     async def close(self) -> None:
@@ -120,7 +119,10 @@ class RabbitMQEventPublisher:
             try:
                 await self._channel.close()
             except Exception as exc:  # pragma: no cover - defensive
-                logger.warning("Error closing RabbitMQ channel: %s", exc)
+                logger.warning(
+                    "event=rabbitmq_channel_close_failed error_type=%s",
+                    type(exc).__name__,
+                )
         self._channel = None
         self._exchange = None
         await self._connection_manager.close()
@@ -130,13 +132,3 @@ def _serialize(event: EventEnvelope) -> bytes:
     import orjson
 
     return orjson.dumps(event.to_dict())
-
-
-def _capture_exception(exc: Exception) -> None:
-    """Forward publish failures to Sentry when configured (non-fatal)."""
-    try:
-        import sentry_sdk
-
-        sentry_sdk.capture_exception(exc)
-    except Exception:  # pragma: no cover
-        pass

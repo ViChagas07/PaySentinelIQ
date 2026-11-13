@@ -578,7 +578,7 @@ def pix_emv_parser(qr_code_payload: str) -> dict[str, Any]:
     except Exception as e:
         return {
             "valid": False,
-            "error": f"Failed to parse EMV payload: {str(e)}",
+            "error": f"Failed to parse EMV payload: {type(e).__name__}",
             "confidence": 100,
             "fraud_signal": True,
         }

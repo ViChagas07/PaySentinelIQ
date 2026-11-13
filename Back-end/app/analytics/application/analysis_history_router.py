@@ -95,7 +95,7 @@ async def save_analysis(
     payload: AnalysisSaveRequest,
     tenant_id: str = Depends(get_current_tenant_id),
     current_user_id: str = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db),  # noqa: B008
 ) -> dict:
     """Persist a completed document analysis. Gracefully degrades."""
     try:
@@ -125,7 +125,7 @@ async def save_analysis(
         await db.refresh(record)
         return {"status": "saved", "id": str(record.id)}
     except Exception as e:
-        return {"status": "skipped", "reason": str(e)[:200]}
+        return {"status": "skipped", "reason": type(e).__name__}
 
 
 # ── GET /analysis/history ─────────────────────────────────
@@ -135,7 +135,7 @@ async def save_analysis(
 async def get_analysis_history(
     tenant_id: str = Depends(get_current_tenant_id),
     current_user_id: str = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db),  # noqa: B008
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     document_type: str | None = Query(None),
@@ -171,7 +171,7 @@ async def get_analysis_history(
 async def get_analysis_stats(
     tenant_id: str = Depends(get_current_tenant_id),
     current_user_id: str = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db),  # noqa: B008
 ) -> dict[str, Any]:
     """Aggregated analysis statistics for dashboard KPIs."""
     tid = UUID(tenant_id)

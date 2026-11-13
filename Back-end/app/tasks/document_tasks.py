@@ -45,7 +45,10 @@ def analyze_document_async(self: Any, document_id: str, tenant_id: str, s3_key: 
     This runs asynchronously so the upload endpoint returns immediately.
     Results can be polled via GET /verifications/status/{document_id}.
     """
-    logger.info("Background analysis starting: %s (s3://%s)", document_id, s3_key)
+    logger.info(
+        "event=background_analysis_started document_id=%s",
+        document_id,
+    )
 
     try:
         from app.services.pipeline_service import get_pipeline_service
@@ -82,7 +85,11 @@ def analyze_document_async(self: Any, document_id: str, tenant_id: str, s3_key: 
         }
 
     except Exception as exc:
-        logger.error("Background analysis failed for %s: %s", document_id, exc)
+        logger.error(
+            "event=background_analysis_failed document_id=%s error_type=%s",
+            document_id,
+            type(exc).__name__,
+        )
         raise self.retry(exc=exc) from exc
 
 
@@ -98,7 +105,7 @@ def analyze_document_async(self: Any, document_id: str, tenant_id: str, s3_key: 
 )
 def run_ocr_task(self: Any, s3_key: str) -> dict[str, Any]:
     """Download from S3 and run real Tesseract OCR."""
-    logger.info("OCR task: downloading %s", s3_key)
+    logger.info("event=ocr_task_started")
 
     try:
         from app.services.storage import S3StorageProvider
@@ -139,7 +146,10 @@ def run_ocr_task(self: Any, s3_key: str) -> dict[str, Any]:
                 os.unlink(tmp_path)
 
     except Exception as exc:
-        logger.error("OCR task failed for %s: %s", s3_key, exc)
+        logger.error(
+            "event=ocr_task_failed error_type=%s",
+            type(exc).__name__,
+        )
         raise self.retry(exc=exc) from exc
 
 
@@ -155,7 +165,7 @@ def run_ocr_task(self: Any, s3_key: str) -> dict[str, Any]:
 )
 def run_fraud_analysis_task(self: Any, document_id: str, ocr_fields: dict[str, Any]) -> dict[str, Any]:
     """Run the full fraud detection pipeline with real extracted data."""
-    logger.info("Fraud analysis: %s", document_id)
+    logger.info("event=fraud_analysis_started document_id=%s", document_id)
 
     try:
         from app.ai_agents.crew import get_ai_crew
@@ -186,7 +196,11 @@ def run_fraud_analysis_task(self: Any, document_id: str, ocr_fields: dict[str, A
         return result
 
     except Exception as exc:
-        logger.error("Fraud analysis failed for %s: %s", document_id, exc)
+        logger.error(
+            "event=fraud_analysis_failed document_id=%s error_type=%s",
+            document_id,
+            type(exc).__name__,
+        )
         raise self.retry(exc=exc) from exc
 
 
@@ -203,18 +217,17 @@ def _emit_analyst_alert(
 ) -> None:
     """Emit real-time alert to analyst dashboard."""
     try:
-        import json
-        alert = {
-            "document_id": document_id,
-            "tenant_id": tenant_id,
-            "risk_score": risk_score,
-            "risk_level": risk_level,
-            "anomaly_count": anomaly_count,
-            "message": (
-                f"ALERTA: Documento {document_id} classificado como {risk_level} "
-                f"(score: {risk_score:.0f}/100)"
-            ),
-        }
-        logger.info("ANALYST ALERT: %s", json.dumps(alert, indent=2))
-    except Exception as e:
-        logger.warning("Could not emit alert: %s", e)
+        logger.info(
+            "event=analyst_alert document_id=%s risk_level=%s "
+            "risk_score=%.0f anomaly_count=%d",
+            document_id,
+            risk_level,
+            risk_score,
+            anomaly_count,
+        )
+    except Exception as exc:
+        logger.warning(
+            "event=analyst_alert_emit_failed document_id=%s error_type=%s",
+            document_id,
+            type(exc).__name__,
+        )

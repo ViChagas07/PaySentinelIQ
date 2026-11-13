@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -16,16 +17,40 @@ from app.ml.features import FEATURE_NAMES
 from app.ml.holdout_contract import SCHEMA_PATH, SCHEMA_VERSION
 
 ROOT = Path(__file__).resolve().parents[2]
+_COMMIT_ENV_VAR = "HOLDOUT_COMMIT_SHA"
+_DETERMINISTIC_COMMIT = "0" * 40
 
 
 def _hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _valid_commit(value: str) -> bool:
+    return len(value) == 40 and all(char in "0123456789abcdef" for char in value)
+
+
 def _head() -> str:
-    return subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
-    ).strip()
+    """Return a 40-hex commit without requiring git metadata.
+
+    Copied trees and CI artifacts may not include ``.git``. An explicit
+    ``HOLDOUT_COMMIT_SHA`` wins; otherwise git is used when available and a
+    deterministic valid 40-hex fallback keeps seal-schema tests hermetic.
+    """
+    explicit = os.environ.get(_COMMIT_ENV_VAR, "").strip()
+    if explicit:
+        return explicit
+
+    try:
+        candidate = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip().lower()
+    except (OSError, subprocess.CalledProcessError):
+        return _DETERMINISTIC_COMMIT
+
+    return candidate if _valid_commit(candidate) else _DETERMINISTIC_COMMIT
 
 
 def _row(document_id, path, fraud, *, critical=False, score=0.0):

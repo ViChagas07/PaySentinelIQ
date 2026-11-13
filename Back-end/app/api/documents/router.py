@@ -126,6 +126,7 @@ async def analyze_document(
         file_name=file_name,
         user_id=user_id,
         tenant_id=tenant_id,
+        correlation_id=correlation_id,
     )
 
     # ── Use CanonicalPipeline if feature flag enabled ──
@@ -158,6 +159,7 @@ async def analyze_document(
             tenant_id=tenant_id,
             risk_score=_safe_risk_score(result),
             risk_level=str(result.get("risk_level") or result.get("RISK_ASSESSMENT", {}).get("risk_classification", "")),
+            correlation_id=correlation_id,
         )
         if result.get("persistence_status") == "failed":
             response.headers[CORRELATION_HEADER] = correlation_id
@@ -178,6 +180,7 @@ async def analyze_document(
             user_id=user_id,
             tenant_id=tenant_id,
             error=exc.error_code,
+            correlation_id=correlation_id,
         )
         raise HTTPException(
             status_code=exc.status_code,
@@ -206,6 +209,7 @@ async def analyze_document(
             user_id=user_id,
             tenant_id=tenant_id,
             error="analysis_error",
+            correlation_id=correlation_id,
         )
         raise HTTPException(
             status_code=500,
@@ -230,6 +234,7 @@ async def _run_canonical(
     from app.services.pipeline.canonical_pipeline import CanonicalPipeline
 
     settings = get_settings()
+    correlation_id = correlation_id or get_correlation().request_id
     ctx = PipelineContext(
         document_id=document_id,
         tenant_id=tenant_id,
@@ -268,7 +273,14 @@ async def _run_canonical(
     )
 
     # ── Send notification ──
-    await _send_analysis_notification(ctx, result, document_id, tenant_id, user_id)
+    await _send_analysis_notification(
+        ctx,
+        result,
+        document_id,
+        tenant_id,
+        user_id,
+        correlation_id=correlation_id,
+    )
 
     # ── Shadow mode ──
     if getattr(settings, "ENABLE_SHADOW_PIPELINE", False):
@@ -283,9 +295,26 @@ async def _run_canonical(
                 tenant_id=tenant_id, legacy_result=legacy_result,
                 file_name=file_name, mime_type=mime_type,
             )
-            logger.info("SHADOW comparison: %s", comparison.to_dict())
-        except Exception as e:
-            logger.warning("Shadow mode failed: %s", e)
+            logger.info(
+                "event=shadow_comparison correlation_id=%s document_id=%s "
+                "legacy_score=%.1f canonical_score=%.1f score_delta=%.1f "
+                "level_match=%s score_match=%s",
+                correlation_id,
+                document_id[:8],
+                comparison.legacy_score,
+                comparison.canonical_score,
+                comparison.score_delta,
+                comparison.level_match,
+                comparison.score_match,
+            )
+        except Exception as exc:
+            logger.warning(
+                "event=shadow_pipeline_failed correlation_id=%s document_id=%s "
+                "error_type=%s",
+                correlation_id,
+                document_id[:8],
+                type(exc).__name__,
+            )
 
     # ── Build response with extracted metadata ──
     response = result.to_dict()
@@ -598,8 +627,10 @@ async def _publish_analysis_event(
     risk_score: float | None = None,
     risk_level: str | None = None,
     error: str | None = None,
+    correlation_id: str | None = None,
 ) -> None:
     """Publish an analysis lifecycle event (non-fatal — never blocks the API)."""
+    correlation_id = correlation_id or get_correlation().request_id
     try:
         from app.messaging.domain.envelope import new_event
         from app.messaging.infrastructure.factory import get_event_publisher
@@ -625,17 +656,35 @@ async def _publish_analysis_event(
         ok = await get_event_publisher().publish(event)
         if not ok:
             logger.warning(
-                "analysis event not published: %s (doc=%s)", event_type, document_id[:8]
+                "event=analysis_event_not_published correlation_id=%s "
+                "event_type=%s document_id=%s",
+                correlation_id,
+                event_type,
+                document_id[:8],
             )
     except Exception as exc:  # pragma: no cover - events must never fail analysis
-        logger.warning("analysis event publish failed (non-fatal): %s", exc)
+        logger.warning(
+            "event=analysis_event_publish_failed correlation_id=%s "
+            "event_type=%s document_id=%s error_type=%s",
+            correlation_id,
+            event_type,
+            document_id[:8],
+            type(exc).__name__,
+        )
 
 
 async def _send_analysis_notification(
-    ctx, result, document_id: str, tenant_id: str, user_id: str,
+    ctx,
+    result,
+    document_id: str,
+    tenant_id: str,
+    user_id: str,
+    *,
+    correlation_id: str | None = None,
 ) -> None:
     """Push real-time WS notification + persist to DB when analysis completes."""
     import uuid as _uuid
+    correlation_id = correlation_id or get_correlation().request_id
     try:
         level = result.risk_level
         score = result.risk_score
@@ -694,19 +743,46 @@ async def _send_analysis_notification(
                     )
                     db.add(notif)
                     await db.commit()
-                    logger.info("Notification persisted to DB: doc=%s", document_id[:8])
-        except Exception as e:
-            logger.warning("DB notification persist failed (non-fatal): %s", e)
+                    logger.info(
+                        "event=notification_persisted correlation_id=%s document_id=%s",
+                        correlation_id,
+                        document_id[:8],
+                    )
+        except Exception as exc:
+            logger.warning(
+                "event=notification_persist_failed correlation_id=%s "
+                "document_id=%s error_type=%s",
+                correlation_id,
+                document_id[:8],
+                type(exc).__name__,
+            )
 
         # ── Push via WebSocket ──
         try:
             from app.websocket.router import publish_ws_notification
             await publish_ws_notification(notification_data)
-            logger.info("WS notification sent: doc=%s level=%s", document_id[:8], level)
-        except Exception as e:
-            logger.warning("WS notification failed (non-fatal): %s", e)
-    except Exception as e:
-        logger.warning("Notification dispatch failed: %s", e)
+            logger.info(
+                "event=ws_notification_sent correlation_id=%s document_id=%s level=%s",
+                correlation_id,
+                document_id[:8],
+                level,
+            )
+        except Exception as exc:
+            logger.warning(
+                "event=ws_notification_failed correlation_id=%s document_id=%s "
+                "error_type=%s",
+                correlation_id,
+                document_id[:8],
+                type(exc).__name__,
+            )
+    except Exception as exc:
+        logger.warning(
+            "event=notification_dispatch_failed correlation_id=%s document_id=%s "
+            "error_type=%s",
+            correlation_id,
+            document_id[:8],
+            type(exc).__name__,
+        )
 
 
 async def _run_legacy(

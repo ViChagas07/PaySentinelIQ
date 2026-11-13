@@ -26,7 +26,7 @@ async def _check_database() -> dict:
             await conn.execute(__import__("sqlalchemy", fromlist=["text"]).text("SELECT 1"))
         return {"status": "healthy"}
     except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}
+        return {"status": "unhealthy", "error_type": type(e).__name__}
 
 
 async def _check_redis() -> dict:
@@ -36,7 +36,7 @@ async def _check_redis() -> dict:
         await redis.ping()
         return {"status": "healthy"}
     except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}
+        return {"status": "unhealthy", "error_type": type(e).__name__}
 
 
 async def _check_rabbitmq() -> dict:
@@ -57,7 +57,7 @@ async def _check_rabbitmq() -> dict:
         await manager.close()
         return {"status": "healthy" if healthy else "unhealthy"}
     except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}
+        return {"status": "unhealthy", "error_type": type(e).__name__}
 
 
 async def _check_llm() -> dict:
@@ -70,7 +70,7 @@ async def _check_llm() -> dict:
         return {"status": "healthy" if provider.health_check() else "unhealthy",
                 "provider": provider.get_info().provider_name}
     except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}
+        return {"status": "unhealthy", "error_type": type(e).__name__}
 
 
 @router.get("/ready")

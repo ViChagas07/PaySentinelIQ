@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.dependencies import get_token_payload
 from app.auth.repository import UserRepository
 from app.auth.services import AuthService
+from app.observability.correlation import get_correlation
 from app.shared.database import get_db
 from app.shared.exceptions import AuthenticationError, InvalidCredentialsError, TokenExpiredError
 from app.shared.orm_models import (
@@ -173,7 +174,13 @@ async def google_login(
                 settings.GOOGLE_CLIENT_ID,
             )
         except ValueError as exc:
-            raise AuthenticationError(f"Invalid Google credential: {exc}") from exc
+            logger.warning(
+                "event=google_credential_verification_failed "
+                "correlation_id=%s error_type=%s",
+                get_correlation().request_id,
+                type(exc).__name__,
+            )
+            raise AuthenticationError("Invalid Google credential") from None
     elif body.access_token:
         # Access token path — used by the modern GIS popup flow
         import httpx
@@ -187,7 +194,13 @@ async def google_login(
                 raise AuthenticationError("Invalid Google access token")
             google_user = resp.json()
         except httpx.RequestError as exc:
-            raise AuthenticationError(f"Google userinfo request failed: {exc}") from exc
+            logger.warning(
+                "event=google_userinfo_request_failed correlation_id=%s "
+                "error_type=%s",
+                get_correlation().request_id,
+                type(exc).__name__,
+            )
+            raise AuthenticationError("Google userinfo request failed") from None
     else:
         raise AuthenticationError(
             "Either 'credential' or 'access_token' is required."
@@ -320,7 +333,10 @@ async def google_callback(
     """
     # Handle OAuth errors from Google
     if error:
-        logger.warning("Google OAuth error: %s — %s", error, error_description)
+        logger.warning(
+            "event=google_oauth_callback_error correlation_id=%s",
+            get_correlation().request_id,
+        )
         frontend_url = settings.APP_BASE_URL.rstrip("/")
         error_msg = error_description or error
         return RedirectResponse(
@@ -356,7 +372,12 @@ async def google_callback(
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
         if token_resp.status_code != 200:
-            logger.error("Google token exchange failed: %s", token_resp.text)
+            logger.error(
+                "event=google_token_exchange_failed correlation_id=%s "
+                "status_code=%s error_type=http_status",
+                get_correlation().request_id,
+                token_resp.status_code,
+            )
             raise AuthenticationError("Failed to exchange authorization code for tokens")
         
         token_data = token_resp.json()
@@ -367,8 +388,13 @@ async def google_callback(
             raise AuthenticationError("No ID token in Google response")
             
     except httpx.RequestError as exc:
-        logger.exception("Google token exchange request failed")
-        raise AuthenticationError(f"Google token exchange failed: {exc}") from exc
+        logger.warning(
+            "event=google_token_exchange_request_failed correlation_id=%s "
+            "error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise AuthenticationError("Google token exchange failed") from None
 
     # ── 2. Verify ID token ─────────────────────────────────────────
     try:
@@ -378,7 +404,13 @@ async def google_callback(
             settings.GOOGLE_CLIENT_ID,
         )
     except ValueError as exc:
-        raise AuthenticationError(f"Invalid Google ID token: {exc}") from exc
+        logger.warning(
+            "event=google_id_token_verification_failed correlation_id=%s "
+            "error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise AuthenticationError("Invalid Google ID token") from None
 
     email: str = google_user["email"]
     name: str = google_user.get("name", email.split("@")[0])
@@ -715,4 +747,8 @@ async def _publish_user_action(
         )
         await get_event_publisher().publish(event)
     except Exception as exc:  # pragma: no cover - audit of auth must never fail
-        logger.warning("user.action publish failed (non-fatal): %s", exc)
+        logger.warning(
+            "event=user_action_publish_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )

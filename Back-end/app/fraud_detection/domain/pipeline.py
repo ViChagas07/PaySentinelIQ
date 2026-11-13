@@ -1,6 +1,6 @@
 # ============================================================
-# PaySentinelIQ — 7-Stage Fraud Detection Pipeline
-# Core orchestration: ingestion → OCR → forensics → structural → entity → cross-field → scoring
+# PaySentinelIQ â€” 7-Stage Fraud Detection Pipeline
+# Core orchestration: ingestion â†’ OCR â†’ forensics â†’ structural â†’ entity â†’ cross-field â†’ scoring
 # ============================================================
 
 import logging
@@ -17,9 +17,9 @@ from app.shared.domain_primitives import (
 logger = logging.getLogger(__name__)
 
 
-# ═══════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # Pipeline Data Structures
-# ═══════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 
 class Severity(str, Enum):
@@ -117,9 +117,9 @@ class PipelineResult:
         }
 
 
-# ═══════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # 7-Stage Detection Pipeline
-# ═══════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 
 class FraudDetectionPipeline:
@@ -198,7 +198,7 @@ class FraudDetectionPipeline:
             }
             logger.info("Registered %d tools in pipeline", len(self.tool_registry))
         except Exception as e:
-            logger.warning("Could not register some tools: %s", e)
+            logger.warning("event=tool_registration_partial_failed error_type=%s", type(e).__name__)
 
     def _call_tool(self, tool_name: str, **kwargs: Any) -> dict[str, Any]:
         """Call a registered tool by name, with error handling."""
@@ -219,12 +219,12 @@ class FraudDetectionPipeline:
                     result = {"raw_output": result}
             return result if isinstance(result, dict) else {"raw_output": str(result)}
         except Exception as e:
-            logger.error("Tool %s failed: %s", tool_name, e)
-            return {"error": str(e), "valid": False}
+            logger.error("event=tool_execution_failed tool=%s error_type=%s", tool_name, type(e).__name__)
+            return {"error": "tool_execution_failed", "valid": False}
 
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     # STAGE 1: INGESTION & CLASSIFICATION
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     def stage1_ingestion(self, document_data: dict[str, Any]) -> StageResult:
         """
@@ -258,7 +258,7 @@ class FraudDetectionPipeline:
                     severity=Severity.LOW,
                     category="classification",
                     description=(
-                        "Tipo de documento não identificado automaticamente. "
+                        "Tipo de documento nÃ£o identificado automaticamente. "
                         "Classificado como UNKNOWN."
                     ),
                     evidence=f"Dados recebidos: {list(document_data.keys())}",
@@ -328,9 +328,9 @@ class FraudDetectionPipeline:
             duration_ms=duration,
         )
 
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     # STAGE 2: OCR & STRUCTURED EXTRACTION
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     def stage2_ocr_extraction(
         self, document_data: dict[str, Any], stage1_result: StageResult
@@ -363,8 +363,8 @@ class FraudDetectionPipeline:
                 Anomaly(
                     severity=Severity.MEDIUM if ocr_conf < 80 else Severity.LOW,
                     category="forensic",
-                    description=f"Confiança de OCR abaixo do ideal: {ocr_conf}%. "
-                    f"Texto parcialmente ilegível — possível adulteração.",
+                    description=f"ConfianÃ§a de OCR abaixo do ideal: {ocr_conf}%. "
+                    f"Texto parcialmente ilegÃ­vel â€” possÃ­vel adulteraÃ§Ã£o.",
                     evidence=f"OCR confidence: {ocr_conf}%",
                     confidence=75,
                     stage_detected="Stage 2",
@@ -382,7 +382,7 @@ class FraudDetectionPipeline:
                         category="structural",
                         description=(
                             "Boleto sem QR Code Pix detectado. "
-                            "Verificar se o documento é anterior ao Pix."
+                            "Verificar se o documento Ã© anterior ao Pix."
                         ),
                         evidence="Nenhum QR code encontrado no documento.",
                         confidence=60,
@@ -400,9 +400,9 @@ class FraudDetectionPipeline:
             duration_ms=duration,
         )
 
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     # STAGE 3: FORENSIC PDF ANALYSIS
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     def stage3_forensic_pdf(
         self, document_data: dict[str, Any], stage1_result: StageResult
@@ -499,17 +499,17 @@ class FraudDetectionPipeline:
             duration_ms=duration,
         )
 
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     # STAGE 4: STRUCTURAL VALIDATION
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     def stage4_structural_validation(
         self, document_data: dict[str, Any], stage1_result: StageResult
     ) -> StageResult:
         """
         Branching validation based on document type.
-        Boleto path: FEBRABAN layout, linha digitável checksum, bank code, QR Pix, barcode
-        Contracheque path: INSS, IRRF, FGTS, líquido, CBO
+        Boleto path: FEBRABAN layout, linha digitÃ¡vel checksum, bank code, QR Pix, barcode
+        Contracheque path: INSS, IRRF, FGTS, lÃ­quido, CBO
         """
         start = datetime.now(UTC)
         anomalies: list[Anomaly] = []
@@ -550,11 +550,11 @@ class FraudDetectionPipeline:
         linha = data.get("linha_digitavel", "")
         barcode_val = data.get("barcode_value", "")
         qr_payload = data.get("qr_code_payload", "")
-        raw_text = data.get("ocr_text", data.get("raw_text", ""))
+        # raw_text intentionally not used here
         cnpj = data.get("cnpj", "")
         beneficiario = data.get("beneficiario", data.get("beneficiary_name", ""))
 
-        # Validate linha digitável
+        # Validate linha digitÃ¡vel
         if linha:
             ld_result = self._call_tool("boleto_linha_digitavel_validator", linha_digitavel=linha)
             extracted["linha_digitavel_validation"] = ld_result
@@ -584,7 +584,7 @@ class FraudDetectionPipeline:
                             severity=Severity.CRITICAL,
                             category="structural",
                             description=(
-                                f"Código de banco {banco} não existe no BACEN. "
+                                f"CÃ³digo de banco {banco} nÃ£o existe no BACEN. "
                                 "Boleto possivelmente fraudulento."
                             ),
                             evidence=bank_result.get("evidence", ""),
@@ -608,9 +608,9 @@ class FraudDetectionPipeline:
                         severity=severity,
                         category="temporal",
                         description=(
-                            f"Boleto vencido há {overdue_days} dias! "
+                            f"Boleto vencido hÃ¡ {overdue_days} dias! "
                             f"Data de vencimento: {bc_result.get('vencimento_estimado', 'N/A')}. "
-                            "Altamente suspeito se vencido há mais de 30 dias."
+                            "Altamente suspeito se vencido hÃ¡ mais de 30 dias."
                         ),
                         evidence=(
                             f"Vencimento: {bc_result.get('vencimento_estimado')} | "
@@ -623,7 +623,7 @@ class FraudDetectionPipeline:
                     )
                 )
 
-        # ── NEW: CNPJ pattern validation (deterministic) ──
+        # â”€â”€ NEW: CNPJ pattern validation (deterministic) â”€â”€
         if cnpj:
             import re as re_cnpj
             digits = re_cnpj.sub(r"\D", "", cnpj)
@@ -638,15 +638,15 @@ class FraudDetectionPipeline:
                     Anomaly(
                         severity=Severity.CRITICAL,
                         category="structural",
-                        description=f"CNPJ {cnpj} possui padrão inválido (todos dígitos iguais ou sequência falsa comum).",
-                        evidence=f"CNPJ: {cnpj} — padrão inválido detectado deterministicamente.",
+                        description=f"CNPJ {cnpj} possui padrÃ£o invÃ¡lido (todos dÃ­gitos iguais ou sequÃªncia falsa comum).",
+                        evidence=f"CNPJ: {cnpj} â€” padrÃ£o invÃ¡lido detectado deterministicamente.",
                         confidence=100,
                         stage_detected="Stage 4",
                         tool_used="cnpj_pattern_validator",
                     )
                 )
 
-        # ── NEW: Suspicious round amounts ──
+        # â”€â”€ NEW: Suspicious round amounts â”€â”€
         valor = data.get("valor_nominal", data.get("amount", 0))
         if isinstance(valor, (int, float)) and valor >= 100 and valor % 100 == 0:
             anomalies.append(
@@ -654,21 +654,21 @@ class FraudDetectionPipeline:
                     severity=Severity.MEDIUM,
                     category="financial",
                     description=(
-                        f"Valor do boleto (R$ {valor:,.2f}) é redondo — "
-                        "comum em boletos fraudulentos sem serviço discriminado."
+                        f"Valor do boleto (R$ {valor:,.2f}) Ã© redondo â€” "
+                        "comum em boletos fraudulentos sem serviÃ§o discriminado."
                     ),
-                    evidence=f"Valor: R$ {valor:,.2f} (múltiplo exato de 100)",
+                    evidence=f"Valor: R$ {valor:,.2f} (mÃºltiplo exato de 100)",
                     confidence=70,
                     stage_detected="Stage 4",
                     tool_used="amount_pattern_analyzer",
                 )
             )
 
-        # ── NEW: Generic/suspicious beneficiary name ──
+        # â”€â”€ NEW: Generic/suspicious beneficiary name â”€â”€
         if beneficiario:
             generic_names = [
-                "soluções", "serviços", "consultoria", "digital", "tecnologia",
-                "comércio", "administração", "gestão", "global", "brasil",
+                "soluÃ§Ãµes", "serviÃ§os", "consultoria", "digital", "tecnologia",
+                "comÃ©rcio", "administraÃ§Ã£o", "gestÃ£o", "global", "brasil",
                 "nacional", "internacional", "master", "gold", "premium",
                 "ltda", "mei", "eireli",
             ]
@@ -682,10 +682,10 @@ class FraudDetectionPipeline:
                         severity=Severity.MEDIUM,
                         category="entity",
                         description=(
-                            f"Razão social do beneficiário '{beneficiario}' "
-                            "é genérica — possível empresa fantasma."
+                            f"RazÃ£o social do beneficiÃ¡rio '{beneficiario}' "
+                            "Ã© genÃ©rica â€” possÃ­vel empresa fantasma."
                         ),
-                        evidence=f"Beneficiário: {beneficiario} — contém termos genéricos.",
+                        evidence=f"BeneficiÃ¡rio: {beneficiario} â€” contÃ©m termos genÃ©ricos.",
                         confidence=60,
                         stage_detected="Stage 4",
                         tool_used="beneficiary_name_analyzer",
@@ -800,7 +800,7 @@ class FraudDetectionPipeline:
                 )
             )
 
-        # --- Líquido consistency ---
+        # --- LÃ­quido consistency ---
         liquido_result = self._call_tool(
             "liquido_consistency_check",
             salario_bruto=salario_bruto,
@@ -817,7 +817,7 @@ class FraudDetectionPipeline:
                     severity=Severity.CRITICAL,
                     category="financial",
                     description=(
-                        f"Salário líquido não confere: calculado "
+                        f"SalÃ¡rio lÃ­quido nÃ£o confere: calculado "
                         f"R$ {liquido_result.get('liquido_calculado', 0):,.2f} "
                         f"vs. declarado R$ {liquido_printed:,.2f}. "
                         f"Delta: R$ {liquido_result.get('delta', 0):,.2f}."
@@ -850,9 +850,9 @@ class FraudDetectionPipeline:
 
         return extracted
 
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     # STAGE 5: ENTITY VALIDATION
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     def stage5_entity_validation(
         self, document_data: dict[str, Any], stage4_result: StageResult
@@ -881,8 +881,8 @@ class FraudDetectionPipeline:
                         severity=Severity.CRITICAL,
                         category="entity",
                         description=(
-                            f"CNPJ inválido: {cnpj}. Dígitos verificadores "
-                            f"não conferem via Módulo 11."
+                            f"CNPJ invÃ¡lido: {cnpj}. DÃ­gitos verificadores "
+                            f"nÃ£o conferem via MÃ³dulo 11."
                         ),
                         evidence=f"CNPJ: {cnpj} | Checksum: FALHOU",
                         confidence=100,
@@ -928,7 +928,7 @@ class FraudDetectionPipeline:
                         Anomaly(
                             severity=Severity.HIGH,
                             category="entity",
-                            description=f"Formato de identificador fiscal inválido: {issue}",
+                            description=f"Formato de identificador fiscal invÃ¡lido: {issue}",
                             evidence=f"Tax ID: {tax_id}",
                             confidence=90,
                             stage_detected="Stage 5",
@@ -945,9 +945,9 @@ class FraudDetectionPipeline:
             duration_ms=duration,
         )
 
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     # STAGE 6: CROSS-FIELD CONSISTENCY
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     def stage6_cross_field_consistency(
         self, document_data: dict[str, Any], stages: list[StageResult]
@@ -1022,7 +1022,7 @@ class FraudDetectionPipeline:
                     severity=Severity.CRITICAL,
                     category="cross_field",
                     description=(
-                        "Vinculação de beneficiário quebrada — múltiplas "
+                        "VinculaÃ§Ã£o de beneficiÃ¡rio quebrada â€” mÃºltiplas "
                         "fontes apontam para destinos diferentes."
                     ),
                     evidence=binding_result.get("evidence", ""),
@@ -1051,7 +1051,7 @@ class FraudDetectionPipeline:
                         severity=Severity.HIGH,
                         category="cross_field",
                         description=(
-                            f"Salário {salario_check.get('deviation_sigma', 0)}σ "
+                            f"SalÃ¡rio {salario_check.get('deviation_sigma', 0)}Ïƒ "
                             f"da mediana do departamento."
                         ),
                         evidence=salario_check.get("detail", ""),
@@ -1070,9 +1070,9 @@ class FraudDetectionPipeline:
             duration_ms=duration,
         )
 
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     # STAGE 7: RISK SCORING & REPORT GENERATION
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     def stage7_risk_scoring(
         self, all_stages: list[StageResult]
@@ -1082,9 +1082,9 @@ class FraudDetectionPipeline:
         Uses severity-weighted scoring with stage multipliers.
 
         Scoring model (CALIBRATED 2025-06-25):
-        - CRITICAL anomaly:  +35 base points (single critical → immediate HIGH)
+        - CRITICAL anomaly:  +35 base points (single critical â†’ immediate HIGH)
         - HIGH anomaly:       +20 base points
-        - MEDIUM anomaly:     +10 base points (two mediums → MEDIUM range)
+        - MEDIUM anomaly:     +10 base points (two mediums â†’ MEDIUM range)
         - LOW anomaly:        +5 base points
         - INFO anomaly:       +2 base points
 
@@ -1100,9 +1100,9 @@ class FraudDetectionPipeline:
             all_anomalies.extend(stage.anomalies)
 
         severity_weights = {
-            Severity.CRITICAL: 35,   # Was 25 — single critical now pushes to HIGH
+            Severity.CRITICAL: 35,   # Was 25 â€” single critical now pushes to HIGH
             Severity.HIGH: 20,       # Was 15
-            Severity.MEDIUM: 10,     # Was 8  — two mediums = 20, enough for attention
+            Severity.MEDIUM: 10,     # Was 8  â€” two mediums = 20, enough for attention
             Severity.LOW: 5,         # Was 3
             Severity.INFO: 2,        # Was 1
         }
@@ -1169,8 +1169,8 @@ class FraudDetectionPipeline:
         if not anomalies:
             return (
                 "Nenhuma anomalia detectada em todas as 7 etapas do pipeline. "
-                "Documento passa em todas as validações estruturais, forenses e financeiras. "
-                "Baixa probabilidade de adulteração."
+                "Documento passa em todas as validaÃ§Ãµes estruturais, forenses e financeiras. "
+                "Baixa probabilidade de adulteraÃ§Ã£o."
             )
 
         critical = [a for a in anomalies if a.severity == Severity.CRITICAL]
@@ -1181,7 +1181,7 @@ class FraudDetectionPipeline:
 
         if critical:
             parts.append(
-                f"Foram detectadas {len(critical)} anomalias CRÍTICAS, incluindo: "
+                f"Foram detectadas {len(critical)} anomalias CRÃTICAS, incluindo: "
                 f"{critical[0].description}"
             )
 
@@ -1193,22 +1193,22 @@ class FraudDetectionPipeline:
 
         if medium and not critical:
             parts.append(
-                f"Detectadas {len(medium)} anomalias de MÉDIA severidade. "
-                f"Recomenda-se revisão manual antes de qualquer decisão."
+                f"Detectadas {len(medium)} anomalias de MÃ‰DIA severidade. "
+                f"Recomenda-se revisÃ£o manual antes de qualquer decisÃ£o."
             )
 
         parts.append(
             f"Score composto de fraude: {score:.1f}/100 "
-            f"— Classificação: {classification.value.upper()}. "
+            f"â€” ClassificaÃ§Ã£o: {classification.value.upper()}. "
             f"Total de {len(anomalies)} anomalias identificadas em "
             f"{len({a.stage_detected for a in anomalies})} etapas do pipeline."
         )
 
         return " ".join(parts)
 
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     # FULL PIPELINE EXECUTION
-    # ═══════════════════════════════════════════════════════════
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     def run_full_pipeline(self, document_data: dict[str, Any]) -> PipelineResult:
         """
@@ -1218,7 +1218,7 @@ class FraudDetectionPipeline:
         Args:
             document_data: Dict containing all extracted document data:
                 - document_type: str
-                - ocr_text: str (raw extracted text — used by boleto pipeline)
+                - ocr_text: str (raw extracted text â€” used by boleto pipeline)
                 - pdf_metadata: dict (creator, producer, creation_date, etc.)
                 - ocr_data: dict (confidence, extracted_fields, barcodes, qr_codes)
                 - pdf_forensics: dict (content_stream_count, font_inventory, etc.)
@@ -1234,25 +1234,25 @@ class FraudDetectionPipeline:
 
         logger.info("Starting 7-stage pipeline for document: %s", document_id)
 
-        # ── STAGE 1: Ingestion & Classification ──
+        # â”€â”€ STAGE 1: Ingestion & Classification â”€â”€
         logger.info("[Stage 1/7] Ingestion & Classification")
         s1 = self.stage1_ingestion(document_data)
 
         doc_class = s1.extracted_data.get("document_class", "unknown")
 
-        # ── STAGE 2: OCR & Structured Extraction ──
+        # â”€â”€ STAGE 2: OCR & Structured Extraction â”€â”€
         logger.info("[Stage 2/7] OCR & Structured Extraction")
         s2 = self.stage2_ocr_extraction(document_data, s1)
 
-        # ── STAGE 3: Forensic PDF Analysis ──
+        # â”€â”€ STAGE 3: Forensic PDF Analysis â”€â”€
         logger.info("[Stage 3/7] Forensic PDF Analysis")
         s3 = self.stage3_forensic_pdf(document_data, s1)
 
-        # ── STAGE 4: Structural Validation ──
+        # â”€â”€ STAGE 4: Structural Validation â”€â”€
         logger.info("[Stage 4/7] Structural Validation")
         s4 = self.stage4_structural_validation(document_data, s1)
 
-        # ── STAGE 4B: Boleto Deep Analysis (if applicable) ──
+        # â”€â”€ STAGE 4B: Boleto Deep Analysis (if applicable) â”€â”€
         # M0 INTEGRATION: Runs the 4-stage boleto pipeline's deterministic checks
         # on raw OCR text for boleto-type documents. This catches fraud indicators
         # that structured field analysis alone misses.
@@ -1311,23 +1311,23 @@ class FraudDetectionPipeline:
                     boleto_pipeline_score,
                 )
             except Exception as e:
-                logger.warning("Boleto deep analysis skipped: %s", e)
+                logger.warning("event=boleto_deep_analysis_skipped error_type=%s", type(e).__name__)
 
-        # ── STAGE 5: Entity Validation ──
+        # â”€â”€ STAGE 5: Entity Validation â”€â”€
         logger.info("[Stage 5/7] Entity Validation")
         s5 = self.stage5_entity_validation(document_data, s4)
 
-        # ── STAGE 6: Cross-Field Consistency ──
+        # â”€â”€ STAGE 6: Cross-Field Consistency â”€â”€
         logger.info("[Stage 6/7] Cross-Field Consistency")
         all_stages = [s1, s2, s3, s4, s5]
         s6 = self.stage6_cross_field_consistency(document_data, all_stages)
         all_stages.append(s6)
 
-        # ── STAGE 7: Risk Scoring & Report ──
+        # â”€â”€ STAGE 7: Risk Scoring & Report â”€â”€
         logger.info("[Stage 7/7] Risk Scoring & Report Generation")
         score, classification, confidence, action, reasoning = self.stage7_risk_scoring(all_stages)
 
-        # ── MERGE: Boleto pipeline score as FLOOR ──
+        # â”€â”€ MERGE: Boleto pipeline score as FLOOR â”€â”€
         # The boleto deep analysis score is the MINIMUM risk score.
         # The 7-stage pipeline score can only INCREASE it, never decrease.
         if boleto_pipeline_score > 0:
@@ -1463,7 +1463,7 @@ class FraudDetectionPipeline:
             "ANALYST_NOTES": (
                 "Recomenda-se verificar o documento original diretamente com o emissor. "
                 "Conferir os dados cadastrais na Receita Federal "
-                "para validação completa do CNPJ. "
+                "para validaÃ§Ã£o completa do CNPJ. "
                 "Em caso de boleto, confirmar a titularidade da conta de "
                 "destino junto ao banco emissor."
             ),
@@ -1472,7 +1472,7 @@ class FraudDetectionPipeline:
         return report
 
 
-# ── Singleton ──
+# â”€â”€ Singleton â”€â”€
 
 _pipeline_instance: FraudDetectionPipeline | None = None
 

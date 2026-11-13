@@ -4,6 +4,7 @@
 # Returns real data only — no mock fallbacks.
 # ============================================================
 
+import logging
 import uuid
 from typing import Any
 
@@ -12,9 +13,11 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_current_tenant_id, get_current_user_id
+from app.observability.correlation import get_correlation
 from app.shared.database import get_db
 from app.notifications.services import NotificationService
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -44,11 +47,11 @@ async def _publish_notification_read(
             tenant_id=tenant_id,
         )
         await get_event_publisher().publish(event)
-    except Exception:  # pragma: no cover - audit must never fail the endpoint
-        import logging
-
-        logging.getLogger(__name__).warning(
-            "notification.read publish failed (non-fatal)", exc_info=True
+    except Exception as exc:  # pragma: no cover - audit must never fail the endpoint
+        logger.warning(
+            "event=notification_read_publish_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
         )
 
 
@@ -141,8 +144,16 @@ async def list_notifications(
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch notifications: {str(e)}") from e
+    except Exception as exc:
+        logger.warning(
+            "event=notifications_list_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            exc.__class__.__name__,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch notifications",
+        ) from None
 
 
 @router.get("/unread-count")
@@ -157,8 +168,16 @@ async def get_unread_count(
         return {"count": count}
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch unread count: {str(e)}") from e
+    except Exception as exc:
+        logger.warning(
+            "event=notifications_unread_count_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch unread count",
+        ) from None
 
 
 @router.patch("/{notification_id}/read")
@@ -187,9 +206,17 @@ async def mark_as_read(
     except HTTPException:
         await db.rollback()
         raise
-    except Exception as e:
+    except Exception as exc:
         await db.rollback()
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        logger.warning(
+            "event=notification_mark_read_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Notification not found",
+        ) from None
 
 
 @router.patch("/{notification_id}/unread")
@@ -214,9 +241,17 @@ async def mark_as_unread(
     except HTTPException:
         await db.rollback()
         raise
-    except Exception as e:
+    except Exception as exc:
         await db.rollback()
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        logger.warning(
+            "event=notification_mark_unread_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Notification not found",
+        ) from None
 
 
 @router.post("/read-all")
@@ -235,9 +270,17 @@ async def mark_all_read(
     except HTTPException:
         await db.rollback()
         raise
-    except Exception as e:
+    except Exception as exc:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.warning(
+            "event=notifications_mark_all_read_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to mark notifications as read",
+        ) from None
 
 
 @router.delete("/bulk")
@@ -258,9 +301,17 @@ async def delete_notifications_bulk(
     except HTTPException:
         await db.rollback()
         raise
-    except Exception as e:
+    except Exception as exc:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.warning(
+            "event=notifications_bulk_delete_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete notifications",
+        ) from None
 
 
 @router.delete("/{notification_id}")
@@ -281,9 +332,17 @@ async def dismiss_notification(
     except HTTPException:
         await db.rollback()
         raise
-    except Exception as e:
+    except Exception as exc:
         await db.rollback()
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        logger.warning(
+            "event=notification_dismiss_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Notification not found",
+        ) from None
 
 
 @router.get("/settings")
@@ -310,8 +369,16 @@ async def get_notification_settings(
         }
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+    except Exception as exc:
+        logger.warning(
+            "event=notification_settings_get_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Notification settings not found",
+        ) from None
 
 
 @router.patch("/settings")
@@ -356,6 +423,14 @@ async def update_notification_settings(
     except HTTPException:
         await db.rollback()
         raise
-    except Exception as e:
+    except Exception as exc:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.warning(
+            "event=notification_settings_update_failed correlation_id=%s error_type=%s",
+            get_correlation().request_id,
+            type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update notification settings",
+        ) from None

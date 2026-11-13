@@ -184,7 +184,7 @@ class NotificationEventHandler:
         except Exception as exc:
             logger.warning(
                 "ws_push_failed",
-                extra={"event_id": event.event_id, "error": str(exc)},
+                extra={"event_id": event.event_id, "error_type": type(exc).__name__},
             )
 
     async def _publish_notification_created(
@@ -214,5 +214,5 @@ class NotificationEventHandler:
         except Exception as exc:
             logger.warning(
                 "notification_created_publish_failed",
-                extra={"event_id": event.event_id, "error": str(exc)},
+                extra={"event_id": event.event_id, "error_type": type(exc).__name__},
             )

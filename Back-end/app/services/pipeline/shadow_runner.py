@@ -14,6 +14,7 @@ from typing import Any
 
 from app.core.contracts.pipeline_context import PipelineContext
 from app.core.contracts.pipeline_result import PipelineResult
+from app.observability.correlation import get_correlation
 from app.services.pipeline.pipeline_comparison import PipelineComparison
 
 logger = logging.getLogger(__name__)
@@ -59,8 +60,14 @@ class ShadowRunner:
         try:
             canonical_result = canonical.execute(ctx)
             canonical_ok = True
-        except Exception as e:
-            logger.error("Shadow canonical pipeline failed: %s", e)
+        except Exception as exc:
+            logger.error(
+                "event=shadow_canonical_pipeline_failed correlation_id=%s "
+                "document_id=%s error_type=%s",
+                get_correlation().request_id,
+                ctx.document_id[:8],
+                type(exc).__name__,
+            )
             canonical_result = PipelineResult()
             canonical_ok = False
         canonical_time = (time.monotonic() - t0) * 1000

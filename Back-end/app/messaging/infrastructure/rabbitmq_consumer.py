@@ -92,14 +92,14 @@ class RabbitMQEventConsumer:
             if self._queue is not None and self._consumer_tag is not None:
                 await self._queue.cancel(self._consumer_tag)
         except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Error cancelling consumer %s: %s", self.queue_name, exc)
+            logger.warning("event=rabbitmq_consumer_cancel_failed queue=%s error_type=%s", self.queue_name, type(exc).__name__)
         self._consumer_tag = None
 
         try:
             if self._channel is not None and not self._channel.is_closed:
                 await self._channel.close()
         except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Error closing channel for %s: %s", self.queue_name, exc)
+            logger.warning("event=rabbitmq_channel_close_failed queue=%s error_type=%s", self.queue_name, type(exc).__name__)
         self._channel = None
 
         await self._connection_manager.close()
@@ -136,7 +136,7 @@ class RabbitMQEventConsumer:
                         t0,
                         retry_count,
                         success=False,
-                        error=str(exc),
+                        error_type=type(exc).__name__,
                     )
                     return
 
@@ -151,7 +151,7 @@ class RabbitMQEventConsumer:
                         t0,
                         decision.next_attempt,
                         success=False,
-                        error=str(exc),
+                        error_type=type(exc).__name__,
                         retry_in_seconds=decision.delay_seconds,
                     )
                 else:
@@ -162,7 +162,7 @@ class RabbitMQEventConsumer:
                         t0,
                         retry_count,
                         success=False,
-                        error=f"retries exhausted: {exc}",
+                        error_type=type(exc).__name__,
                     )
 
     async def _republish_for_retry(
@@ -206,7 +206,7 @@ class RabbitMQEventConsumer:
         retry_count: int,
         *,
         success: bool,
-        error: str | None = None,
+        error_type: str | None = None,
         retry_in_seconds: float | None = None,
     ) -> None:
         record = {
@@ -220,8 +220,8 @@ class RabbitMQEventConsumer:
             "duration_ms": round((time.monotonic() - t0) * 1000, 2),
             "success": success,
         }
-        if error:
-            record["error"] = error
+        if error_type:
+            record["error_type"] = error_type
         if retry_in_seconds is not None:
             record["retry_in_seconds"] = retry_in_seconds
 

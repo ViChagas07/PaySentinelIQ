@@ -64,7 +64,7 @@ async def run_worker(
                 await stop()
             except Exception as exc:  # pragma: no cover - defensive
                 logger.error(
-                    "worker_stop_error", extra={"worker": name, "error": str(exc)}
+                    "worker_stop_error", extra={"worker": name, "error_type": type(exc).__name__}
                 )
 
     logger.info("worker_stopped", extra={"worker": name})

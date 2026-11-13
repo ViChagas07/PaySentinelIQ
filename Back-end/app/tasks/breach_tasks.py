@@ -55,7 +55,7 @@ def notify_anpd_of_breach(
         # ...
 
         # ── Build ANPD notification payload ──────────────────
-        notification_payload = {
+        notification_payload = {  # noqa: F841 - wired when email delivery lands
             "to": settings.ANPD_NOTIFICATION_EMAIL,
             "subject": f"[Notificação de Violação] PaySentinelIQ — {breach_id}",
             "body": (
@@ -94,7 +94,9 @@ def notify_anpd_of_breach(
         }
 
     except Exception as exc:
-        logger.exception(
-            "Failed to prepare ANPD notification for breach %s", breach_id,
+        logger.error(
+            "event=anpd_notification_prepare_failed breach_id=%s error_type=%s",
+            breach_id,
+            type(exc).__name__,
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=RuntimeError("anpd_notification_prepare_failed")) from None

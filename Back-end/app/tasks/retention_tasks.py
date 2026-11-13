@@ -13,7 +13,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select
 
 from app.tasks import celery_app
 from app.shared.settings import get_settings
@@ -45,10 +45,6 @@ def cleanup_ocr_temp_files(self: Any) -> dict[str, Any]:
     )
 
     try:
-        from app.services.storage import S3StorageProvider
-
-        storage = S3StorageProvider()
-
         # List all objects in the temp/ prefix
         import boto3
         s3 = boto3.client(
@@ -74,13 +70,16 @@ def cleanup_ocr_temp_files(self: Any) -> dict[str, Any]:
                 if obj["LastModified"].replace(tzinfo=timezone.utc) < cutoff:
                     s3.delete_object(Bucket=bucket, Key=obj["Key"])
                     deleted_count += 1
-                    logger.debug("Deleted temp file: %s", obj["Key"])
+                    logger.debug("event=ocr_temp_file_deleted")
 
         logger.info("OCR temp cleanup complete: %d files deleted", deleted_count)
         return {"status": "completed", "deleted_count": deleted_count}
 
     except Exception as exc:
-        logger.error("OCR temp cleanup failed: %s", exc)
+        logger.error(
+            "event=ocr_temp_cleanup_failed error_type=%s",
+            type(exc).__name__,
+        )
         raise self.retry(exc=exc) from exc
 
 
@@ -128,8 +127,8 @@ def finalize_account_deletions(self: Any) -> dict[str, Any]:
 
                 for user in users:
                     logger.info(
-                        "Finalizing deletion for user: %s (email: %s)",
-                        user.id, user.email,
+                        "event=account_deletion_finalizing user_id=%s",
+                        user.id,
                     )
 
                     # Remove user's documents from S3
@@ -148,7 +147,9 @@ def finalize_account_deletions(self: Any) -> dict[str, Any]:
                             await session.delete(doc)
                     except Exception as s3_err:
                         logger.warning(
-                            "S3 deletion error for user %s: %s", user.id, s3_err
+                            "event=s3_deletion_failed user_id=%s error_type=%s",
+                            user.id,
+                            type(s3_err).__name__,
                         )
 
                     # Delete consent records
@@ -205,7 +206,10 @@ def finalize_account_deletions(self: Any) -> dict[str, Any]:
         return {"status": "completed", **result}
 
     except Exception as exc:
-        logger.error("Account deletion finalization failed: %s", exc)
+        logger.error(
+            "event=account_deletion_finalization_failed error_type=%s",
+            type(exc).__name__,
+        )
         raise self.retry(exc=exc) from exc
 
 
@@ -277,7 +281,10 @@ def cleanup_expired_documents(self: Any) -> dict[str, Any]:
 
                     except Exception as doc_err:
                         logger.warning(
-                            "Failed to clean document %s: %s", doc.id, doc_err
+                            "event=document_cleanup_failed document_id=%s "
+                            "error_type=%s",
+                            doc.id,
+                            type(doc_err).__name__,
                         )
 
                 await session.commit()
@@ -288,7 +295,10 @@ def cleanup_expired_documents(self: Any) -> dict[str, Any]:
         return {"status": "completed", "documents_removed": removed}
 
     except Exception as exc:
-        logger.error("Expired document cleanup failed: %s", exc)
+        logger.error(
+            "event=document_retention_cleanup_failed error_type=%s",
+            type(exc).__name__,
+        )
         raise self.retry(exc=exc) from exc
 
 
@@ -316,7 +326,6 @@ def archive_old_audit_logs(self: Any) -> dict[str, Any]:
 
     try:
         import asyncio
-        import json
         from app.shared.database import AsyncSessionLocal
         from app.shared.orm_models import AuditLogModel
 
@@ -333,7 +342,7 @@ def archive_old_audit_logs(self: Any) -> dict[str, Any]:
 
                 # In production: export to S3 Glacier, then delete from DB
                 # For now, we simply count and log
-                archive_data = {
+                archive_data = {  # noqa: F841 - export wiring lands with Glacier
                     "archived_at": datetime.now(timezone.utc).isoformat(),
                     "count": len(old_logs),
                     "cutoff_date": cutoff.isoformat(),
@@ -361,5 +370,8 @@ def archive_old_audit_logs(self: Any) -> dict[str, Any]:
         return {"status": "completed", "logs_candidates_for_archival": count}
 
     except Exception as exc:
-        logger.error("Audit log archival failed: %s", exc)
+        logger.error(
+            "event=audit_log_archival_failed error_type=%s",
+            type(exc).__name__,
+        )
         raise self.retry(exc=exc) from exc

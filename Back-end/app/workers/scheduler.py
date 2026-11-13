@@ -34,7 +34,7 @@ def main() -> None:
             try:
                 await scheduler.run_once()
             except Exception as exc:  # pragma: no cover - defensive
-                logger.error("scheduler_scan_failed", extra={"error": str(exc)})
+                logger.error("scheduler_scan_failed", extra={"error_type": type(exc).__name__})
             try:
                 await asyncio.wait_for(
                     stop_event.wait(),

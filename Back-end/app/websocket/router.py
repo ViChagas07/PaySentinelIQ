@@ -13,7 +13,6 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.auth.services import AuthService
 from app.shared.exceptions import AuthenticationError
 from app.shared.redis_client import RedisPubSub
-from app.shared.settings import get_settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -274,11 +273,11 @@ async def _ws_endpoint(channel: str, websocket: WebSocket) -> None:
     try:
         payload = await authenticate_websocket(websocket)
     except AuthenticationError as exc:
-        logger.warning("WS auth failed on %s: %s", channel, exc)
+        logger.warning("event=ws_auth_failed channel=%s error_type=%s", channel, type(exc).__name__)
         await websocket.close(code=4001, reason=str(exc))
         return
     except Exception as exc:
-        logger.error("WS auth error on %s: %s", channel, exc)
+        logger.error("event=ws_auth_error channel=%s error_type=%s", channel, type(exc).__name__)
         await websocket.close(code=4001, reason="Authentication error")
         return
 
@@ -308,7 +307,7 @@ async def _ws_endpoint(channel: str, websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         await ws_manager.disconnect(channel, websocket, user_id, tenant_id)
     except Exception as e:
-        logger.error("WS error on channel %s: %s", channel, e)
+        logger.error("event=ws_error channel=%s error_type=%s", channel, type(e).__name__)
         await ws_manager.disconnect(channel, websocket, user_id, tenant_id)
 
 
@@ -371,7 +370,7 @@ async def start_ws_redis_listener() -> None:
         pubsub = await RedisPubSub.subscribe(_WS_REDIS_CHANNEL)
         logger.info("WebSocket Redis listener subscribed to %s", _WS_REDIS_CHANNEL)
     except Exception as exc:
-        logger.error("Failed to subscribe to Redis channel %s: %s", _WS_REDIS_CHANNEL, exc)
+        logger.error("event=ws_redis_subscribe_failed error_type=%s", type(exc).__name__)
         return
 
     try:
@@ -388,11 +387,11 @@ async def start_ws_redis_listener() -> None:
                     user_id=user_id,
                 )
             except Exception as exc:
-                logger.error("Error processing WS Redis message: %s", exc)
+                logger.error("event=ws_redis_message_failed error_type=%s", type(exc).__name__)
     except asyncio.CancelledError:
         logger.info("WebSocket Redis listener cancelled (shutting down)")
     except Exception as exc:
-        logger.error("WebSocket Redis listener error: %s", exc)
+        logger.error("event=ws_redis_listener_failed error_type=%s", type(exc).__name__)
     finally:
         logger.info("WebSocket Redis listener stopped")
 
@@ -522,4 +521,4 @@ async def publish_via_redis(
             notification_data.get("id", "unknown"),
         )
     except Exception as exc:
-        logger.error("Failed to publish WS notification to Redis: %s", exc)
+        logger.error("event=ws_redis_publish_failed error_type=%s", type(exc).__name__)

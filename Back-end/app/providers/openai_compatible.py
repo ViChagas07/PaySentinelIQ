@@ -144,11 +144,10 @@ class OpenAICompatibleProvider(BaseLLMProvider):
                     headers=self._headers(),
                 )
             return response.status_code == 200
-        except Exception:
+        except Exception as exc:
             logger.debug(
-                "OpenAI-compatible health check failed for %s",
-                self.base_url,
-                exc_info=True,
+                "event=openai_compatible_health_check_failed error_type=%s",
+                type(exc).__name__,
             )
             return False
 

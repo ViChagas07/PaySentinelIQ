@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -37,7 +38,10 @@ try:
     init_sentry()
     print("[psi] Sentry initialized", flush=True)
 except Exception as exc:
-    print(f"[psi] Sentry init skipped (non-fatal): {exc}", flush=True)
+    print(
+        f"[psi] Sentry init skipped (non-fatal): {type(exc).__name__}",
+        flush=True,
+    )
 
 # ── Database engine — lazy, no connection at import time ──
 print("[psi] Creating database engine...", flush=True)
@@ -45,7 +49,10 @@ try:
     from app.shared.database import engine
     print("[psi] Database engine created (lazy)", flush=True)
 except Exception as exc:
-    print(f"[psi] Database engine creation failed (non-fatal): {exc}", flush=True)
+    print(
+        f"[psi] Database engine creation failed (non-fatal): {type(exc).__name__}",
+        flush=True,
+    )
     engine = None  # type: ignore[assignment]
 
 # ── Redis client import — function refs only, no connection ──
@@ -54,7 +61,10 @@ try:
     from app.shared.redis_client import close_redis, get_redis
     print("[psi] Redis client imported", flush=True)
 except Exception as exc:
-    print(f"[psi] Redis client import failed (non-fatal): {exc}", flush=True)
+    print(
+        f"[psi] Redis client import failed (non-fatal): {type(exc).__name__}",
+        flush=True,
+    )
 
     async def get_redis():  # type: ignore[no-redef]
         raise RuntimeError("Redis unavailable")
@@ -71,7 +81,10 @@ async def _background_init_redis() -> None:
         await get_redis()
         logger.info("Redis connection pool initialized")
     except Exception as exc:
-        logger.exception("Redis initialization deferred (non-fatal): %s", exc)
+        logger.warning(
+            "event=redis_initialization_deferred error_type=%s",
+            type(exc).__name__,
+        )
 
 
 async def _background_init_llm() -> None:
@@ -86,7 +99,10 @@ async def _background_init_llm() -> None:
             info["provider"], info["model"], info["healthy"],
         )
     except Exception as exc:
-        logger.exception("LLM service initialization deferred (non-fatal): %s", exc)
+        logger.warning(
+            "event=llm_service_initialization_deferred error_type=%s",
+            type(exc).__name__,
+        )
 
 
 async def _background_run_migrations() -> None:
@@ -105,7 +121,10 @@ async def _background_run_migrations() -> None:
         # Seed default tenant if not exists
         await _seed_default_tenant(engine)
     except Exception as exc:
-        logger.exception("Table creation failed (non-fatal): %s", exc)
+        logger.warning(
+            "event=background_migrations_failed error_type=%s",
+            type(exc).__name__,
+        )
 
 
 async def _seed_default_tenant(engine) -> None:
@@ -132,7 +151,10 @@ async def _seed_default_tenant(engine) -> None:
             else:
                 logger.debug("Default tenant already exists")
     except Exception as exc:
-        logger.exception("Default tenant seeding failed (non-fatal): %s", exc)
+        logger.warning(
+            "event=default_tenant_seed_failed error_type=%s",
+            type(exc).__name__,
+        )
 
 
 # ── WebSocket Redis listener handle (for shutdown) ──
@@ -157,7 +179,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         _ws_redis_task = asyncio.create_task(start_ws_redis_listener())
         print("[psi] WebSocket Redis listener started", flush=True)
     except Exception as exc:
-        print(f"[psi] WebSocket Redis listener init skipped (non-fatal): {exc}", flush=True)
+        print(
+            "[psi] WebSocket Redis listener init skipped (non-fatal): "
+            f"{type(exc).__name__}",
+            flush=True,
+        )
 
     # ── Start Domain Event Redis listener ──
     try:
@@ -165,7 +191,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         _domain_event_redis_task = asyncio.create_task(start_redis_event_listener())
         print("[psi] Domain event Redis listener started", flush=True)
     except Exception as exc:
-        print(f"[psi] Domain event Redis listener init skipped (non-fatal): {exc}", flush=True)
+        print(
+            "[psi] Domain event Redis listener init skipped (non-fatal): "
+            f"{type(exc).__name__}",
+            flush=True,
+        )
 
     print("[psi] Lifespan yielding — app is ready for /health", flush=True)
     yield
@@ -192,17 +222,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         await close_redis()
     except Exception as exc:
-        logger.warning("Redis shutdown error (non-fatal): %s", exc)
+        logger.warning(
+            "event=redis_shutdown_failed error_type=%s",
+            type(exc).__name__,
+        )
     try:
         from app.messaging.infrastructure.factory import close_event_publisher
         await close_event_publisher()
     except Exception as exc:
-        logger.warning("Event publisher shutdown error (non-fatal): %s", exc)
+        logger.warning(
+            "event=event_publisher_shutdown_failed error_type=%s",
+            type(exc).__name__,
+        )
     try:
         if engine is not None:
             await engine.dispose()
     except Exception as exc:
-        logger.warning("DB engine dispose error (non-fatal): %s", exc)
+        logger.warning(
+            "event=db_engine_dispose_failed error_type=%s",
+            type(exc).__name__,
+        )
 
 
 def create_app() -> FastAPI:
@@ -281,7 +320,10 @@ def create_app() -> FastAPI:
         )
         instrumentator.instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
     except Exception as exc:
-        print(f"[psi] Prometheus init skipped (non-fatal): {exc}", flush=True)
+        print(
+            f"[psi] Prometheus init skipped (non-fatal): {type(exc).__name__}",
+            flush=True,
+        )
 
     # ── Global Exception Handler ──
     @app.exception_handler(PSIDomainError)
@@ -304,6 +346,39 @@ def create_app() -> FastAPI:
         return JSONResponse(
             status_code=exc.status_code,
             content={"detail": exc.public_message},
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_error_handler(
+        request: Request,
+        exc: RequestValidationError,
+    ) -> JSONResponse:
+        """Return 422 without echoing submitted input values.
+
+        FastAPI's default payload includes ``input``/``ctx`` for every error,
+        which can reflect passwords, tokens, SQL fragments or file names back
+        to the caller and into access logs.
+        """
+        correlation_id = getattr(request.state, "correlation_id", None)
+        if not correlation_id:
+            correlation_id = bind_request_correlation(request.headers)
+        logger.warning(
+            "event=request_validation_failed correlation_id=%s error_count=%d",
+            correlation_id,
+            len(exc.errors()),
+        )
+        safe_errors = [
+            {
+                "loc": list(error.get("loc", ())),
+                "msg": str(error.get("msg", "Invalid value")),
+                "type": str(error.get("type", "value_error")),
+            }
+            for error in exc.errors()
+        ]
+        return JSONResponse(
+            status_code=422,
+            content={"detail": safe_errors},
+            headers={CORRELATION_HEADER: correlation_id},
         )
 
     # ── Catch-all exception handler — never return 503 from /health ──
@@ -373,7 +448,10 @@ def create_app() -> FastAPI:
                 checks["dependencies"]["database"] = {"status": "unavailable"}
         except Exception as exc:
             checks["status"] = "degraded"
-            checks["dependencies"]["database"] = {"status": "unhealthy", "error": str(exc)}
+            checks["dependencies"]["database"] = {
+                "status": "unhealthy",
+                "error_type": type(exc).__name__,
+            }
         # Redis
         try:
             client = await get_redis()
@@ -381,14 +459,20 @@ def create_app() -> FastAPI:
             checks["dependencies"]["redis"] = {"status": "healthy"}
         except Exception as exc:
             checks["status"] = "degraded"
-            checks["dependencies"]["redis"] = {"status": "unhealthy", "error": str(exc)}
+            checks["dependencies"]["redis"] = {
+                "status": "unhealthy",
+                "error_type": type(exc).__name__,
+            }
         # RabbitMQ
         try:
             from app.observability.health import _check_rabbitmq
             checks["dependencies"]["rabbitmq"] = await _check_rabbitmq()
         except Exception as exc:
             checks["status"] = "degraded"
-            checks["dependencies"]["rabbitmq"] = {"status": "unhealthy", "error": str(exc)}
+            checks["dependencies"]["rabbitmq"] = {
+                "status": "unhealthy",
+                "error_type": type(exc).__name__,
+            }
         # LLM
         try:
             from app.ai_agents.llm_service import get_llm_service
@@ -400,7 +484,10 @@ def create_app() -> FastAPI:
                 "model": info.get("model", "unknown"),
             }
         except Exception as exc:
-            checks["dependencies"]["llm"] = {"status": "unhealthy", "error": str(exc)}
+            checks["dependencies"]["llm"] = {
+                "status": "unhealthy",
+                "error_type": type(exc).__name__,
+            }
         return checks
 
     # ── Register Routers (lazy — each wrapped in try/except) ──
@@ -432,23 +519,40 @@ def _register_routers(app: FastAPI) -> list[dict[str, str]]:
             if router is None:
                 msg = f"No 'router' in {module_path}"
                 print(f"[psi] WARNING: {msg}", flush=True)
-                router_status.append({"router": tag, "prefix": prefix, "status": "skipped", "reason": msg})
+                router_status.append({
+                    "router": tag,
+                    "prefix": prefix,
+                    "status": "skipped",
+                    "reason": "router_export_missing",
+                })
                 return
             app.include_router(router, prefix=prefix, tags=[tag])
             print(f"[psi]   Router loaded: {prefix} ({tag})", flush=True)
             router_status.append({"router": tag, "prefix": prefix, "status": "loaded", "reason": ""})
         except Exception as exc:
-            import traceback
-            tb = traceback.format_exc()
-            logger.exception(f"Router import failed: {prefix} ({tag})")
-            reason = f"{exc}"
-            router_status.append({"router": tag, "prefix": prefix, "status": "failed", "reason": reason})
+            logger.error(
+                "event=router_import_failed router=%s prefix=%s error_type=%s",
+                tag,
+                prefix,
+                type(exc).__name__,
+            )
+            router_status.append({
+                "router": tag,
+                "prefix": prefix,
+                "status": "failed",
+                "reason": type(exc).__name__,
+            })
             if required and settings.ENVIRONMENT == "production":
-                print(f"[psi] FATAL: Required router {prefix} ({tag}) failed to load in production", flush=True)
-                print(f"[psi] Traceback:\n{tb}", flush=True)
+                print(
+                    f"[psi] FATAL: Required router {prefix} ({tag}) failed to load in production",
+                    flush=True,
+                )
                 raise
             else:
-                print(f"[psi]   Router SKIPPED: {prefix} ({tag}) — {exc}", flush=True)
+                print(
+                    f"[psi]   Router SKIPPED: {prefix} ({tag}) — {type(exc).__name__}",
+                    flush=True,
+                )
 
     _safe_include("app.observability.health", "", "Health")  # Fase 4
     _safe_include("app.auth.presentation.router", "/api/auth", "Auth", required=True)

@@ -2,7 +2,6 @@
 # PaySentinelIQ — Enrichment + Risk Analyzer Tests
 # ============================================================
 
-import pytest
 from datetime import datetime, timezone, timedelta
 
 from app.services.enrichment.models import CompanyEnrichment
@@ -152,7 +151,10 @@ class TestCompanyRiskAnalyzer:
             situacao_cadastral="INAPTA",
             capital_social=1000.0,
         )
-        doc = {"amount": 200000.0, "company_name": "Empresa Diferente Ltda"}
+        # Deliberately unrelated synthetic name (same as test_name_mismatch):
+        # "Empresa Diferente Ltda" shares too many tokens with the registered
+        # "Empresa Teste Ltda" and would not trigger COMPANY_NAME_MISMATCH.
+        doc = {"amount": 200000.0, "company_name": "Comércio de Alimentos S.A."}
         result = self.analyzer.analyze(e, doc)
         # Should have at least 3 flags
         assert result.flag_count >= 3
