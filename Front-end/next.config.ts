@@ -99,6 +99,9 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   org: sentryOrg,
   project: sentryProject,
 
+  // Do not send build telemetry to Sentry from CI/dev machines.
+  telemetry: false,
+
   // ══ Source map upload control ═══════════════════════════════════════
   // If SENTRY_AUTH_TOKEN is missing, disable source map upload so the
   // build doesn't fail when Sentry is not fully configured (e.g. local

@@ -1,19 +1,16 @@
-// This file configures the initialization of Sentry on the server.
-// The config you add here will be used whenever the server handles a request.
-// https://docs.sentry.io/platforms/javascript/guides/nextjs/
+// Sentry is opt-in and disabled unless an explicit DSN is provided.
+// Never hardcode a DSN here: the release tree must not enable telemetry by
+// default, and PII/log capture remains disabled when it is enabled.
 
 import * as Sentry from "@sentry/nextjs";
 
-Sentry.init({
-  dsn: "https://12b6df940097f27ceec4bded6b78eb21@o4511407142535168.ingest.us.sentry.io/4511407144763392",
+const dsn = process.env.SENTRY_DSN;
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
-
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
-
-  // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
-  sendDefaultPii: true,
-});
+if (dsn) {
+  Sentry.init({
+    dsn,
+    tracesSampleRate: 0,
+    enableLogs: false,
+    sendDefaultPii: false,
+  });
+}

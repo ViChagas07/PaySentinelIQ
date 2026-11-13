@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,9 +33,21 @@ export async function POST(request: NextRequest) {
     const userId = `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
     // ── Send welcome email via Resend ──
+    if (!resend) {
+      return NextResponse.json(
+        {
+          success: true,
+          userId,
+          emailSent: false,
+          message: "Account created, but welcome email could not be sent.",
+        },
+        { status: 201 }
+      );
+    }
+
     let emailSent = false;
     try {
-      const { data, error } = await resend.emails.send({
+      const { error } = await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || "onboarding@paysentineliq.com",
         to: [email],
         subject: "Welcome to PaySentinelIQ — Your AI-Powered Fraud Intelligence Platform",
@@ -124,13 +136,13 @@ export async function POST(request: NextRequest) {
       });
 
       if (error) {
-        console.error("Resend email error:", error);
+        console.error("event=resend_email_error");
       } else {
         emailSent = true;
-        console.log("Welcome email sent to:", email, "ID:", data?.id);
+        console.log("event=welcome_email_sent");
       }
-    } catch (emailError) {
-      console.error("Failed to send welcome email:", emailError);
+    } catch {
+      console.error("event=welcome_email_failed");
       // Don't fail the signup if email fails
     }
 
@@ -145,8 +157,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (err) {
-    console.error("Signup error:", err);
+  } catch {
+    console.error("event=signup_failed");
     return NextResponse.json(
       { error: "Internal server error." },
       { status: 500 }
