@@ -13,17 +13,16 @@ from __future__ import annotations
 
 import uuid
 import logging
-import tempfile
 import os
 from datetime import datetime, timezone
-from typing import Any, BinaryIO
+from typing import Any
 
 from app.services.storage import S3StorageProvider, FileValidator
-from app.services.storage.exceptions import FileTooLargeError, InvalidFileTypeError
+from app.services.storage.exceptions import InvalidFileTypeError
 from app.services.ocr import get_ocr_provider, DocumentExtractionService
 from app.services.enrichment import EnrichmentService
 from app.services.ai import FraudCopilot
-from app.services.ai.context_builder import FraudAnalysisContext, ContextBuilder
+from app.services.ai.context_builder import ContextBuilder
 from app.services.ai.risk_analyzer import RiskAnalyzer
 from app.shared.settings import get_settings
 
@@ -101,6 +100,7 @@ class DocumentPipelineService:
         }
 
         temp_file_path = None
+        uploaded_s3_key: str | None = None
 
         try:
             # ── Stage 1: Validate ──
@@ -123,6 +123,7 @@ class DocumentPipelineService:
                 file_data, s3_key, content_type,
                 metadata={"original_name": file_name, "tenant_id": tenant_id},
             )
+            uploaded_s3_key = s3_key
             result["stages"]["upload"] = {
                 "status": "completed",
                 "s3_key": s3_key,
@@ -235,11 +236,14 @@ class DocumentPipelineService:
                         boleto_analysis["risk_level"],
                         boleto_analysis["total_indicators"],
                     )
-                except Exception as e:
-                    logger.warning("Boleto pipeline failed, using generic analysis: %s", e)
+                except Exception as exc:
+                    logger.warning(
+                        "Boleto pipeline failed, using generic analysis: %s",
+                        type(exc).__name__,
+                    )
                     result["stages"]["boleto_pipeline"] = {
                         "status": "skipped",
-                        "reason": str(e),
+                        "reason": "processing_error",
                     }
 
             # ── Stage 7: LLM Copilot (if available) ──
@@ -253,9 +257,15 @@ class DocumentPipelineService:
                         "status": "completed",
                         "report": report.to_dict(),
                     }
-                except Exception as e:
-                    logger.warning("Copilot enhancement failed: %s", e)
-                    result["stages"]["copilot"] = {"status": "skipped", "reason": str(e)}
+                except Exception as exc:
+                    logger.warning(
+                        "Copilot enhancement failed: %s",
+                        type(exc).__name__,
+                    )
+                    result["stages"]["copilot"] = {
+                        "status": "skipped",
+                        "reason": "processing_error",
+                    }
 
             # ── Final ──
             elapsed = (datetime.now(timezone.utc) - start_time).total_seconds()
@@ -271,10 +281,32 @@ class DocumentPipelineService:
 
             return result
 
-        except Exception as e:
-            logger.error("Pipeline failed for %s: %s", document_id, e)
+        except Exception as exc:
+            logger.error(
+                "Pipeline failed: document_id=%s tenant_id=%s error_type=%s",
+                document_id,
+                tenant_id,
+                type(exc).__name__,
+            )
             result["pipeline_status"] = "failed"
-            result["error"] = str(e)
+            result["error"] = "processing_error"
+
+            if uploaded_s3_key:
+                try:
+                    deleted = await self._storage.delete_file(uploaded_s3_key)
+                    if not deleted:
+                        logger.warning(
+                            "Orphan upload remains after pipeline failure: document_id=%s tenant_id=%s",
+                            document_id,
+                            tenant_id,
+                        )
+                except Exception:
+                    logger.warning(
+                        "Failed to remove orphan upload: document_id=%s tenant_id=%s",
+                        document_id,
+                        tenant_id,
+                    )
+
             return result
 
         finally:

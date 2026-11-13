@@ -179,11 +179,20 @@ export default function AuthPage() {
 
       if (res.ok) {
         const data = await res.json();
+
+        if (data.requires_mfa) {
+          setSignInLoading(false);
+          setSignInError(
+            "Multi-factor authentication is required. Complete MFA verification to continue.",
+          );
+          return;
+        }
+
         loginStore(
           {
             id: data.user?.id || crypto.randomUUID(),
             email: data.user?.email || signInEmail,
-            full_name: data.user?.name || signInEmail.split("@")[0] || "User",
+            full_name: data.user?.full_name || data.user?.name || signInEmail.split("@")[0] || "User",
             avatar_url: data.user?.avatar_url || null,
             role: data.user?.role || "viewer",
             tenant_id: data.user?.tenant_id || "demo",

@@ -8,9 +8,9 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
+import bcrypt
 import pyotp
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.auth.domain import User
 from app.shared.exceptions import (
@@ -22,8 +22,6 @@ from app.shared.settings import get_settings
 
 settings = get_settings()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 class AuthService:
     """Authentication and authorization service."""
@@ -32,11 +30,22 @@ class AuthService:
 
     @staticmethod
     def hash_password(password: str) -> str:
-        return cast(str, pwd_context.hash(password))
+        # bcrypt only considers the first 72 bytes; truncate explicitly so
+        # bcrypt>=5 does not reject long passwords at runtime.
+        return bcrypt.hashpw(
+            password.encode("utf-8")[:72],
+            bcrypt.gensalt(),
+        ).decode("utf-8")
 
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        return cast(bool, pwd_context.verify(plain_password, hashed_password))
+        try:
+            return bcrypt.checkpw(
+                plain_password.encode("utf-8")[:72],
+                hashed_password.encode("utf-8"),
+            )
+        except (TypeError, ValueError):
+            return False
 
     # ── JWT Token Generation ──
 
@@ -89,8 +98,38 @@ class AuthService:
                 algorithm=settings.JWT_ALGORITHM,
             ),
         )
-        hashed_token = hashlib.sha256(raw_token.encode()).hexdigest()
-        return raw_token, hashed_token
+        return raw_token, AuthService.hash_refresh_token(raw_token)
+
+    @staticmethod
+    def hash_refresh_token(token: str) -> str:
+        """Stable hash used to store and look up refresh tokens."""
+        return hashlib.sha256(token.encode()).hexdigest()
+
+    @staticmethod
+    def create_mfa_session_token(
+        user_id: str,
+        tenant_id: str,
+        role: str,
+    ) -> str:
+        """Short-lived token that only authorizes the MFA verification step."""
+        now = datetime.now(UTC)
+        payload = {
+            "sub": user_id,
+            "tenant_id": tenant_id,
+            "role": role,
+            "type": "mfa",
+            "iat": now,
+            "exp": now + timedelta(minutes=settings.MFA_SESSION_EXPIRE_MINUTES),
+            "jti": str(uuid.uuid4()),
+        }
+        return cast(
+            str,
+            jwt.encode(
+                payload,
+                settings.JWT_SECRET_KEY.get_secret_value(),
+                algorithm=settings.JWT_ALGORITHM,
+            ),
+        )
 
     # ── Token Verification ──
 
@@ -112,6 +151,13 @@ class AuthService:
     def verify_access_token(token: str) -> dict[str, Any]:
         payload = AuthService.decode_token(token)
         if payload.get("type") != "access":
+            raise AuthenticationError("Invalid token type")
+        return payload
+
+    @staticmethod
+    def verify_mfa_session_token(token: str) -> dict[str, Any]:
+        payload = AuthService.decode_token(token)
+        if payload.get("type") != "mfa":
             raise AuthenticationError("Invalid token type")
         return payload
 

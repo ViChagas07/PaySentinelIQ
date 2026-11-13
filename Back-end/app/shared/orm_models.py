@@ -169,6 +169,7 @@ class DocumentModel(Base, SoftDeleteMixin):
     file_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
     s3_key: Mapped[str] = mapped_column(String(500), nullable=False)
     s3_bucket: Mapped[str] = mapped_column(String(200), nullable=False)
+    file_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     ocr_status: Mapped[str] = mapped_column(String(30), default="pending")
     ocr_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     extracted_fields: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)

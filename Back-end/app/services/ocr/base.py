@@ -67,6 +67,13 @@ class OCRProvider(ABC):
     or Google Vision without changing any business logic.
     """
 
+    # True only when the provider's work can really be cancelled by
+    # asyncio (for example, an async HTTP request). Local CPU/subprocess
+    # providers remain False so callers do not pretend wait_for kills them.
+    @property
+    def supports_hard_timeout(self) -> bool:
+        return False
+
     @abstractmethod
     async def extract_text(self, file_path: str) -> OCRResult:
         """Extract text from a document file.

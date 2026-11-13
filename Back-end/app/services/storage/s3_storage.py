@@ -74,7 +74,11 @@ class S3StorageProvider(StorageProvider):
         content_type: str,
         metadata: dict[str, str] | None = None,
     ) -> UploadResult:
-        """Upload file bytes to S3."""
+        """Upload file bytes to S3.
+
+        The object is the source of truth. A failure to generate the optional
+        presigned URL must not turn a successful upload into an orphan.
+        """
         try:
             extra_args: dict[str, Any] = {"ContentType": content_type}
             if metadata:
@@ -86,31 +90,46 @@ class S3StorageProvider(StorageProvider):
                 Body=file_data,
                 **extra_args,
             )
+        except (ClientError, BotoCoreError) as e:
+            logger.error(
+                "event=s3_upload_failed operation=upload error_type=%s",
+                type(e).__name__,
+            )
+            raise UploadFailedError(key, str(e)) from e
 
+        presigned = None
+        try:
             presigned = await self.generate_presigned_url(key)
-
-            logger.info("S3 upload: %s/%s (%d bytes)", self._bucket, key, len(file_data))
-
-            return UploadResult(
-                success=True,
-                key=key,
-                bucket=self._bucket,
-                presigned_url=presigned,
+        except Exception as e:
+            logger.warning(
+                "event=s3_presign_failed operation=upload error_type=%s",
+                type(e).__name__,
             )
 
-        except (ClientError, BotoCoreError) as e:
-            logger.error("S3 upload failed for %s: %s", key, e)
-            raise UploadFailedError(key, str(e)) from e
+        logger.info(
+            "event=s3_upload_succeeded operation=upload bytes=%d",
+            len(file_data),
+        )
+
+        return UploadResult(
+            success=True,
+            key=key,
+            bucket=self._bucket,
+            presigned_url=presigned,
+        )
 
     async def download_file(self, key: str) -> bytes:
         """Download file bytes from S3."""
         try:
             response = self._client.get_object(Bucket=self._bucket, Key=key)
             data = response["Body"].read()
-            logger.debug("S3 download: %s/%s (%d bytes)", self._bucket, key, len(data))
+            logger.debug(
+                "event=s3_download_succeeded operation=download bytes=%d",
+                len(data),
+            )
             return data
         except self._client.exceptions.NoSuchKey:
-            raise FileNotFoundError(key)
+            raise FileNotFoundError(key) from None
         except (ClientError, BotoCoreError) as e:
             raise StorageError(f"Download failed: {e}", key=key) from e
 
@@ -118,10 +137,13 @@ class S3StorageProvider(StorageProvider):
         """Delete a file from S3."""
         try:
             self._client.delete_object(Bucket=self._bucket, Key=key)
-            logger.info("S3 delete: %s/%s", self._bucket, key)
+            logger.info("event=s3_delete_succeeded operation=delete")
             return True
         except (ClientError, BotoCoreError) as e:
-            logger.error("S3 delete failed for %s: %s", key, e)
+            logger.error(
+                "event=s3_delete_failed operation=delete error_type=%s",
+                type(e).__name__,
+            )
             return False
 
     async def file_exists(self, key: str) -> bool:

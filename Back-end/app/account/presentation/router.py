@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_token_payload
 from app.shared.database import get_db
-from app.shared.exceptions import NotFoundError, PSIDomainError
+from app.shared.exceptions import NotFoundError
 from app.shared.settings import get_settings
 from app.shared.orm_models import (
     ConsentRecordModel,
@@ -380,7 +380,10 @@ async def delete_account(
 
     # Mark all user documents for deletion
     docs_result = await db.execute(
-        select(DocumentModel).where(DocumentModel.uploaded_by == user_id)
+        select(DocumentModel).where(
+            DocumentModel.tenant_id == tenant_id,
+            DocumentModel.uploaded_by == user_id,
+        )
     )
     documents = docs_result.scalars().all()
     for doc in documents:
@@ -483,7 +486,10 @@ async def export_account_data(
 
     # Documents (metadata only — actual files via separate authenticated download)
     docs_result = await db.execute(
-        select(DocumentModel).where(DocumentModel.uploaded_by == user_id)
+        select(DocumentModel).where(
+            DocumentModel.tenant_id == tenant_id,
+            DocumentModel.uploaded_by == user_id,
+        )
     )
     for doc in docs_result.scalars().all():
         export_data["documents"].append({
@@ -495,10 +501,18 @@ async def export_account_data(
             "uploaded_at": doc.created_at.isoformat() if doc.created_at else None,
         })
 
-    # Verification reports
+    # Verification reports (only reports derived from the caller's documents)
     reports_result = await db.execute(
         select(VerificationReportModel)
-        .where(VerificationReportModel.tenant_id == tenant_id)
+        .join(
+            DocumentModel,
+            VerificationReportModel.document_id == DocumentModel.id,
+        )
+        .where(
+            VerificationReportModel.tenant_id == tenant_id,
+            DocumentModel.tenant_id == tenant_id,
+            DocumentModel.uploaded_by == user_id,
+        )
     )
     for report in reports_result.scalars().all():
         export_data["verification_reports"].append({
@@ -601,7 +615,10 @@ async def download_export_zip(
 
     # Documents
     docs_result = await db.execute(
-        select(DocumentModel).where(DocumentModel.uploaded_by == user_id)
+        select(DocumentModel).where(
+            DocumentModel.tenant_id == tenant_id,
+            DocumentModel.uploaded_by == user_id,
+        )
     )
     for doc in docs_result.scalars().all():
         export_json["documents"].append({

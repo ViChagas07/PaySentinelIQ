@@ -3,6 +3,7 @@
 # Value objects and enums used across all modules
 # ============================================================
 
+import math
 import uuid
 from dataclasses import dataclass
 from enum import Enum
@@ -93,6 +94,28 @@ class EntityType(str, Enum):
     COMPANY = "company"
     EMPLOYEE = "employee"
     VENDOR = "vendor"
+
+
+# ── Confidence Scale Conversion ──
+
+
+def percent_confidence_to_ratio(confidence_percent: float) -> float:
+    """Convert a 0-100 confidence to the persisted 0-1 ratio.
+
+    The scale is defined by the producer contract (the canonical pipeline
+    emits percentages). Values outside 0-100 are rejected instead of clamped,
+    and the input scale is never inferred from the numeric value.
+    """
+    if isinstance(confidence_percent, bool) or not isinstance(
+        confidence_percent, (int, float)
+    ):
+        raise ValueError("confidence must be a number on the 0-100 scale")
+    value = float(confidence_percent)
+    if not math.isfinite(value):
+        raise ValueError("confidence must be finite")
+    if value < 0.0 or value > 100.0:
+        raise ValueError("confidence must be between 0 and 100")
+    return value / 100.0
 
 
 # ── Value Objects ──

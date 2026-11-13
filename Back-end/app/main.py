@@ -15,16 +15,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
-from starlette.responses import Response as StarletteResponse
 
 # ── Startup trace (stdout — visible in Railway logs) ──
 print("[psi] Importing app.shared modules...", flush=True)
 
+from app.observability.correlation import CORRELATION_HEADER, bind_request_correlation
+from app.services.upload_validation import UploadValidationError
 from app.shared.exceptions import PSIDomainError
 from app.shared.middleware import RateLimitMiddleware
-from app.shared.settings import get_settings
+from app.shared.settings import get_settings, validate_production_auth_settings
+from app.shared.upload_limits import UploadBodyLimitMiddleware
 
 settings = get_settings()
+validate_production_auth_settings(settings)
 print(f"[psi] Settings loaded: env={settings.ENVIRONMENT}", flush=True)
 
 # ── Sentry — non-blocking, fails gracefully ──
@@ -235,6 +238,13 @@ def create_app() -> FastAPI:
             },
         )
 
+    # ── Upload body limit ──
+    # Added before CORS so CORS is outer and decorates 413 responses.
+    app.add_middleware(
+        UploadBodyLimitMiddleware,
+        max_bytes=settings.max_upload_request_bytes,
+    )
+
     # ── CORS ──
     app.add_middleware(
         CORSMiddleware,
@@ -286,13 +296,37 @@ def create_app() -> FastAPI:
             content={"error": exc.code, "message": exc.message, "details": exc.details},
         )
 
+    @app.exception_handler(UploadValidationError)
+    async def upload_validation_error_handler(
+        request: Request,
+        exc: UploadValidationError,
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.public_message},
+        )
+
     # ── Catch-all exception handler — never return 503 from /health ──
     @app.exception_handler(Exception)
     async def catchall_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path, exc)
+        correlation_id = getattr(request.state, "correlation_id", None)
+        if not correlation_id:
+            correlation_id = bind_request_correlation(request.headers)
+        logger.error(
+            "event=unhandled_exception correlation_id=%s error_type=%s",
+            correlation_id,
+            type(exc).__name__,
+        )
         return JSONResponse(
             status_code=500,
-            content={"error": "internal_error", "message": str(exc)},
+            content={
+                "detail": {
+                    "error": "internal_error",
+                    "message": "Internal server error",
+                    "correlation_id": correlation_id,
+                }
+            },
+            headers={CORRELATION_HEADER: correlation_id},
         )
 
     # ── Root ──

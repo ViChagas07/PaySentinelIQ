@@ -1258,7 +1258,8 @@
             "riskCritical": "حرج",
             "riskHigh": "مرتفع",
             "riskMedium": "متوسط",
-            "riskLow": "منخفض"
+            "riskLow": "منخفض",
+            "notSaved": "لم يتم الحفظ"
         },
         "history": {
             "noHistory": "لا يوجد سجل تحليل بعد",

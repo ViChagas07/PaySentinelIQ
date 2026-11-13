@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 
 from app.services.pipeline.stages.base import BaseStage
 from app.core.contracts.pipeline_context import PipelineContext
@@ -57,7 +58,6 @@ class CrewAIStage(BaseStage):
 
     def _launch_background(self, context: PipelineContext, orchestrator) -> None:
         """Fire agents in background thread. Does NOT block pipeline."""
-        import threading
 
         def _bg_run():
             try:
@@ -73,21 +73,43 @@ class CrewAIStage(BaseStage):
                         "CrewAI background: agents=%d evidence=%d",
                         crew_result.agents_executed, len(crew_result.total_evidence),
                     )
-            except Exception as e:
-                logger.warning("CrewAI background failed: %s", e)
+            except Exception as exc:
+                logger.warning(
+                    "CrewAI background failed: %s",
+                    type(exc).__name__,
+                )
 
         thread = threading.Thread(target=_bg_run, daemon=True)
         thread.start()
 
     def _run_sync(self, context: PipelineContext, orchestrator) -> None:
         """Run agents synchronously. Blocks until complete or timeout."""
+        import concurrent.futures
+
+        future: concurrent.futures.Future[CrewResult | None] = (
+            concurrent.futures.Future()
+        )
+
+        def _runner() -> None:
+            try:
+                future.set_result(
+                    asyncio.run(orchestrator.execute_agents(context))
+                )
+            except BaseException as exc:  # noqa: BLE001
+                future.set_exception(exc)
+
+        thread = threading.Thread(target=_runner, daemon=True)
+        thread.start()
         try:
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                future = pool.submit(asyncio.run, orchestrator.execute_agents(context))
-                crew_result: CrewResult = future.result(timeout=60)
-        except Exception as e:
-            context.add_warning(f"CrewAI sync failed: {e}")
+            crew_result: CrewResult | None = future.result(timeout=60)
+        except concurrent.futures.TimeoutError:
+            context.add_warning("CrewAI sync timed out")
+            context.agent_findings = []
+            return
+        except Exception as exc:
+            context.add_warning(
+                f"CrewAI sync failed: {type(exc).__name__}"
+            )
             context.agent_findings = []
             return
 
@@ -116,6 +138,9 @@ class CrewAIStage(BaseStage):
             from app.ai_agents.orchestrator import CrewAIOrchestrator
             self._orchestrator = CrewAIOrchestrator()
             return self._orchestrator
-        except Exception as e:
-            logger.warning("Could not create CrewAIOrchestrator: %s", e)
+        except Exception as exc:
+            logger.warning(
+                "Could not create CrewAIOrchestrator: %s",
+                type(exc).__name__,
+            )
             return None

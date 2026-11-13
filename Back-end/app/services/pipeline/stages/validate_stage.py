@@ -263,8 +263,10 @@ class ValidateStage(BaseStage):
                             rule_reference="Heuristica de fraude em boleto",
                         ))
 
-        except Exception as e:
-            ctx.add_warning(f"Boleto validation failed: {e}")
+        except Exception as exc:
+            ctx.add_warning(
+                f"Boleto validation failed: {type(exc).__name__}"
+            )
 
     def _validate_contracheque(self, ctx: PipelineContext, fields: dict) -> None:
         """Payroll-specific validations."""

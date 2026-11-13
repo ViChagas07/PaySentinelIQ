@@ -116,16 +116,22 @@ class CanonicalPipeline:
                     stage_name=stage.name,
                     data={"duration": context.processing_times.get(stage.name, 0)},
                 ))
-            except Exception as e:
-                logger.error("Stage %s crashed: %s", stage.name, e)
-                context.add_error(f"Stage {stage.name}: {e}")
+            except Exception as exc:
+                logger.error(
+                    "Stage %s crashed: %s",
+                    stage.name,
+                    type(exc).__name__,
+                )
+                context.add_error(
+                    f"Stage {stage.name}: {type(exc).__name__}"
+                )
                 context.pipeline_status = PipelineStatus.PARTIAL
 
                 self._event_bus.publish(PipelineEvent(
                     PipelineEventType.STAGE_FAILED,
                     document_id=context.document_id,
                     stage_name=stage.name,
-                    data={"error": str(e)},
+                    data={"error": type(exc).__name__},
                 ))
 
         context.mark_completed()

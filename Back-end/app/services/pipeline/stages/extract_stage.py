@@ -9,8 +9,20 @@ from __future__ import annotations
 
 from app.services.pipeline.stages.base import BaseStage
 from app.core.contracts.pipeline_context import PipelineContext
+from app.core.contracts.pipeline_status import PipelineStatus
 
 NATIVE_TEXT_METHODS = {"native_text", "pymupdf", "pdfplumber", "pypdf"}
+_OCR_FAILURE_STATUSES = {
+    "failed",
+    "timeout",
+    "unavailable",
+    "invalid_response",
+    "empty",
+}
+
+
+def _useful_chars(text: str) -> int:
+    return sum(1 for char in text if char.isalnum())
 
 
 class ExtractStage(BaseStage):
@@ -40,8 +52,10 @@ class ExtractStage(BaseStage):
                 context.extracted_text = extraction["text"]
                 context.extraction_method = extraction["method"]
                 context.page_count = extraction.get("pages", extraction.get("all_attempts", [{}])[0].get("pages", 1))
-            except Exception as e:
-                context.add_warning(f"Text extraction failed: {e}")
+            except Exception as exc:
+                context.add_warning(
+                    f"Text extraction failed: {type(exc).__name__}"
+                )
 
         if (
             context.extraction_method in NATIVE_TEXT_METHODS
@@ -60,8 +74,10 @@ class ExtractStage(BaseStage):
                 extractor = DocumentExtractionService()
                 extraction_result = extractor.extract(context.extracted_text)
                 context.extracted_fields = extraction_result.to_dict()
-            except Exception as e:
-                context.add_warning(f"Structured extraction failed: {e}")
+            except Exception as exc:
+                context.add_warning(
+                    f"Structured extraction failed: {type(exc).__name__}"
+                )
 
         # ── PDF Metadata ──
         try:
@@ -83,6 +99,17 @@ class ExtractStage(BaseStage):
 
         # ── Canonical extraction (additive) ──
         self._apply_canonical_extraction(context)
+
+        # ── OCR failure must not silently become a low-risk result ──
+        ocr_status = context.metadata.get("ocr", {}).get("status")
+        if _useful_chars(context.extracted_text) < 20:
+            if ocr_status in _OCR_FAILURE_STATUSES:
+                context.add_error(
+                    "OCR did not produce usable text for analysis"
+                )
+                context.pipeline_status = PipelineStatus.FAILED
+        elif ocr_status in _OCR_FAILURE_STATUSES - {"empty"}:
+            context.add_warning("ocr_fallback_native_text")
 
     def _apply_canonical_extraction(self, context: PipelineContext) -> None:
         from app.shared.settings import get_settings

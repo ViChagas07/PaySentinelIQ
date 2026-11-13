@@ -1258,7 +1258,8 @@
             "riskCritical": "Crítico",
             "riskHigh": "Alto",
             "riskMedium": "Medio",
-            "riskLow": "Bajo"
+            "riskLow": "Bajo",
+            "notSaved": "No guardado"
         },
         "history": {
             "noHistory": "Sin historial de análisis aún",

@@ -58,7 +58,12 @@ export function AnalysisResultCard({ result, index }: { result: AnalysisResult; 
                 </p>
               </div>
             </div>
-            <StatusPill label={t(riskLabel(result.riskScore) as any)} variant={riskVariant(result.riskScore)} />
+            <div className="flex items-center gap-2">
+              {result.persistenceStatus === "failed" && (
+                <StatusPill label={t("result.notSaved")} variant="destructive" />
+              )}
+              <StatusPill label={t(riskLabel(result.riskScore) as any)} variant={riskVariant(result.riskScore)} />
+            </div>
           </div>
         </div>
 

@@ -178,9 +178,10 @@ class TesseractOCRProvider(OCRProvider):
                     extraction_result["char_count"],
                     extraction_quality,
                 )
-        except Exception as e:
+        except Exception as exc:
             logger.info(
-                "Robust text extraction not viable, falling back to OCR: %s", e
+                "Robust text extraction not viable, falling back to OCR: %s",
+                type(exc).__name__,
             )
 
         # ── Phase 2: If text extraction yielded GOOD quality, use it ──
@@ -338,9 +339,12 @@ class TesseractOCRProvider(OCRProvider):
                 height=image.height if hasattr(image, "height") else None,
             )
 
-        except Exception as e:
+        except Exception as exc:
             # Fallback: simple text extraction without confidence
-            logger.warning("Detailed OCR failed, using simple extraction: %s", e)
+            logger.warning(
+                "Detailed OCR failed, using simple extraction: %s",
+                type(exc).__name__,
+            )
             text = pytesseract.image_to_string(image, lang=self._language, config="--psm 6")
             return OCRPageResult(
                 page_number=page_number,

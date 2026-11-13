@@ -97,26 +97,30 @@ export default function AnalyzePayrollPage() {
         const result = mapPSIReportToAnalysisResult(report, file.name, "payroll", locale);
         newResults.push(result);
 
-        // Persist analysis to the database so dashboard/history reflect real data
-        try {
-          await saveAnalysis.mutateAsync({
-            document_type: "CONTRACHEQUE",
-            file_name: file.name,
-            file_size: file.size,
-            risk_level: result.riskScore >= 70 ? "HIGH" : result.riskScore >= 40 ? "MEDIUM" : "LOW",
-            risk_score: result.riskScore,
-            confidence_score: result.confidenceScore,
-            fraud_probability: result.fraudProbability,
-            is_fraudulent: result.riskScore >= 70,
-            fraud_indicators: result.manipulationIndicators.length > 0 ? result.manipulationIndicators : undefined,
-            analysis_result: report,
-            amount: undefined,
-            ai_summary: result.aiSummary,
-            processing_duration: result.processingDuration,
-            status: result.riskScore >= 70 ? "flagged" : "completed",
-          });
-        } catch (saveErr) {
-          console.error("Failed to persist analysis:", saveErr);
+        // Persist analysis to the database so dashboard/history reflect real data.
+        // If the canonical endpoint could not persist the document/alert, do not
+        // attempt a separate save or present the result as saved.
+        if (result.persistenceStatus !== "failed") {
+          try {
+            await saveAnalysis.mutateAsync({
+              document_type: "CONTRACHEQUE",
+              file_name: file.name,
+              file_size: file.size,
+              risk_level: result.riskScore >= 70 ? "HIGH" : result.riskScore >= 40 ? "MEDIUM" : "LOW",
+              risk_score: result.riskScore,
+              confidence_score: result.confidenceScore,
+              fraud_probability: result.fraudProbability,
+              is_fraudulent: result.riskScore >= 70,
+              fraud_indicators: result.manipulationIndicators.length > 0 ? result.manipulationIndicators : undefined,
+              analysis_result: report,
+              amount: undefined,
+              ai_summary: result.aiSummary,
+              processing_duration: result.processingDuration,
+              status: result.riskScore >= 70 ? "flagged" : "completed",
+            });
+          } catch (saveErr) {
+            console.error("Failed to persist analysis:", saveErr);
+          }
         }
       } catch (err) {
         console.error("Analysis failed for", file.name, err);
@@ -145,6 +149,7 @@ export default function AnalyzePayrollPage() {
 
     newResults.forEach((r) => {
       addResult(DOC_TYPE, r);
+      if (r.persistenceStatus === "failed") return;
       addHistoryEntry(DOC_TYPE, {
         id: r.id,
         fileName: r.fileName,

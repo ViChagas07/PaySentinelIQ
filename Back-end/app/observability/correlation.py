@@ -5,8 +5,11 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 from contextvars import ContextVar
 from dataclasses import dataclass, field
+
+CORRELATION_HEADER = "X-Correlation-ID"
 
 
 @dataclass
@@ -40,3 +43,44 @@ def get_correlation() -> CorrelationContext:
 
 def set_correlation(ctx: CorrelationContext) -> None:
     _correlation_ctx.set(ctx)
+
+
+def _validated_correlation_id(value: str | None) -> str | None:
+    """Return a canonical UUID or ``None`` when the value is not safe."""
+    if not value:
+        return None
+    try:
+        return str(uuid.UUID(value))
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
+def resolve_correlation_id(headers: Mapping[str, str] | None = None) -> str:
+    """Return a client-supplied correlation ID when valid, else a new UUID."""
+    if headers is not None:
+        candidate = headers.get(CORRELATION_HEADER)
+        if candidate is None:
+            candidate = headers.get(CORRELATION_HEADER.lower())
+        validated = _validated_correlation_id(candidate)
+        if validated is not None:
+            return validated
+    return str(uuid.uuid4())
+
+
+def bind_request_correlation(
+    headers: Mapping[str, str] | None = None,
+    *,
+    tenant_id: str = "",
+    user_id: str = "",
+) -> str:
+    """Bind one correlation ID to the shared logging context."""
+    correlation_id = resolve_correlation_id(headers)
+    set_correlation(
+        CorrelationContext(
+            request_id=correlation_id,
+            trace_id=correlation_id,
+            tenant_id=tenant_id,
+            user_id=user_id,
+        )
+    )
+    return correlation_id

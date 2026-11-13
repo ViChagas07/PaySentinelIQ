@@ -34,7 +34,15 @@ class RiskStage(BaseStage):
             ocr_confidence: float | None = context.ocr_confidence
             if isinstance(ocr_metadata, dict) and ocr_metadata.get(
                 "status"
-            ) in {"failed", "empty", "not_needed"}:
+            ) in {
+                "failed",
+                "error",
+                "timeout",
+                "unavailable",
+                "invalid_response",
+                "empty",
+                "not_needed",
+            }:
                 ocr_confidence = None
             risk_ctx = {
                 "document_type": context.document_type,
@@ -63,8 +71,10 @@ class RiskStage(BaseStage):
                         rule_reference="RiskAnalyzer heuristics",
                     )
                 )
-        except Exception as e:
-            context.add_warning(f"RiskAnalyzer failed: {e}")
+        except Exception as exc:
+            context.add_warning(
+                f"RiskAnalyzer failed: {type(exc).__name__}"
+            )
 
         # ── Compute deterministic score via FusionEngine ──
         if context.evidences:
@@ -78,8 +88,10 @@ class RiskStage(BaseStage):
 
                 # Store explainability data
                 context.metadata["fusion_result"] = result
-            except Exception as e:
-                context.add_warning(f"FusionEngine failed: {e}")
+            except Exception as exc:
+                context.add_warning(
+                    f"FusionEngine failed: {type(exc).__name__}"
+                )
                 # Fallback: simple severity-weighted score
                 weights = {
                     Severity.CRITICAL: 35,
@@ -88,7 +100,10 @@ class RiskStage(BaseStage):
                     Severity.LOW: 5,
                     Severity.INFO: 2,
                 }
-                total = sum(weights.get(e.severity, 1) for e in context.evidences)
+                total = sum(
+                    weights.get(evidence.severity, 1)
+                    for evidence in context.evidences
+                )
                 context.deterministic_score = min(total, 100.0)
                 if context.deterministic_score >= 70:
                     context.risk_level = "HIGH"

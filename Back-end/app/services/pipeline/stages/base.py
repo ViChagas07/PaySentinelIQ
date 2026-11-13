@@ -33,8 +33,8 @@ class BaseStage(ABC):
         start = time.monotonic()
         try:
             self._execute(context)
-        except Exception as e:
-            context.add_error(f"[{self.name}] {e}")
+        except Exception as exc:
+            context.add_error(f"[{self.name}] {type(exc).__name__}")
         finally:
             elapsed = time.monotonic() - start
             context.record_stage_time(self.name, round(elapsed, 3))

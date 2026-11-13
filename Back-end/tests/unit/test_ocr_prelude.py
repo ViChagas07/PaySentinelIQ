@@ -85,11 +85,11 @@ async def test_ocr_prelude_failure_is_non_fatal(monkeypatch):
     await run_ocr_prelude(ctx, provider=provider)
 
     assert ctx.metadata["ocr"] == {
-        "status": "failed",
-        "error": "RuntimeError",
+        "status": "error",
+        "error": "error",
     }
     assert "ocr_prelude" not in ctx.metadata
-    assert "ocr_unavailable: RuntimeError" in ctx.warnings
+    assert "ocr_error" in ctx.warnings
     assert not Path(provider.paths[0]).exists()
 
 

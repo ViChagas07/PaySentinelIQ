@@ -37,6 +37,7 @@ interface PSIReport {
   riskLevel?: string;
   anomaly_list?: Record<string, any>[];
   anomalies?: Record<string, any>[];
+  persistence_status?: string;
 }
 
 export function mapPSIReportToAnalysisResult(
@@ -176,5 +177,11 @@ export function mapPSIReportToAnalysisResult(
     statusIndicators,
     createdAt: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
     processingDuration: +(2 + Math.random() * 5).toFixed(1),
+    persistenceStatus:
+      report.persistence_status === "failed"
+        ? "failed"
+        : report.persistence_status === "saved"
+          ? "saved"
+          : undefined,
   };
 }

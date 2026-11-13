@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import tempfile
 from pathlib import Path
@@ -7,6 +8,7 @@ from typing import Any
 
 from app.core.contracts.pipeline_context import PipelineContext
 from app.services.ocr.base import OCRProvider
+from app.services.ocr.exceptions import classify_ocr_exception
 
 logger = logging.getLogger(__name__)
 
@@ -29,14 +31,14 @@ def _confidence_percent(confidence: float) -> float:
 
 def _set_failure(
     ctx: PipelineContext,
-    exception_type: str,
+    category: str,
 ) -> None:
     ctx.metadata["ocr"] = {
-        "status": "failed",
-        "error": exception_type,
+        "status": category,
+        "error": category,
     }
     ctx.metadata.pop("ocr_prelude", None)
-    ctx.add_warning(f"ocr_unavailable: {exception_type}")
+    ctx.add_warning(f"ocr_{category}")
 
 
 async def run_ocr_prelude(
@@ -63,7 +65,14 @@ async def run_ocr_prelude(
         with tempfile.TemporaryDirectory(prefix="psi_ocr_") as temp_dir:
             file_path = Path(temp_dir) / f"document{extension}"
             file_path.write_bytes(ctx.file_bytes)
-            result = await provider.extract_text(str(file_path))
+            extraction = provider.extract_text(str(file_path))
+            if getattr(provider, "supports_hard_timeout", False):
+                result = await asyncio.wait_for(
+                    extraction,
+                    timeout=float(settings.OCR_SERVICE_TIMEOUT),
+                )
+            else:
+                result = await extraction
 
         if _useful_chars(result.text) < 20:
             ctx.metadata["ocr"] = {"status": "empty"}
@@ -104,9 +113,10 @@ async def run_ocr_prelude(
             result.processing_time_seconds,
         )
     except Exception as exc:
-        _set_failure(ctx, type(exc).__name__)
+        category = classify_ocr_exception(exc)
+        _set_failure(ctx, category)
         logger.warning(
-            "OCR prelude status=failed error=%s bytes=%d",
-            type(exc).__name__,
+            "OCR prelude status=%s bytes=%d",
+            category,
             len(ctx.file_bytes),
         )

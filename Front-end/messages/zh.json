@@ -1258,7 +1258,8 @@
             "riskCritical": "严重",
             "riskHigh": "高",
             "riskMedium": "中",
-            "riskLow": "低"
+            "riskLow": "低",
+            "notSaved": "未保存"
         },
         "history": {
             "noHistory": "暂无分析历史",

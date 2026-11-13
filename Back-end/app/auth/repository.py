@@ -5,7 +5,7 @@
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.orm_models import UserModel
@@ -19,8 +19,10 @@ class UserRepository(BaseRepository[UserModel]):
         super().__init__(UserModel, session)
 
     async def get_by_email(self, email: str) -> UserModel | None:
-        """Find a user by email address."""
-        stmt = select(UserModel).where(UserModel.email == email)
+        """Find a user by email address (case-insensitive)."""
+        stmt = select(UserModel).where(
+            func.lower(UserModel.email) == email.strip().lower()
+        )
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 

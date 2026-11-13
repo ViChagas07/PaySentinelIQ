@@ -4,44 +4,26 @@
 # ============================================================
 
 
+import uuid
 from typing import Any
 
 from fastapi import Depends, Header, Request
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.repository import UserRepository
 from app.auth.services import AuthService
+from app.shared.database import get_db
 from app.shared.exceptions import AuthenticationError, AuthorizationError
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 
-async def get_current_user_id(
+async def _extract_access_token(
     request: Request,
-    authorization: str | None = Header(None),
+    authorization: str | None,
 ) -> str:
-    """Extract user ID from JWT access token."""
-    token = None
-
-    # Try Bearer token from Authorization header
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.removeprefix("Bearer ")
-
-    # Fall back to OAuth2 scheme
-    if not token:
-        token = await oauth2_scheme(request)
-
-    if not token:
-        raise AuthenticationError("Authentication required")
-
-    payload = AuthService.verify_access_token(token)
-    return str(payload["sub"])
-
-
-async def get_current_tenant_id(
-    request: Request,
-    authorization: str | None = Header(None),
-) -> str:
-    """Extract tenant ID from JWT access token."""
+    """Read the bearer token from the header or the OAuth2 scheme."""
     token = None
     if authorization and authorization.startswith("Bearer "):
         token = authorization.removeprefix("Bearer ")
@@ -51,49 +33,65 @@ async def get_current_tenant_id(
 
     if not token:
         raise AuthenticationError("Authentication required")
-
-    payload = AuthService.verify_access_token(token)
-    return str(payload["tenant_id"])
-
-
-async def get_current_user_role(
-    request: Request,
-    authorization: str | None = Header(None),
-) -> str:
-    """Extract user role from JWT access token."""
-    token = None
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.removeprefix("Bearer ")
-
-    if not token:
-        token = await oauth2_scheme(request)
-
-    if not token:
-        raise AuthenticationError("Authentication required")
-
-    payload = AuthService.verify_access_token(token)
-    return str(payload["role"])
-
-
-# ── Composite dependency: full token payload ──
+    return token
 
 
 async def get_token_payload(
     request: Request,
     authorization: str | None = Header(None),
+    db: AsyncSession = Depends(get_db),  # noqa: B008
 ) -> dict[str, Any]:
-    """Extract full JWT payload for comprehensive auth context."""
-    token = None
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.removeprefix("Bearer ")
+    """Verify the JWT and resolve its owner against the server database.
 
-    if not token:
-        token = await oauth2_scheme(request)
+    A valid signature is necessary but not sufficient: the subject must still
+    exist, be active, and belong to the tenant asserted by the token. Current
+    role and tenant values are taken from the database, not from the token.
+    """
+    token = await _extract_access_token(request, authorization)
+    payload = AuthService.verify_access_token(token)
 
-    if not token:
+    subject = payload.get("sub")
+    token_tenant_id = payload.get("tenant_id")
+    if not subject or not token_tenant_id:
+        raise AuthenticationError("Invalid token")
+
+    try:
+        user_id = uuid.UUID(str(subject))
+        tenant_id = uuid.UUID(str(token_tenant_id))
+    except (TypeError, ValueError, AttributeError):
+        raise AuthenticationError("Invalid token") from None
+
+    user = await UserRepository(db).get_by_id(user_id)
+    if user is None or not user.is_active:
         raise AuthenticationError("Authentication required")
+    if user.tenant_id != tenant_id:
+        raise AuthenticationError("Invalid token")
 
-    return AuthService.verify_access_token(token)
+    payload["sub"] = str(user.id)
+    payload["tenant_id"] = str(user.tenant_id)
+    payload["role"] = user.role
+    return payload
+
+
+async def get_current_user_id(
+    payload: dict[str, Any] = Depends(get_token_payload),  # noqa: B008
+) -> str:
+    """Extract the verified user ID from the authenticated payload."""
+    return str(payload["sub"])
+
+
+async def get_current_tenant_id(
+    payload: dict[str, Any] = Depends(get_token_payload),  # noqa: B008
+) -> str:
+    """Extract the verified tenant ID from the authenticated payload."""
+    return str(payload["tenant_id"])
+
+
+async def get_current_user_role(
+    payload: dict[str, Any] = Depends(get_token_payload),  # noqa: B008
+) -> str:
+    """Extract the current role from the authenticated payload."""
+    return str(payload["role"])
 
 
 # ── RBAC Dependency Factory ──

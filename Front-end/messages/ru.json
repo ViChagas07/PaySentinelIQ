@@ -1258,7 +1258,8 @@
             "riskCritical": "Критический",
             "riskHigh": "Высокий",
             "riskMedium": "Средний",
-            "riskLow": "Низкий"
+            "riskLow": "Низкий",
+            "notSaved": "Не сохранено"
         },
         "history": {
             "noHistory": "Истории анализа пока нет",

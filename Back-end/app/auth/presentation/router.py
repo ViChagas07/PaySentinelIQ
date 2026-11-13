@@ -6,7 +6,7 @@
 
 import logging
 import uuid
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
 from typing import Any
 from urllib.parse import urlencode
 
@@ -23,7 +23,12 @@ from app.auth.repository import UserRepository
 from app.auth.services import AuthService
 from app.shared.database import get_db
 from app.shared.exceptions import AuthenticationError, InvalidCredentialsError, TokenExpiredError
-from app.shared.orm_models import ConsentRecordModel, TenantModel
+from app.shared.orm_models import (
+    ConsentRecordModel,
+    RefreshTokenModel,
+    TenantModel,
+    UserModel,
+)
 from app.shared.settings import get_settings
 
 settings = get_settings()
@@ -54,16 +59,6 @@ class TokenRefreshRequest(BaseModel):
     refresh_token: str
 
 
-class TokenResponse(BaseModel):
-    model_config = ConfigDict(strict=True)
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    expires_in: int
-    requires_mfa: bool = False
-    mfa_session_token: str | None = None
-
-
 class UserResponse(BaseModel):
     model_config = ConfigDict(strict=True)
     id: str
@@ -75,6 +70,17 @@ class UserResponse(BaseModel):
     avatar_url: str | None = None
 
 
+class TokenResponse(BaseModel):
+    model_config = ConfigDict(strict=True)
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    requires_mfa: bool = False
+    mfa_session_token: str | None = None
+    user: UserResponse | None = None
+
+
 class GoogleLoginRequest(BaseModel):
     model_config = ConfigDict(strict=True)
     credential: str | None = Field(default=None, min_length=1)
@@ -82,6 +88,50 @@ class GoogleLoginRequest(BaseModel):
     terms_version: str | None = Field(default=None, min_length=1, max_length=20)
     privacy_version: str | None = Field(default=None, min_length=1, max_length=20)
     consent_given: bool = Field(default=False)
+
+
+# ── Token Issuance Helpers ──
+
+
+def _user_response(user: UserModel) -> UserResponse:
+    return UserResponse(
+        id=str(user.id),
+        email=user.email,
+        full_name=user.full_name,
+        role=user.role,
+        tenant_id=str(user.tenant_id),
+        mfa_enabled=bool(user.mfa_enabled),
+        avatar_url=user.avatar_url,
+    )
+
+
+async def _issue_auth_tokens(
+    db: AsyncSession,
+    user: UserModel,
+) -> tuple[str, str]:
+    """Issue an access token and persist the hashed refresh token."""
+    now = datetime.now(dt_timezone.utc)
+    access_token = AuthService.create_access_token(
+        user_id=str(user.id),
+        tenant_id=str(user.tenant_id),
+        role=user.role,
+    )
+    refresh_token_raw, refresh_token_hash = AuthService.create_refresh_token(
+        str(user.id)
+    )
+    db.add(
+        RefreshTokenModel(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            token_hash=refresh_token_hash,
+            expires_at=now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+            is_revoked=False,
+        )
+    )
+    user.last_login = now
+    await db.commit()
+    await db.refresh(user)
+    return access_token, refresh_token_raw
 
 
 # ── Endpoints ──
@@ -209,18 +259,11 @@ async def google_login(
         )
         db.add(consent_record)
 
-    # 4. Update last_login BEFORE issuing tokens
-    user.last_login = datetime.now(dt_timezone.utc)
-    await db.commit()
-    await db.refresh(user)
+    if not user.is_active:
+        raise AuthenticationError("Account is inactive")
 
-    # 5. Issue PaySentinelIQ JWT + refresh token
-    access_token = AuthService.create_access_token(
-        user_id=str(user.id),
-        tenant_id=str(user.tenant_id),
-        role=user.role,
-    )
-    refresh_token_raw, _ = AuthService.create_refresh_token(str(user.id))
+    # 4. Commit consent + persist refresh token + update last_login
+    access_token, refresh_token_raw = await _issue_auth_tokens(db, user)
 
     return {
         "access_token": access_token,
@@ -400,17 +443,11 @@ async def google_callback(
         )
         db.add(consent_record)
 
-    # ── 5. Update last_login & issue tokens ────────────────────────
-    user.last_login = datetime.now(dt_timezone.utc)
-    await db.commit()
-    await db.refresh(user)
+    if not user.is_active:
+        raise AuthenticationError("Account is inactive")
 
-    access_token = AuthService.create_access_token(
-        user_id=str(user.id),
-        tenant_id=str(user.tenant_id),
-        role=user.role,
-    )
-    refresh_token_raw, _ = AuthService.create_refresh_token(str(user.id))
+    # ── 5. Commit consent + persist refresh token + update last_login ──
+    access_token, refresh_token_raw = await _issue_auth_tokens(db, user)
 
     # ── 6. Redirect to frontend with tokens ────────────────────────
     # Option A: Query params (simple, but tokens in URL history)
@@ -431,12 +468,16 @@ async def google_callback(
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(request: Request, body: LoginRequest) -> TokenResponse:
+async def login(
+    request: Request,
+    body: LoginRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
     """
-    Authenticate user. If MFA is enabled, returns a temporary session token
-    instead of full access/refresh tokens.
+    Authenticate a user with server-side credential verification.
 
-    LGPD: Requires explicit consent to Terms of Service and Privacy Policy.
+    If MFA is enabled, returns a short-lived MFA session token instead of
+    full access/refresh tokens. LGPD consent is still required.
     """
     # ── LGPD Consent Check ──
     if not body.consent_given:
@@ -445,27 +486,41 @@ async def login(request: Request, body: LoginRequest) -> TokenResponse:
             detail="Consent to Terms of Service and Privacy Policy is required (LGPD Article 7).",
         )
 
-    # In production, fetch user from repository
-    # For demonstration, return mock tokens
-    # Actual implementation would:
-    # 1. Look up user by email
-    # 2. Verify password
-    # 3. Check if MFA is enabled
-    # 4. Return tokens or MFA session
+    repo = UserRepository(db)
+    user = await repo.get_by_email(str(body.email))
 
-    # Mock: always return a valid token for demo purposes
-    mock_user_id = str(uuid.uuid4())
-    mock_tenant_id = str(uuid.uuid4())
+    password_ok = False
+    if user is not None and user.hashed_password:
+        try:
+            password_ok = AuthService.verify_password(
+                body.password,
+                user.hashed_password,
+            )
+        except Exception:
+            password_ok = False
 
-    access_token = AuthService.create_access_token(
-        user_id=mock_user_id,
-        tenant_id=mock_tenant_id,
-        role="fraud_analyst",
-    )
-    raw_refresh, hashed_refresh = AuthService.create_refresh_token(mock_user_id)
+    if user is None or not user.is_active or not password_ok:
+        raise InvalidCredentialsError()
+
+    if user.mfa_enabled:
+        if not user.mfa_secret:
+            raise AuthenticationError("MFA is not configured for this account")
+        return TokenResponse(
+            access_token="",
+            refresh_token="",
+            expires_in=settings.MFA_SESSION_EXPIRE_MINUTES * 60,
+            requires_mfa=True,
+            mfa_session_token=AuthService.create_mfa_session_token(
+                user_id=str(user.id),
+                tenant_id=str(user.tenant_id),
+                role=user.role,
+            ),
+        )
+
+    access_token, refresh_token_raw = await _issue_auth_tokens(db, user)
 
     await _publish_user_action(
-        {"sub": mock_user_id, "tenant_id": mock_tenant_id},
+        {"sub": str(user.id), "tenant_id": str(user.tenant_id)},
         "login",
         ip_address=_client_ip(request),
         user_agent=request.headers.get("User-Agent"),
@@ -473,9 +528,10 @@ async def login(request: Request, body: LoginRequest) -> TokenResponse:
 
     return TokenResponse(
         access_token=access_token,
-        refresh_token=raw_refresh,
-        expires_in=900,  # 15 minutes
+        refresh_token=refresh_token_raw,
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         requires_mfa=False,
+        user=_user_response(user),
     )
 
 
@@ -487,85 +543,144 @@ def _client_ip(request: Request) -> str | None:
 
 
 @router.post("/mfa/verify", response_model=TokenResponse)
-async def verify_mfa(body: MFAVerifyRequest) -> TokenResponse:
+async def verify_mfa(
+    body: MFAVerifyRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
     """
-    Verify MFA code and issue full access/refresh tokens.
+    Verify a short-lived MFA session token and a TOTP code.
     """
-    # In production:
-    # 1. Validate session token from Redis
-    # 2. Verify MFA code against user's secret
-    # 3. Issue real tokens
+    try:
+        payload = AuthService.verify_mfa_session_token(body.session_token)
+        user_id = uuid.UUID(str(payload["sub"]))
+        user = await UserRepository(db).get_by_id(user_id)
+        if (
+            user is None
+            or not user.is_active
+            or not user.mfa_enabled
+            or not user.mfa_secret
+        ):
+            raise InvalidCredentialsError()
+        if str(user.tenant_id) != str(payload.get("tenant_id")):
+            raise InvalidCredentialsError()
+        if not AuthService.verify_mfa_code(user.mfa_secret, body.code):
+            raise InvalidCredentialsError()
+    except (AuthenticationError, InvalidCredentialsError):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid MFA session or code",
+        ) from None
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid MFA session or code",
+        ) from None
 
-    mock_user_id = str(uuid.uuid4())
-    mock_tenant_id = str(uuid.uuid4())
+    access_token, refresh_token_raw = await _issue_auth_tokens(db, user)
 
-    access_token = AuthService.create_access_token(
-        user_id=mock_user_id,
-        tenant_id=mock_tenant_id,
-        role="fraud_analyst",
+    await _publish_user_action(
+        {"sub": str(user.id), "tenant_id": str(user.tenant_id)},
+        "login",
+        ip_address=_client_ip(request),
+        user_agent=request.headers.get("User-Agent"),
     )
-    raw_refresh, _ = AuthService.create_refresh_token(mock_user_id)
 
     return TokenResponse(
         access_token=access_token,
-        refresh_token=raw_refresh,
-        expires_in=900,
+        refresh_token=refresh_token_raw,
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=_user_response(user),
     )
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(body: TokenRefreshRequest) -> TokenResponse:
+async def refresh_token(
+    body: TokenRefreshRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
     """
-    Exchange a valid refresh token for a new access/refresh token pair.
-    Implements refresh token rotation.
+    Rotate a stored refresh token and issue a new access/refresh pair.
     """
     try:
         payload = AuthService.decode_token(body.refresh_token)
         if payload.get("type") != "refresh":
             raise InvalidCredentialsError()
 
-        user_id = payload["sub"]
-        # In production: validate refresh token hash in DB, revoke old one
+        token_hash = AuthService.hash_refresh_token(body.refresh_token)
+        result = await db.execute(
+            sa_select(RefreshTokenModel).where(
+                RefreshTokenModel.token_hash == token_hash,
+                RefreshTokenModel.is_revoked.is_(False),
+            )
+        )
+        stored = result.scalar_one_or_none()
+        if stored is None:
+            raise InvalidCredentialsError()
 
-        # Issue new pair
-        tenant_id = payload.get("tenant_id", str(uuid.uuid4()))
-        role = payload.get("role", "viewer")
+        now = datetime.now(dt_timezone.utc)
+        expires_at = stored.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=dt_timezone.utc)
+        if expires_at <= now:
+            raise InvalidCredentialsError()
 
-        new_access = AuthService.create_access_token(user_id, tenant_id, role)
-        new_refresh_raw, _ = AuthService.create_refresh_token(user_id)
+        user = await UserRepository(db).get_by_id(stored.user_id)
+        if user is None or not user.is_active:
+            raise InvalidCredentialsError()
+
+        stored.is_revoked = True
+        new_access, new_refresh_raw = await _issue_auth_tokens(db, user)
 
         return TokenResponse(
             access_token=new_access,
             refresh_token=new_refresh_raw,
-            expires_in=900,
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            user=_user_response(user),
         )
     except TokenExpiredError:
         raise HTTPException(status_code=401, detail="Refresh token expired") from None
+    except (AuthenticationError, InvalidCredentialsError):
+        raise HTTPException(status_code=401, detail="Invalid refresh token") from None
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token") from None
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user(payload: dict[str, Any] = Depends(get_token_payload)) -> UserResponse:
+async def get_current_user(
+    payload: dict[str, Any] = Depends(get_token_payload),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
     """
-    Return the currently authenticated user's profile.
+    Return the currently authenticated user's real server-side profile.
     """
-    return UserResponse(
-        id=payload["sub"],
-        email="analyst@paysentineliq.com",  # In production: fetch from DB
-        full_name="Sarah Mitchell",
-        role=payload["role"],
-        tenant_id=payload["tenant_id"],
-        mfa_enabled=True,
-    )
+    user = await UserRepository(db).get_by_id(uuid.UUID(str(payload["sub"])))
+    if user is None or not user.is_active:
+        raise AuthenticationError("Authentication required")
+    return _user_response(user)
 
 
 @router.post("/logout")
-async def logout(payload: dict[str, Any] = Depends(get_token_payload)) -> dict[str, Any]:
+async def logout(
+    payload: dict[str, Any] = Depends(get_token_payload),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
     """
     Logout: revoke all refresh tokens for this user.
+
+    Access tokens remain stateless and expire naturally.
     """
-    # In production: revoke refresh tokens, clear sessions
+    user_id = uuid.UUID(str(payload["sub"]))
+    result = await db.execute(
+        sa_select(RefreshTokenModel).where(
+            RefreshTokenModel.user_id == user_id,
+            RefreshTokenModel.is_revoked.is_(False),
+        )
+    )
+    for token in result.scalars().all():
+        token.is_revoked = True
+    await db.commit()
+
     await _publish_user_action(payload, "logout")
     return {"message": "Logged out successfully"}
 

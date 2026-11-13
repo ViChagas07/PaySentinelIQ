@@ -105,8 +105,11 @@ export default function AnalyzeBankSlipPage() {
             const result = mapPSIReportToAnalysisResult(report, file.name, "bank-slip", locale);
             newResults.push(result);
 
-            // Persist analysis — unified thresholds (70/40 from Fase 3B)
-            try {
+            // Persist analysis — unified thresholds (70/40 from Fase 3B).
+            // If the canonical endpoint could not persist the document/alert,
+            // do not attempt a separate save or present the result as saved.
+            if (result.persistenceStatus !== "failed") {
+              try {
                 await saveAnalysis.mutateAsync({
                     document_type: "BOLETO",
                     file_name: file.name,
@@ -123,37 +126,39 @@ export default function AnalyzeBankSlipPage() {
                     processing_duration: result.processingDuration,
                     status: result.riskScore >= 70 ? "flagged" : "completed",
                 });
-        } catch (saveErr) {
-          // Non-blocking — user already sees the result
-          console.error("Failed to persist analysis:", saveErr);
+              } catch (saveErr) {
+                // Non-blocking — user already sees the result
+                console.error("Failed to persist analysis:", saveErr);
+              }
+            }
+        } catch (err) {
+            console.error("Analysis failed for", file.name, err);
+            setError(getReadableError(err));
+            // Fallback: show a basic error result
+            newResults.push({
+                id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                fileName: file.name,
+                documentType: "bank-slip",
+                riskScore: 0,
+                fraudProbability: 0,
+                confidenceScore: 0,
+                aiSummary: `Analysis failed: ${err instanceof Error ? err.message : "Unknown error"}. Please try again.`,
+                ocrData: {},
+                metadata: {},
+                financialInconsistencies: [],
+                manipulationIndicators: [],
+                recommendedActions: ["Retry analysis or contact support"],
+                analysisTimeline: [],
+                statusIndicators: [],
+                createdAt: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+                processingDuration: 0,
+            });
         }
-      } catch (err) {
-        console.error("Analysis failed for", file.name, err);
-        setError(getReadableError(err));
-        // Fallback: show a basic error result
-        newResults.push({
-          id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          fileName: file.name,
-          documentType: "bank-slip",
-          riskScore: 0,
-          fraudProbability: 0,
-          confidenceScore: 0,
-          aiSummary: `Analysis failed: ${err instanceof Error ? err.message : "Unknown error"}. Please try again.`,
-          ocrData: {},
-          metadata: {},
-          financialInconsistencies: [],
-          manipulationIndicators: [],
-          recommendedActions: ["Retry analysis or contact support"],
-          analysisTimeline: [],
-          statusIndicators: [],
-          createdAt: new Date().toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-          processingDuration: 0,
-        });
-      }
     }
 
     newResults.forEach((r) => {
       addResult(DOC_TYPE, r);
+      if (r.persistenceStatus === "failed") return;
       addHistoryEntry(DOC_TYPE, {
         id: r.id,
         fileName: r.fileName,

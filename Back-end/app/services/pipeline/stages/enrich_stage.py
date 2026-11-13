@@ -29,19 +29,12 @@ class EnrichStage(BaseStage):
             return
 
         try:
-            from app.services.enrichment import EnrichmentService
-
-            enricher = EnrichmentService()
-            # Build a context dict for the enrichment service
-            enrichment_context = {
-                "cnpj": cnpj,
-                "document_type": context.document_type,
-                **fields,
-            }
             # Note: enrich_for_context is async but BaseStage.execute is sync.
             # In production, this stage will be async. For now, we note the
             # enrichment data source but don't block the pipeline.
             context.metadata["brasilapi_pending"] = True
             context.metadata["cnpj_for_enrichment"] = cnpj
-        except Exception as e:
-            context.add_warning(f"BrasilAPI enrichment setup failed: {e}")
+        except Exception as exc:
+            context.add_warning(
+                f"BrasilAPI enrichment setup failed: {type(exc).__name__}"
+            )

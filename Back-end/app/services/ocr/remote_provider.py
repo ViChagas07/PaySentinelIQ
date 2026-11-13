@@ -16,6 +16,10 @@ _MIME_TYPES = {
 
 
 class RemoteOCRProvider(OCRProvider):
+    @property
+    def supports_hard_timeout(self) -> bool:
+        return True
+
     def __init__(
         self,
         url: str,

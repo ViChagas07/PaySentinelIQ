@@ -42,6 +42,12 @@ class NativeTextFirstOCRProvider(OCRProvider):
         self._min_native_chars = min_native_chars
         self._primary_disabled = False
 
+    @property
+    def supports_hard_timeout(self) -> bool:
+        if self._fallback is not None or self._fallback_factory is not None:
+            return False
+        return getattr(self._primary, "supports_hard_timeout", False)
+
     async def extract_text(self, file_path: str) -> OCRResult:
         start_time = time.monotonic()
         path = Path(file_path)
@@ -204,12 +210,12 @@ class NativeTextFirstOCRProvider(OCRProvider):
         if not self._primary_disabled:
             try:
                 return await self._primary.extract_text(file_path)
-            except Exception:
+            except Exception as exc:
                 if self._get_fallback() is None:
                     raise
                 logger.warning(
-                    "Primary OCR provider failed; falling back",
-                    exc_info=True,
+                    "Primary OCR provider failed; falling back: %s",
+                    type(exc).__name__,
                 )
                 self._primary_disabled = True
 
@@ -224,10 +230,10 @@ class NativeTextFirstOCRProvider(OCRProvider):
         if self._fallback is None and self._fallback_factory is not None:
             try:
                 self._fallback = self._fallback_factory()
-            except Exception:
+            except Exception as exc:
                 logger.warning(
-                    "OCR fallback provider is unavailable",
-                    exc_info=True,
+                    "OCR fallback provider is unavailable: %s",
+                    type(exc).__name__,
                 )
                 return None
         return self._fallback

@@ -88,6 +88,17 @@ async def _alerts_query(
     return list(result.scalars().all())
 
 
+def _parse_alert_id(alert_id: str) -> uuid.UUID:
+    """Convert a path ID without leaking invalid/existing distinctions."""
+    try:
+        return uuid.UUID(alert_id)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=404,
+            detail="Fraud alert not found",
+        ) from None
+
+
 def _alert_to_dict(alert: FraudAlertModel) -> dict[str, Any]:
     """Convert a FraudAlertModel ORM instance to a dict matching the front-end schema."""
     flagged = []
@@ -294,8 +305,9 @@ async def get_fraud_alert(
 ) -> dict[str, Any]:
     """Get a single fraud alert with full details from the database."""
     tid = uuid.UUID(tenant_id)
+    alert_uuid = _parse_alert_id(alert_id)
     stmt = select(FraudAlertModel).where(
-        FraudAlertModel.id == alert_id,
+        FraudAlertModel.id == alert_uuid,
         FraudAlertModel.tenant_id == tid,
     )
     result = await db.execute(stmt)
@@ -304,7 +316,7 @@ async def get_fraud_alert(
     if not alert:
         raise HTTPException(
             status_code=404,
-            detail=f"Fraud alert '{alert_id}' not found for this tenant.",
+            detail="Fraud alert not found",
         )
 
     return _alert_to_dict(alert)
@@ -320,8 +332,9 @@ async def resolve_fraud_alert(
 ) -> dict[str, Any]:
     """Resolve a fraud alert in the database."""
     tid = uuid.UUID(tenant_id)
+    alert_uuid = _parse_alert_id(alert_id)
     stmt = select(FraudAlertModel).where(
-        FraudAlertModel.id == alert_id,
+        FraudAlertModel.id == alert_uuid,
         FraudAlertModel.tenant_id == tid,
     )
     result = await db.execute(stmt)
@@ -330,7 +343,7 @@ async def resolve_fraud_alert(
     if not alert:
         raise HTTPException(
             status_code=404,
-            detail=f"Fraud alert '{alert_id}' not found for this tenant.",
+            detail="Fraud alert not found",
         )
 
     alert.status = body.resolution

@@ -196,6 +196,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    MFA_SESSION_EXPIRE_MINUTES: int = 5
     MFA_ISSUER: str = "PaySentinelIQ"
 
     # ── Google OIDC ──
@@ -306,7 +307,29 @@ class Settings(BaseSettings):
     )
 
     # ── Business ──
-    MAX_UPLOAD_SIZE_MB: int = 50
+    MAX_UPLOAD_SIZE_MB: int = Field(default=10, gt=0, le=100)
+    MAX_UPLOAD_REQUEST_OVERHEAD_MB: int = Field(default=2, gt=0, le=20)
+    MAX_PDF_PAGE_DIMENSION_PT: float = Field(
+        default=5000.0, gt=0, le=100_000
+    )
+    MAX_PDF_PAGE_AREA_PT2: float = Field(
+        default=10_000_000.0, gt=0, le=1_000_000_000
+    )
+    MAX_IMAGE_PIXELS: int = Field(
+        default=25_000_000, gt=0, le=200_000_000
+    )
+    MAX_IMAGE_DIMENSION: int = Field(default=10_000, gt=0, le=50_000)
+
+    @property
+    def max_upload_file_bytes(self) -> int:
+        return self.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+
+    @property
+    def max_upload_request_bytes(self) -> int:
+        return (
+            self.max_upload_file_bytes
+            + self.MAX_UPLOAD_REQUEST_OVERHEAD_MB * 1024 * 1024
+        )
     # ── Fase 3B: Unified thresholds (single source of truth in ThresholdProvider) ──
     RISK_SCORE_THRESHOLD_HIGH: int = 70    # >= 70 = HIGH (REJECT)
     RISK_SCORE_THRESHOLD_MEDIUM: int = 40   # >= 40 = MEDIUM (MANUAL_REVIEW)
@@ -457,3 +480,18 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def validate_production_auth_settings(settings: Settings) -> None:
+    """Fail fast when production starts with a placeholder JWT secret."""
+    if settings.ENVIRONMENT != "production":
+        return
+
+    secret = settings.JWT_SECRET_KEY.get_secret_value()
+    if (
+        secret == "change-me-in-production-use-256-bit-key"
+        or len(secret.encode("utf-8")) < 32
+    ):
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be a strong secret of at least 32 bytes in production"
+        )

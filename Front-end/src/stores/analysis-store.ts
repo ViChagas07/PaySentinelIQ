@@ -48,6 +48,7 @@ export interface AnalysisResult {
   statusIndicators: { label: string; value: boolean; severity: "low" | "medium" | "high" | "critical" }[];
   createdAt: string;
   processingDuration: number;
+  persistenceStatus?: "saved" | "failed";
 }
 
 export interface HistoryEntry {
