@@ -14,6 +14,13 @@ from app.shared.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
+# Project DSN — used when SENTRY_DSN is not set in the environment.
+# Sentry DSNs are safe to commit: they are write-only ingestion keys.
+DEFAULT_SENTRY_DSN = (
+    "https://4247a607bbd08d21ed443765660be1e0@o4511407142535168"
+    ".ingest.us.sentry.io/4512425012625408"
+)
+
 
 def init_sentry() -> None:
     """
@@ -28,12 +35,13 @@ def init_sentry() -> None:
     """
     settings = get_settings()
 
-    if not settings.SENTRY_DSN:
+    dsn = settings.SENTRY_DSN or DEFAULT_SENTRY_DSN
+    if not dsn:
         logger.info("Sentry DSN not configured — skipping Sentry initialization.")
         return
 
     sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
+        dsn=dsn,
         environment=settings.ENVIRONMENT,
         release=f"{settings.APP_NAME}@{settings.APP_VERSION}",
         # ── Performance Monitoring ──
