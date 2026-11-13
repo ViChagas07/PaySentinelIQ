@@ -7,39 +7,39 @@
 
 "use client";
 
-import { useState, useCallback, useRef, useMemo, type ReactElement } from "react";
-import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useCallback, useMemo } from "react";
+import { useTranslations, useLocale } from "next-intl";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { PaymentRemindersCard } from "@/components/payroll/PaymentRemindersCard";
+import { PayrollDocumentItem, PayrollUploadZone } from "@/components/payroll/PayrollUploadZone";
 import { Button } from "@/components/ui/Button";
-import { Separator } from "@/components/ui/Separator";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
   // Hero / status
-  Brain, Zap, ShieldCheck, AlertTriangle, Clock, ArrowUpRight,
+  Brain, ShieldCheck, AlertTriangle, Clock,
   // Upload
-  Upload, FileText, FileSpreadsheet, FileImage, X, Check, Scan,
+  Upload, FileText, X, Check,
   // Scanner / verification
-  Search, Fingerprint, Barcode, Eye, Flag, GitCompare, TrendingUp,
+  Search, Eye, Flag, TrendingUp,
   // Queue
-  Inbox, Send, CheckCircle2, CreditCard,
+  Inbox, CheckCircle2, CreditCard,
   // Simulation
-  BarChart3, LineChart, PieChart, TrendingDown,
+  BarChart3, LineChart,
   // Assistant
   Sparkles, Lightbulb,
   // Actions
   Wallet, Calendar, Copy, Download, Building2,
 } from "lucide-react";
-import { useFraudAlertStats, usePaymentSchedules, useDashboardKpis } from "@/hooks/useApi";
+import { useFraudAlertStats, usePaymentSchedules, useDashboardKpis, useAnalyzeDocument } from "@/hooks/useApi";
+import { useAnalysisStore, selectExtraInfo } from "@/stores/analysis-store";
+import type { PayrollUploadedDocument } from "@/lib/payroll-upload";
 
 // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 // Types
 // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
-
-type UploadStatus = "idle" | "scanning" | "done" | "error";
 
 const SCANNER_CHECKS = [
   "beneficiaryValidation",
@@ -50,14 +50,6 @@ const SCANNER_CHECKS = [
   "historicalInconsistency",
   "patternAnomaly",
 ] as const;
-
-interface UploadedDocument {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  status: UploadStatus;
-}
 
 // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 // Animation variants
@@ -122,171 +114,6 @@ function StatusCard({
         </CardContent>
       </Card>
     </motion.div>
-  );
-}
-
-/** Drop zone for document upload */
-function UploadZone({
-  t,
-  onDocumentParsed,
-}: {
-  t: (key: string) => string;
-  onDocumentParsed: (doc: UploadedDocument) => void;
-}) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const dragCounter = useRef(0);
-
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current++;
-    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-      setIsDragging(true);
-    }
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current--;
-    if (dragCounter.current === 0) {
-      setIsDragging(false);
-    }
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const processFiles = useCallback(
-    (files: FileList | File[]) => {
-      setIsDragging(false);
-      setScanning(true);
-      // Simulate AI scanning — in production, this calls the backend
-      setTimeout(() => {
-        Array.from(files).forEach((f) => {
-          onDocumentParsed({
-            id: crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`,
-            name: f.name,
-            size: f.size,
-            type: f.type,
-            status: "done",
-          });
-        });
-        setScanning(false);
-      }, 2000);
-    },
-    [onDocumentParsed]
-  );
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dragCounter.current = 0;
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        processFiles(e.dataTransfer.files);
-      }
-    },
-    [processFiles]
-  );
-
-  const handleFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files.length > 0) {
-        processFiles(e.target.files);
-      }
-    },
-    [processFiles]
-  );
-
-  return (
-    <div className="relative">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf,.png,.jpg,.jpeg"
-        multiple
-        className="hidden"
-        onChange={handleFileSelect}
-        aria-label={t("upload.selectFile")}
-      />
-
-      {/* Drop zone */}
-      <motion.div
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-        className={cn(
-          "relative cursor-pointer rounded-xl border-2 border-dashed p-8 sm:p-12 text-center transition-all duration-300",
-          isDragging
-            ? "border-psi-electric bg-psi-electric/5 shadow-lg shadow-psi-electric/10 scale-[1.01]"
-            : "border-white/[0.08] bg-white/[0.02] hover:border-psi-electric/30 hover:bg-white/[0.04]"
-        )}
-        whileHover={{ scale: 1.005 }}
-        role="button"
-        tabIndex={0}
-        aria-label={t("upload.dragDrop")}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            fileInputRef.current?.click();
-          }
-        }}
-      >
-        {/* Animated border glow when dragging */}
-        {isDragging && (
-          <motion.div
-            className="absolute inset-0 rounded-xl pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-psi-electric/20 via-psi-emerald/20 to-psi-electric/20 animate-pulse" />
-          </motion.div>
-        )}
-
-        {/* Scanning animation */}
-        {scanning ? (
-          <div className="relative z-10 flex flex-col items-center gap-3">
-            <motion.div
-              className="relative w-16 h-16"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            >
-              <div className="absolute inset-0 rounded-full border-2 border-psi-electric/30 border-t-psi-electric" />
-              <Scan className="absolute inset-0 m-auto h-6 w-6 text-psi-electric" />
-            </motion.div>
-            <p className="text-sm font-medium text-psi-electric">
-              {t("upload.scanning")}
-            </p>
-          </div>
-        ) : (
-          <div className="relative z-10 flex flex-col items-center gap-3">
-            <div className="rounded-2xl bg-psi-electric/10 p-4 ring-1 ring-psi-electric/20 group-hover:bg-psi-electric/20 transition-colors">
-              <Upload className="h-8 w-8 text-psi-electric" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-psi-text-primary">
-                {t("upload.dragDrop")}
-              </p>
-              <p className="text-xs text-psi-text-secondary/60 mt-1">
-                {t("upload.supportedFormats")}
-              </p>
-            </div>
-            <Button variant="outline" size="sm" type="button">
-              <FileText className="h-3.5 w-3.5" />
-              {t("upload.selectFile")}
-            </Button>
-          </div>
-        )}
-      </motion.div>
-    </div>
   );
 }
 
@@ -494,14 +321,18 @@ function RecommendationCard({
 
 export default function PaymentCenterPage() {
   const t = useTranslations("payroll");
+  const tAnalysis = useTranslations("analysis");
+  const locale = useLocale();
 
   // ── State — all real, no mock ── //
-  const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
+  const [uploadedDocs, setUploadedDocs] = useState<PayrollUploadedDocument[]>([]);
 
   // ── API hooks — connected to real backend ── //
   const { data: fraudAlertStats, isLoading: statsLoading } = useFraudAlertStats();
   const { data: paymentSchedules, isLoading: schedulesLoading } = usePaymentSchedules();
   const { data: dashboardKpis, isLoading: kpisLoading } = useDashboardKpis();
+  const analyzeDocument = useAnalyzeDocument();
+  const extraInfo = useAnalysisStore(selectExtraInfo("payroll"));
 
   // ── Derived data ── //
   const pendingPayments = useMemo(
@@ -516,6 +347,14 @@ export default function PaymentCenterPage() {
     () => paymentSchedules?.filter((s) => s.status === "paid") ?? [],
     [paymentSchedules]
   );
+
+  const latestResult = useMemo(() => {
+    for (let i = uploadedDocs.length - 1; i >= 0; i--) {
+      const doc = uploadedDocs[i];
+      if (doc.status === "done" && doc.result) return doc.result;
+    }
+    return null;
+  }, [uploadedDocs]);
 
   const scannerCheckStatuses = useMemo(() => {
     const s = fraudAlertStats;
@@ -535,8 +374,14 @@ export default function PaymentCenterPage() {
     ? "scanning"
     : "idle";
 
-  const handleDocumentParsed = useCallback((doc: UploadedDocument) => {
-    setUploadedDocs((prev) => [...prev, doc]);
+  const handleDocumentChange = useCallback((doc: PayrollUploadedDocument) => {
+    setUploadedDocs((prev) => {
+      const index = prev.findIndex((item) => item.id === doc.id);
+      if (index === -1) return [...prev, doc];
+      const next = [...prev];
+      next[index] = doc;
+      return next;
+    });
   }, []);
 
   const removeDocument = useCallback((id: string) => {
@@ -645,61 +490,119 @@ export default function PaymentCenterPage() {
             <CardDescription>{t("upload.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Upload zone */}
-            <UploadZone t={t} onDocumentParsed={handleDocumentParsed} />
+            {/* Upload zone — each file is analyzed through the canonical API */}
+            <PayrollUploadZone
+              t={t}
+              locale={locale}
+              extraInfo={extraInfo}
+              analyzeDocument={analyzeDocument.mutateAsync}
+              onDocumentChange={handleDocumentChange}
+            />
 
             {/* Uploaded documents */}
             {uploadedDocs.length > 0 && (
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-psi-text-secondary uppercase tracking-wider">
-                  Uploaded documents
+                  {t("upload.uploadedDocuments")}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {uploadedDocs.map((doc) => (
-                    <motion.div
+                    <PayrollDocumentItem
                       key={doc.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3"
-                    >
-                      <div className="shrink-0 w-8 h-8 rounded-lg bg-psi-emerald/10 flex items-center justify-center">
-                        <FileText className="h-4 w-4 text-psi-emerald" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-psi-text-primary truncate">
-                          {doc.name}
-                        </p>
-                        <p className="text-xs text-psi-text-secondary/60">
-                          {(doc.size / 1024).toFixed(1)} KB
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => removeDocument(doc.id)}
-                        className="shrink-0 p-1 rounded-md hover:bg-psi-border/30 text-psi-text-secondary/50 hover:text-psi-fraud transition-colors"
-                        aria-label="Remove document"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </motion.div>
+                      document={doc}
+                      t={t}
+                      onRemove={removeDocument}
+                    />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Extracted data area — empty state */}
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="mb-4 rounded-2xl bg-psi-electric/5 p-4 ring-1 ring-psi-electric/10">
-                  <FileText className="h-8 w-8 text-psi-electric/40" />
+            {/* Latest analysis result — real risk summary */}
+            {latestResult ? (
+              <div
+                className={cn(
+                  "rounded-xl border p-6",
+                  latestResult.persistenceStatus === "failed"
+                    ? "border-psi-warning/20 bg-psi-warning/5"
+                    : "border-psi-emerald/20 bg-psi-emerald/5"
+                )}
+              >
+                <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+                  <div>
+                    <p className="text-[10px] font-semibold text-psi-text-secondary uppercase tracking-widest">
+                      {t("scanner.riskScore")}
+                    </p>
+                    <p
+                      className={cn(
+                        "text-2xl font-bold tabular-nums",
+                        latestResult.riskScore >= 70
+                          ? "text-psi-fraud"
+                          : latestResult.riskScore >= 40
+                          ? "text-psi-warning"
+                          : "text-psi-emerald"
+                      )}
+                    >
+                      {latestResult.riskScore}/100
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold text-psi-text-secondary uppercase tracking-widest">
+                      {t("scanner.aiConfidence")}
+                    </p>
+                    <p className="text-2xl font-bold text-psi-electric tabular-nums">
+                      {latestResult.confidenceScore}%
+                    </p>
+                  </div>
+                  <p className="text-xs text-psi-text-secondary/70 max-w-xl">
+                    {latestResult.aiSummary}
+                  </p>
                 </div>
-                <p className="text-sm font-medium text-psi-text-primary">
-                  {t("upload.noDocument")}
-                </p>
-                <p className="text-xs text-psi-text-secondary/60 mt-1 max-w-xs">
-                  {t("upload.noDocumentDesc")}
-                </p>
+                {(latestResult.financialInconsistencies.length > 0 ||
+                  latestResult.manipulationIndicators.length > 0) && (
+                  <div className="mt-5 grid gap-4 border-t border-white/[0.06] pt-4 sm:grid-cols-2">
+                    {latestResult.financialInconsistencies.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-psi-text-secondary uppercase tracking-widest">
+                          {tAnalysis("result.financialInconsistencies")}
+                        </p>
+                        <ul className="mt-1.5 space-y-1 text-xs text-psi-text-secondary/80">
+                          {latestResult.financialInconsistencies.slice(0, 5).map((item, index) => (
+                            <li key={`financial-${index}`}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {latestResult.manipulationIndicators.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-psi-text-secondary uppercase tracking-widest">
+                          {tAnalysis("result.manipulationIndicators")}
+                        </p>
+                        <ul className="mt-1.5 space-y-1 text-xs text-psi-text-secondary/80">
+                          {latestResult.manipulationIndicators.slice(0, 5).map((item, index) => (
+                            <li key={`manipulation-${index}`}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
+            ) : (
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="mb-4 rounded-2xl bg-psi-electric/5 p-4 ring-1 ring-psi-electric/10">
+                    <FileText className="h-8 w-8 text-psi-electric/40" />
+                  </div>
+                  <p className="text-sm font-medium text-psi-text-primary">
+                    {t("upload.noDocument")}
+                  </p>
+                  <p className="text-xs text-psi-text-secondary/60 mt-1 max-w-xs">
+                    {t("upload.noDocumentDesc")}
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>

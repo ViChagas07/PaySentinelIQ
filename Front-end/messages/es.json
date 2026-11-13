@@ -630,7 +630,18 @@
             },
             "noDocument": "Ningún documento subido",
             "noDocumentDesc": "Sube un documento de pago para ver los datos extraídos aquí",
-            "scanning": "La IA está escaneando tu documento..."
+            "scanning": "La IA está escaneando tu documento...",
+            "uploadedDocuments": "Documentos subidos",
+            "removeDocument": "Eliminar documento",
+            "persistenceWarning": "El análisis se completó, pero el documento no se pudo guardar. Este resultado solo se muestra en esta sesión.",
+            "error": {
+              "auth": "Tu sesión expiró. Vuelve a iniciar sesión para analizar el documento.",
+              "file": "No se pudo procesar este documento. Verifica que sea un recibo de nómina válido (PDF, PNG o JPG) e inténtalo de nuevo.",
+              "server": "El servidor no pudo completar el análisis. Inténtalo de nuevo en unos minutos.",
+              "network": "No se pudo conectar con el servidor. Revisa tu conexión a internet e inténtalo de nuevo.",
+              "timeout": "El análisis tardó más de lo esperado. Inténtalo de nuevo.",
+              "unknown": "No se pudo analizar el documento. Inténtalo de nuevo."
+            }
         },
         "scanner": {
             "title": "Escáner de Riesgo de Fraude",

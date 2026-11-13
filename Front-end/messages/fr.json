@@ -630,7 +630,18 @@
             },
             "noDocument": "Aucun document téléchargé",
             "noDocumentDesc": "Téléchargez un document de paiement pour voir les données extraites",
-            "scanning": "L'IA analyse votre document..."
+            "scanning": "L'IA analyse votre document...",
+            "uploadedDocuments": "Documents téléversés",
+            "removeDocument": "Supprimer le document",
+            "persistenceWarning": "L'analyse est terminée, mais le document n'a pas pu être enregistré. Ce résultat n'est affiché que pour cette session.",
+            "error": {
+              "auth": "Votre session a expiré. Reconnectez-vous pour analyser le document.",
+              "file": "Ce document n'a pas pu être traité. Vérifiez qu'il s'agit d'un bulletin de paie valide (PDF, PNG ou JPG) et réessayez.",
+              "server": "Le serveur n'a pas pu terminer l'analyse. Réessayez dans quelques minutes.",
+              "network": "Impossible de joindre le serveur. Vérifiez votre connexion Internet et réessayez.",
+              "timeout": "L'analyse a pris plus de temps que prévu. Réessayez.",
+              "unknown": "Le document n'a pas pu être analysé. Réessayez."
+            }
         },
         "scanner": {
             "title": "Scanner de Risque de Fraude",

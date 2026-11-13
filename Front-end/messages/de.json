@@ -632,7 +632,18 @@
             },
             "noDocument": "Kein Dokument hochgeladen",
             "noDocumentDesc": "Laden Sie ein Zahlungsdokument hoch, um extrahierte Daten zu sehen",
-            "scanning": "KI scannt Ihr Dokument..."
+            "scanning": "KI scannt Ihr Dokument...",
+            "uploadedDocuments": "Hochgeladene Dokumente",
+            "removeDocument": "Dokument entfernen",
+            "persistenceWarning": "Die Analyse wurde abgeschlossen, aber das Dokument konnte nicht gespeichert werden. Dieses Ergebnis wird nur für diese Sitzung angezeigt.",
+            "error": {
+              "auth": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um das Dokument zu analysieren.",
+              "file": "Dieses Dokument konnte nicht verarbeitet werden. Prüfen Sie, ob es eine gültige Gehaltsabrechnung (PDF, PNG oder JPG) ist, und versuchen Sie es erneut.",
+              "server": "Der Server konnte die Analyse nicht abschließen. Versuchen Sie es in einigen Minuten erneut.",
+              "network": "Der Server ist nicht erreichbar. Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+              "timeout": "Die Analyse hat länger gedauert als erwartet. Versuchen Sie es erneut.",
+              "unknown": "Das Dokument konnte nicht analysiert werden. Versuchen Sie es erneut."
+            }
         },
         "scanner": {
             "title": "Betrugsrisiko-Scanner",

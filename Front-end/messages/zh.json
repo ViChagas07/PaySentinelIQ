@@ -630,7 +630,18 @@
             },
             "noDocument": "未上传文档",
             "noDocumentDesc": "上传支付文档即可查看提取的数据",
-            "scanning": "AI正在扫描您的文档..."
+            "scanning": "AI正在扫描您的文档...",
+            "uploadedDocuments": "已上传的文档",
+            "removeDocument": "删除文档",
+            "persistenceWarning": "分析已完成，但文档无法保存。此结果仅在本次会话中显示。",
+            "error": {
+              "auth": "会话已过期。请重新登录后再分析文档。",
+              "file": "无法处理此文档。请确认它是有效的工资单（PDF、PNG 或 JPG），然后重试。",
+              "server": "服务器无法完成分析。请几分钟后重试。",
+              "network": "无法连接服务器。请检查网络连接后重试。",
+              "timeout": "分析超时。请重试。",
+              "unknown": "无法分析此文档。请重试。"
+            }
         },
         "scanner": {
             "title": "欺诈风险扫描器",

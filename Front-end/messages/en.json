@@ -702,7 +702,18 @@
       },
       "noDocument": "No document uploaded",
       "noDocumentDesc": "Upload a payment document to see the extracted data here",
-      "scanning": "AI is scanning your document..."
+      "scanning": "AI is scanning your document...",
+      "uploadedDocuments": "Uploaded documents",
+      "removeDocument": "Remove document",
+      "persistenceWarning": "Analysis completed, but the document could not be saved. This result is shown for this session only.",
+      "error": {
+        "auth": "Your session expired. Sign in again to analyze the document.",
+        "file": "This document could not be processed. Check that it is a valid pay stub (PDF, PNG or JPG) and try again.",
+        "server": "The server could not complete the analysis. Try again in a few minutes.",
+        "network": "Could not reach the server. Check your internet connection and try again.",
+        "timeout": "The analysis took longer than expected. Try again.",
+        "unknown": "The document could not be analyzed. Try again."
+      }
     },
     "scanner": {
       "title": "Fraud Risk Scanner",

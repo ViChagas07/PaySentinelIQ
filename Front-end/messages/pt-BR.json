@@ -689,7 +689,18 @@
             },
             "noDocument": "Nenhum documento enviado",
             "noDocumentDesc": "Envie um documento de pagamento para ver os dados extraídos aqui",
-            "scanning": "IA está escaneando seu documento..."
+            "scanning": "IA está escaneando seu documento...",
+            "uploadedDocuments": "Documentos enviados",
+            "removeDocument": "Remover documento",
+            "persistenceWarning": "A análise foi concluída, mas o documento não pôde ser salvo. Este resultado é exibido apenas nesta sessão.",
+            "error": {
+              "auth": "Sua sessão expirou. Entre novamente para analisar o documento.",
+              "file": "Não foi possível processar este documento. Verifique se é um contracheque válido (PDF, PNG ou JPG) e tente novamente.",
+              "server": "O servidor não conseguiu concluir a análise. Tente novamente em alguns minutos.",
+              "network": "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.",
+              "timeout": "A análise demorou mais que o esperado. Tente novamente.",
+              "unknown": "Não foi possível analisar o documento. Tente novamente."
+            }
         },
         "scanner": {
             "title": "Scanner de Risco de Fraude",
