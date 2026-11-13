@@ -14,7 +14,6 @@ from app.shared.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
-
 def init_sentry() -> None:
     """
     Initialize the Sentry SDK for error tracking and performance monitoring.
